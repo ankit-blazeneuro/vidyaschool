@@ -66,7 +66,7 @@ export function Header() {
         
         {/* Brand/Logo */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-sm tracking-tight text-foreground hover:opacity-90">
+          <Link id="header-brand-logo" href="/" className="flex items-center gap-2 font-semibold text-sm tracking-tight text-foreground hover:opacity-90">
             <span className="font-semibold text-sm">VidyaSchool</span>
           </Link>
         </div>
@@ -147,12 +147,12 @@ export function Header() {
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
           <Button variant="ghost" asChild>
-            <Link href="/student">
+            <Link id="header-student-portal-btn" href="/student">
               Student Portal
             </Link>
           </Button>
           <Button variant="default" asChild>
-            <Link href="/teacher">
+            <Link id="header-teacher-portal-btn" href="/teacher">
               Teacher Portal
             </Link>
           </Button>

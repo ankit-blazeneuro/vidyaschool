@@ -8,8 +8,17 @@ import { Footer } from "@/components/footer"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Terminal, Globe, Code, ArrowRight, Play, Pause, Laptop, Monitor, Music, Bot, Activity, Sparkles, X } from "lucide-react"
-import { LiquidMetal } from "@paper-design/shaders-react"
+import dynamic from "next/dynamic"
+import { Skeleton } from "@/components/ui/skeleton"
 import { motion, AnimatePresence } from "framer-motion"
+
+const LiquidMetal = dynamic(
+  () => import("@paper-design/shaders-react").then((mod) => mod.LiquidMetal),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="w-full h-full aspect-[4/3] rounded-xl" />,
+  }
+)
 
 interface SlideItem {
   title: string
@@ -175,12 +184,12 @@ export default function Home() {
                   {/* Call-to-Actions */}
                   <div className="flex items-center gap-3 pt-2">
                     <Button asChild variant="default" size="md">
-                      <Link href={slides[current].buttonHref}>
+                      <Link id="hero-student-portal-btn" href={slides[current].buttonHref}>
                         {slides[current].buttonText} <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
                     <Button asChild variant="outline" size="md">
-                      <Link href="/teacher">
+                      <Link id="hero-teacher-portal-btn" href="/teacher">
                         Teacher Portal
                       </Link>
                     </Button>
@@ -219,6 +228,7 @@ export default function Home() {
             {/* Play/Pause Button in Bottom Right Corner */}
             <div className="absolute bottom-4 right-4 z-10">
               <Button
+                id="hero-play-pause-btn"
                 variant="outline"
                 size="default"
                 onClick={togglePlay}
@@ -253,6 +263,7 @@ export default function Home() {
               
               {/* Card 1: Classical & Fusion Dance */}
               <motion.div 
+                id="bento-card-dance"
                 initial="initial"
                 whileHover="hover"
                 onClick={() => setActiveImage({
@@ -269,10 +280,13 @@ export default function Home() {
 
                 {/* Nice Inner Image Frame */}
                 <div className="relative w-full h-full rounded-lg overflow-hidden border border-border/60 dark:border-border/30 bg-muted/20">
-                  <img 
+                  <Image 
                     src="/assets/vidyaschool/student_classical_dance.jpg"
                     alt="Student classical and fusion dance practice"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
                     className="object-cover w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
+                    loading="lazy"
                   />
                   {/* Hover Text Overlay inside image frame */}
                   <motion.div 
@@ -300,6 +314,7 @@ export default function Home() {
 
               {/* Card 2: Choral & Classical Singing */}
               <motion.div 
+                id="bento-card-singing"
                 initial="initial"
                 whileHover="hover"
                 onClick={() => setActiveImage({
@@ -316,10 +331,13 @@ export default function Home() {
 
                 {/* Nice Inner Image Frame */}
                 <div className="relative w-full h-full rounded-lg overflow-hidden border border-border/60 dark:border-border/30 bg-muted/20">
-                  <img 
+                  <Image 
                     src="/assets/vidyaschool/student_singing.jpg"
                     alt="Student vocal and choral practice"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
+                    loading="lazy"
                   />
                   {/* Hover Text Overlay inside image frame */}
                   <motion.div 
@@ -347,6 +365,7 @@ export default function Home() {
 
               {/* Card 3: Instrumental Music */}
               <motion.div 
+                id="bento-card-instrumental"
                 initial="initial"
                 whileHover="hover"
                 onClick={() => setActiveImage({
@@ -363,10 +382,13 @@ export default function Home() {
 
                 {/* Nice Inner Image Frame */}
                 <div className="relative w-full h-full rounded-lg overflow-hidden border border-border/60 dark:border-border/30 bg-muted/20">
-                  <img 
+                  <Image 
                     src="/assets/vidyaschool/student_playing.jpg"
                     alt="Student playing acoustic guitar"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
+                    loading="lazy"
                   />
                   {/* Hover Text Overlay inside image frame */}
                   <motion.div 
@@ -392,8 +414,9 @@ export default function Home() {
                 </div>
               </motion.div>
 
-              {/* Card 4: Lego Robotics */}
+              {/* Card 4: Lego Robotics & Innovation */}
               <motion.div 
+                id="bento-card-robotics"
                 initial="initial"
                 whileHover="hover"
                 onClick={() => setActiveImage({
@@ -410,10 +433,13 @@ export default function Home() {
 
                 {/* Nice Inner Image Frame */}
                 <div className="relative w-full h-full rounded-lg overflow-hidden border border-border/60 dark:border-border/30 bg-muted/20">
-                  <img 
+                  <Image 
                     src="/assets/vidyaschool/student_robotics.jpg"
                     alt="Student coding and constructing Lego Mindstorms robotics"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
                     className="object-cover w-full h-full transition-transform duration-700 ease-out group-hover:scale-105"
+                    loading="lazy"
                   />
                   {/* Hover Text Overlay inside image frame */}
                   <motion.div 
@@ -515,6 +541,7 @@ export default function Home() {
               
               {/* Close Button */}
               <button 
+                id="lightbox-close-btn"
                 onClick={() => setActiveImage(null)}
                 className="absolute top-4 right-4 z-20 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 hover:border-white/30 text-white/80 hover:text-white p-2 transition-all cursor-pointer"
                 aria-label="Close dialog"

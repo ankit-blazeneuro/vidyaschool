@@ -11,7 +11,7 @@ export function Footer() {
           
           {/* Column 1: Brand Info */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 font-semibold text-sm tracking-tight text-foreground hover:opacity-90">
+            <Link id="footer-brand-logo" href="/" className="flex items-center gap-2 font-semibold text-sm tracking-tight text-foreground hover:opacity-90">
               <span className="font-semibold text-sm">VidyaSchool</span>
             </Link>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">

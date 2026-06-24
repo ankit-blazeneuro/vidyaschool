@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VidyaSchool",
-  description: "VidyaSchool Portal",
+  title: "VidyaSchool | Empowering Minds, Shaping Futures",
+  description: "Welcome to VidyaSchool, a premier educational portal dedicated to academic excellence, STEM innovation, and holistic student growth through co-curricular arts.",
+  keywords: ["VidyaSchool", "school portal", "academics", "STEM education", "performing arts", "student portal", "teacher portal"],
 };
 
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -39,7 +40,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
