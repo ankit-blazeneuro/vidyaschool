@@ -192,6 +192,21 @@ export default function Home() {
   const current = 0
   const [isPlaying, setIsPlaying] = React.useState(true)
   const [activeImage, setActiveImage] = React.useState<{ src: string; alt: string } | null>(null)
+  
+  // Custom states and refs for Founder Image hover video popup
+  const [isModalOpen, setIsModalOpen] = React.useState(false)
+  const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 })
+  const [isHovered, setIsHovered] = React.useState(false)
+  const imageContainerRef = React.useRef<HTMLDivElement>(null)
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageContainerRef.current) return
+    const rect = imageContainerRef.current.getBoundingClientRect()
+    setMousePosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    })
+  }
 
   // Load animation play/pause state from localStorage on client-side mount
   React.useEffect(() => {
@@ -325,7 +340,14 @@ export default function Home() {
               
               {/* Left Column: Image */}
               <div className="lg:col-span-7 w-full">
-                <div className="relative rounded-2xl overflow-hidden border border-border/80 dark:border-border bg-card/45 shadow-lg group select-none aspect-video">
+                <div 
+                  ref={imageContainerRef}
+                  onMouseMove={handleMouseMove}
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                  onClick={() => setIsModalOpen(true)}
+                  className="relative rounded-2xl overflow-hidden border border-border/80 dark:border-border bg-card/45 shadow-lg group select-none aspect-video cursor-none"
+                >
                   {/* Technical Corner Accents */}
                   <div className="absolute top-3 left-3 w-2.5 h-2.5 border-t border-l border-foreground/20 group-hover:border-foreground/45 transition-colors duration-300 z-10" />
                   <div className="absolute top-3 right-3 w-2.5 h-2.5 border-t border-r border-foreground/20 group-hover:border-foreground/45 transition-colors duration-300 z-10" />
@@ -333,13 +355,30 @@ export default function Home() {
                   <div className="absolute bottom-3 right-3 w-2.5 h-2.5 border-b border-r border-foreground/20 group-hover:border-foreground/45 transition-colors duration-300 z-10" />
 
                   <Image
-                    className="w-full h-full object-cover rounded-2xl"
+                    className="w-full h-full object-cover rounded-2xl transition-transform duration-750 group-hover:scale-[1.03]"
                     src="/assets/vidyaschool/vidya-founder.png"
                     alt="VIDYA Founder"
                     width={1366}
                     height={768}
                     priority
                   />
+
+                  {/* Cursor Follower Watch Button */}
+                  <motion.div
+                    className="absolute pointer-events-none z-20 flex flex-col items-center justify-center bg-rose-600 dark:bg-rose-500 text-white font-bold rounded-full shadow-2xl text-[10px] sm:text-xs tracking-wider gap-0.5"
+                    style={{
+                      width: 84,
+                      height: 84,
+                      left: mousePosition.x - 42,
+                      top: mousePosition.y - 42,
+                    }}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: isHovered ? 1 : 0, scale: isHovered ? 1 : 0 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 28, mass: 0.4 }}
+                  >
+                    <Play className="h-4 w-4 fill-current ml-0.5 text-white" />
+                    <span>WATCH</span>
+                  </motion.div>
                 </div>
               </div>
 
@@ -696,6 +735,46 @@ export default function Home() {
                   {activeImage.alt}
                 </p>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* YouTube Video Dialog Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsModalOpen(false)}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-4xl w-full aspect-video rounded-2xl overflow-hidden border border-border bg-black shadow-2xl flex items-center justify-center"
+            >
+              {/* Close Button */}
+              <button 
+                id="video-dialog-close-btn"
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-4 right-4 z-20 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 hover:border-white/30 text-white/80 hover:text-white p-2 transition-all cursor-pointer"
+                aria-label="Close dialog"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <iframe
+                src="https://www.youtube.com/embed/LxzeiY0BG1U?si=m2V7tJ-BuAWCP48f&autoplay=1"
+                title="VIDYA Founders Video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
             </motion.div>
           </motion.div>
         )}
