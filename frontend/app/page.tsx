@@ -323,7 +323,7 @@ export default function Home() {
           >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
               
-              {/* Left Column: Video Player */}
+              {/* Left Column: Image */}
               <div className="lg:col-span-7 w-full">
                 <div className="relative rounded-2xl overflow-hidden border border-border/80 dark:border-border bg-card/45 shadow-lg group select-none aspect-video">
                   {/* Technical Corner Accents */}
@@ -332,12 +332,13 @@ export default function Home() {
                   <div className="absolute bottom-3 left-3 w-2.5 h-2.5 border-b border-l border-foreground/20 group-hover:border-foreground/45 transition-colors duration-300 z-10" />
                   <div className="absolute bottom-3 right-3 w-2.5 h-2.5 border-b border-r border-foreground/20 group-hover:border-foreground/45 transition-colors duration-300 z-10" />
 
-                  <video
-                    className="w-full h-full object-cover rounded-xl"
-                    src="https://assets.mixkit.co/videos/preview/mixkit-children-in-school-playing-together-in-the-classroom-40342-large.mp4"
-                    controls
-                    poster="/assets/vidyaschool/student_1.jpg"
-                    preload="none"
+                  <Image
+                    className="w-full h-full object-cover rounded-2xl"
+                    src="/assets/vidyaschool/vidya-founder.png"
+                    alt="VIDYA Founder"
+                    width={1366}
+                    height={768}
+                    priority
                   />
                 </div>
               </div>
