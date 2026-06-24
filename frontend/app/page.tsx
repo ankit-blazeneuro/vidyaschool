@@ -52,7 +52,9 @@ const partners: PartnerItem[] = [
     name: "WIAUK",
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
-        <span className="h-8 w-8 flex items-center justify-center bg-rose-600 rounded text-white text-[12px] font-bold">WI</span>
+        <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded shadow-xs">
+          <Image src="/assets/logos/wiaauk.jpg" width={32} height={32} alt="WIAUK Logo" className="object-contain" />
+        </div>
         <span>WIAUK</span>
       </div>
     )
@@ -84,7 +86,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded shadow-xs">
-          <Image src="/assets/logos/ica.svg" width={32} height={32} alt="ICA Logo" className="object-contain" />
+          <Image src="/assets/logos/india-for-collective-india.png" width={32} height={32} alt="ICA Logo" className="object-contain" />
         </div>
         <span>ICA India</span>
       </div>
@@ -95,7 +97,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded shadow-xs">
-          <Image src="/assets/logos/rbs.svg" width={32} height={32} alt="RBS Logo" className="object-contain" />
+          <Image src="/assets/logos/rbs.png" width={32} height={32} alt="RBS Logo" className="object-contain" />
         </div>
         <span>RBS Bank</span>
       </div>
@@ -128,7 +130,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded shadow-xs">
-          <Image src="/assets/logos/verint.png" width={32} height={32} alt="Verint Logo" className="object-contain" />
+          <Image src="/assets/logos/verint.jpg" width={32} height={32} alt="Verint Logo" className="object-contain" />
         </div>
         <span>Verint</span>
       </div>
@@ -139,7 +141,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-18 h-8 flex items-center justify-center bg-white px-2.5 py-1 rounded shadow-xs">
-          <Image src="/assets/logos/kpmg.svg" width={72} height={32} alt="KPMG Logo" className="object-contain" />
+          <Image src="/assets/logos/kpmg.png" width={72} height={32} alt="KPMG Logo" className="object-contain" />
         </div>
       </div>
     )
