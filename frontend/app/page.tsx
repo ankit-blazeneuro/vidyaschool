@@ -49,62 +49,111 @@ interface PartnerItem {
 
 const partners: PartnerItem[] = [
   {
-    name: "Google Cloud",
+    name: "WIAUK",
     logo: (
       <div className="flex items-center gap-2 font-semibold text-foreground/75 tracking-tight text-xs sm:text-sm">
-        <span className="h-5.5 w-5.5 flex items-center justify-center bg-blue-600 rounded-full text-white text-[10px] sm:text-xs font-bold font-sans">G</span>
-        <span>Google Cloud</span>
+        <span className="h-5.5 w-5.5 flex items-center justify-center bg-rose-600 rounded text-white text-[9px] font-bold">WI</span>
+        <span>WIAUK</span>
       </div>
     )
   },
   {
-    name: "Vercel",
+    name: "Mastercard",
+    logo: (
+      <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
+        <div className="relative w-5 h-5 flex items-center">
+          <div className="absolute left-0 w-3.5 h-3.5 bg-red-500 rounded-full opacity-90" />
+          <div className="absolute right-0 w-3.5 h-3.5 bg-amber-500 rounded-full opacity-80" />
+        </div>
+        <span className="pl-1">Mastercard</span>
+      </div>
+    )
+  },
+  {
+    name: "IIT Delhi",
+    logo: (
+      <div className="flex items-center gap-2 font-semibold text-foreground/75 tracking-tight text-xs sm:text-sm">
+        <span className="h-5.5 w-5.5 flex items-center justify-center bg-indigo-600 rounded-full text-white text-[9px] font-bold">IITD</span>
+        <span>IIT Delhi</span>
+      </div>
+    )
+  },
+  {
+    name: "Indians for Collective Action",
+    logo: (
+      <div className="flex items-center gap-2 font-semibold text-foreground/75 tracking-tight text-xs sm:text-sm">
+        <span className="h-5.5 w-5.5 flex items-center justify-center bg-emerald-600 rounded text-white text-[9px] font-bold">ICA</span>
+        <span>ICA India</span>
+      </div>
+    )
+  },
+  {
+    name: "RBS",
+    logo: (
+      <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
+        <span className="h-5.5 w-5.5 flex items-center justify-center bg-blue-800 rounded text-white text-[9px] font-bold">RBS</span>
+        <span>RBS Bank</span>
+      </div>
+    )
+  },
+  {
+    name: "Bird Group",
+    logo: (
+      <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
+        <span className="h-5.5 w-5.5 flex items-center justify-center bg-cyan-600 rounded-full text-white text-[9px] font-bold">BG</span>
+        <span>Bird Group</span>
+      </div>
+    )
+  },
+  {
+    name: "Fidelity International",
     logo: (
       <div className="flex items-center gap-2 font-bold text-foreground/75 text-xs sm:text-sm">
-        <svg className="h-4 w-4 fill-current" viewBox="0 0 76 65" fill="none">
-          <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
-        </svg>
-        <span>Vercel</span>
+        <span className="h-5.5 w-5.5 flex items-center justify-center bg-teal-600 rounded text-white text-[9px] font-bold">FI</span>
+        <span>Fidelity</span>
       </div>
     )
   },
   {
-    name: "GitHub",
+    name: "Verint",
     logo: (
       <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
-        <svg className="h-4.5 w-4.5 fill-current" viewBox="0 0 16 16">
-          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
-        </svg>
-        <span>GitHub</span>
+        <span className="h-5.5 w-5.5 flex items-center justify-center bg-purple-600 rounded text-white text-[9px] font-bold">V</span>
+        <span>Verint</span>
       </div>
     )
   },
   {
-    name: "DeepMind",
-    logo: (
-      <div className="flex items-center gap-2 font-semibold text-foreground/75 tracking-tight text-xs sm:text-sm">
-        <div className="h-5.5 w-5.5 rounded bg-emerald-600 flex items-center justify-center text-white text-[9px] font-bold">DM</div>
-        <span>Google DeepMind</span>
-      </div>
-    )
-  },
-  {
-    name: "Anthropic",
+    name: "KPMG",
     logo: (
       <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
-        <span className="font-serif italic text-sm sm:text-base font-bold">A</span>
-        <span>Anthropic</span>
+        <span className="h-5.5 w-9 flex items-center justify-center bg-blue-900 text-white text-[8px] font-extrabold rounded-xs">KPMG</span>
       </div>
     )
   },
   {
-    name: "OpenAI",
+    name: "ReNew Power",
     logo: (
       <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
-        <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-          <path d="M22.5 12.5c0-1.58-.8-2.95-2.02-3.77.16-.54.27-1.12.27-1.73 0-3.04-2.46-5.5-5.5-5.5-.61 0-1.19.11-1.73.27C12.7 1.3 11.33.5 9.75.5 6.7.5 4.25 2.96 4.25 6c0 .61.11 1.19.27 1.73C3.3 8.55 2.5 9.92 2.5 11.5c0 1.58.8 2.95 2.02 3.77-.16.54-.27 1.12-.27 1.73 0 3.04 2.46 5.5 5.5 5.5.61 0 1.19-.11 1.73-.27.82.97 2.19 1.77 3.77 1.77 3.04 0 5.5-2.46 5.5-5.5 0-.61-.11-1.19-.27-1.73.97-.82 1.77-2.19 1.77-3.77z" />
-        </svg>
-        <span>OpenAI</span>
+        <span className="h-5.5 w-5.5 flex items-center justify-center bg-lime-600 rounded text-white text-[9px] font-bold">RE</span>
+        <span>ReNew Power</span>
+      </div>
+    )
+  },
+  {
+    name: "IndiGo",
+    logo: (
+      <div className="flex items-center gap-2 font-bold text-foreground/75 text-xs sm:text-sm">
+        <span className="h-5.5 w-5.5 flex items-center justify-center bg-[#002f6c] rounded-full text-white text-[9px] font-bold">iGo</span>
+        <span>IndiGo</span>
+      </div>
+    )
+  },
+  {
+    name: "ICRA",
+    logo: (
+      <div className="flex items-center gap-2 font-bold text-foreground/75 text-xs sm:text-sm">
+        <span className="h-5.5 w-9 flex items-center justify-center bg-amber-600 text-white text-[8px] font-extrabold rounded-xs">ICRA</span>
       </div>
     )
   }
