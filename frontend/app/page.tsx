@@ -72,7 +72,7 @@ const partners: PartnerItem[] = [
     name: "IIT Delhi",
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-8 h-8 flex items-center justify-center">
+        <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded-full shadow-xs">
           <Image src="/assets/logos/iitd.png" width={32} height={32} alt="IIT Delhi Logo" className="object-contain" />
         </div>
         <span>IIT Delhi</span>
@@ -83,7 +83,7 @@ const partners: PartnerItem[] = [
     name: "Indians for Collective Action",
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-8 h-8 flex items-center justify-center">
+        <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded shadow-xs">
           <Image src="/assets/logos/ica.svg" width={32} height={32} alt="ICA Logo" className="object-contain" />
         </div>
         <span>ICA India</span>
@@ -94,7 +94,7 @@ const partners: PartnerItem[] = [
     name: "RBS",
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-8 h-8 flex items-center justify-center">
+        <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded shadow-xs">
           <Image src="/assets/logos/rbs.svg" width={32} height={32} alt="RBS Logo" className="object-contain" />
         </div>
         <span>RBS Bank</span>
@@ -105,7 +105,7 @@ const partners: PartnerItem[] = [
     name: "Bird Group",
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-8 h-8 flex items-center justify-center">
+        <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded-full shadow-xs">
           <Image src="/assets/logos/bird.png" width={32} height={32} alt="Bird Group Logo" className="object-contain" />
         </div>
         <span>Bird Group</span>
@@ -116,7 +116,7 @@ const partners: PartnerItem[] = [
     name: "Fidelity International",
     logo: (
       <div className="flex items-center gap-3 font-bold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-8 h-8 flex items-center justify-center">
+        <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded shadow-xs">
           <Image src="/assets/logos/fidelity.svg" width={32} height={32} alt="Fidelity Logo" className="object-contain" />
         </div>
         <span>Fidelity</span>
@@ -127,8 +127,8 @@ const partners: PartnerItem[] = [
     name: "Verint",
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-8 h-8 flex items-center justify-center">
-          <Image src="/assets/logos/verint.svg" width={32} height={32} alt="Verint Logo" className="object-contain" />
+        <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded shadow-xs">
+          <Image src="/assets/logos/verint.png" width={32} height={32} alt="Verint Logo" className="object-contain" />
         </div>
         <span>Verint</span>
       </div>
@@ -138,7 +138,7 @@ const partners: PartnerItem[] = [
     name: "KPMG",
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-18 h-8 flex items-center justify-center">
+        <div className="relative w-18 h-8 flex items-center justify-center bg-white px-2.5 py-1 rounded shadow-xs">
           <Image src="/assets/logos/kpmg.svg" width={72} height={32} alt="KPMG Logo" className="object-contain" />
         </div>
       </div>
@@ -148,7 +148,7 @@ const partners: PartnerItem[] = [
     name: "ReNew Power",
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-20 h-8 flex items-center justify-center">
+        <div className="relative w-20 h-8 flex items-center justify-center bg-white px-2 py-1 rounded shadow-xs">
           <Image src="/assets/logos/renew.svg" width={80} height={32} alt="ReNew Power Logo" className="object-contain" />
         </div>
       </div>
@@ -158,7 +158,7 @@ const partners: PartnerItem[] = [
     name: "IndiGo",
     logo: (
       <div className="flex items-center gap-3 font-bold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-10 h-8 flex items-center justify-center">
+        <div className="relative w-10 h-8 flex items-center justify-center bg-white p-1 rounded shadow-xs">
           <Image src="/assets/logos/indigo.svg" width={40} height={32} alt="IndiGo Logo" className="object-contain" />
         </div>
         <span>IndiGo</span>
@@ -169,7 +169,7 @@ const partners: PartnerItem[] = [
     name: "ICRA",
     logo: (
       <div className="flex items-center gap-3 font-bold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-20 h-8 flex items-center justify-center">
+        <div className="relative w-20 h-8 flex items-center justify-center bg-white px-2 py-1 rounded shadow-xs">
           <Image src="/assets/logos/icra.png" width={80} height={32} alt="ICRA Logo" className="object-contain" />
         </div>
       </div>
@@ -560,10 +560,10 @@ export default function Home() {
                         y: [0, -18, 0],
                       }}
                       transition={{
-                        duration: 6.0,
+                        duration: 8.0,
                         repeat: Infinity,
                         ease: "easeInOut",
-                        delay: -index * 1.0,
+                        delay: -index * 1.25,
                       }}
                       whileHover={{ scale: 1.05 }}
                       className="flex items-center justify-center bg-muted/20 border border-border/40 hover:border-foreground/30 dark:hover:border-foreground/40 rounded-lg px-8 py-5 min-w-[210px] h-[72px] select-none cursor-pointer transition-colors duration-200 mr-8"
