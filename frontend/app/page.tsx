@@ -73,7 +73,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-8 h-8 flex items-center justify-center">
-          <Image src="/assets/logos/iitd.png" width={32} height={32} alt="IIT Delhi Logo" className="object-contain dark:invert" />
+          <Image src="/assets/logos/iitd.png" width={32} height={32} alt="IIT Delhi Logo" className="object-contain" />
         </div>
         <span>IIT Delhi</span>
       </div>
@@ -95,7 +95,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-8 h-8 flex items-center justify-center">
-          <Image src="/assets/logos/rbs.svg" width={32} height={32} alt="RBS Logo" className="object-contain dark:invert" />
+          <Image src="/assets/logos/rbs.svg" width={32} height={32} alt="RBS Logo" className="object-contain" />
         </div>
         <span>RBS Bank</span>
       </div>
@@ -106,7 +106,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-8 h-8 flex items-center justify-center">
-          <Image src="/assets/logos/bird.png" width={32} height={32} alt="Bird Group Logo" className="object-contain dark:invert" />
+          <Image src="/assets/logos/bird.png" width={32} height={32} alt="Bird Group Logo" className="object-contain" />
         </div>
         <span>Bird Group</span>
       </div>
@@ -117,7 +117,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-bold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-8 h-8 flex items-center justify-center">
-          <Image src="/assets/logos/fidelity.svg" width={32} height={32} alt="Fidelity Logo" className="object-contain dark:invert" />
+          <Image src="/assets/logos/fidelity.svg" width={32} height={32} alt="Fidelity Logo" className="object-contain" />
         </div>
         <span>Fidelity</span>
       </div>
@@ -139,7 +139,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-18 h-8 flex items-center justify-center">
-          <Image src="/assets/logos/kpmg.svg" width={72} height={32} alt="KPMG Logo" className="object-contain dark:invert" />
+          <Image src="/assets/logos/kpmg.svg" width={72} height={32} alt="KPMG Logo" className="object-contain" />
         </div>
       </div>
     )
@@ -149,7 +149,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-20 h-8 flex items-center justify-center">
-          <Image src="/assets/logos/renew.svg" width={80} height={32} alt="ReNew Power Logo" className="object-contain dark:invert" />
+          <Image src="/assets/logos/renew.svg" width={80} height={32} alt="ReNew Power Logo" className="object-contain" />
         </div>
       </div>
     )
@@ -170,7 +170,7 @@ const partners: PartnerItem[] = [
     logo: (
       <div className="flex items-center gap-3 font-bold text-foreground/75 text-sm sm:text-base">
         <div className="relative w-20 h-8 flex items-center justify-center">
-          <Image src="/assets/logos/icra.png" width={80} height={32} alt="ICRA Logo" className="object-contain dark:invert" />
+          <Image src="/assets/logos/icra.png" width={80} height={32} alt="ICRA Logo" className="object-contain" />
         </div>
       </div>
     )
