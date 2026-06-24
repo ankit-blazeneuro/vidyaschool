@@ -107,10 +107,9 @@ const partners: PartnerItem[] = [
     name: "Bird Group",
     logo: (
       <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-8 h-8 flex items-center justify-center bg-white p-1 rounded-full shadow-xs">
-          <Image src="/assets/logos/bird.png" width={32} height={32} alt="Bird Group Logo" className="object-contain" />
+        <div className="relative w-20 h-8 flex items-center justify-center bg-white px-2.5 py-1 rounded shadow-xs">
+          <Image src="/assets/logos/bird.png" width={80} height={16} alt="Bird Group Logo" className="object-contain" />
         </div>
-        <span>Bird Group</span>
       </div>
     )
   },
