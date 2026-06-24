@@ -24,12 +24,12 @@ interface SlideItem {
 
 const slides: SlideItem[] = [
   {
-    title: "A command center in your terminal",
-    description: "Deploy autonomous agents to trigger test suites, execute dev scripts, and run workspace diagnostics from any shell environment.",
-    icon: <Terminal className="h-4 w-4" />,
-    badge: "Terminal & CLI",
-    buttonText: "Get Started with CLI",
-    buttonHref: "/docs/cli"
+    title: "Empowering Minds, Shaping Futures",
+    description: "Welcome to VidyaSchool, where academic excellence meets holistic development. Discover our wings, modern labs, arts programs, and vibrant student community.",
+    icon: <Sparkles className="h-4 w-4" />,
+    badge: "Welcome to VidyaSchool",
+    buttonText: "Student Portal",
+    buttonHref: "/student"
   }
 ]
 
@@ -180,8 +180,8 @@ export default function Home() {
                       </Link>
                     </Button>
                     <Button asChild variant="outline" size="md">
-                      <Link href="/login">
-                        Get Started
+                      <Link href="/teacher">
+                        Teacher Portal
                       </Link>
                     </Button>
                   </div>
@@ -452,50 +452,33 @@ export default function Home() {
           >
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-4">
               <h2 className="text-center text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
-                Partnering with Teams from Industry Leaders
+                Platforms & Programs Empowering Our Digital Classroom
               </h2>
             </div>
             
             <div className="relative flex w-full overflow-hidden mask-gradient">
               <div className="animate-marquee flex items-center py-8">
-                {/* Logogroup 1 */}
-                {partners.map((partner, index) => (
-                  <motion.div
-                    key={`p1-${index}`}
-                    animate={{
-                      y: [0, -18, 0],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: index * 0.5,
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    className="flex items-center justify-center bg-muted/20 border border-border/40 hover:border-foreground/30 dark:hover:border-foreground/40 rounded-lg px-6 py-4 min-w-[170px] h-[60px] select-none cursor-pointer transition-colors duration-200 mr-8"
-                  >
-                    {partner.logo}
-                  </motion.div>
-                ))}
-                {/* Logogroup 2 (duplicate for seamless loop) */}
-                {partners.map((partner, index) => (
-                  <motion.div
-                    key={`p2-${index}`}
-                    animate={{
-                      y: [0, -18, 0],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                      delay: (index + partners.length) * 0.5,
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    className="flex items-center justify-center bg-muted/20 border border-border/40 hover:border-foreground/30 dark:hover:border-foreground/40 rounded-lg px-6 py-4 min-w-[170px] h-[60px] select-none cursor-pointer transition-colors duration-200 mr-8"
-                  >
-                    {partner.logo}
-                  </motion.div>
-                ))}
+                {/* Render 4 copies of the partners array to cover wide screen viewports without blank gaps at translateX(-50%) */}
+                {Array.from({ length: 4 }).map((_, groupIndex) => 
+                  partners.map((partner, index) => (
+                    <motion.div
+                      key={`p${groupIndex + 1}-${index}`}
+                      animate={{
+                        y: [0, -18, 0],
+                      }}
+                      transition={{
+                        duration: 4.5,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: -index * 0.75,
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      className="flex items-center justify-center bg-muted/20 border border-border/40 hover:border-foreground/30 dark:hover:border-foreground/40 rounded-lg px-6 py-4 min-w-[170px] h-[60px] select-none cursor-pointer transition-colors duration-200 mr-8"
+                    >
+                      {partner.logo}
+                    </motion.div>
+                  ))
+                )}
               </div>
             </div>
           </motion.section>

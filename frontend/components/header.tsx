@@ -67,7 +67,7 @@ export function Header() {
         {/* Brand/Logo */}
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2 font-semibold text-sm tracking-tight text-foreground hover:opacity-90">
-            <span className="font-semibold text-sm">Antigravity</span>
+            <span className="font-semibold text-sm">VidyaSchool</span>
           </Link>
         </div>
 
@@ -76,81 +76,65 @@ export function Header() {
           <NavigationMenu>
             <NavigationMenuList className="gap-1">
               
-              {/* Products Dropdown */}
+              {/* Portals Dropdown */}
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="text-foreground/80 hover:text-foreground text-sm font-medium">
-                  Products
+                  Portals
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                    <ListItem href="/products/app" title="Antigravity 2.0">
-                      Parallel desktop application with chat canvas.
+                    <ListItem href="/student" title="Student Portal">
+                      Access your reports, marks, academic fees, and announcements.
                     </ListItem>
-                    <ListItem href="/products/ide" title="IDE">
-                      Standalone AI-first development environment.
+                    <ListItem href="/teacher" title="Teacher Portal">
+                      Manage class registers, students, and post notices.
                     </ListItem>
-                    <ListItem href="/products/cli" title="Terminal & CLI">
-                      Manage agents and tasks from your command line.
+                    <ListItem href="/student/library" title="Library Catalog">
+                      Search library books, view reservations, and issue status.
                     </ListItem>
-                    <ListItem href="/products/sdk" title="SDK">
-                      Programmatic leasing and orchestration APIs.
+                    <ListItem href="/student/fees" title="Fees Portal">
+                      View details of student tuition, fees structures, and history.
                     </ListItem>
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
-              {/* Documentation Dropdown */}
+              {/* Academics Dropdown */}
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="text-foreground/80 hover:text-foreground text-sm font-medium">
-                  Documentation
+                  Academics & Life
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                    <ListItem href="/docs/skills" title="Skills">
-                      Specialized agent tools and capability packs.
+                    <ListItem href="/student/notice" title="Circulars & Notices">
+                      Latest announcements and circulars for students and parents.
                     </ListItem>
-                    <ListItem href="/docs/rules" title="Rules">
-                      Behavior policies and coding style compliance guides.
+                    <ListItem href="/student/marks" title="Curriculum & Exams">
+                      Exams, syllabus outlines, and student assessment schemes.
                     </ListItem>
-                    <ListItem href="/docs/hooks" title="Hooks & Plugins">
-                      Lifecycle extension scripts and event hooks.
+                    <ListItem href="/docs/admissions" title="Admissions Guide">
+                      Enrollment instructions, registration forms, and policy guides.
                     </ListItem>
-                    <ListItem href="/docs/sidecars" title="Sidecars">
-                      Cron schedules and background helper services.
-                    </ListItem>
-                    <ListItem href="/docs/mcp" title="Model Context Protocol (MCP)">
-                      Integrate external services and databases.
-                    </ListItem>
-                    <ListItem href="/docs/browser" title="Browser Control">
-                      End-to-end testing and autonomous browser automation.
+                    <ListItem href="/docs/co-curriculars" title="Co-Curricular Activities">
+                      Indian performing arts, choral singing, music, and robotics.
                     </ListItem>
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
-              {/* Direct Link: Permissions */}
+              {/* Direct Links */}
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/docs/agent-permissions" className="text-foreground/80 hover:text-foreground text-sm font-medium">
-                    Permissions
+                  <Link href="/student/notice" className="text-foreground/80 hover:text-foreground text-sm font-medium">
+                    Notices
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
-              {/* Direct Link: Changelog */}
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/changelog" className="text-foreground/80 hover:text-foreground text-sm font-medium">
-                    Changelog
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-
-              {/* Direct Link: Support */}
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
                   <Link href="/support" className="text-foreground/80 hover:text-foreground text-sm font-medium">
-                    Support
+                    Help & Support
                   </Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
@@ -163,13 +147,13 @@ export function Header() {
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
           <Button variant="ghost" asChild>
-            <Link href="/login">
-              Sign In
+            <Link href="/student">
+              Student Portal
             </Link>
           </Button>
           <Button variant="default" asChild>
-            <Link href="/console">
-              Console
+            <Link href="/teacher">
+              Teacher Portal
             </Link>
           </Button>
         </div>
@@ -194,73 +178,64 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-background px-4 py-4 space-y-4">
           
-          {/* Products Panel */}
+          {/* Portals Panel */}
           <div>
-            <div className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Products</div>
+            <div className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Portals</div>
             <div className="grid gap-1">
-              <Link href="/products/app" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-                Antigravity 2.0
+              <Link href="/student" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+                Student Portal
               </Link>
-              <Link href="/products/ide" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-                IDE
+              <Link href="/teacher" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+                Teacher Portal
               </Link>
-              <Link href="/products/cli" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-                Terminal & CLI
+              <Link href="/student/library" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+                Library Catalog
               </Link>
-              <Link href="/products/sdk" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-                SDK
+              <Link href="/student/fees" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+                Fees Portal
               </Link>
             </div>
           </div>
 
-          {/* Documentation Panel */}
+          {/* Academics & Life Panel */}
           <div>
-            <div className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Documentation</div>
+            <div className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Academics & Life</div>
             <div className="grid gap-1">
-              <Link href="/docs/skills" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-                Skills
+              <Link href="/student/notice" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+                Circulars & Notices
               </Link>
-              <Link href="/docs/rules" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-                Rules
+              <Link href="/student/marks" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+                Curriculum & Exams
               </Link>
-              <Link href="/docs/hooks" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-                Hooks & Plugins
+              <Link href="/docs/admissions" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+                Admissions Guide
               </Link>
-              <Link href="/docs/sidecars" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-                Sidecars
-              </Link>
-              <Link href="/docs/mcp" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-                MCP
-              </Link>
-              <Link href="/docs/browser" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-                Browser Control
+              <Link href="/docs/co-curriculars" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+                Co-Curricular Activities
               </Link>
             </div>
           </div>
 
           {/* Direct Links Panel */}
           <div className="border-t border-border pt-3 space-y-1">
-            <Link href="/docs/agent-permissions" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-              Permissions
-            </Link>
-            <Link href="/changelog" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-              Changelog
+            <Link href="/student/notice" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+              Notices
             </Link>
             <Link href="/support" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
-              Support
+              Help & Support
             </Link>
           </div>
 
           {/* Action Buttons Panel */}
           <div className="border-t border-border pt-3 grid grid-cols-2 gap-2">
             <Button variant="outline" asChild className="w-full">
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                Sign In
+              <Link href="/student" onClick={() => setMobileMenuOpen(false)}>
+                Student Portal
               </Link>
             </Button>
             <Button variant="default" asChild className="w-full">
-              <Link href="/console" onClick={() => setMobileMenuOpen(false)}>
-                Console
+              <Link href="/teacher" onClick={() => setMobileMenuOpen(false)}>
+                Teacher Portal
               </Link>
             </Button>
           </div>

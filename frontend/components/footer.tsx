@@ -12,63 +12,60 @@ export function Footer() {
           {/* Column 1: Brand Info */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2 font-semibold text-sm tracking-tight text-foreground hover:opacity-90">
-              <span className="font-semibold text-sm">Antigravity</span>
+              <span className="font-semibold text-sm">VidyaSchool</span>
             </Link>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
-              Advanced agentic coding environment built on the Model Context Protocol. Designed by the Google DeepMind team.
+              Modern learning environment focused on academic excellence, creative arts, STEM innovation, and holistic development.
             </p>
           </div>
 
-          {/* Column 2: Products */}
+          {/* Column 2: Portals */}
           <div>
-            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Products</h3>
+            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Portals</h3>
             <ul className="space-y-2.5 text-xs text-muted-foreground">
               <li>
-                <Link href="/products/app" className="hover:text-foreground transition-colors">Antigravity 2.0</Link>
+                <Link href="/student" className="hover:text-foreground transition-colors">Student Portal</Link>
               </li>
               <li>
-                <Link href="/products/ide" className="hover:text-foreground transition-colors">IDE</Link>
+                <Link href="/teacher" className="hover:text-foreground transition-colors">Teacher Portal</Link>
               </li>
               <li>
-                <Link href="/products/cli" className="hover:text-foreground transition-colors">Terminal & CLI</Link>
+                <Link href="/student/library" className="hover:text-foreground transition-colors">Library Catalog</Link>
               </li>
               <li>
-                <Link href="/products/sdk" className="hover:text-foreground transition-colors">SDK</Link>
+                <Link href="/student/fees" className="hover:text-foreground transition-colors">Fees Desk</Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Documentation */}
+          {/* Column 3: Academics */}
           <div>
-            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Documentation</h3>
+            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Academics</h3>
             <ul className="space-y-2.5 text-xs text-muted-foreground">
               <li>
-                <Link href="/docs/skills" className="hover:text-foreground transition-colors">Skills</Link>
+                <Link href="/student/notice" className="hover:text-foreground transition-colors">Circulars & Notices</Link>
               </li>
               <li>
-                <Link href="/docs/rules" className="hover:text-foreground transition-colors">Rules</Link>
+                <Link href="/student/marks" className="hover:text-foreground transition-colors">Curriculum & Exams</Link>
               </li>
               <li>
-                <Link href="/docs/mcp" className="hover:text-foreground transition-colors">Model Context Protocol</Link>
+                <Link href="/docs/admissions" className="hover:text-foreground transition-colors">Admissions Guide</Link>
               </li>
               <li>
-                <Link href="/docs/browser" className="hover:text-foreground transition-colors">Browser Control</Link>
+                <Link href="/docs/co-curriculars" className="hover:text-foreground transition-colors">Co-Curriculars</Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 4: Resources & Support */}
+          {/* Column 4: Information */}
           <div>
-            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Resources</h3>
+            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Information</h3>
             <ul className="space-y-2.5 text-xs text-muted-foreground">
               <li>
-                <Link href="/docs/agent-permissions" className="hover:text-foreground transition-colors">Permissions</Link>
+                <Link href="/student/notice" className="hover:text-foreground transition-colors">Academic Calendar</Link>
               </li>
               <li>
-                <Link href="/changelog" className="hover:text-foreground transition-colors">Changelog</Link>
-              </li>
-              <li>
-                <Link href="/support" className="hover:text-foreground transition-colors">Support</Link>
+                <Link href="/support" className="hover:text-foreground transition-colors">Help & Support</Link>
               </li>
             </ul>
           </div>
@@ -85,7 +82,7 @@ export function Footer() {
         {/* Bottom copyright section */}
         <div className="border-t border-border mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-[11px] text-muted-foreground">
-            &copy; {new Date().getFullYear()} Google Antigravity. All rights reserved.
+            &copy; {new Date().getFullYear()} VidyaSchool. All rights reserved.
           </div>
           <div className="flex gap-4 text-[11px] text-muted-foreground">
             <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
