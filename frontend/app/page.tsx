@@ -313,6 +313,78 @@ export default function Home() {
             </div>
           </motion.div>
 
+          {/* Video Showcase Section */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="w-full mt-16 md:mt-24 py-8 bg-transparent"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+              
+              {/* Left Column: Video Player */}
+              <div className="lg:col-span-7 w-full">
+                <div className="relative rounded-2xl overflow-hidden border border-border/80 dark:border-border bg-card/45 shadow-lg group select-none aspect-video">
+                  {/* Technical Corner Accents */}
+                  <div className="absolute top-3 left-3 w-2.5 h-2.5 border-t border-l border-foreground/20 group-hover:border-foreground/45 transition-colors duration-300 z-10" />
+                  <div className="absolute top-3 right-3 w-2.5 h-2.5 border-t border-r border-foreground/20 group-hover:border-foreground/45 transition-colors duration-300 z-10" />
+                  <div className="absolute bottom-3 left-3 w-2.5 h-2.5 border-b border-l border-foreground/20 group-hover:border-foreground/45 transition-colors duration-300 z-10" />
+                  <div className="absolute bottom-3 right-3 w-2.5 h-2.5 border-b border-r border-foreground/20 group-hover:border-foreground/45 transition-colors duration-300 z-10" />
+
+                  <video
+                    className="w-full h-full object-cover rounded-xl"
+                    src="https://assets.mixkit.co/videos/preview/mixkit-children-in-school-playing-together-in-the-classroom-40342-large.mp4"
+                    controls
+                    poster="/assets/vidyaschool/student_1.jpg"
+                    preload="none"
+                  />
+                </div>
+              </div>
+
+              {/* Right Column: Text Content */}
+              <div className="lg:col-span-5 flex flex-col justify-center space-y-6">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 w-fit text-xs font-semibold text-muted-foreground">
+                  <Monitor className="h-3.5 w-3.5" />
+                  <span>Interactive Learning</span>
+                </div>
+                
+                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+                  A Glimpse into Our Dynamic Digital Classrooms
+                </h2>
+                
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  At VidyaSchool, we integrate advanced digital tools, smart classrooms, and collaborative spaces to foster deep conceptual understanding. Watch how our students leverage technology to learn, create, and build their future.
+                </p>
+
+                <div className="space-y-3.5 pt-2">
+                  <div className="flex items-start gap-2.5 text-sm text-foreground/80">
+                    <span className="h-5 w-5 mt-0.5 flex items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 font-semibold text-xs shrink-0">✓</span>
+                    <div>
+                      <h4 className="font-semibold text-foreground">Smart Interactive Boards</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">Visualizing complex science and math problems dynamically.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 text-sm text-foreground/80">
+                    <span className="h-5 w-5 mt-0.5 flex items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 font-semibold text-xs shrink-0">✓</span>
+                    <div>
+                      <h4 className="font-semibold text-foreground">Tablet-Led Active Learning</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">Personalized progress pacing and instant feedback loops.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 text-sm text-foreground/80">
+                    <span className="h-5 w-5 mt-0.5 flex items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 font-semibold text-xs shrink-0">✓</span>
+                    <div>
+                      <h4 className="font-semibold text-foreground">Real-Time Team Collaboration</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">Group projects powered by school-wide cloud drives.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </motion.section>
+
           {/* Bento Grid Section */}
           <motion.section 
             initial={{ opacity: 0, y: 20 }}
