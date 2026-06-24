@@ -51,8 +51,8 @@ const partners: PartnerItem[] = [
   {
     name: "WIAUK",
     logo: (
-      <div className="flex items-center gap-2 font-semibold text-foreground/75 tracking-tight text-xs sm:text-sm">
-        <span className="h-5.5 w-5.5 flex items-center justify-center bg-rose-600 rounded text-white text-[9px] font-bold">WI</span>
+      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 tracking-tight text-sm sm:text-base">
+        <span className="h-7 w-7 flex items-center justify-center bg-rose-600 rounded text-white text-[11px] font-bold">WI</span>
         <span>WIAUK</span>
       </div>
     )
@@ -60,20 +60,20 @@ const partners: PartnerItem[] = [
   {
     name: "Mastercard",
     logo: (
-      <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
-        <div className="relative w-5 h-5 flex items-center">
-          <div className="absolute left-0 w-3.5 h-3.5 bg-red-500 rounded-full opacity-90" />
-          <div className="absolute right-0 w-3.5 h-3.5 bg-amber-500 rounded-full opacity-80" />
+      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-6 h-6 flex items-center">
+          <div className="absolute left-0 w-4.5 h-4.5 bg-red-500 rounded-full opacity-90" />
+          <div className="absolute right-0 w-4.5 h-4.5 bg-amber-500 rounded-full opacity-80" />
         </div>
-        <span className="pl-1">Mastercard</span>
+        <span className="pl-1.5">Mastercard</span>
       </div>
     )
   },
   {
     name: "IIT Delhi",
     logo: (
-      <div className="flex items-center gap-2 font-semibold text-foreground/75 tracking-tight text-xs sm:text-sm">
-        <span className="h-5.5 w-5.5 flex items-center justify-center bg-indigo-600 rounded-full text-white text-[9px] font-bold">IITD</span>
+      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 tracking-tight text-sm sm:text-base">
+        <span className="h-7 w-7 flex items-center justify-center bg-indigo-600 rounded-full text-white text-[11px] font-bold">IITD</span>
         <span>IIT Delhi</span>
       </div>
     )
@@ -81,8 +81,8 @@ const partners: PartnerItem[] = [
   {
     name: "Indians for Collective Action",
     logo: (
-      <div className="flex items-center gap-2 font-semibold text-foreground/75 tracking-tight text-xs sm:text-sm">
-        <span className="h-5.5 w-5.5 flex items-center justify-center bg-emerald-600 rounded text-white text-[9px] font-bold">ICA</span>
+      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 tracking-tight text-sm sm:text-base">
+        <span className="h-7 w-7 flex items-center justify-center bg-emerald-600 rounded text-white text-[11px] font-bold">ICA</span>
         <span>ICA India</span>
       </div>
     )
@@ -90,8 +90,8 @@ const partners: PartnerItem[] = [
   {
     name: "RBS",
     logo: (
-      <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
-        <span className="h-5.5 w-5.5 flex items-center justify-center bg-blue-800 rounded text-white text-[9px] font-bold">RBS</span>
+      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
+        <span className="h-7 w-7 flex items-center justify-center bg-blue-800 rounded text-white text-[11px] font-bold">RBS</span>
         <span>RBS Bank</span>
       </div>
     )
@@ -99,8 +99,8 @@ const partners: PartnerItem[] = [
   {
     name: "Bird Group",
     logo: (
-      <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
-        <span className="h-5.5 w-5.5 flex items-center justify-center bg-cyan-600 rounded-full text-white text-[9px] font-bold">BG</span>
+      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
+        <span className="h-7 w-7 flex items-center justify-center bg-cyan-600 rounded-full text-white text-[11px] font-bold">BG</span>
         <span>Bird Group</span>
       </div>
     )
@@ -108,8 +108,8 @@ const partners: PartnerItem[] = [
   {
     name: "Fidelity International",
     logo: (
-      <div className="flex items-center gap-2 font-bold text-foreground/75 text-xs sm:text-sm">
-        <span className="h-5.5 w-5.5 flex items-center justify-center bg-teal-600 rounded text-white text-[9px] font-bold">FI</span>
+      <div className="flex items-center gap-2.5 font-bold text-foreground/75 text-sm sm:text-base">
+        <span className="h-7 w-7 flex items-center justify-center bg-teal-600 rounded text-white text-[11px] font-bold">FI</span>
         <span>Fidelity</span>
       </div>
     )
@@ -117,8 +117,8 @@ const partners: PartnerItem[] = [
   {
     name: "Verint",
     logo: (
-      <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
-        <span className="h-5.5 w-5.5 flex items-center justify-center bg-purple-600 rounded text-white text-[9px] font-bold">V</span>
+      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
+        <span className="h-7 w-7 flex items-center justify-center bg-purple-600 rounded text-white text-[11px] font-bold">V</span>
         <span>Verint</span>
       </div>
     )
@@ -126,16 +126,16 @@ const partners: PartnerItem[] = [
   {
     name: "KPMG",
     logo: (
-      <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
-        <span className="h-5.5 w-9 flex items-center justify-center bg-blue-900 text-white text-[8px] font-extrabold rounded-xs">KPMG</span>
+      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
+        <span className="h-7 w-11 flex items-center justify-center bg-blue-900 text-white text-[10px] font-extrabold rounded-xs">KPMG</span>
       </div>
     )
   },
   {
     name: "ReNew Power",
     logo: (
-      <div className="flex items-center gap-2 font-semibold text-foreground/75 text-xs sm:text-sm">
-        <span className="h-5.5 w-5.5 flex items-center justify-center bg-lime-600 rounded text-white text-[9px] font-bold">RE</span>
+      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
+        <span className="h-7 w-7 flex items-center justify-center bg-lime-600 rounded text-white text-[11px] font-bold">RE</span>
         <span>ReNew Power</span>
       </div>
     )
@@ -143,8 +143,8 @@ const partners: PartnerItem[] = [
   {
     name: "IndiGo",
     logo: (
-      <div className="flex items-center gap-2 font-bold text-foreground/75 text-xs sm:text-sm">
-        <span className="h-5.5 w-5.5 flex items-center justify-center bg-[#002f6c] rounded-full text-white text-[9px] font-bold">iGo</span>
+      <div className="flex items-center gap-2.5 font-bold text-foreground/75 text-sm sm:text-base">
+        <span className="h-7 w-7 flex items-center justify-center bg-[#002f6c] rounded-full text-white text-[11px] font-bold">iGo</span>
         <span>IndiGo</span>
       </div>
     )
@@ -152,8 +152,8 @@ const partners: PartnerItem[] = [
   {
     name: "ICRA",
     logo: (
-      <div className="flex items-center gap-2 font-bold text-foreground/75 text-xs sm:text-sm">
-        <span className="h-5.5 w-9 flex items-center justify-center bg-amber-600 text-white text-[8px] font-extrabold rounded-xs">ICRA</span>
+      <div className="flex items-center gap-2.5 font-bold text-foreground/75 text-sm sm:text-base">
+        <span className="h-7 w-11 flex items-center justify-center bg-amber-600 text-white text-[10px] font-extrabold rounded-xs">ICRA</span>
       </div>
     )
   }
@@ -542,13 +542,13 @@ export default function Home() {
                         y: [0, -18, 0],
                       }}
                       transition={{
-                        duration: 4.5,
+                        duration: 6.0,
                         repeat: Infinity,
                         ease: "easeInOut",
-                        delay: -index * 0.75,
+                        delay: -index * 1.0,
                       }}
                       whileHover={{ scale: 1.05 }}
-                      className="flex items-center justify-center bg-muted/20 border border-border/40 hover:border-foreground/30 dark:hover:border-foreground/40 rounded-lg px-6 py-4 min-w-[170px] h-[60px] select-none cursor-pointer transition-colors duration-200 mr-8"
+                      className="flex items-center justify-center bg-muted/20 border border-border/40 hover:border-foreground/30 dark:hover:border-foreground/40 rounded-lg px-8 py-5 min-w-[210px] h-[72px] select-none cursor-pointer transition-colors duration-200 mr-8"
                     >
                       {partner.logo}
                     </motion.div>
