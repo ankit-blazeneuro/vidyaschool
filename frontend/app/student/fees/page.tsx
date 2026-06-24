@@ -1,0 +1,550 @@
+"use client"
+
+import * as React from "react"
+import { 
+  CheckCircle2, 
+  AlertCircle, 
+  Calendar, 
+  Receipt, 
+  CreditCard, 
+  X, 
+  Printer, 
+  ShieldCheck, 
+  CircleDollarSign, 
+  Clock, 
+  GraduationCap 
+} from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Checkbox } from "@/components/ui/checkbox"
+
+interface FeeMonth {
+  id: string
+  month: string
+  year: string
+  amount: number
+  dueDate: string
+  status: "paid" | "pending" | "overdue" | "upcoming"
+  paidDate?: string
+  receiptNo?: string
+  paymentMethod?: string
+}
+
+// Arranged calendar-chronologically from January to December 2026
+const initialMonths: FeeMonth[] = [
+  { id: "1", month: "January", year: "2026", amount: 5000, dueDate: "2026-01-10", status: "paid", paidDate: "2026-01-08", receiptNo: "REC-2026-0005", paymentMethod: "UPI" },
+  { id: "2", month: "February", year: "2026", amount: 5000, dueDate: "2026-02-10", status: "paid", paidDate: "2026-02-09", receiptNo: "REC-2026-0082", paymentMethod: "Credit Card" },
+  { id: "3", month: "March", year: "2026", amount: 5000, dueDate: "2026-03-10", status: "paid", paidDate: "2026-03-09", receiptNo: "REC-2026-0145", paymentMethod: "NetBanking" },
+  { id: "4", month: "April", year: "2026", amount: 5000, dueDate: "2026-04-10", status: "paid", paidDate: "2026-04-05", receiptNo: "REC-2026-0211", paymentMethod: "UPI" },
+  { id: "5", month: "May", year: "2026", amount: 5000, dueDate: "2026-05-10", status: "paid", paidDate: "2026-05-09", receiptNo: "REC-2026-0348", paymentMethod: "NetBanking" },
+  { id: "6", month: "June", year: "2026", amount: 5000, dueDate: "2026-06-10", status: "pending" },
+  { id: "7", month: "July", year: "2026", amount: 5000, dueDate: "2026-07-10", status: "pending" },
+  { id: "8", month: "August", year: "2026", amount: 5000, dueDate: "2026-08-10", status: "upcoming" },
+  { id: "9", month: "September", year: "2026", amount: 5000, dueDate: "2026-09-10", status: "upcoming" },
+  { id: "10", month: "October", year: "2026", amount: 5000, dueDate: "2026-10-10", status: "upcoming" },
+  { id: "11", month: "November", year: "2026", amount: 5000, dueDate: "2026-11-10", status: "upcoming" },
+  { id: "12", month: "December", year: "2026", amount: 5000, dueDate: "2026-12-10", status: "upcoming" },
+]
+
+export default function StudentFeesPage() {
+  const [months, setMonths] = React.useState<FeeMonth[]>(initialMonths)
+  const [selectedMonths, setSelectedMonths] = React.useState<string[]>([])
+  
+  const [checkoutData, setCheckoutData] = React.useState<{ ids: string[]; amount: number; title: string; subtitle: string } | null>(null)
+  const [receiptMonth, setReceiptMonth] = React.useState<FeeMonth | null>(null)
+  const [isPaying, setIsPaying] = React.useState(false)
+
+  // Calculations
+  const totalPaid = months.filter(m => m.status === "paid").reduce((acc, m) => acc + m.amount, 0)
+  const totalUpcoming = months.filter(m => m.status !== "paid").reduce((acc, m) => acc + m.amount, 0)
+  const pendingMonths = months.filter(m => m.status === "pending" || m.status === "overdue")
+  const pendingCount = pendingMonths.length
+
+  const handlePay = () => {
+    if (!checkoutData) return
+    setIsPaying(true)
+    
+    // Mock API call delays
+    setTimeout(() => {
+      setMonths(prev => prev.map(m => {
+        if (checkoutData.ids.includes(m.id)) {
+          return {
+            ...m,
+            status: "paid",
+            paidDate: new Date().toISOString().split("T")[0],
+            receiptNo: `REC-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+            paymentMethod: "Card / Mock Gateway"
+          }
+        }
+        return m
+      }))
+      setSelectedMonths([])
+      setIsPaying(false)
+      setCheckoutData(null)
+    }, 1500)
+  }
+
+  // Checkbox toggle logic
+  const handleSelectRow = (checked: boolean, id: string) => {
+    if (checked) {
+      setSelectedMonths(prev => [...prev, id])
+    } else {
+      setSelectedMonths(prev => prev.filter(mid => mid !== id))
+    }
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedMonths(pendingMonths.map(m => m.id))
+    } else {
+      setSelectedMonths([])
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6 py-6 min-h-screen bg-background">
+      
+      {/* Page Title & Desc */}
+      <div className="flex flex-col gap-1.5 px-6 lg:px-8">
+        <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
+          Fee Management
+        </h1>
+        <p className="text-muted-foreground text-sm max-w-2xl leading-relaxed">
+          Monitor your tuition invoices, print payment receipts, and select pending installments to clear school dues.
+        </p>
+      </div>
+
+      {/* Metrics Summary Panels */}
+      <div className="grid gap-4 md:grid-cols-3 px-6 lg:px-8">
+        
+        {/* Metric 1 */}
+        <div className="rounded-xl border border-border bg-card/50 p-6 flex items-center justify-between shadow-sm">
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Fees Paid</p>
+            <h3 className="text-2xl font-bold text-foreground">₹{totalPaid.toLocaleString("en-IN")}</h3>
+            <p className="text-[10px] text-muted-foreground">Academic Year 2026</p>
+          </div>
+          <div className="h-10 w-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <CircleDollarSign className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Metric 2 */}
+        <div className="rounded-xl border border-border bg-card/50 p-6 flex items-center justify-between shadow-sm">
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Outstanding Dues</p>
+            <h3 className="text-2xl font-bold text-foreground">
+              {pendingCount > 0 ? `₹${(pendingCount * 5000).toLocaleString("en-IN")}` : "₹0"}
+            </h3>
+            <p className="text-[10px] text-muted-foreground">
+              {pendingCount > 0 ? `${pendingCount} month(s) pending` : "All current installments cleared"}
+            </p>
+          </div>
+          <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${pendingCount > 0 ? "bg-amber-500/10 text-amber-500" : "bg-muted text-muted-foreground"}`}>
+            <Clock className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Metric 3 */}
+        <div className="rounded-xl border border-border bg-card/50 p-6 flex items-center justify-between shadow-sm">
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Enrolled Grade</p>
+            <h3 className="text-2xl font-bold text-foreground">Class 10 - Section A</h3>
+            <p className="text-[10px] text-muted-foreground">Student ID: VS-2026-092</p>
+          </div>
+          <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+            <GraduationCap className="h-5 w-5" />
+          </div>
+        </div>
+
+      </div>
+
+      {/* Fee Instalments Table */}
+      <div className="px-6 lg:px-8 space-y-4">
+        
+        {/* Table Title and Actions bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h2 className="text-lg font-bold tracking-tight text-foreground">Instalment Schedule</h2>
+          {selectedMonths.length > 0 && (
+            <Button
+              onClick={() => {
+                const totalAmount = months.filter(m => selectedMonths.includes(m.id)).reduce((acc, m) => acc + m.amount, 0)
+                const names = months.filter(m => selectedMonths.includes(m.id)).map(m => m.month).join(", ")
+                setCheckoutData({
+                  ids: selectedMonths,
+                  amount: totalAmount,
+                  title: "Pay Selected Dues",
+                  subtitle: `Pay tuition installments for: ${names}`
+                })
+              }}
+              className="text-xs h-8.5 font-semibold bg-primary hover:bg-primary/95 text-primary-foreground flex items-center gap-1.5 rounded-lg shadow-md self-start"
+            >
+              <CreditCard className="h-3.5 w-3.5" /> Pay Selected (₹{selectedMonths.reduce((acc, id) => acc + (months.find(m => m.id === id)?.amount || 0), 0).toLocaleString("en-IN")})
+            </Button>
+          )}
+        </div>
+        
+        <div className="rounded-xl border border-border bg-card/30 overflow-hidden shadow-sm">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow>
+                <TableHead className="w-[50px] text-center">
+                  <Checkbox 
+                    checked={pendingCount > 0 && selectedMonths.length === pendingCount}
+                    onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                    disabled={pendingCount === 0}
+                    aria-label="Select all pending instalments"
+                  />
+                </TableHead>
+                <TableHead className="font-semibold text-foreground">Month</TableHead>
+                <TableHead className="font-semibold text-foreground">Academic Year</TableHead>
+                <TableHead className="font-semibold text-foreground">Amount</TableHead>
+                <TableHead className="font-semibold text-foreground">Due Date</TableHead>
+                <TableHead className="font-semibold text-foreground">Status</TableHead>
+                <TableHead className="font-semibold text-foreground text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {months.map((month) => {
+                const isPaid = month.status === "paid"
+                const isPending = month.status === "pending"
+                const isOverdue = month.status === "overdue"
+                const isUpcoming = month.status === "upcoming"
+
+                return (
+                  <TableRow key={month.id} className="hover:bg-muted/10 transition-colors">
+                    {/* Checkbox column */}
+                    <TableCell className="text-center">
+                      {isPaid ? (
+                        <Checkbox checked={true} disabled aria-label={`${month.month} paid`} />
+                      ) : isUpcoming ? (
+                        <Checkbox checked={false} disabled aria-label={`${month.month} upcoming`} />
+                      ) : (
+                        <Checkbox 
+                          checked={selectedMonths.includes(month.id)}
+                          onCheckedChange={(checked) => handleSelectRow(!!checked, month.id)}
+                          aria-label={`Select ${month.month}`}
+                        />
+                      )}
+                    </TableCell>
+                    
+                    <TableCell className="font-bold text-foreground">{month.month}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{month.year}</TableCell>
+                    <TableCell className="font-semibold text-foreground">₹{month.amount.toLocaleString("en-IN")}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">
+                      {new Date(month.dueDate).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </TableCell>
+                    <TableCell>
+                      {isPaid && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="h-3 w-3" /> Paid
+                        </span>
+                      )}
+                      {isPending && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                          <AlertCircle className="h-3 w-3 animate-pulse" /> Pending
+                        </span>
+                      )}
+                      {isOverdue && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold text-red-600 dark:text-red-400 animate-pulse">
+                          <AlertCircle className="h-3 w-3" /> Overdue
+                        </span>
+                      )}
+                      {isUpcoming && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                          Upcoming
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isPaid ? (
+                        <Button 
+                          variant="outline"
+                          onClick={() => setReceiptMonth(month)}
+                          className="text-xs h-8 font-medium inline-flex items-center gap-1.5 rounded-lg border-border hover:bg-muted"
+                        >
+                          <Receipt className="h-3.5 w-3.5" /> View Receipt
+                        </Button>
+                      ) : isPending || isOverdue ? (
+                        <Button 
+                          onClick={() => setCheckoutData({
+                            ids: [month.id],
+                            amount: month.amount,
+                            title: "Clear Dues",
+                            subtitle: `Clear tuition installment for ${month.month} ${month.year}`
+                          })}
+                          className="text-xs h-8 font-semibold inline-flex items-center gap-1.5 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground"
+                        >
+                          <CreditCard className="h-3.5 w-3.5" /> Pay Now
+                        </Button>
+                      ) : (
+                        <Button 
+                          disabled
+                          variant="outline"
+                          className="text-xs h-8 rounded-lg border-border bg-transparent text-muted-foreground/50 opacity-60 cursor-not-allowed"
+                        >
+                          Locked
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Checkout Dialog Modal */}
+      <AnimatePresence>
+        {checkoutData && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setCheckoutData(null)}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-md w-full rounded-xl border border-border bg-card p-6 shadow-2xl space-y-6"
+            >
+              {/* Modal Header */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">{checkoutData.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{checkoutData.subtitle}</p>
+                </div>
+                <button 
+                  onClick={() => setCheckoutData(null)}
+                  className="rounded-full hover:bg-muted p-1 transition-colors text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Order breakdown */}
+              <div className="rounded-lg bg-muted/30 p-4 border border-border/40 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tuition Fees:</span>
+                  <span className="font-medium text-foreground">₹{checkoutData.amount.toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tax / Gateway Fee:</span>
+                  <span className="font-medium text-foreground">₹0</span>
+                </div>
+                <div className="pt-2 border-t border-border/65 flex justify-between text-base font-bold">
+                  <span className="text-foreground">Total Dues:</span>
+                  <span className="text-foreground">₹{checkoutData.amount.toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+
+              {/* Card Inputs */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Details</h4>
+                <div className="space-y-3">
+                  <div className="grid gap-1">
+                    <label className="text-[11px] font-semibold text-muted-foreground uppercase">Card Number</label>
+                    <input 
+                      type="text" 
+                      placeholder="•••• •••• •••• 4242"
+                      disabled={isPaying}
+                      className="h-9 px-3 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary w-full disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-1">
+                      <label className="text-[11px] font-semibold text-muted-foreground uppercase">Expiry Date</label>
+                      <input 
+                        type="text" 
+                        placeholder="MM / YY" 
+                        disabled={isPaying}
+                        className="h-9 px-3 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary w-full disabled:opacity-50"
+                      />
+                    </div>
+                    <div className="grid gap-1">
+                      <label className="text-[11px] font-semibold text-muted-foreground uppercase">Security Code (CVV)</label>
+                      <input 
+                        type="password" 
+                        placeholder="•••" 
+                        maxLength={3}
+                        disabled={isPaying}
+                        className="h-9 px-3 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary w-full disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Secure Info */}
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-2.5">
+                <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>Your payment session is fully encrypted and secured by Vidya School Payment System.</span>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex items-center gap-3 pt-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setCheckoutData(null)}
+                  disabled={isPaying}
+                  className="flex-1 rounded-lg border-border hover:bg-muted"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handlePay}
+                  disabled={isPaying}
+                  className="flex-1 rounded-lg bg-primary hover:bg-primary/95 text-primary-foreground font-semibold flex items-center justify-center gap-1.5"
+                >
+                  {isPaying ? (
+                    <span className="flex items-center gap-2">
+                      <span className="h-3 w-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                      Processing...
+                    </span>
+                  ) : (
+                    `Pay ₹${checkoutData.amount.toLocaleString("en-IN")}`
+                  )}
+                </Button>
+              </div>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Receipt Dialog Modal */}
+      <AnimatePresence>
+        {receiptMonth && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setReceiptMonth(null)}
+            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-xl w-full rounded-xl border border-border bg-card p-6 shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto"
+            >
+              {/* Receipt Title */}
+              <div className="flex items-start justify-between pb-4 border-b border-border/60">
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Official Fee Receipt</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Vidya School Academic Billing</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => window.print()}
+                    className="h-8.5 w-8.5 rounded-lg border-border hover:bg-muted"
+                    title="Print receipt"
+                  >
+                    <Printer className="h-4 w-4" />
+                  </Button>
+                  <button 
+                    onClick={() => setReceiptMonth(null)}
+                    className="rounded-full hover:bg-muted p-1 transition-colors text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Receipt Metadata */}
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-xs">
+                <div>
+                  <span className="text-muted-foreground block font-medium">Student Name:</span>
+                  <span className="font-semibold text-foreground block mt-0.5">Karan Sharma</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block font-medium">Receipt Number:</span>
+                  <span className="font-mono font-semibold text-foreground block mt-0.5">{receiptMonth.receiptNo}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block font-medium">Enrollment ID:</span>
+                  <span className="font-semibold text-foreground block mt-0.5">VS-2026-092</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block font-medium">Paid Date:</span>
+                  <span className="font-semibold text-foreground block mt-0.5">
+                    {receiptMonth.paidDate ? new Date(receiptMonth.paidDate).toLocaleDateString("en-IN", { day: 'numeric', month: 'long', year: 'numeric' }) : "-"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block font-medium">Grade / Class:</span>
+                  <span className="font-semibold text-foreground block mt-0.5">Class 10 - Section A</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block font-medium">Payment Mode:</span>
+                  <span className="font-semibold text-foreground block mt-0.5">{receiptMonth.paymentMethod || "-"}</span>
+                </div>
+              </div>
+
+              {/* Billing Breakdowns */}
+              <div className="rounded-lg border border-border/80 overflow-hidden text-xs mt-6">
+                <div className="grid grid-cols-12 bg-muted/40 px-4 py-2 border-b border-border/80 font-semibold text-muted-foreground">
+                  <div className="col-span-8">Description</div>
+                  <div className="col-span-4 text-right">Amount</div>
+                </div>
+                
+                <div className="grid grid-cols-12 px-4 py-3 border-b border-border/40">
+                  <div className="col-span-8 font-medium text-foreground">
+                    Tuition Fees - {receiptMonth.month} {receiptMonth.year}
+                  </div>
+                  <div className="col-span-4 text-right font-semibold text-foreground">
+                    ₹{receiptMonth.amount.toLocaleString("en-IN")}.00
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-12 px-4 py-3 border-b border-border/40">
+                  <div className="col-span-8 font-medium text-foreground">
+                    Development Charges
+                  </div>
+                  <div className="col-span-4 text-right font-semibold text-foreground">
+                    ₹0.00
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-12 bg-muted/20 px-4 py-3 font-bold text-foreground">
+                  <div className="col-span-8 uppercase tracking-wider text-[10px] text-muted-foreground flex items-center">Total Paid</div>
+                  <div className="col-span-4 text-right text-base text-emerald-600 dark:text-emerald-400">
+                    ₹{receiptMonth.amount.toLocaleString("en-IN")}.00
+                  </div>
+                </div>
+              </div>
+
+              {/* Receipt Footer */}
+              <div className="flex flex-col items-center justify-center text-center space-y-2 pt-4 border-t border-border/60">
+                <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                <p className="text-xs font-semibold text-foreground">Payment Fully Received</p>
+                <p className="text-[10px] text-muted-foreground max-w-sm">
+                  This is a computer generated receipt of Vidya School. No physical signature is required.
+                </p>
+              </div>
+
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+    </div>
+  )
+}
