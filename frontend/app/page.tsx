@@ -51,8 +51,8 @@ const partners: PartnerItem[] = [
   {
     name: "WIAUK",
     logo: (
-      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 tracking-tight text-sm sm:text-base">
-        <span className="h-7 w-7 flex items-center justify-center bg-rose-600 rounded text-white text-[11px] font-bold">WI</span>
+      <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
+        <span className="h-8 w-8 flex items-center justify-center bg-rose-600 rounded text-white text-[12px] font-bold">WI</span>
         <span>WIAUK</span>
       </div>
     )
@@ -60,20 +60,21 @@ const partners: PartnerItem[] = [
   {
     name: "Mastercard",
     logo: (
-      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
-        <div className="relative w-6 h-6 flex items-center">
-          <div className="absolute left-0 w-4.5 h-4.5 bg-red-500 rounded-full opacity-90" />
-          <div className="absolute right-0 w-4.5 h-4.5 bg-amber-500 rounded-full opacity-80" />
+      <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/mastercard.svg" width={32} height={32} alt="Mastercard Logo" className="object-contain" />
         </div>
-        <span className="pl-1.5">Mastercard</span>
+        <span>Mastercard</span>
       </div>
     )
   },
   {
     name: "IIT Delhi",
     logo: (
-      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 tracking-tight text-sm sm:text-base">
-        <span className="h-7 w-7 flex items-center justify-center bg-indigo-600 rounded-full text-white text-[11px] font-bold">IITD</span>
+      <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/iitd.png" width={32} height={32} alt="IIT Delhi Logo" className="object-contain dark:invert" />
+        </div>
         <span>IIT Delhi</span>
       </div>
     )
@@ -81,8 +82,10 @@ const partners: PartnerItem[] = [
   {
     name: "Indians for Collective Action",
     logo: (
-      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 tracking-tight text-sm sm:text-base">
-        <span className="h-7 w-7 flex items-center justify-center bg-emerald-600 rounded text-white text-[11px] font-bold">ICA</span>
+      <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/ica.svg" width={32} height={32} alt="ICA Logo" className="object-contain" />
+        </div>
         <span>ICA India</span>
       </div>
     )
@@ -90,8 +93,10 @@ const partners: PartnerItem[] = [
   {
     name: "RBS",
     logo: (
-      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
-        <span className="h-7 w-7 flex items-center justify-center bg-blue-800 rounded text-white text-[11px] font-bold">RBS</span>
+      <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/rbs.svg" width={32} height={32} alt="RBS Logo" className="object-contain dark:invert" />
+        </div>
         <span>RBS Bank</span>
       </div>
     )
@@ -99,8 +104,10 @@ const partners: PartnerItem[] = [
   {
     name: "Bird Group",
     logo: (
-      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
-        <span className="h-7 w-7 flex items-center justify-center bg-cyan-600 rounded-full text-white text-[11px] font-bold">BG</span>
+      <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/bird.png" width={32} height={32} alt="Bird Group Logo" className="object-contain dark:invert" />
+        </div>
         <span>Bird Group</span>
       </div>
     )
@@ -108,8 +115,10 @@ const partners: PartnerItem[] = [
   {
     name: "Fidelity International",
     logo: (
-      <div className="flex items-center gap-2.5 font-bold text-foreground/75 text-sm sm:text-base">
-        <span className="h-7 w-7 flex items-center justify-center bg-teal-600 rounded text-white text-[11px] font-bold">FI</span>
+      <div className="flex items-center gap-3 font-bold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/fidelity.svg" width={32} height={32} alt="Fidelity Logo" className="object-contain dark:invert" />
+        </div>
         <span>Fidelity</span>
       </div>
     )
@@ -117,8 +126,10 @@ const partners: PartnerItem[] = [
   {
     name: "Verint",
     logo: (
-      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
-        <span className="h-7 w-7 flex items-center justify-center bg-purple-600 rounded text-white text-[11px] font-bold">V</span>
+      <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-8 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/verint.svg" width={32} height={32} alt="Verint Logo" className="object-contain" />
+        </div>
         <span>Verint</span>
       </div>
     )
@@ -126,25 +137,30 @@ const partners: PartnerItem[] = [
   {
     name: "KPMG",
     logo: (
-      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
-        <span className="h-7 w-11 flex items-center justify-center bg-blue-900 text-white text-[10px] font-extrabold rounded-xs">KPMG</span>
+      <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-18 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/kpmg.svg" width={72} height={32} alt="KPMG Logo" className="object-contain dark:invert" />
+        </div>
       </div>
     )
   },
   {
     name: "ReNew Power",
     logo: (
-      <div className="flex items-center gap-2.5 font-semibold text-foreground/75 text-sm sm:text-base">
-        <span className="h-7 w-7 flex items-center justify-center bg-lime-600 rounded text-white text-[11px] font-bold">RE</span>
-        <span>ReNew Power</span>
+      <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-20 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/renew.svg" width={80} height={32} alt="ReNew Power Logo" className="object-contain dark:invert" />
+        </div>
       </div>
     )
   },
   {
     name: "IndiGo",
     logo: (
-      <div className="flex items-center gap-2.5 font-bold text-foreground/75 text-sm sm:text-base">
-        <span className="h-7 w-7 flex items-center justify-center bg-[#002f6c] rounded-full text-white text-[11px] font-bold">iGo</span>
+      <div className="flex items-center gap-3 font-bold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-10 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/indigo.svg" width={40} height={32} alt="IndiGo Logo" className="object-contain" />
+        </div>
         <span>IndiGo</span>
       </div>
     )
@@ -152,8 +168,10 @@ const partners: PartnerItem[] = [
   {
     name: "ICRA",
     logo: (
-      <div className="flex items-center gap-2.5 font-bold text-foreground/75 text-sm sm:text-base">
-        <span className="h-7 w-11 flex items-center justify-center bg-amber-600 text-white text-[10px] font-extrabold rounded-xs">ICRA</span>
+      <div className="flex items-center gap-3 font-bold text-foreground/75 text-sm sm:text-base">
+        <div className="relative w-20 h-8 flex items-center justify-center">
+          <Image src="/assets/logos/icra.png" width={80} height={32} alt="ICRA Logo" className="object-contain dark:invert" />
+        </div>
       </div>
     )
   }
