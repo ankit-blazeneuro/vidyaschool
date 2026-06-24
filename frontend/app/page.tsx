@@ -228,7 +228,7 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
               
               {/* Left Column: Text Content */}
-              <div className="lg:col-span-6 flex flex-col justify-center min-h-[350px] lg:pl-6">
+              <div className="lg:col-span-6 flex flex-col justify-center min-h-[350px] lg:pl-6 order-2 lg:order-1">
                 
                 {/* Slide Text Content */}
                 <div className="space-y-6">
@@ -268,7 +268,7 @@ export default function Home() {
               </div>
   
               {/* Right Column: Slide Mockup Shader */}
-              <div className="lg:col-span-6 flex items-center justify-center lg:pr-6">
+              <div className="lg:col-span-6 flex items-center justify-center lg:pr-6 order-1 lg:order-2">
                 <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden flex items-center justify-center bg-transparent">
                   <LiquidMetal
                     width="100%"
