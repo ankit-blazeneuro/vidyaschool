@@ -32,6 +32,7 @@ export default function VideoModal() {
           alt="VIDYA Founder"
           width={1366}
           height={768}
+          quality={85}
           priority
         />
         <button

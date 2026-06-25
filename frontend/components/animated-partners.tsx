@@ -10,7 +10,7 @@ interface Partner {
 }
 
 interface AnimatedPartnersProps {
-  partners: Partner[]
+  partners: readonly Partner[]
 }
 
 export default function AnimatedPartners({ partners }: AnimatedPartnersProps) {
@@ -18,8 +18,8 @@ export default function AnimatedPartners({ partners }: AnimatedPartnersProps) {
   
   return (
     <div className="relative flex w-full overflow-hidden mask-gradient">
-      <div className="animate-marquee flex items-center py-8">
-        {Array.from({ length: 4 }).map((_, groupIndex) => 
+      <div className="animate-marquee flex items-center py-8 will-change-transform">
+        {Array.from({ length: 3 }).map((_, groupIndex) => 
           partners.map((partner, index) => (
             <div
               key={`${groupIndex}-${index}`}
@@ -30,7 +30,15 @@ export default function AnimatedPartners({ partners }: AnimatedPartnersProps) {
             >
               <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm">
                 <div className="relative flex items-center justify-center bg-white p-1 rounded shadow-xs">
-                  <Image src={partner.logo} width={partner.width} height={partner.height} alt={`${partner.name} Logo`} className="object-contain" />
+                  <Image 
+                    src={partner.logo} 
+                    width={partner.width} 
+                    height={partner.height} 
+                    alt={`${partner.name} Logo`} 
+                    className="object-contain"
+                    loading="lazy"
+                    quality={90}
+                  />
                 </div>
                 {!noTextLogos.includes(partner.name) && <span>{partner.name}</span>}
               </div>

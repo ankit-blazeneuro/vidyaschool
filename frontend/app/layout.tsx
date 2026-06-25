@@ -21,7 +21,16 @@ export const metadata: Metadata = {
   title: "VidyaSchool | Empowering Minds, Shaping Futures",
   description: "Welcome to VidyaSchool, a premier educational portal dedicated to academic excellence, STEM innovation, and holistic student growth through co-curricular arts.",
   keywords: ["VidyaSchool", "school portal", "academics", "STEM education", "performing arts", "student portal", "teacher portal"],
-};
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: 'white' },
+    { media: '(prefers-color-scheme: dark)', color: 'black' }
+  ]
+}
 
 import { TooltipProvider } from "@/components/ui/tooltip"
 
@@ -40,6 +49,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,slnt,wdth,wght,ROND@8..144,-10..0,25..150,400..500,0..100&display=swap" rel="stylesheet" />
+        <link rel="dns-prefetch" href="https://www.youtube.com" />
       </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider

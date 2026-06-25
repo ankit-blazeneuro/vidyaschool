@@ -1,13 +1,23 @@
 import Link from "next/link"
 import Image from "next/image"
-import { Header } from "@/components/header"
+import { LightHeader } from "@/components/light-header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { Globe, ArrowRight, Music, Bot, Activity, Sparkles } from "lucide-react"
+import { Globe, ArrowRight, Sparkles } from "lucide-react"
 import dynamic from "next/dynamic"
+import type { Metadata } from 'next'
 
-const LiquidMetalHero = dynamic(() => import("@/components/liquid-metal-hero"))
-const VideoModal = dynamic(() => import("@/components/video-modal"))
+export const metadata: Metadata = {
+  title: 'VidyaSchool | Empowering Minds, Shaping Futures',
+  description: 'Welcome to VidyaSchool - academic excellence meets holistic development with modern labs, arts programs, and vibrant student community.',
+}
+
+const LiquidMetalHero = dynamic(() => import("@/components/liquid-metal-hero"), { 
+  loading: () => <div className="w-full aspect-[4/3] rounded-xl bg-muted/20 animate-pulse" />
+})
+const VideoModal = dynamic(() => import("@/components/video-modal"), {
+  loading: () => <div className="w-full aspect-video rounded-2xl bg-muted/20 animate-pulse" />
+})
 const ImageLightbox = dynamic(() => import("@/components/image-lightbox"))
 const AnimatedPartners = dynamic(() => import("@/components/animated-partners"))
 
@@ -24,12 +34,12 @@ const partners = [
   { name: "ReNew Power", logo: "/assets/logos/renew.svg", width: 80, height: 32 },
   { name: "IndiGo", logo: "/assets/logos/indigo.svg", width: 40, height: 32 },
   { name: "ICRA", logo: "/assets/logos/icra.png", width: 80, height: 32 }
-]
+] as const
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
+      <LightHeader />
       
       <main className="flex-1 flex flex-col justify-center py-4 sm:py-6 md:py-8">
         <div className="w-full px-4 sm:px-8 md:px-12 lg:px-24 max-w-none">
@@ -113,16 +123,16 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2 p-3.5 rounded-2xl border border-border/80 bg-card/45 overflow-hidden h-[360px]">
-                <ImageLightbox src="/assets/vidyaschool/student_classical_dance.jpg" alt="Classical & Fusion Dance" width={800} height={600} />
+                <ImageLightbox src="/assets/vidyaschool/student_classical_dance.jpg" alt="Classical & Fusion Dance" width={1200} height={800} priority />
               </div>
               <div className="p-3.5 rounded-2xl border border-border/80 bg-card/45 overflow-hidden h-[360px]">
-                <ImageLightbox src="/assets/vidyaschool/student_singing.jpg" alt="Choral & Classical Singing" width={400} height={600} />
+                <ImageLightbox src="/assets/vidyaschool/student_singing.jpg" alt="Choral & Classical Singing" width={600} height={900} />
               </div>
               <div className="p-3.5 rounded-2xl border border-border/80 bg-card/45 overflow-hidden h-[360px]">
-                <ImageLightbox src="/assets/vidyaschool/student_playing.jpg" alt="Instrumental Play" width={400} height={600} />
+                <ImageLightbox src="/assets/vidyaschool/student_playing.jpg" alt="Instrumental Play" width={600} height={900} />
               </div>
               <div className="md:col-span-2 p-3.5 rounded-2xl border border-border/80 bg-card/45 overflow-hidden h-[360px]">
-                <ImageLightbox src="/assets/vidyaschool/student_robotics.jpg" alt="Lego Robotics & Innovation" width={800} height={600} />
+                <ImageLightbox src="/assets/vidyaschool/student_robotics.jpg" alt="Lego Robotics & Innovation" width={1200} height={800} />
               </div>
             </div>
           </section>
