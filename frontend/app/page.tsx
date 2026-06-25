@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { LightHeader } from "@/components/light-header"
+import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Globe, ArrowRight, Sparkles } from "lucide-react"
@@ -39,7 +39,7 @@ const partners = [
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <LightHeader />
+      <Header />
       
       <main className="flex-1 flex flex-col justify-center py-4 sm:py-6 md:py-8">
         <div className="w-full px-4 sm:px-8 md:px-12 lg:px-24 max-w-none">
