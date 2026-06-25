@@ -230,48 +230,49 @@ export default function Home() {
       <Header />
       
       {/* Main Full Hero Content */}
-      <main className="flex-1 flex flex-col justify-center py-6 md:py-8">
-        <div className="w-full px-6 sm:px-12 md:px-16 lg:px-24 max-w-none">
+      <main className="flex-1 flex flex-col justify-center py-4 sm:py-6 md:py-8">
+        <div className="w-full px-4 sm:px-8 md:px-12 lg:px-24 max-w-none">
           
           {/* Hero Wrapper Card */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.98, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.7, ease: "easeOut" }}
-            className="relative rounded-xl border border-border bg-transparent py-8 px-6 sm:py-10 sm:px-10 md:py-12 md:px-12 lg:py-14 lg:px-14 shadow-none"
+            className="relative rounded-xl border border-border bg-transparent px-4 py-6 sm:px-8 sm:py-9 md:px-12 md:py-12 lg:px-14 lg:py-14 shadow-none"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 sm:gap-10 lg:gap-16 items-center">
               
               {/* Left Column: Text Content */}
-              <div className="lg:col-span-6 flex flex-col justify-center min-h-[350px] lg:pl-6 order-2 lg:order-1">
+              <div className="lg:col-span-6 flex flex-col justify-center min-h-0 lg:min-h-[350px] lg:pl-6 order-2 lg:order-1">
                 
                 {/* Slide Text Content */}
-                <div className="space-y-6">
+                <div className="space-y-4 text-center sm:space-y-5 lg:space-y-6 lg:text-left">
                   
                   {/* Badge */}
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                  <div className="inline-flex max-w-full items-center gap-1.5 self-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground sm:text-xs lg:self-start">
                     {slides[current].icon}
-                    <span>{slides[current].badge}</span>
+                    <span className="truncate">{slides[current].badge}</span>
                   </div>
                   
                   {/* Title */}
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
+                  <h1 className="text-[clamp(2.25rem,10vw,3.75rem)] font-extrabold tracking-tight text-foreground leading-[1.05] text-balance sm:text-[clamp(3rem,7vw,4.5rem)] lg:text-[clamp(3.25rem,4.6vw,5rem)]">
                     {slides[current].title}
                   </h1>
                   
                   {/* Description */}
-                  <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl">
+                  <p className="mx-auto max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base md:text-lg lg:mx-0">
                     {slides[current].description}
                   </p>
   
                   {/* Call-to-Actions */}
-                  <div className="flex items-center gap-3 pt-2">
-                    <Button asChild variant="default" size="md">
+                  <div className="flex w-full flex-col items-stretch gap-3 pt-2 sm:flex-row sm:items-center sm:justify-center lg:justify-start">
+                    <Button asChild variant="default" size="md" className="w-full sm:w-auto">
                       <Link id="hero-student-portal-btn" href={slides[current].buttonHref}>
-                        {slides[current].buttonText} <ArrowRight className="ml-2 h-4 w-4" />
+                        <span>{slides[current].buttonText}</span>
+                        <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
-                    <Button asChild variant="outline" size="md">
+                    <Button asChild variant="outline" size="md" className="w-full sm:w-auto">
                       <Link id="hero-teacher-portal-btn" href="/teacher">
                         Teacher Portal
                       </Link>

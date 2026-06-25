@@ -14,6 +14,7 @@ export function Footer() {
             <Link id="footer-brand-logo" href="/" className="flex items-center gap-2 font-semibold text-sm tracking-tight text-foreground hover:opacity-90">
               <span className="font-semibold text-sm">VidyaSchool</span>
             </Link>
+            <p className="text-sm font-semibold text-foreground">Be the Guiding Star</p>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
               Modern learning environment focused on academic excellence, creative arts, STEM innovation, and holistic development.
             </p>
