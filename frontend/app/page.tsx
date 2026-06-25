@@ -363,21 +363,35 @@ export default function Home() {
                     priority
                   />
 
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsModalOpen(true)
+                    }}
+                    className="absolute left-1/2 top-1/2 z-20 flex h-18 w-18 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/35 bg-white/20 text-white shadow-2xl backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 sm:h-22 sm:w-22"
+                    aria-label="Play VIDYA founder video"
+                  >
+                    <Play className="ml-1 h-7 w-7 fill-current sm:h-9 sm:w-9" />
+                  </button>
+
                   {/* Cursor Follower Watch Button */}
                   <motion.div
-                    className="absolute pointer-events-none z-20 flex flex-col items-center justify-center bg-rose-600 dark:bg-rose-500 text-white font-bold rounded-full shadow-2xl text-[10px] sm:text-xs tracking-wider gap-0.5"
+                    className="absolute pointer-events-none z-20 flex items-center justify-center gap-2 bg-background/60 dark:bg-black/50 backdrop-blur-md border border-border/80 dark:border-white/10 text-foreground dark:text-white font-semibold rounded-xl shadow-2xl text-xs sm:text-sm px-4 py-2.5 whitespace-nowrap select-none"
                     style={{
-                      width: 84,
-                      height: 84,
-                      left: mousePosition.x - 42,
-                      top: mousePosition.y - 42,
+                      left: mousePosition.x,
+                      top: mousePosition.y,
+                      translateX: "-50%",
+                      translateY: "-50%",
                     }}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: isHovered ? 1 : 0, scale: isHovered ? 1 : 0 }}
-                    transition={{ type: "spring", stiffness: 450, damping: 28, mass: 0.4 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: isHovered ? 1 : 0, scale: isHovered ? 1 : 0.8 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 25, mass: 0.4 }}
                   >
-                    <Play className="h-4 w-4 fill-current ml-0.5 text-white" />
-                    <span>WATCH</span>
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white shrink-0 shadow-sm animate-pulse">
+                      <Play className="h-2 w-2 fill-current ml-0.5" />
+                    </div>
+                    <span className="tracking-wide">Watch Video</span>
                   </motion.div>
                 </div>
               </div>
@@ -385,38 +399,38 @@ export default function Home() {
               {/* Right Column: Text Content */}
               <div className="lg:col-span-5 flex flex-col justify-center space-y-6">
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 w-fit text-xs font-semibold text-muted-foreground">
-                  <Monitor className="h-3.5 w-3.5" />
-                  <span>Interactive Learning</span>
+                  <Globe className="h-3.5 w-3.5" />
+                  <span>A Little About Us</span>
                 </div>
                 
-                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-[1.15]">
-                  A Glimpse into Our Dynamic Digital Classrooms
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-[1.3] italic border-l-3 border-rose-600/60 dark:border-rose-500/60 pl-5 py-1">
+                  “It’s like a home to me. It’s the place where I grow as a person, get exposed to new ideas, learn and reach for my dreams.”
                 </h2>
                 
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  At VidyaSchool, we integrate advanced digital tools, smart classrooms, and collaborative spaces to foster deep conceptual understanding. Watch how our students leverage technology to learn, create, and build their future.
+                  Here’s a short film with the students, teachers, and staff talking about what makes the VIDYA School different and what it means to them.
                 </p>
 
                 <div className="space-y-3.5 pt-2">
                   <div className="flex items-start gap-2.5 text-sm text-foreground/80">
                     <span className="h-5 w-5 mt-0.5 flex items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 font-semibold text-xs shrink-0">✓</span>
                     <div>
-                      <h4 className="font-semibold text-foreground">Smart Interactive Boards</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">Visualizing complex science and math problems dynamically.</p>
+                      <h4 className="font-semibold text-foreground">Holistic Growth</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">Fostering personal development alongside academic excellence.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5 text-sm text-foreground/80">
                     <span className="h-5 w-5 mt-0.5 flex items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 font-semibold text-xs shrink-0">✓</span>
                     <div>
-                      <h4 className="font-semibold text-foreground">Tablet-Led Active Learning</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">Personalized progress pacing and instant feedback loops.</p>
+                      <h4 className="font-semibold text-foreground">New Ideas & Exposure</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">Broadening horizons through visual and physical digital learning.</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2.5 text-sm text-foreground/80">
                     <span className="h-5 w-5 mt-0.5 flex items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 font-semibold text-xs shrink-0">✓</span>
                     <div>
-                      <h4 className="font-semibold text-foreground">Real-Time Team Collaboration</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">Group projects powered by school-wide cloud drives.</p>
+                      <h4 className="font-semibold text-foreground">A Nurturing Community</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">A second home where students, teachers, and staff grow together.</p>
                     </div>
                   </div>
                 </div>
