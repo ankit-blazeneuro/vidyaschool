@@ -62,7 +62,7 @@ export default function SignUpPage() {
             </p>
           </div>
           <Button asChild>
-            <Link href="/sign-in">Go to Sign In</Link>
+            <Link href="/login">Go to Sign In</Link>
           </Button>
         </div>
       </div>
@@ -145,7 +145,7 @@ export default function SignUpPage() {
               </div>
               <FieldDescription className="text-center">
                 Already have an account?{" "}
-                <Link href="/sign-in" className="underline underline-offset-4">
+                <Link href="/login" className="underline underline-offset-4">
                   Sign in
                 </Link>
               </FieldDescription>
