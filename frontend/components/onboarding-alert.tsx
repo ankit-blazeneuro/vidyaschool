@@ -1,0 +1,37 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+
+export function OnboardingAlert() {
+  const [show, setShow] = useState(false)
+
+  useEffect(() => {
+    fetch("/api/onboarding/status")
+      .then(res => res.json())
+      .then(data => {
+        if (!data.onboardingCompleted) {
+          setShow(true)
+        }
+      })
+      .catch(() => setShow(false))
+  }, [])
+
+  if (!show) return null
+
+  return (
+    <Alert variant="destructive" className="mb-4">
+      <AlertCircle className="h-4 w-4" />
+      <AlertTitle>Onboarding Not Completed</AlertTitle>
+      <AlertDescription className="flex items-center justify-between">
+        <span>Please complete your profile to access all features.</span>
+        <Button asChild size="sm" variant="outline" className="ml-2">
+          <Link href="/student/onboarding">Complete Now</Link>
+        </Button>
+      </AlertDescription>
+    </Alert>
+  )
+}

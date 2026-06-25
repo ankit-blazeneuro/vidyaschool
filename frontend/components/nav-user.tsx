@@ -26,18 +26,52 @@ import {
 } from "@/components/ui/sidebar"
 import { useTheme } from "next-themes"
 import { EllipsisVerticalIcon, CircleUserRoundIcon, BellIcon, LogOutIcon, SunIcon } from "lucide-react"
+import { useSession, authClient } from "@/lib/auth-client"
+import Link from "next/link"
+import * as React from "react"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+export function NavUser() {
   const { isMobile } = useSidebar()
   const { setTheme } = useTheme()
+  const { data: session } = useSession()
+  const [username, setUsername] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    fetch('/api/profile/username')
+      .then(res => res.json())
+      .then(data => {
+        if (data.username) setUsername(data.username)
+      })
+      .catch(() => setUsername(null))
+  }, [])
+
+  if (!session?.user) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild>
+            <Link href="/login">Sign In</Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
+
+  const user = session.user
+
+  const handleSignOut = async () => {
+    await authClient.signOut()
+    window.location.href = "/"
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map(n => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
+  }
 
   return (
     <SidebarMenu>
@@ -48,14 +82,17 @@ export function NavUser({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg grayscale">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src={user.image || undefined} alt={user.name} />
+                <AvatarFallback className="rounded-lg">{getInitials(user.name)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
                 <span className="truncate text-xs text-muted-foreground">
                   {user.email}
+                </span>
+                <span className="truncate text-xs text-muted-foreground capitalize">
+                  {user.role}
                 </span>
               </div>
               <EllipsisVerticalIcon className="ml-auto size-4" />
@@ -70,8 +107,8 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarImage src={user.image || undefined} alt={user.name} />
+                  <AvatarFallback className="rounded-lg">{getInitials(user.name)}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -83,10 +120,11 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <CircleUserRoundIcon
-                />
-                Account
+              <DropdownMenuItem asChild>
+                <Link href={username ? `/student/${username}/account` : '/student'} className="flex items-center cursor-pointer">
+                  <CircleUserRoundIcon />
+                  Account
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
@@ -115,7 +153,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSignOut}>
               <LogOutIcon
               />
               Log out

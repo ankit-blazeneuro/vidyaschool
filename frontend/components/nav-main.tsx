@@ -51,7 +51,16 @@ export function NavMain({
         </SidebarMenu>
         <SidebarMenu>
           {items.map((item) => {
-            const isActive = pathname === item.url || (item.url !== "/student" && item.url !== "/teacher" && pathname?.startsWith(item.url + "/"))
+            const isActive = (() => {
+              if (!pathname) return false
+              // Exact match
+              if (pathname === item.url) return true
+              // For teacher and student dashboard roots — don't prefix-match as they're the root
+              const isDashboardRoot = item.url === '/teacher' || item.url === '/student' || /^\/student\/[^/]+$/.test(item.url)
+              if (isDashboardRoot) return false
+              // For all other items, prefix-match with trailing slash
+              return pathname.startsWith(item.url + '/')
+            })()
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton 

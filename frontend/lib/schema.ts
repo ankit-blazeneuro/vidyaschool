@@ -1,4 +1,6 @@
-import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, pgEnum, integer, date } from 'drizzle-orm/pg-core'
+
+export const roleEnum = pgEnum('role', ['student', 'teacher', 'admin', 'account'])
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -6,6 +8,28 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
+  role: roleEnum('role').notNull().default('student'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const userProfile = pgTable('user_profile', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().unique().references(() => user.id, { onDelete: 'cascade' }),
+  admissionNumber: text('admission_number').unique(),
+  username: text('username').unique(),
+  phoneNumber: text('phone_number'),
+  parentName: text('parent_name'),
+  parentPhone: text('parent_phone'),
+  parentEmail: text('parent_email'),
+  address: text('address'),
+  city: text('city'),
+  state: text('state'),
+  pincode: text('pincode'),
+  class: text('class'),
+  section: text('section'),
+  classSectionLastUpdated: timestamp('class_section_last_updated'),
+  onboardingCompleted: boolean('onboarding_completed').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
@@ -42,6 +66,21 @@ export const verification = pgTable('verification', {
   identifier: text('identifier').notNull(),
   value: text('value').notNull(),
   expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const feeInstallment = pgTable('fee_installment', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  month: text('month').notNull(),
+  year: text('year').notNull(),
+  amount: integer('amount').notNull(),
+  dueDate: date('due_date').notNull(),
+  status: text('status').notNull(), // 'paid', 'pending', 'overdue', 'upcoming'
+  paidDate: date('paid_date'),
+  receiptNo: text('receipt_no'),
+  paymentMethod: text('payment_method'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })

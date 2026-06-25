@@ -5,6 +5,7 @@ import * as React from "react"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
+import { OnboardingAlert } from "@/components/onboarding-alert"
 import { usePathname } from "next/navigation"
 import {
   Sidebar,
@@ -16,6 +17,33 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon } from "lucide-react"
+
+// Hook to get username-based URLs
+function useStudentUrls() {
+  const [username, setUsername] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    fetch('/api/profile/username')
+      .then(res => res.json())
+      .then(data => {
+        if (data.username) {
+          setUsername(data.username)
+        }
+      })
+      .catch(() => setUsername(null))
+  }, [])
+
+  const base = username ? `/student/${username}` : '/student'
+  
+  return {
+    dashboard: base,
+    fees: `${base}/fees`,
+    library: `${base}/library`,
+    marks: `${base}/marks`,
+    notice: `${base}/notice`,
+    account: `${base}/account`,
+  }
+}
 
 const data = {
   user: {
@@ -171,6 +199,7 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const isTeacher = pathname?.startsWith("/teacher")
+  const urls = useStudentUrls()
 
   const navMain = isTeacher
     ? [
@@ -198,27 +227,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     : [
         {
           title: "Dashboard",
-          url: "/student",
+          url: urls.dashboard,
           icon: <LayoutDashboardIcon />,
         },
         {
           title: "Fees",
-          url: "/student/fees",
+          url: urls.fees,
           icon: <DatabaseIcon />,
         },
         {
           title: "Library",
-          url: "/student/library",
+          url: urls.library,
           icon: <BookOpenIcon />,
         },
         {
           title: "Marks",
-          url: "/student/marks",
+          url: urls.marks,
           icon: <GraduationCapIcon />,
         },
         {
           title: "Notices",
-          url: "/student/notice",
+          url: urls.notice,
           icon: <BellIcon />,
         },
       ]
@@ -242,10 +271,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />
+        <div className="px-3 py-2">
+          <OnboardingAlert />
+        </div>
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   )

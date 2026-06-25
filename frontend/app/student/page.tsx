@@ -1,16 +1,19 @@
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
-import { SectionCards } from "@/components/section-cards"
-import data from "./data.json"
+import { redirect } from 'next/navigation'
+import { requireRole } from '@/lib/auth-helpers'
+import { db } from '@/lib/db'
+import { userProfile } from '@/lib/schema'
+import { eq } from 'drizzle-orm'
 
-export default function StudentDashboardPage() {
-  return (
-    <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-      <SectionCards />
-      <div className="px-4 lg:px-6">
-        <ChartAreaInteractive />
-      </div>
-      <DataTable data={data} />
-    </div>
-  )
+export default async function StudentRootPage() {
+  const user = await requireRole(['student', 'admin'])
+  
+  const profile = await db.query.userProfile.findFirst({
+    where: eq(userProfile.userId, user.id)
+  })
+
+  if (!profile?.onboardingCompleted || !profile.username) {
+    redirect('/student/onboarding')
+  }
+
+  redirect(`/student/${profile.username}`)
 }
