@@ -46,6 +46,7 @@ export function OnboardingDialog({ userRole, userEmail, onSuccess }: OnboardingD
   const [phoneNumber, setPhoneNumber] = React.useState("")
   const [studentClass, setStudentClass] = React.useState("")
   const [section, setSection] = React.useState("")
+  const [transportMode, setTransportMode] = React.useState("walking")
   
   // Student Parent Info
   const [parentName, setParentName] = React.useState("")
@@ -132,6 +133,7 @@ export function OnboardingDialog({ userRole, userEmail, onSuccess }: OnboardingD
           pincode,
           class: isStudent ? studentClass : undefined,
           section: isStudent ? section : undefined,
+          transportMode: isStudent ? transportMode : undefined,
         }),
       })
 
@@ -276,32 +278,46 @@ export function OnboardingDialog({ userRole, userEmail, onSuccess }: OnboardingD
                   </div>
 
                   {isStudent && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="class">Assigned Class</Label>
-                        <Select value={studentClass} onValueChange={setStudentClass}>
-                          <SelectTrigger id="class" className="w-full text-xs bg-card">
-                            <SelectValue placeholder="Select Class" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {["Nursery", "KG", ...Array.from({ length: 12 }, (_, i) => (i + 1).toString())].map((c) => (
-                              <SelectItem key={c} value={c}>
-                                {c === "Nursery" || c === "KG" ? c : `Class ${c}`}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="class">Assigned Class</Label>
+                          <Select value={studentClass} onValueChange={setStudentClass}>
+                            <SelectTrigger id="class" className="w-full text-xs bg-card">
+                              <SelectValue placeholder="Select Class" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["Nursery", "KG", ...Array.from({ length: 12 }, (_, i) => (i + 1).toString())].map((c) => (
+                                <SelectItem key={c} value={c}>
+                                  {c === "Nursery" || c === "KG" ? c : `Class ${c}`}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="section">Section</Label>
+                          <Select value={section} onValueChange={setSection}>
+                            <SelectTrigger id="section" className="w-full text-xs bg-card">
+                              <SelectValue placeholder="Select Section" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["A", "B", "C", "D", "E"].map((s) => (
+                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="section">Section</Label>
-                        <Select value={section} onValueChange={setSection}>
-                          <SelectTrigger id="section" className="w-full text-xs bg-card">
-                            <SelectValue placeholder="Select Section" />
+                        <Label htmlFor="transport">Mode of Commute</Label>
+                        <Select value={transportMode} onValueChange={setTransportMode}>
+                          <SelectTrigger id="transport" className="w-full text-xs bg-card">
+                            <SelectValue placeholder="Select Commute Mode" />
                           </SelectTrigger>
                           <SelectContent>
-                            {["A", "B", "C", "D", "E"].map((s) => (
-                              <SelectItem key={s} value={s}>{s}</SelectItem>
-                            ))}
+                            <SelectItem value="walking">Walking</SelectItem>
+                            <SelectItem value="transport">School Transport</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

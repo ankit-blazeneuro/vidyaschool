@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AppSidebar } from "@/components/app-sidebar"
+import { AccountsSidebar } from "./_components/accounts-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AccountsHeader } from "./_components/accounts-header"
@@ -22,7 +22,7 @@ export default async function AccountsLayout({
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" username={username} />
+      <AccountsSidebar username={username} />
       <SidebarInset>
         <SiteHeader>
           <AccountsHeader />

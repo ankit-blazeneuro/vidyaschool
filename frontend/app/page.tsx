@@ -88,11 +88,10 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
               <div className="lg:col-span-7"><VideoModal /></div>
               <div className="lg:col-span-5 flex flex-col justify-center space-y-6">
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 w-fit text-xs font-semibold text-muted-foreground">
-                  <Globe className="h-3.5 w-3.5" />
-                  <span>A Little About Us</span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-[1.3] italic border-l-3 border-rose-600/60 pl-5 py-1">
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  A Little About Us
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-[1.3] border-l-3 border-rose-600/60 pl-5 py-1">
                   "It's like a home to me. It's the place where I grow as a person, get exposed to new ideas, learn and reach for my dreams."
                 </h2>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">

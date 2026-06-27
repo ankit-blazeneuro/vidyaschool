@@ -45,6 +45,7 @@ class UserProfile(SQLModel, table=True):
     class_section_last_updated: Optional[datetime] = Field(default=None, alias="class_section_last_updated")
     class_section_changes: Optional[str] = Field(default=None, alias="class_section_changes")
     secondary_role: Optional[str] = Field(default=None, alias="secondary_role")
+    transport_mode: Optional[str] = Field(default=None, alias="transport_mode")
     onboarding_completed: bool = Field(default=False, alias="onboarding_completed")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

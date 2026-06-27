@@ -276,6 +276,27 @@ def get_student_fees(student_id: str, admin: User = Depends(require_role(["admin
     return [_serialize_installment(inst) for inst in installments]
 
 
+from pydantic import BaseModel as AdminPayFeesBaseModel
+
+class AdminPayFeesRequest(AdminPayFeesBaseModel):
+    student_id: str
+    installment_ids: list[str]
+    payment_method: str
+
+@router.post("/api/admin/fees/pay")
+def admin_pay_fees(req: AdminPayFeesRequest, admin: User = Depends(require_role(["admin", "account"])), db: Session = Depends(get_db)):
+    installments = db.query(FeeInstallment).filter(
+        FeeInstallment.id.in_(req.installment_ids),
+        FeeInstallment.user_id == req.student_id,
+    ).all()
+
+    if not installments:
+        raise HTTPException(status_code=404, detail="Installments not found")
+
+    receipt_no = f"REC-2026-{uuid.uuid4().hex[:6].upper()}"
+    return _mark_installments_paid(db, installments, req.payment_method, receipt_no)
+
+
 @router.get("/api/student/marks", response_model=Dict[str, Any])
 def get_logged_in_student_marks(
     current_user: User = Depends(require_role(["student"])),
@@ -495,7 +516,7 @@ def change_role(
 
 @router.get("/api/admin/fee-management")
 def get_fee_management(
-    admin: User = Depends(require_role(["admin"])),
+    admin: User = Depends(require_role(["admin", "account"])),
     db: Session = Depends(get_db)
 ):
     results = db.query(FeeInstallment, User, UserProfile).join(
@@ -539,6 +560,7 @@ class OnboardingSubmitRequest(BaseModel):
     pincode: str
     class_: Optional[str] = Field(default=None, alias="class")
     section: Optional[str] = None
+    transportMode: Optional[str] = Field(default=None, alias="transportMode")
 
     class Config:
         populate_by_name = True
@@ -590,6 +612,7 @@ def submit_onboarding(
         profile.pincode = data.pincode
         profile.class_ = data.class_
         profile.section = data.section
+        profile.transport_mode = data.transportMode
         profile.class_section_last_updated = datetime.utcnow()
         profile.onboarding_completed = True
         profile.updated_at = datetime.utcnow()
@@ -610,6 +633,7 @@ def submit_onboarding(
             pincode=data.pincode,
             class_=data.class_,
             section=data.section,
+            transport_mode=data.transportMode,
             class_section_last_updated=datetime.utcnow(),
             onboarding_completed=True,
             created_at=datetime.utcnow(),
