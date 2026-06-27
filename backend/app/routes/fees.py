@@ -822,6 +822,23 @@ def register_teacher_preference(
     return {"success": True}
 
 
+from sqlmodel import or_
+
+@router.get("/api/users/search")
+def search_users(q: Optional[str] = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    query = db.query(User, UserProfile).join(UserProfile, User.id == UserProfile.user_id)
+    if q:
+        query = query.filter(
+            or_(
+                User.name.like(f"%{q}%"),
+                UserProfile.username.like(f"%{q}%")
+            )
+        )
+    results = query.limit(20).all()
+    return [{"name": u.name, "username": p.username, "role": u.role} for u, p in results]
+
+
+
 
 
 

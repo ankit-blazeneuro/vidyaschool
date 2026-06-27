@@ -15,20 +15,20 @@ export default async function UsernameLayout({
   const { username } = await params
   const user = await requireRole(['student', 'admin'])
 
-  // Get current user's profile
-  const currentProfile = await db.query.userProfile.findFirst({
-    where: eq(userProfile.userId, user.id)
-  })
+  // Fetch profiles concurrently to optimize latency
+  const [currentProfile, requestedProfile] = await Promise.all([
+    db.query.userProfile.findFirst({
+      where: eq(userProfile.userId, user.id)
+    }),
+    db.query.userProfile.findFirst({
+      where: eq(userProfile.username, username)
+    })
+  ])
 
   // If the current user has no completed profile, send them to onboarding
   if (!currentProfile?.onboardingCompleted || !currentProfile.username) {
     redirect('/student?onboarding=true')
   }
-
-  // Check if the requested username exists in the DB
-  const requestedProfile = await db.query.userProfile.findFirst({
-    where: eq(userProfile.username, username)
-  })
 
   // If the requested username doesn't exist, redirect everyone to their own profile
   if (!requestedProfile) {

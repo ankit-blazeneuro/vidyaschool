@@ -22,7 +22,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Allow public routes and API auth routes
-  if (publicRoutes.some(route => pathname === route) || pathname.startsWith('/api/auth/')) {
+  if (publicRoutes.some(route => pathname === route) || pathname.startsWith('/api/auth/') || pathname.startsWith('/docs') || pathname.startsWith('/api/search')) {
     return NextResponse.next()
   }
 

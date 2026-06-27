@@ -33,6 +33,7 @@ export const viewport = {
 }
 
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { RootProvider } from "fumadocs-ui/provider/next"
 
 export default function RootLayout({
   children,
@@ -59,7 +60,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider>
-            {children}
+            <RootProvider theme={{ enabled: false }}>
+              {children}
+            </RootProvider>
           </TooltipProvider>
         </ThemeProvider>
       </body>
