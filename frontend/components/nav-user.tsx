@@ -29,21 +29,39 @@ import { EllipsisVerticalIcon, CircleUserRoundIcon, BellIcon, LogOutIcon, SunIco
 import { useSession, authClient } from "@/lib/auth-client"
 import Link from "next/link"
 import * as React from "react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { setTheme } = useTheme()
-  const { data: session } = useSession()
+  const { data: session, isPending } = useSession()
   const [username, setUsername] = React.useState<string | null>(null)
 
   React.useEffect(() => {
+    if (isPending) return
     fetch('/api/profile/username')
       .then(res => res.json())
       .then(data => {
         if (data.username) setUsername(data.username)
       })
       .catch(() => setUsername(null))
-  }, [])
+  }, [isPending])
+
+  if (isPending) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <div className="flex items-center gap-2.5 px-2 py-1.5 w-full">
+            <Skeleton className="h-8 w-8 rounded-lg shrink-0 animate-pulse bg-muted-foreground/20" />
+            <div className="flex-1 space-y-1">
+              <Skeleton className="h-3 w-20 rounded animate-pulse bg-muted-foreground/20" />
+              <Skeleton className="h-2 w-32 rounded animate-pulse bg-muted-foreground/20" />
+            </div>
+          </div>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    )
+  }
 
   if (!session?.user) {
     return (
@@ -72,6 +90,12 @@ export function NavUser() {
       .toUpperCase()
       .slice(0, 2)
   }
+
+  const accountUrl = user.role === 'admin'
+    ? (username ? `/admin/${username}/account` : '/admin')
+    : user.role === 'teacher'
+    ? (username ? `/teacher/${username}/account` : '/teacher')
+    : (username ? `/student/${username}/account` : '/student')
 
   return (
     <SidebarMenu>
@@ -121,7 +145,7 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href={username ? `/student/${username}/account` : '/student'} className="flex items-center cursor-pointer">
+                <Link href={accountUrl} className="flex items-center cursor-pointer">
                   <CircleUserRoundIcon />
                   Account
                 </Link>

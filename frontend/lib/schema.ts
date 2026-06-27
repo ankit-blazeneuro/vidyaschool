@@ -9,6 +9,8 @@ export const user = pgTable('user', {
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
   role: roleEnum('role').notNull().default('student'),
+  preferredRole: text('preferred_role'),
+  teacherApprovalStatus: text('teacher_approval_status').default('pending'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
@@ -18,6 +20,7 @@ export const userProfile = pgTable('user_profile', {
   userId: text('user_id').notNull().unique().references(() => user.id, { onDelete: 'cascade' }),
   admissionNumber: text('admission_number').unique(),
   username: text('username').unique(),
+  designation: text('designation'),
   phoneNumber: text('phone_number'),
   parentName: text('parent_name'),
   parentPhone: text('parent_phone'),
@@ -29,6 +32,8 @@ export const userProfile = pgTable('user_profile', {
   class: text('class'),
   section: text('section'),
   classSectionLastUpdated: timestamp('class_section_last_updated'),
+  classSectionChanges: text('class_section_changes'),
+  secondaryRole: text('secondary_role'),
   onboardingCompleted: boolean('onboarding_completed').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -84,3 +89,64 @@ export const feeInstallment = pgTable('fee_installment', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
+
+export const subjectClassRequest = pgTable('subject_class_request', {
+  id: text('id').primaryKey(),
+  teacherId: text('teacher_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  class: text('class').notNull(),
+  section: text('section').notNull(),
+  subject: text('subject').notNull(),
+  status: text('status').notNull().default('pending'), // 'pending', 'approved', 'rejected'
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const subjectClassAssignment = pgTable('subject_class_assignment', {
+  id: text('id').primaryKey(),
+  teacherId: text('teacher_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  class: text('class').notNull(),
+  section: text('section').notNull(),
+  subject: text('subject').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const exam = pgTable('exam', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  class: text('class').notNull(),
+  section: text('section').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const studentSubjectMarks = pgTable('student_subject_marks', {
+  id: text('id').primaryKey(),
+  studentId: text('student_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  examId: text('exam_id').notNull().references(() => exam.id, { onDelete: 'cascade' }),
+  subject: text('subject').notNull(),
+  score: integer('score').notNull(),
+  maxScore: integer('max_score').notNull().default(100),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const communityMessage = pgTable('community_message', {
+  id: text('id').primaryKey(),
+  userId: text('userId').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  replyTo: text('replyTo'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+})
+
+export const teacherRequest = pgTable('teacher_request', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  status: text('status').notNull().default('pending'),
+  adminId: text('admin_id').references(() => user.id),
+  rejectionReason: text('rejection_reason'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+

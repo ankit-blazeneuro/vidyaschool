@@ -4,6 +4,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 from main import build_default_fee_installments, decode_session_token
+from app.routes.fees import generate_receipt_qr_data_url
 
 
 def test_decode_session_token_unquotes_percent_encoded_cookie_values():
@@ -33,3 +34,10 @@ def test_build_default_fee_installments_parses_academic_year_strings():
     assert len(installments) == 12
     assert installments[0].year == "2026"
     assert installments[-1].year == "2026"
+
+
+def test_generate_receipt_qr_data_url_returns_png_data_url():
+    data_url = generate_receipt_qr_data_url("VIDYA-SCHOOL|RECEIPT:REC-2026-ABC123")
+
+    assert data_url.startswith("data:image/png;base64,")
+    assert len(data_url) > 30

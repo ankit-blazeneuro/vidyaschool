@@ -6,11 +6,11 @@ import { AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-export function OnboardingAlert() {
+export function OnboardingAlert({ isTeacher }: { isTeacher?: boolean }) {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
-    fetch("/api/onboarding/status")
+    fetch("/api/backend/api/onboarding/status")
       .then(res => res.json())
       .then(data => {
         if (!data.onboardingCompleted) {
@@ -29,7 +29,7 @@ export function OnboardingAlert() {
       <AlertDescription className="flex items-center justify-between">
         <span>Please complete your profile to access all features.</span>
         <Button asChild size="sm" variant="outline" className="ml-2">
-          <Link href="/student/onboarding">Complete Now</Link>
+          <Link href={isTeacher ? "/teacher?onboarding=true" : "/student?onboarding=true"}>Complete Now</Link>
         </Button>
       </AlertDescription>
     </Alert>

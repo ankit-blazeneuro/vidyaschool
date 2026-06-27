@@ -14,7 +14,8 @@ import {
   Calendar,
   Search,
   ChevronDown,
-  Check
+  Check,
+  Loader2
 } from "lucide-react"
 import { 
   EvilBarChart, 
@@ -61,86 +62,7 @@ interface TermMarks {
   subjects: SubjectMark[]
 }
 
-const marksData: Record<string, TermMarks> = {
-  "term-1": {
-    termName: "Mid-Term Examination (Term 1)",
-    rank: "4th / 42",
-    attendance: "94.2%",
-    gpa: "8.4 / 10",
-    subjects: [
-      { code: "MAT-101", subject: "Mathematics", teacher: "Prof. Ananya Sen", score: 88, maxScore: 100, classAverage: 76, grade: "A", status: "Pass", breakdown: { theory: 55, practical: 20, internal: 13 } },
-      { code: "PHY-101", subject: "Physics", teacher: "Dr. Amit Verma", score: 84, maxScore: 100, classAverage: 72, grade: "A", status: "Pass", breakdown: { theory: 50, practical: 22, internal: 12 } },
-      { code: "CHM-101", subject: "Chemistry", teacher: "Dr. Sneha Roy", score: 91, maxScore: 100, classAverage: 79, grade: "A+", status: "Pass", breakdown: { theory: 56, practical: 21, internal: 14 } },
-      { code: "ENG-101", subject: "English Literature", teacher: "Mrs. Clara D'Souza", score: 78, maxScore: 100, classAverage: 74, grade: "B", status: "Pass", breakdown: { theory: 52, practical: 14, internal: 12 } },
-      { code: "CSE-101", subject: "Computer Programming", teacher: "Prof. Rajesh Nair", score: 95, maxScore: 100, classAverage: 81, grade: "A+", status: "Pass", breakdown: { theory: 58, practical: 23, internal: 14 } },
-      { code: "ME-101", subject: "Engineering Graphics", teacher: "Dr. Vikram Seth", score: 82, maxScore: 100, classAverage: 70, grade: "B+", status: "Pass", breakdown: { theory: 48, practical: 22, internal: 12 } },
-    ]
-  },
-  "term-2": {
-    termName: "Final Examination (Term 2)",
-    rank: "3rd / 42",
-    attendance: "95.8%",
-    gpa: "8.9 / 10",
-    subjects: [
-      { code: "MAT-101", subject: "Mathematics", teacher: "Prof. Ananya Sen", score: 92, maxScore: 100, classAverage: 78, grade: "A+", status: "Pass", breakdown: { theory: 58, practical: 20, internal: 14 } },
-      { code: "PHY-101", subject: "Physics", teacher: "Dr. Amit Verma", score: 89, maxScore: 100, classAverage: 75, grade: "A", status: "Pass", breakdown: { theory: 53, practical: 23, internal: 13 } },
-      { code: "CHM-101", subject: "Chemistry", teacher: "Dr. Sneha Roy", score: 88, maxScore: 100, classAverage: 77, grade: "A", status: "Pass", breakdown: { theory: 54, practical: 21, internal: 13 } },
-      { code: "ENG-101", subject: "English Literature", teacher: "Mrs. Clara D'Souza", score: 85, maxScore: 100, classAverage: 76, grade: "A", status: "Pass", breakdown: { theory: 55, practical: 16, internal: 14 } },
-      { code: "CSE-101", subject: "Computer Programming", teacher: "Prof. Rajesh Nair", score: 98, maxScore: 100, classAverage: 83, grade: "O", status: "Pass", breakdown: { theory: 60, practical: 24, internal: 14 } },
-      { code: "ME-101", subject: "Engineering Graphics", teacher: "Dr. Vikram Seth", score: 86, maxScore: 100, classAverage: 72, grade: "A", status: "Pass", breakdown: { theory: 50, practical: 23, internal: 13 } },
-    ]
-  },
-  "unit-test-1": {
-    termName: "Unit Test 1 (Monthly)",
-    rank: "5th / 42",
-    attendance: "93.5%",
-    gpa: "8.2 / 10",
-    subjects: [
-      { code: "MAT-101", subject: "Mathematics", teacher: "Prof. Ananya Sen", score: 22, maxScore: 25, classAverage: 19, grade: "A", status: "Pass", breakdown: { theory: 15, practical: 0, internal: 7 } },
-      { code: "PHY-101", subject: "Physics", teacher: "Dr. Amit Verma", score: 20, maxScore: 25, classAverage: 18, grade: "B+", status: "Pass", breakdown: { theory: 14, practical: 0, internal: 6 } },
-      { code: "CHM-101", subject: "Chemistry", teacher: "Dr. Sneha Roy", score: 23, maxScore: 25, classAverage: 19, grade: "A+", status: "Pass", breakdown: { theory: 16, practical: 0, internal: 7 } },
-      { code: "ENG-101", subject: "English Literature", teacher: "Mrs. Clara D'Souza", score: 18, maxScore: 25, classAverage: 18, grade: "B", status: "Pass", breakdown: { theory: 12, practical: 0, internal: 6 } },
-      { code: "CSE-101", subject: "Computer Programming", teacher: "Prof. Rajesh Nair", score: 24, maxScore: 25, classAverage: 20, grade: "A+", status: "Pass", breakdown: { theory: 16, practical: 0, internal: 8 } },
-      { code: "ME-101", subject: "Engineering Graphics", teacher: "Dr. Vikram Seth", score: 21, maxScore: 25, classAverage: 17, grade: "A", status: "Pass", breakdown: { theory: 14, practical: 0, internal: 7 } },
-    ]
-  },
-  "unit-test-2": {
-    termName: "Unit Test 2 (Monthly)",
-    rank: "2nd / 42",
-    attendance: "96.1%",
-    gpa: "9.1 / 10",
-    subjects: [
-      { code: "MAT-101", subject: "Mathematics", teacher: "Prof. Ananya Sen", score: 24, maxScore: 25, classAverage: 19, grade: "A+", status: "Pass", breakdown: { theory: 16, practical: 0, internal: 8 } },
-      { code: "PHY-101", subject: "Physics", teacher: "Dr. Amit Verma", score: 22, maxScore: 25, classAverage: 18, grade: "A", status: "Pass", breakdown: { theory: 15, practical: 0, internal: 7 } },
-      { code: "CHM-101", subject: "Chemistry", teacher: "Dr. Sneha Roy", score: 21, maxScore: 25, classAverage: 20, grade: "A", status: "Pass", breakdown: { theory: 14, practical: 0, internal: 7 } },
-      { code: "ENG-101", subject: "English Literature", teacher: "Mrs. Clara D'Souza", score: 23, maxScore: 25, classAverage: 19, grade: "A+", status: "Pass", breakdown: { theory: 15, practical: 0, internal: 8 } },
-      { code: "CSE-101", subject: "Computer Programming", teacher: "Prof. Rajesh Nair", score: 25, maxScore: 25, classAverage: 21, grade: "O", status: "Pass", breakdown: { theory: 17, practical: 0, internal: 8 } },
-      { code: "ME-101", subject: "Engineering Graphics", teacher: "Dr. Vikram Seth", score: 20, maxScore: 25, classAverage: 18, grade: "B+", status: "Pass", breakdown: { theory: 13, practical: 0, internal: 7 } },
-    ]
-  },
-  "practical-lab": {
-    termName: "Practical & Lab Assessment",
-    rank: "3rd / 42",
-    attendance: "98.5%",
-    gpa: "9.0 / 10",
-    subjects: [
-      { code: "MAT-101", subject: "Mathematics", teacher: "Prof. Ananya Sen", score: 18, maxScore: 20, classAverage: 16, grade: "A", status: "Pass", breakdown: { theory: 0, practical: 14, internal: 4 } },
-      { code: "PHY-101", subject: "Physics", teacher: "Dr. Amit Verma", score: 19, maxScore: 20, classAverage: 15, grade: "A+", status: "Pass", breakdown: { theory: 0, practical: 15, internal: 4 } },
-      { code: "CHM-101", subject: "Chemistry", teacher: "Dr. Sneha Roy", score: 18, maxScore: 20, classAverage: 16, grade: "A", status: "Pass", breakdown: { theory: 0, practical: 14, internal: 4 } },
-      { code: "ENG-101", subject: "English Literature", teacher: "Mrs. Clara D'Souza", score: 17, maxScore: 20, classAverage: 15, grade: "B+", status: "Pass", breakdown: { theory: 0, practical: 13, internal: 4 } },
-      { code: "CSE-101", subject: "Computer Programming", teacher: "Prof. Rajesh Nair", score: 20, maxScore: 20, classAverage: 17, grade: "O", status: "Pass", breakdown: { theory: 0, practical: 16, internal: 4 } },
-      { code: "ME-101", subject: "Engineering Graphics", teacher: "Dr. Vikram Seth", score: 17, maxScore: 20, classAverage: 14, grade: "B+", status: "Pass", breakdown: { theory: 0, practical: 13, internal: 4 } },
-    ]
-  }
-}
 
-const termOptions = [
-  { value: "term-2", label: "Term 2 (Final Exam)" },
-  { value: "term-1", label: "Term 1 (Mid-Term)" },
-  { value: "unit-test-1", label: "Unit Test 1" },
-  { value: "unit-test-2", label: "Unit Test 2" },
-  { value: "practical-lab", label: "Practical Lab Assessment" }
-]
 
 interface ComboboxOption {
   value: string
@@ -264,27 +186,55 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export default function StudentMarksPage() {
-  const [activeTerm, setActiveTerm] = React.useState<string>("term-2")
+  const [activeTerm, setActiveTerm] = React.useState<string>("")
   const [selectedSubject, setSelectedSubject] = React.useState<SubjectMark | null>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [isMounted, setIsMounted] = React.useState(false)
 
+  const [marksData, setMarksData] = React.useState<Record<string, TermMarks>>({})
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState("")
+
   React.useEffect(() => {
     setIsMounted(true)
+    fetch("/api/backend/api/student/marks")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load marks")
+        return res.json()
+      })
+      .then((data) => {
+        setMarksData(data)
+        const keys = Object.keys(data)
+        if (keys.length > 0) {
+          setActiveTerm(keys[0])
+        }
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
   }, [])
 
-  const currentTermData = marksData[activeTerm] || marksData["term-2"]
+  const termOptions = React.useMemo(() => {
+    return Object.entries(marksData).map(([key, data]) => ({
+      value: key,
+      label: data.termName
+    }))
+  }, [marksData])
+
+  const currentTermData = activeTerm ? marksData[activeTerm] : null
   
   // Calculate average percentage
-  const totalScore = currentTermData.subjects.reduce((sum, s) => sum + s.score, 0)
-  const totalMax = currentTermData.subjects.reduce((sum, s) => sum + s.maxScore, 0)
-  const overallPercentage = Math.round((totalScore / totalMax) * 1000) / 10
+  const totalScore = currentTermData ? currentTermData.subjects.reduce((sum, s) => sum + s.score, 0) : 0
+  const totalMax = currentTermData ? currentTermData.subjects.reduce((sum, s) => sum + s.maxScore, 0) : 0
+  const overallPercentage = totalMax > 0 ? Math.round((totalScore / totalMax) * 1000) / 10 : 0
 
   // Filtered subjects based on search query
-  const filteredSubjects = currentTermData.subjects.filter(sub => {
+  const filteredSubjects = currentTermData ? currentTermData.subjects.filter(sub => {
     return sub.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
            sub.code.toLowerCase().includes(searchQuery.toLowerCase())
-  })
+  }) : []
 
   // Chart Data preparation
   const chartData = filteredSubjects.map(sub => ({
@@ -292,6 +242,30 @@ export default function StudentMarksPage() {
     "Your Score": sub.score,
     "Class Avg": sub.classAverage,
   }))
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (Object.keys(marksData).length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 p-6 bg-background text-center">
+        <BookOpen className="h-12 w-12 text-muted-foreground/60" />
+        <h2 className="text-xl font-bold text-foreground">No Marks Available</h2>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          No examination marks have been recorded for your class section yet.
+        </p>
+      </div>
+    )
+  }
+
+  if (!currentTermData) {
+    return null
+  }
 
   return (
     <div className="flex flex-col gap-6 py-6 min-h-screen bg-background font-sans">

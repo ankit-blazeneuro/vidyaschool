@@ -1,14 +1,13 @@
 "use client"
 
 import * as React from "react"
+import { useParams, useRouter } from "next/navigation"
 import { 
   Users, 
   Search, 
-  Mail, 
-  MessageSquare, 
   TrendingUp, 
   TrendingDown,
-  ChevronRight
+  Loader2Icon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,46 +19,100 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 interface Student {
   id: string
+  userId: string
   name: string
   email: string
+  image?: string | null
   attendance: string
   gpa: number
   performance: "improving" | "stable" | "declining"
   status: "Excellent" | "Good" | "Needs Attention"
 }
 
-const mockStudents: Student[] = [
-  { id: "STU-2026-01", name: "Aarav Mehta", email: "aarav.mehta@vidya.edu", attendance: "98.2%", gpa: 9.4, performance: "improving", status: "Excellent" },
-  { id: "STU-2026-02", name: "Ananya Sen", email: "ananya.sen@vidya.edu", attendance: "94.5%", gpa: 8.8, performance: "stable", status: "Good" },
-  { id: "STU-2026-03", name: "Kabir Joshi", email: "kabir.joshi@vidya.edu", attendance: "82.1%", gpa: 6.2, performance: "declining", status: "Needs Attention" },
-  { id: "STU-2026-04", name: "Meera Nair", email: "meera.nair@vidya.edu", attendance: "96.8%", gpa: 9.1, performance: "improving", status: "Excellent" },
-  { id: "STU-2026-05", name: "Rohan Verma", email: "rohan.verma@vidya.edu", attendance: "89.4%", gpa: 7.5, performance: "stable", status: "Good" },
-  { id: "STU-2026-06", name: "Sneha Rao", email: "sneha.rao@vidya.edu", attendance: "95.0%", gpa: 8.9, performance: "improving", status: "Excellent" },
-  { id: "STU-2026-07", name: "Vihaan Gupta", email: "vihaan.gupta@vidya.edu", attendance: "78.5%", gpa: 5.8, performance: "declining", status: "Needs Attention" },
-]
+const getInitials = (name: string) => {
+  if (!name) return "ST"
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+}
 
 export default function MyClassPage() {
+  const params = useParams()
+  const router = useRouter()
+  const username = params.username as string
+
+  const [students, setStudents] = React.useState<Student[]>([])
+  const [className, setClassName] = React.useState<string>("")
+  const [sectionName, setSectionName] = React.useState<string>("")
+  const [loading, setLoading] = React.useState<boolean>(true)
+  const [error, setError] = React.useState<string>("")
   const [searchQuery, setSearchQuery] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<string>("All")
 
-  const filteredStudents = mockStudents.filter(student => {
+  React.useEffect(() => {
+    fetch("/api/backend/teacher/class/students")
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to load students")
+        return res.json()
+      })
+      .then(data => {
+        setStudents(data.students)
+        setClassName(data.class)
+        setSectionName(data.section)
+        setLoading(false)
+      })
+      .catch(err => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [])
+
+  const handleViewDetails = (studentUserId: string) => {
+    router.push(`/teacher/${username}/class/${studentUserId}`)
+  }
+
+  const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           student.id.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesFilter = statusFilter === "All" || student.status === statusFilter
     return matchesSearch && matchesFilter
   })
 
+  if (loading) {
+    return (
+      <div className="flex min-h-[400px] w-full items-center justify-center bg-background">
+        <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-2 p-6 bg-background">
+        <p className="text-destructive font-medium">Error: {error}</p>
+        <Button variant="outline" onClick={() => { setLoading(true); setError(""); window.location.reload() }}>
+          Retry
+        </Button>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col gap-6 py-6 min-h-screen bg-background font-sans">
+    <div className="flex flex-col gap-6 py-6 min-h-screen bg-background font-sans relative">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-6 lg:px-8">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
             <Users className="h-8 w-8 text-primary" />
-            My Class: Grade 10-A
+            My Class: {className && className !== "Not Assigned" && className !== "none" ? (className === "Nursery" || className === "KG" ? className : `Class ${className}`) : "Not Assigned"}{sectionName && sectionName !== "None" && sectionName !== "none" ? ` - ${sectionName}` : ""}
           </h1>
           <p className="text-muted-foreground text-sm max-w-2xl leading-relaxed">
             Manage your classroom roster, track student engagement, grade standing, and daily attendance records.
@@ -137,7 +190,17 @@ export default function MyClassPage() {
                   return (
                     <TableRow key={student.id} className="hover:bg-muted/10 transition-colors">
                       <TableCell className="font-mono text-xs font-semibold text-muted-foreground">{student.id}</TableCell>
-                      <TableCell className="font-bold text-foreground">{student.name}</TableCell>
+                      <TableCell className="font-bold text-foreground">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={student.image || undefined} alt={student.name} />
+                            <AvatarFallback className="font-semibold text-xs bg-primary/10 text-primary">
+                              {getInitials(student.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{student.name}</span>
+                        </div>
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-xs">{student.email}</TableCell>
                       <TableCell className="text-foreground text-sm font-semibold">{student.attendance}</TableCell>
                       <TableCell className="font-mono text-xs font-bold text-foreground">{student.gpa} / 10</TableCell>
@@ -176,14 +239,14 @@ export default function MyClassPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-1.5">
-                          <Button variant="outline" size="icon" className="h-7 w-7 rounded-md cursor-pointer" aria-label="Email Student">
-                            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                          </Button>
-                          <Button variant="outline" size="icon" className="h-7 w-7 rounded-md cursor-pointer" aria-label="Message Parent">
-                            <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-                          </Button>
-                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-xs rounded-lg cursor-pointer h-8"
+                          onClick={() => handleViewDetails(student.userId)}
+                        >
+                          View Details
+                        </Button>
                       </TableCell>
                     </TableRow>
                   )

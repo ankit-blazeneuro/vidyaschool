@@ -5,6 +5,7 @@ import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
@@ -13,6 +14,7 @@ export default function SignUpPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [preferredRole, setPreferredRole] = useState<"student" | "teacher">("student")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
@@ -23,12 +25,21 @@ export default function SignUpPage() {
     setError("")
 
     try {
-      await authClient.signUp.email({
+      const { data } = await authClient.signUp.email({
         name,
         email,
         password,
-        callbackURL: "/student/onboarding",
+        preferredRole,
       })
+      
+      if (preferredRole === "teacher" && data?.user?.id) {
+        await fetch("/api/admin/teacher-requests/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: data.user.id, preferredRole })
+        })
+      }
+      
       setSuccess(true)
     } catch (err: any) {
       setError(err.message || "Failed to sign up")
@@ -40,14 +51,14 @@ export default function SignUpPage() {
   const handleGoogleSignIn = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/student/onboarding",
+      callbackURL: "/dashboard",
     })
   }
 
   const handleGitHubSignIn = async () => {
     await authClient.signIn.social({
       provider: "github",
-      callbackURL: "/student/onboarding",
+      callbackURL: "/dashboard",
     })
   }
 
@@ -112,7 +123,7 @@ export default function SignUpPage() {
                     required
                   />
                 </Field>
-                <Field>
+                 <Field>
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   <Input
                     id="password"
@@ -122,6 +133,23 @@ export default function SignUpPage() {
                     required
                     minLength={8}
                   />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="role">Preferred Role</FieldLabel>
+                  <Select value={preferredRole} onValueChange={(value: "student" | "teacher") => setPreferredRole(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="teacher">Teacher</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {preferredRole === "teacher" && (
+                    <FieldDescription>
+                      Teacher accounts require admin approval
+                    </FieldDescription>
+                  )}
                 </Field>
                 {error && <p className="text-sm text-destructive text-center">{error}</p>}
                 <Field>

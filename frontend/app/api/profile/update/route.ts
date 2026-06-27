@@ -66,6 +66,7 @@ export async function PATCH(req: NextRequest) {
         city:        data.city        ?? existingProfile.city,
         state:       data.state       ?? existingProfile.state,
         pincode:     data.pincode     ?? existingProfile.pincode,
+        secondaryRole: data.secondaryRole !== undefined ? data.secondaryRole : existingProfile.secondaryRole,
         class:       data.class       !== undefined ? data.class       : existingProfile.class,
         section:     data.section     !== undefined ? data.section     : existingProfile.section,
         classSectionLastUpdated,

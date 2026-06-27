@@ -55,8 +55,8 @@ export function NavMain({
               if (!pathname) return false
               // Exact match
               if (pathname === item.url) return true
-              // For teacher and student dashboard roots — don't prefix-match as they're the root
-              const isDashboardRoot = item.url === '/teacher' || item.url === '/student' || /^\/student\/[^/]+$/.test(item.url)
+              // For dashboard roots (student, teacher, admin) — don't prefix-match as they're the root
+              const isDashboardRoot = /^\/(student|teacher|admin)(?:\/[^/]+)?$/.test(item.url)
               if (isDashboardRoot) return false
               // For all other items, prefix-match with trailing slash
               return pathname.startsWith(item.url + '/')

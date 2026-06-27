@@ -3,6 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from './db'
 import * as schema from './schema'
 import { Resend } from 'resend'
+import { eq } from 'drizzle-orm'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -50,6 +51,17 @@ export const auth = betterAuth({
         type: 'string',
         required: true,
         defaultValue: 'student',
+        input: false,
+      },
+      preferredRole: {
+        type: 'string',
+        required: false,
+        input: true,
+      },
+      teacherApprovalStatus: {
+        type: 'string',
+        required: false,
+        defaultValue: 'pending',
         input: false,
       },
     },

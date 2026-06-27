@@ -4,7 +4,6 @@ import * as React from "react"
 import { 
   CheckCircle2, 
   AlertCircle, 
-  Calendar, 
   Receipt, 
   CreditCard, 
   X, 
@@ -37,10 +36,45 @@ interface FeeMonth {
   paidDate?: string
   receiptNo?: string
   paymentMethod?: string
+  qrDataUrl?: string
+}
+
+interface FeeApiRecord {
+  id: string
+  month: string
+  year: string
+  amount: number
+  due_date: string
+  status: "paid" | "pending" | "overdue" | "upcoming"
+  paid_date?: string | null
+  receipt_no?: string | null
+  payment_method?: string | null
+  qr_data_url?: string | null
+}
+
+interface RazorpayOrderResponse {
+  detail?: string
+  key_id?: string
+  order_id?: string
+  amount?: number
+  currency?: string
+  mock_payment?: boolean
+}
+
+interface RazorpayVerificationResponse {
+  detail?: string
 }
 
 // Arranged calendar-chronologically from January to December 2026
 const BACKEND_URL = "/api/backend"
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
+  return "An unexpected error occurred."
+}
 
 const formatClassSection = (cls?: string, sec?: string) => {
   if (!cls) return "N/A"
@@ -56,8 +90,51 @@ export default function StudentFeesPage() {
   const [checkoutData, setCheckoutData] = React.useState<{ ids: string[]; amount: number; title: string; subtitle: string } | null>(null)
   const [receiptMonth, setReceiptMonth] = React.useState<FeeMonth | null>(null)
   const [isPaying, setIsPaying] = React.useState(false)
+  const [paymentMessage, setPaymentMessage] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState("")
+  const razorpayScriptLoaded = React.useRef(false)
+
+  const loadRazorpayScript = React.useCallback(async () => {
+    if (typeof window === "undefined") {
+      throw new Error("Payment gateway is unavailable in this environment")
+    }
+
+    if ((window as Window & { Razorpay?: unknown }).Razorpay) {
+      return
+    }
+
+    if (razorpayScriptLoaded.current) {
+      return
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      const existingScript = document.querySelector("script[src*='checkout.razorpay.com']") as HTMLScriptElement | null
+      if (existingScript) {
+        if (existingScript.dataset.loaded === "true") {
+          resolve()
+          return
+        }
+
+        existingScript.addEventListener("load", () => resolve(), { once: true })
+        existingScript.addEventListener("error", () => reject(new Error("Unable to load the Razorpay payment gateway. Please refresh and try again.")), { once: true })
+        return
+      }
+
+      const script = document.createElement("script")
+      script.src = "https://checkout.razorpay.com/v1/checkout.js"
+      script.async = true
+      script.onload = () => {
+        script.dataset.loaded = "true"
+        razorpayScriptLoaded.current = true
+        resolve()
+      }
+      script.onerror = () => {
+        reject(new Error("Unable to load the Razorpay payment gateway. Please refresh and try again."))
+      }
+      document.body.appendChild(script)
+    })
+  }, [])
 
   const fetchData = async () => {
     setLoading(true)
@@ -68,7 +145,10 @@ export default function StudentFeesPage() {
       if (!accountRes.ok) {
         throw new Error("Failed to load student profile details")
       }
-      const accountData = await accountRes.json()
+      const accountData = await accountRes.json() as {
+        user?: { name?: string }
+        profile?: { admissionNumber?: string; class?: string; section?: string }
+      }
       setStudentProfile({
         name: accountData.user?.name || "Student",
         admissionNumber: accountData.profile?.admissionNumber || "N/A",
@@ -83,30 +163,40 @@ export default function StudentFeesPage() {
       if (!feesRes.ok) {
         throw new Error("Failed to load fee installments from backend server")
       }
-      const feesData = await feesRes.json()
+      const feesData = await feesRes.json() as FeeApiRecord[]
       
-      const mappedFees: FeeMonth[] = feesData.map((inst: any) => ({
+      const mappedFees: FeeMonth[] = feesData.map((inst) => ({
         id: inst.id,
         month: inst.month,
         year: inst.year,
         amount: inst.amount,
         dueDate: inst.due_date,
         status: inst.status,
-        paidDate: inst.paid_date,
-        receiptNo: inst.receipt_no,
-        paymentMethod: inst.payment_method,
+        paidDate: inst.paid_date ?? undefined,
+        receiptNo: inst.receipt_no ?? undefined,
+        paymentMethod: inst.payment_method ?? undefined,
+        qrDataUrl: inst.qr_data_url ?? undefined,
       }))
       setMonths(mappedFees)
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.")
+    } catch (err) {
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }
   }
 
   React.useEffect(() => {
-    fetchData()
-  }, [])
+    const initializePage = async () => {
+      try {
+        await loadRazorpayScript()
+        await fetchData()
+      } catch (err) {
+        setError(getErrorMessage(err))
+      }
+    }
+
+    void initializePage()
+  }, [loadRazorpayScript])
 
   // Calculations
   const totalPaid = months.filter(m => m.status === "paid").reduce((acc, m) => acc + m.amount, 0)
@@ -118,28 +208,107 @@ export default function StudentFeesPage() {
     if (!checkoutData) return
     setIsPaying(true)
     setError("")
-    
+    setPaymentMessage(null)
+
     try {
-      const res = await fetch(`${BACKEND_URL}/api/fees/pay`, {
+      await loadRazorpayScript()
+
+      const orderRes = await fetch(`${BACKEND_URL}/api/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           installment_ids: checkoutData.ids,
-          payment_method: "Card / Online"
+          amount: checkoutData.amount * 100,
+          receipt: `FEE-${checkoutData.ids.join("")}-${Date.now()}`
         })
       })
 
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.detail || "Payment failed to process")
+      const orderData = await orderRes.json() as RazorpayOrderResponse
+      if (!orderRes.ok) {
+        throw new Error(orderData.detail || "Unable to start Razorpay checkout")
       }
 
-      await fetchData()
-      setSelectedMonths([])
-      setCheckoutData(null)
-    } catch (err: any) {
-      setError(err.message || "Payment failed")
+      const isDarkMode = document.documentElement.classList.contains("dark") || window.matchMedia("(prefers-color-scheme: dark)").matches
+
+      if (orderData.mock_payment) {
+        setPaymentMessage(orderData.detail || "Mock payment mode is active. Your payment was simulated successfully.")
+        await fetchData()
+        setSelectedMonths([])
+        setCheckoutData(null)
+        return
+      }
+
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Vidya School",
+        description: checkoutData.subtitle,
+        order_id: orderData.order_id,
+        prefill: {
+          name: studentProfile?.name || "Student",
+          email: "student@example.com",
+          contact: "9999999999"
+        },
+        handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
+          try {
+            const verifyRes = await fetch(`${BACKEND_URL}/api/verify-payment`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                order_id: response.razorpay_order_id,
+                payment_id: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                installment_ids: checkoutData.ids,
+                payment_method: "Razorpay"
+              })
+            })
+
+            const verifyData = await verifyRes.json() as RazorpayVerificationResponse
+            if (!verifyRes.ok) {
+              throw new Error(verifyData.detail || "Payment verification failed")
+            }
+
+            await fetchData()
+            setSelectedMonths([])
+            setCheckoutData(null)
+            setPaymentMessage("Payment successful. Your receipt is ready.")
+          } catch (err) {
+            setError(getErrorMessage(err) || "Payment verification failed")
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setPaymentMessage("Payment cancelled. No charges were made.")
+          }
+        },
+        display: {
+          blocks: {
+            upi: {
+              name: "Pay via UPI",
+              instruments: [{ method: "upi" }]
+            },
+            card: {
+              name: "Pay via Card",
+              instruments: [{ method: "card" }]
+            }
+          },
+          sequence: ["block.upi", "block.card"],
+          preferences: {
+            show_default_blocks: false
+          }
+        },
+        theme: {
+          color: isDarkMode ? "#0f172a" : "#2563eb"
+        }
+      }
+
+      const razorpay = new ((window as Window & { Razorpay?: new (options: unknown) => { open: () => void } }).Razorpay as new (options: unknown) => { open: () => void })(options)
+      razorpay.open()
+    } catch (err) {
+      setError(getErrorMessage(err) || "Payment failed")
     } finally {
       setIsPaying(false)
     }
@@ -432,40 +601,11 @@ export default function StudentFeesPage() {
                 </div>
               </div>
 
-              {/* Card Inputs */}
+              {/* Payment Button */}
               <div className="space-y-4">
-                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Payment Details</h4>
-                <div className="space-y-3">
-                  <div className="grid gap-1">
-                    <label className="text-[11px] font-semibold text-muted-foreground uppercase">Card Number</label>
-                    <input 
-                      type="text" 
-                      placeholder="•••• •••• •••• 4242"
-                      disabled={isPaying}
-                      className="h-9 px-3 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary w-full disabled:opacity-50"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="grid gap-1">
-                      <label className="text-[11px] font-semibold text-muted-foreground uppercase">Expiry Date</label>
-                      <input 
-                        type="text" 
-                        placeholder="MM / YY" 
-                        disabled={isPaying}
-                        className="h-9 px-3 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary w-full disabled:opacity-50"
-                      />
-                    </div>
-                    <div className="grid gap-1">
-                      <label className="text-[11px] font-semibold text-muted-foreground uppercase">Security Code (CVV)</label>
-                      <input 
-                        type="password" 
-                        placeholder="•••" 
-                        maxLength={3}
-                        disabled={isPaying}
-                        className="h-9 px-3 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-primary w-full disabled:opacity-50"
-                      />
-                    </div>
-                  </div>
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Secure Checkout</h4>
+                <div className="rounded-lg border border-dashed border-border/70 bg-muted/20 p-3 text-sm text-muted-foreground">
+                  You will be redirected to Razorpay&apos;s secure payment page to complete this fee payment.
                 </div>
               </div>
 
@@ -474,6 +614,12 @@ export default function StudentFeesPage() {
                 <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
                 <span>Your payment session is fully encrypted and secured by Vidya School Payment System.</span>
               </div>
+
+              {paymentMessage && (
+                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-400">
+                  {paymentMessage}
+                </div>
+              )}
 
               {/* Buttons */}
               <div className="flex items-center gap-3 pt-2">
@@ -493,7 +639,7 @@ export default function StudentFeesPage() {
                   {isPaying ? (
                     <span className="flex items-center gap-2">
                       <span className="h-3 w-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                      Processing...
+                      Preparing payment...
                     </span>
                   ) : (
                     `Pay ₹${checkoutData.amount.toLocaleString("en-IN")}`
@@ -580,6 +726,8 @@ export default function StudentFeesPage() {
                   <span className="font-semibold text-foreground block mt-0.5">{receiptMonth.paymentMethod || "-"}</span>
                 </div>
               </div>
+
+              {/* Receipt QR temporarily disabled */}
 
               {/* Billing Breakdowns */}
               <div className="rounded-lg border border-border/80 overflow-hidden text-xs mt-6">

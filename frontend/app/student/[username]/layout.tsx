@@ -22,7 +22,7 @@ export default async function UsernameLayout({
 
   // If the current user has no completed profile, send them to onboarding
   if (!currentProfile?.onboardingCompleted || !currentProfile.username) {
-    redirect('/student/onboarding')
+    redirect('/student?onboarding=true')
   }
 
   // Check if the requested username exists in the DB

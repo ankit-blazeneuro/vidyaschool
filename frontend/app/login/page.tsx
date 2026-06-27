@@ -24,10 +24,10 @@ export default function LoginPage() {
       await authClient.signIn.email({
         email,
         password,
-        callbackURL: "/student",
+        callbackURL: "/dashboard",
       })
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to sign in")
     } finally {
       setLoading(false)
     }
@@ -36,14 +36,14 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/student",
+      callbackURL: "/dashboard",
     })
   }
 
   const handleGitHubSignIn = async () => {
     await authClient.signIn.social({
       provider: "github",
-      callbackURL: "/student",
+      callbackURL: "/dashboard",
     })
   }
 
@@ -51,13 +51,14 @@ export default function LoginPage() {
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
-          <a href="/" className="flex items-center gap-2 font-medium">
+          <Link href="/" className="flex items-center gap-2 font-medium">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
               VS
             </div>
             VidyaSchool
-          </a>
+          </Link>
         </div>
+
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
             <form onSubmit={handleEmailSignIn} className={cn("flex flex-col gap-6")}>
@@ -68,6 +69,7 @@ export default function LoginPage() {
                     Enter your email below to login to your account
                   </p>
                 </div>
+
                 <Field>
                   <FieldLabel htmlFor="email">Email</FieldLabel>
                   <Input
@@ -79,13 +81,11 @@ export default function LoginPage() {
                     required
                   />
                 </Field>
+
                 <Field>
                   <div className="flex items-center">
                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <a
-                      href="#"
-                      className="ml-auto text-sm underline-offset-4 hover:underline"
-                    >
+                    <a href="#" className="ml-auto text-sm underline-offset-4 hover:underline">
                       Forgot your password?
                     </a>
                   </div>
@@ -97,13 +97,17 @@ export default function LoginPage() {
                     required
                   />
                 </Field>
-                {error && <p className="text-sm text-destructive text-center">{error}</p>}
+
+                {error ? <p className="text-center text-sm text-destructive">{error}</p> : null}
+
                 <Field>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Logging in..." : "Login"}
                   </Button>
                 </Field>
+
                 <FieldSeparator>Or continue with</FieldSeparator>
+
                 <Field>
                   <div className="grid grid-cols-2 gap-4">
                     <Button variant="outline" type="button" onClick={handleGoogleSignIn}>
@@ -117,8 +121,9 @@ export default function LoginPage() {
                       </svg>
                     </Button>
                   </div>
+
                   <FieldDescription className="text-center">
-                    Don&apos;t have an account?{" "}
+                    Don&apos;t have an account? {" "}
                     <Link href="/signup" className="underline underline-offset-4">
                       Sign up
                     </Link>
@@ -129,6 +134,7 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
       <div className="relative hidden bg-muted lg:block">
         <div className="absolute inset-0 flex items-center justify-center">
           <Image
