@@ -139,7 +139,7 @@ export function OnboardingDialog({ userRole, userEmail, onSuccess }: OnboardingD
 
       const data = await response.json()
       if (!response.ok) {
-        throw new Error(data.error || "Failed to complete onboarding")
+        throw new Error(data.detail || data.error || "Failed to complete onboarding")
       }
 
       toast.success("Profile onboarding completed successfully!")
