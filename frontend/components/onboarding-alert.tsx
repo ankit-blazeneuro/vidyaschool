@@ -11,10 +11,15 @@ export function OnboardingAlert({ isTeacher }: { isTeacher?: boolean }) {
 
   useEffect(() => {
     fetch("/api/backend/api/onboarding/status")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error("Not authenticated or error")
+        return res.json()
+      })
       .then(data => {
-        if (!data.onboardingCompleted) {
+        if (data && data.onboardingCompleted === false) {
           setShow(true)
+        } else {
+          setShow(false)
         }
       })
       .catch(() => setShow(false))
