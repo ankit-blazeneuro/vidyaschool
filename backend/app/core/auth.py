@@ -7,7 +7,6 @@ from sqlmodel import Session
 
 from app.core.database import get_db
 from models import User, Session as SessionModel
-from app.core.config import DEBUG_LOG_PATH
 
 
 def decode_session_token(token: Optional[str]) -> Optional[str]:
@@ -28,10 +27,9 @@ def decode_session_token(token: Optional[str]) -> Optional[str]:
 
 
 def log_request_debug(request: Request) -> None:
-    with DEBUG_LOG_PATH.open("a", encoding="utf-8") as fh:
-        fh.write(f"\n--- {datetime.utcnow()} ---\n")
-        fh.write(f"Headers: {dict(request.headers)}\n")
-        fh.write(f"Cookies: {dict(request.cookies)}\n")
+    print(f"\n--- [DEBUG] Request at {datetime.utcnow()} ---")
+    print(f"Headers: {dict(request.headers)}")
+    print(f"Cookies: {dict(request.cookies)}")
 
 
 def get_current_user(request: Request, db: Session = Depends(get_db)):
@@ -43,18 +41,16 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
         if auth_header and auth_header.startswith("Bearer "):
             token = decode_session_token(auth_header.split(" ", 1)[1])
 
-    with DEBUG_LOG_PATH.open("a", encoding="utf-8") as fh:
-        fh.write(f"Extracted token: {token}\n")
+    print(f"Extracted token: {token}")
 
     if not token:
         raise HTTPException(status_code=401, detail="Unauthorized: No session token found")
 
     db_session = db.query(SessionModel).filter(SessionModel.token == token).first()
 
-    with DEBUG_LOG_PATH.open("a", encoding="utf-8") as fh:
-        fh.write(f"Found db_session: {db_session is not None}\n")
-        if db_session:
-            fh.write(f"db_session user_id: {db_session.user_id}, expires_at: {db_session.expires_at}\n")
+    print(f"Found db_session: {db_session is not None}")
+    if db_session:
+        print(f"db_session user_id: {db_session.user_id}, expires_at: {db_session.expires_at}")
 
     if not db_session:
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid session")
