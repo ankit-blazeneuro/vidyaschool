@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const userRole = session.user.role || 'student'
 
   try {
-    let noticesData = []
+    let noticesData: any[] = []
 
     if (userRole === 'student') {
       // 1. Fetch student's profile to get class and section
