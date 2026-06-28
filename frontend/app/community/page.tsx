@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/page-header"
 
 interface Message {
   id: string
@@ -327,63 +328,40 @@ export default function CommunityChatPage() {
     : `/teacher/${userProfile?.username || ""}`
 
   return (
-    <div className="flex flex-col h-[calc(100vh-var(--header-height))] bg-background text-foreground font-sans overflow-hidden border-t border-border">
+    <div className="flex flex-col h-[calc(100vh-var(--header-height))] bg-background text-foreground font-sans overflow-hidden">
       
-      {/* Top Chat Header Bar */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-background sticky top-0 z-10 shrink-0 select-none">
-        <div className="flex items-center gap-3 min-w-0">
-          <Button asChild variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 animate-in fade-in duration-200">
-            <Link href={backHref}>
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-          </Button>
-          
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Hash className="h-6 w-6 text-muted-foreground/80 shrink-0" />
-            <span className="font-bold text-foreground text-base truncate">community</span>
-            <div className="hidden md:block w-[1px] h-4 bg-border mx-2 shrink-0" />
-            <p className="text-xs text-muted-foreground truncate hidden md:block">
-              Secure realtime workspace for school teachers and administrators
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 text-muted-foreground">
-          {connected ? (
-            <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 py-0.5 px-2 flex items-center gap-1 shadow-none rounded-sm text-[10px] font-semibold select-none uppercase">
-              <Wifi className="h-3 w-3" />
-              Connected
-            </Badge>
-          ) : (
-            <Badge variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20 py-0.5 px-2 flex items-center gap-1 shadow-none rounded-sm text-[10px] font-semibold animate-pulse select-none uppercase">
-              <WifiOff className="h-3 w-3" />
-              Reconnecting
-            </Badge>
-          )}
-
+      {/* Page Header */}
+      <PageHeader
+        title="Community"
+        onToggleSidebar={() => setShowMemberList(!showMemberList)}
+        actions={
           <div className="flex items-center gap-3">
+            {connected ? (
+              <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 gap-1.5">
+                <Wifi className="h-3 w-3" />
+                Online
+              </Badge>
+            ) : (
+              <Badge variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20 gap-1.5 animate-pulse">
+                <WifiOff className="h-3 w-3" />
+                Offline
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowMemberList(!showMemberList)}
+              className="hidden md:flex"
+            >
+              <Users className="h-5 w-5" />
+            </Button>
+          </div>
+        }
+      />
             <button className="hover:text-foreground transition-colors" title="Notification Settings">
               <Bell className="h-5 w-5" />
             </button>
             <button className="hover:text-foreground transition-colors" title="Pinned Messages">
-              <Pin className="h-5 w-5" />
-            </button>
-            <button 
-              onClick={() => setShowMemberList(!showMemberList)} 
-              className={`transition-colors ${showMemberList ? "text-foreground font-semibold" : "hover:text-foreground"}`}
-              title="Member List"
-            >
-              <Users className="h-5 w-5" />
-            </button>
-            <button className="hover:text-foreground transition-colors" title="Inbox">
-              <Inbox className="h-5 w-5" />
-            </button>
-            <button className="hover:text-foreground transition-colors" title="Help">
-              <HelpCircle className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </header>
 
       {/* Main Container */}
       <div className="flex flex-1 overflow-hidden min-h-0">
