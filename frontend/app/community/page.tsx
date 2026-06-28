@@ -358,10 +358,6 @@ export default function CommunityChatPage() {
           </div>
         }
       />
-            <button className="hover:text-foreground transition-colors" title="Notification Settings">
-              <Bell className="h-5 w-5" />
-            </button>
-            <button className="hover:text-foreground transition-colors" title="Pinned Messages">
 
       {/* Main Container */}
       <div className="flex flex-1 overflow-hidden min-h-0">
