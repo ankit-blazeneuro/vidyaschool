@@ -22,7 +22,11 @@ db_url = os.getenv("DATABASE_URL")
 if db_url and db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
 
-engine = create_engine(db_url or "")
+engine = create_engine(
+    db_url or "",
+    pool_pre_ping=True,
+    pool_recycle=300
+)
 
 # Set up Socket.IO server
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')

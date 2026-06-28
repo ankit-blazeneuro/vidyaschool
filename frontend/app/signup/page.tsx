@@ -85,9 +85,13 @@ export default function SignUpPage() {
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="/" className="flex items-center gap-2 font-medium">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              VS
-            </div>
+            <Image
+              src="/assets/vidyaschool/Logo/no_title.svg"
+              alt="VidyaSchool Logo"
+              width={24}
+              height={24}
+              className="h-6 w-6 object-contain"
+            />
             VidyaSchool
           </a>
         </div>
@@ -186,11 +190,11 @@ export default function SignUpPage() {
       <div className="relative hidden bg-muted lg:block">
         <div className="absolute inset-0 flex items-center justify-center">
           <Image
-            src="/assets/vidyaschool/simple-removebg-preview.png"
+            src="/assets/vidyaschool/Logo/restored_no_bg_with_title.png"
             alt="VidyaSchool Logo"
             width={400}
             height={400}
-            className="object-contain"
+            className="object-contain animate-fade-in"
           />
         </div>
       </div>

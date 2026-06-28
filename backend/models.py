@@ -124,4 +124,32 @@ class TeacherRequest(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+class Complaint(SQLModel, table=True):
+    __tablename__ = "complaint"
+    id: str = Field(primary_key=True)
+    user_id: str = Field(alias="user_id", foreign_key="user.id")
+    title: str
+    recipient: str
+    tagged_people: Optional[str] = Field(default=None, alias="tagged_people")
+    message: str
+    file_url: Optional[str] = Field(default=None, alias="file_url")
+    file_name: Optional[str] = Field(default=None, alias="file_name")
+    status: str = Field(default="pending")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Notice(SQLModel, table=True):
+    __tablename__ = "notice"
+    id: str = Field(primary_key=True)
+    title: str
+    content: str
+    category: str = Field(default="General")
+    is_urgent: bool = Field(default=False, alias="is_urgent")
+    sender_id: str = Field(alias="sender_id", foreign_key="user.id")
+    target_role: str = Field(default="all", alias="target_role")
+    target_class: Optional[str] = Field(default=None, alias="target_class")
+    target_section: Optional[str] = Field(default=None, alias="target_section")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
 

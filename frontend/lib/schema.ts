@@ -34,6 +34,7 @@ export const userProfile = pgTable('user_profile', {
   classSectionLastUpdated: timestamp('class_section_last_updated'),
   classSectionChanges: text('class_section_changes'),
   secondaryRole: text('secondary_role'),
+  transportMode: text('transport_mode'),
   onboardingCompleted: boolean('onboarding_completed').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -132,11 +133,11 @@ export const studentSubjectMarks = pgTable('student_subject_marks', {
 
 export const communityMessage = pgTable('community_message', {
   id: text('id').primaryKey(),
-  userId: text('userId').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
-  replyTo: text('replyTo'),
-  createdAt: timestamp('createdAt').notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  replyTo: text('reply_to'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
 export const teacherRequest = pgTable('teacher_request', {
@@ -145,6 +146,34 @@ export const teacherRequest = pgTable('teacher_request', {
   status: text('status').notNull().default('pending'),
   adminId: text('admin_id').references(() => user.id),
   rejectionReason: text('rejection_reason'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const complaint = pgTable('complaint', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  recipient: text('recipient').notNull(),
+  taggedPeople: text('tagged_people'),
+  message: text('message').notNull(),
+  fileUrl: text('file_url'),
+  fileName: text('file_name'),
+  status: text('status').notNull().default('pending'), // 'pending', 'resolved'
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const notice = pgTable('notice', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  category: text('category').notNull().default('General'), // 'Academic', 'Exams', 'Events', 'General'
+  isUrgent: boolean('is_urgent').notNull().default(false),
+  senderId: text('sender_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  targetRole: text('target_role').notNull().default('all'), // 'all', 'teacher', 'student'
+  targetClass: text('target_class'),
+  targetSection: text('target_section'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
@@ -16,8 +17,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle } from "lucide-react"
 import { useSession } from "@/lib/auth-client"
+import { io } from "socket.io-client"
 
 // Hook to get username-based URLs
 function useStudentUrls() {
@@ -96,6 +98,7 @@ function useAdminUrls() {
     teachers: `${base}/teacher`,
     requests: `${base}/requests`,
     feeManagement: `${base}/fee-management`,
+    notices: `${base}/notice`,
   }
 }
 
@@ -300,6 +303,94 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const adminUrls = useAdminUrls()
   const accountUrls = useAccountUrls()
 
+  // Notification states
+  const [unreadCommunity, setUnreadCommunity] = React.useState(false)
+  const [unreadRequests, setUnreadRequests] = React.useState(false)
+  const [unreadNotices, setUnreadNotices] = React.useState(false)
+  const [unreadComplaints, setUnreadComplaints] = React.useState(false)
+
+  // Clear notifications when visiting pages
+  React.useEffect(() => {
+    if (!pathname) return
+    if (pathname === "/community") {
+      setUnreadCommunity(false)
+    }
+    if (pathname.includes("/requests")) {
+      setUnreadRequests(false)
+    }
+    if (pathname.includes("/notice")) {
+      setUnreadNotices(false)
+    }
+    if (pathname.includes("/complaints")) {
+      setUnreadComplaints(false)
+    }
+  }, [pathname])
+
+  // Fetch initial pending status on mount and connect to Socket.IO
+  React.useEffect(() => {
+    if (!session?.user) return
+
+    // 1. Fetch complaints status
+    const roleParam = isTeacher ? "teacher" : isAdmin ? "admin" : ""
+    if (roleParam) {
+      fetch(`/api/complaints?role=${roleParam}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            const hasPending = data.some(c => c.status === "pending")
+            setUnreadComplaints(hasPending)
+          }
+        })
+        .catch(() => {})
+    }
+
+    // 2. Fetch admin requests status
+    if (isAdmin) {
+      fetch('/api/backend/api/admin/requests')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            const hasPending = data.some((r: any) => r.status === "pending")
+            setUnreadRequests(hasPending)
+          }
+        })
+        .catch(() => {})
+    }
+
+    // 3. Setup Socket.IO listener for real-time notification triggers
+    const socket = io("http://localhost:8000", {
+      transports: ["websocket", "polling"]
+    })
+
+    socket.on("new_message", () => {
+      if (pathname !== "/community") {
+        setUnreadCommunity(true)
+      }
+    })
+
+    socket.on("teacher_request_created", () => {
+      if (isAdmin && !pathname?.includes("/requests")) {
+        setUnreadRequests(true)
+      }
+    })
+
+    return () => {
+      socket.disconnect()
+    }
+  }, [session, pathname, isTeacher, isAdmin])
+
+  // Trigger simulated new notice dot
+  React.useEffect(() => {
+    if (pathname?.includes("/notice")) {
+      setUnreadNotices(false)
+      return
+    }
+    const timer = setTimeout(() => {
+      setUnreadNotices(true)
+    }, 12000)
+    return () => clearTimeout(timer)
+  }, [pathname])
+
   const navMain = isAccount
     ? [
         {
@@ -399,16 +490,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Requests",
           url: teacherUrls.requests,
           icon: <GitPullRequest />,
+          hasNotification: unreadRequests,
         },
         {
           title: "Notices",
           url: teacherUrls.notice,
           icon: <BellIcon />,
+          hasNotification: unreadNotices,
         },
         {
           title: "Community Chat",
           url: "/community",
           icon: <MessageSquare />,
+          hasNotification: unreadCommunity,
+        },
+        {
+          title: "Complaints",
+          url: `${teacherUrls.dashboard}/complaints`,
+          icon: <AlertTriangle />,
+          hasNotification: unreadComplaints,
         },
       ]
     : isAdmin
@@ -432,6 +532,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Requests",
           url: adminUrls.requests,
           icon: <GitPullRequest />,
+          hasNotification: unreadRequests,
         },
         {
           title: "Fee Management",
@@ -442,6 +543,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Community Chat",
           url: "/community",
           icon: <MessageSquare />,
+          hasNotification: unreadCommunity,
+        },
+        {
+          title: "Complaints",
+          url: `${adminUrls.dashboard}/complaints`,
+          icon: <AlertTriangle />,
+          hasNotification: unreadComplaints,
+        },
+        {
+          title: "Notices",
+          url: adminUrls.notices,
+          icon: <BellIcon />,
+          hasNotification: unreadNotices,
         },
       ]
     : [
@@ -469,6 +583,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Notices",
           url: urls.notice,
           icon: <BellIcon />,
+          hasNotification: unreadNotices,
         },
       ]
 
@@ -482,7 +597,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <a href="#">
-                <CommandIcon className="size-5!" />
+                <Image
+                  src="/assets/vidyaschool/Logo/no_title.svg"
+                  alt="Vidya School Logo"
+                  width={20}
+                  height={20}
+                  className="size-5! object-contain grayscale brightness-0 dark:invert"
+                />
                 <span className="text-base font-semibold">Vidya School</span>
               </a>
             </SidebarMenuButton>

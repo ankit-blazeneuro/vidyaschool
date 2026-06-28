@@ -1,34 +1,53 @@
 "use client"
 
 import * as React from "react"
-import { Megaphone, Search, Calendar, AlertTriangle } from "lucide-react"
+import { Megaphone, Search, Calendar, AlertTriangle, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { toast } from "sonner"
 
 interface Notice {
   id: string
   title: string
-  date: string
-  sender: string
-  category: "Academic" | "Exams" | "Events" | "General"
   content: string
+  category: string
   isUrgent: boolean
+  senderId: string
+  targetRole: string
+  targetClass: string | null
+  targetSection: string | null
+  createdAt: string
+  senderName: string
 }
 
-const mockNotices: Notice[] = [
-  { id: "N-01", title: "Final Semester Examination Timetable Released", date: "June 24, 2026", sender: "Controller of Examinations", category: "Exams", content: "The examination schedule for the upcoming final semester examinations is now officially published. Students can view the dates on the register page or download the PDF copy from the school notices board portal. Examinations begin July 10, 2026.", isUrgent: true },
-  { id: "N-02", title: "Independence Day Celebration Rehearsals", date: "June 22, 2026", sender: "Dean of Student Affairs", category: "Events", content: "Rehearsals for the dance, choir, and parade teams for the Independence Day event will start from tomorrow. Students who signed up must report to the school main auditorium by 03:00 PM everyday after regular classes.", isUrgent: false },
-  { id: "N-03", title: "Upgrade of Digital Library Systems", date: "June 20, 2026", sender: "Chief Librarian", category: "Academic", content: "The digital library portal will undergo scheduled database maintenance and server upgrade on June 28, 2026. Online access to e-books, registers, and research papers will be unavailable from 09:00 AM to 05:00 PM.", isUrgent: false },
-  { id: "N-04", title: "Monsoon Health Advisory and Precautions", date: "June 18, 2026", sender: "School Medical Officer", category: "General", content: "In view of the monsoon season, students are advised to carry umbrellas, maintain proper sanitation, and drink filtered water. Health center is stocked with essential medicines in case of cold, seasonal flu, or allergies.", isUrgent: false }
-]
-
 export default function StudentNoticePage() {
+  const [notices, setNotices] = React.useState<Notice[]>([])
+  const [loading, setLoading] = React.useState(true)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [selectedCategory, setSelectedCategory] = React.useState<string>("All")
 
-  const filteredNotices = mockNotices.filter(notice => {
+  const fetchNotices = React.useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/notices")
+      if (!res.ok) throw new Error("Failed to fetch notices")
+      const data = await res.json()
+      setNotices(data)
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load notices")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    fetchNotices()
+  }, [fetchNotices])
+
+  const filteredNotices = notices.filter(notice => {
     const matchesSearch = notice.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          notice.content.toLowerCase().includes(searchQuery.toLowerCase())
+                          notice.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          notice.senderName.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = selectedCategory === "All" || notice.category === selectedCategory
     return matchesSearch && matchesCategory
   })
@@ -43,9 +62,19 @@ export default function StudentNoticePage() {
             Notice Board
           </h1>
           <p className="text-muted-foreground text-sm max-w-2xl leading-relaxed">
-            Stay updated with official notifications, exam announcements, holidays, and extracurricular events.
+            Stay updated with official notifications, exam announcements, holidays, and class bulletins.
           </p>
         </div>
+        <Button
+          onClick={fetchNotices}
+          variant="outline"
+          size="sm"
+          className="sm:w-auto rounded-lg cursor-pointer flex items-center gap-1.5"
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Filters */}
@@ -77,7 +106,11 @@ export default function StudentNoticePage() {
 
       {/* Notices List */}
       <div className="grid gap-6 px-6 lg:px-8">
-        {filteredNotices.length > 0 ? (
+        {loading ? (
+          <div className="py-16 text-center text-muted-foreground text-sm">
+            Loading notices...
+          </div>
+        ) : filteredNotices.length > 0 ? (
           filteredNotices.map((notice) => (
             <div key={notice.id} className={`rounded-xl border p-6 bg-card/30 flex flex-col gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden ${
               notice.isUrgent ? "border-amber-500/30 bg-amber-500/[0.01]" : "border-border"
@@ -102,16 +135,25 @@ export default function StudentNoticePage() {
                       <AlertTriangle className="h-3 w-3 mr-0.5" /> Urgent Notice
                     </span>
                   )}
+                  {notice.targetClass && (
+                    <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-md font-bold">
+                      Class: {notice.targetClass}-{notice.targetSection || "All"}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
                   <Calendar className="h-3.5 w-3.5" />
-                  {notice.date}
+                  {new Date(notice.createdAt).toLocaleDateString("en-US", {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </div>
               </div>
 
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-foreground leading-tight tracking-tight">{notice.title}</h3>
-                <p className="text-xs text-muted-foreground font-semibold">Posted by: {notice.sender}</p>
+                <p className="text-xs text-muted-foreground font-semibold">Posted by: {notice.senderName || "System"}</p>
               </div>
 
               <p className="text-sm text-foreground/80 leading-relaxed font-normal whitespace-pre-wrap">{notice.content}</p>

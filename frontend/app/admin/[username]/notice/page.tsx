@@ -28,7 +28,7 @@ interface Notice {
   senderName: string
 }
 
-export default function TeacherNoticePage() {
+export default function AdminNoticePage() {
   const { data: session } = useSession()
   const [notices, setNotices] = React.useState<Notice[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -38,11 +38,10 @@ export default function TeacherNoticePage() {
   // Create notice form states
   const [isCreating, setIsCreating] = React.useState(false)
   const [newTitle, setNewTitle] = React.useState("")
-  const [newCategory, setNewCategory] = React.useState<string>("Academic")
+  const [newCategory, setNewCategory] = React.useState<string>("General")
   const [newContent, setNewContent] = React.useState("")
   const [newIsUrgent, setNewIsUrgent] = React.useState(false)
-  const [targetClass, setTargetClass] = React.useState("10")
-  const [targetSection, setTargetSection] = React.useState("A")
+  const [targetRole, setTargetRole] = React.useState("all") // "all" | "teacher" | "student"
 
   const fetchNotices = React.useCallback(async () => {
     setLoading(true)
@@ -75,8 +74,7 @@ export default function TeacherNoticePage() {
           content: newContent,
           category: newCategory,
           isUrgent: newIsUrgent,
-          targetClass,
-          targetSection: targetSection === "All" ? "" : targetSection,
+          targetRole,
         }),
       })
 
@@ -85,14 +83,14 @@ export default function TeacherNoticePage() {
         throw new Error(err.error || "Failed to publish notice")
       }
 
-      toast.success("Announcement published successfully")
+      toast.success("School bulletin published successfully")
       setNewTitle("")
       setNewContent("")
       setNewIsUrgent(false)
       setIsCreating(false)
       fetchNotices()
     } catch (err: any) {
-      toast.error(err.message || "Failed to post announcement")
+      toast.error(err.message || "Failed to post bulletin")
     }
   }
 
@@ -117,7 +115,8 @@ export default function TeacherNoticePage() {
   const filteredNotices = notices.filter(notice => {
     const matchesSearch = notice.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           notice.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          notice.senderName.toLowerCase().includes(searchQuery.toLowerCase())
+                          notice.senderName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          notice.targetRole.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = selectedCategory === "All" || notice.category === selectedCategory
     return matchesSearch && matchesCategory
   })
@@ -129,10 +128,10 @@ export default function TeacherNoticePage() {
         <div className="flex flex-col gap-1.5">
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
             <Megaphone className="h-8 w-8 text-primary" />
-            Notice Administration
+            School Notice Administration
           </h1>
           <p className="text-muted-foreground text-sm max-w-2xl leading-relaxed">
-            Announce notices, schedule events, publish bulletins, and coordinate school announcements for students.
+            Publish announcements, post official circulars, and target notices to teachers, students, or all campus staff.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -151,7 +150,7 @@ export default function TeacherNoticePage() {
             className="rounded-lg cursor-pointer flex items-center gap-1.5"
           >
             <Plus className="h-4 w-4" />
-            {isCreating ? "View Notices" : "Post Announcement"}
+            {isCreating ? "View Bulletins" : "Create Announcement"}
           </Button>
         </div>
       </div>
@@ -160,14 +159,14 @@ export default function TeacherNoticePage() {
         /* Create Notice Form */
         <div className="px-6 lg:px-8 max-w-3xl">
           <form onSubmit={handlePostNotice} className="rounded-xl border border-border bg-card/40 p-6 flex flex-col gap-5 shadow-sm">
-            <h2 className="text-lg font-bold text-foreground">Post New Announcement</h2>
+            <h2 className="text-lg font-bold text-foreground">Create School Bulletin</h2>
             
             <div className="space-y-1.5">
               <label htmlFor="notice-title" className="text-xs font-semibold text-foreground">Announcement Title</label>
               <Input
                 id="notice-title"
                 type="text"
-                placeholder="e.g. Extra Class for Mathematics scheduled"
+                placeholder="e.g. Annual Sports Meet 2026 Registration"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 className="h-10 rounded-lg border-border focus:ring-1 focus:ring-primary w-full bg-card/60 text-xs"
@@ -175,7 +174,7 @@ export default function TeacherNoticePage() {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5 flex flex-col">
                 <label className="text-xs font-semibold text-foreground">Category</label>
                 <Select value={newCategory} onValueChange={setNewCategory}>
@@ -183,40 +182,24 @@ export default function TeacherNoticePage() {
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="General">General</SelectItem>
                     <SelectItem value="Academic">Academic</SelectItem>
                     <SelectItem value="Exams">Exams</SelectItem>
                     <SelectItem value="Events">Events</SelectItem>
-                    <SelectItem value="General">General</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5 flex flex-col">
-                <label className="text-xs font-semibold text-foreground">Target Class</label>
-                <Select value={targetClass} onValueChange={setTargetClass}>
+                <label className="text-xs font-semibold text-foreground">Share With (Target Audience)</label>
+                <Select value={targetRole} onValueChange={setTargetRole}>
                   <SelectTrigger className="h-10 rounded-lg border-border bg-card/60 text-xs shadow-xs outline-hidden cursor-pointer">
-                    <SelectValue placeholder="Select Class" />
+                    <SelectValue placeholder="Select Audience" />
                   </SelectTrigger>
                   <SelectContent>
-                    {["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"].map((c) => (
-                      <SelectItem key={c} value={c}>Class {c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5 flex flex-col">
-                <label className="text-xs font-semibold text-foreground">Target Section</label>
-                <Select value={targetSection} onValueChange={setTargetSection}>
-                  <SelectTrigger className="h-10 rounded-lg border-border bg-card/60 text-xs shadow-xs outline-hidden cursor-pointer">
-                    <SelectValue placeholder="Select Section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All">All Sections</SelectItem>
-                    <SelectItem value="A">Section A</SelectItem>
-                    <SelectItem value="B">Section B</SelectItem>
-                    <SelectItem value="C">Section C</SelectItem>
-                    <SelectItem value="D">Section D</SelectItem>
+                    <SelectItem value="all">All (Teachers, Students & Staff)</SelectItem>
+                    <SelectItem value="teacher">Teachers Only</SelectItem>
+                    <SelectItem value="student">Students Only</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -237,8 +220,8 @@ export default function TeacherNoticePage() {
               <label htmlFor="notice-content" className="text-xs font-semibold text-foreground">Notice Description / Content</label>
               <textarea
                 id="notice-content"
-                rows={5}
-                placeholder="Enter detailed notice information here..."
+                rows={6}
+                placeholder="Enter detailed announcement message here..."
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
                 className="flex w-full rounded-lg border border-border bg-card/60 px-3 py-2 text-xs text-foreground shadow-xs outline-none focus:ring-1 focus:ring-primary"
@@ -251,7 +234,7 @@ export default function TeacherNoticePage() {
                 Cancel
               </Button>
               <Button type="submit" className="rounded-lg cursor-pointer">
-                Publish Announcement
+                Publish Bulletin
               </Button>
             </div>
           </form>
@@ -264,7 +247,7 @@ export default function TeacherNoticePage() {
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground/75" />
               <Input 
                 type="text"
-                placeholder="Search announcements..."
+                placeholder="Search bulletins..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9.5 rounded-lg border-border focus:ring-1 focus:ring-primary w-full bg-card/40 text-xs"
@@ -288,7 +271,7 @@ export default function TeacherNoticePage() {
           <div className="grid gap-6 px-6 lg:px-8">
             {loading ? (
               <div className="py-16 text-center text-muted-foreground text-sm">
-                Loading announcements...
+                Loading school bulletins...
               </div>
             ) : filteredNotices.length > 0 ? (
               filteredNotices.map((notice) => (
@@ -309,9 +292,12 @@ export default function TeacherNoticePage() {
                       }`}>
                         {notice.category}
                       </span>
+                      <span className="text-[10px] bg-sky-500/10 text-sky-600 dark:text-sky-400 px-2 py-0.5 rounded-md font-bold">
+                        Audience: {notice.targetRole.toUpperCase()}
+                      </span>
                       {notice.isUrgent && (
                         <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                          <AlertTriangle className="h-3 w-3 mr-0.5" /> Urgent Alert
+                          <AlertTriangle className="h-3 w-3 mr-0.5" /> Urgent Notice
                         </span>
                       )}
                       {notice.targetClass && (
@@ -329,16 +315,14 @@ export default function TeacherNoticePage() {
                           year: "numeric",
                         })}
                       </span>
-                      {session?.user && (session.user.id === notice.senderId || session.user.role === "admin") && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(notice.id)}
-                          className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(notice.id)}
+                        className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 cursor-pointer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
 

@@ -39,6 +39,7 @@ export function NavMain({
     title: string
     url: string
     icon?: React.ReactNode
+    hasNotification?: boolean
   }[]
 }) {
   const pathname = usePathname()
@@ -51,6 +52,7 @@ export function NavMain({
   const [title, setTitle] = React.useState("")
   const [taggedPeople, setTaggedPeople] = React.useState("")
   const [message, setMessage] = React.useState("")
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
 
   // Autocomplete states
   const [users, setUsers] = React.useState<{ name: string; username: string; role: string }[]>([])
@@ -93,14 +95,18 @@ export function NavMain({
   }
 
   const selectUser = (username: string) => {
-    const words = taggedPeople.split(/([\s,]+)/)
-    for (let i = words.length - 1; i >= 0; i--) {
-      if (words[i].trim().startsWith("@")) {
-        words[i] = `@${username}`
-        break
+    const words = taggedPeople.split(",").map(w => w.trim()).filter(Boolean)
+    if (words.length > 0) {
+      const lastIndex = words.length - 1
+      if (words[lastIndex].startsWith("@")) {
+        words[lastIndex] = "@" + username
+      } else {
+        words.push("@" + username)
       }
+    } else {
+      words.push("@" + username)
     }
-    const newValue = words.join("") + ", "
+    const newValue = words.join(", ") + ", "
     setTaggedPeople(newValue)
     setShowAutocomplete(false)
     setUsers([])
@@ -109,7 +115,7 @@ export function NavMain({
   const userRole = session?.user?.role || "student"
   const isStudent = userRole === "student"
 
-  const handleComplaintSubmit = (e: React.FormEvent) => {
+  const handleComplaintSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim() || !message.trim()) {
       toast.error("Please provide a title and a description message.")
@@ -119,16 +125,41 @@ export function NavMain({
     setIsSubmitting(true)
     const tId = toast.loading(`Filing complaint with ${recipient}...`)
 
-    setTimeout(() => {
+    try {
+      const formData = new FormData()
+      formData.append("title", title)
+      formData.append("recipient", recipient)
+      formData.append("taggedPeople", taggedPeople)
+      formData.append("message", message)
+      if (selectedFile) {
+        formData.append("file", selectedFile)
+      }
+
+      const res = await fetch("/api/complaints", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Failed to submit complaint")
+      }
+
       toast.dismiss(tId)
       toast.success(`Your complaint has been sent to ${recipient}`)
       setIsSubmitting(false)
       setComplaintOpen(false)
+      
       // Reset form
       setTitle("")
       setTaggedPeople("")
       setMessage("")
-    }, 1500)
+      setSelectedFile(null)
+    } catch (err: any) {
+      toast.dismiss(tId)
+      toast.error(err.message || "Failed to file complaint")
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -172,9 +203,14 @@ export function NavMain({
                     isActive={isActive}
                     className={isActive ? "shadow-sm border border-sidebar-border/50 dark:shadow-none dark:border-transparent" : ""}
                   >
-                    <Link href={item.url}>
-                      {item.icon}
-                      <span>{item.title}</span>
+                    <Link href={item.url} className="relative flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        {item.icon}
+                        <span>{item.title}</span>
+                      </div>
+                      {item.hasNotification && (
+                        <span className="h-2.5 w-2.5 rounded-full bg-blue-500 mr-1 animate-pulse shrink-0" />
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -271,6 +307,23 @@ export function NavMain({
                 required
                 rows={4}
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 outline-hidden"
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="compFile">Attach File (Optional)</Label>
+              <Input
+                id="compFile"
+                type="file"
+                onChange={(e) => {
+                  const files = e.target.files
+                  if (files && files.length > 0) {
+                    setSelectedFile(files[0])
+                  } else {
+                    setSelectedFile(null)
+                  }
+                }}
+                className="cursor-pointer text-xs bg-card/40 border-border"
               />
             </div>
 

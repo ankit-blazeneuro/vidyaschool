@@ -32,7 +32,7 @@ export default function LiquidMetalHero() {
       <LiquidMetal
         width="100%"
         height="100%"
-        image="/assets/vidyaschool/simple-removebg-preview.png"
+        image="/assets/vidyaschool/Logo/restored_no_bg_with_title.png"
         colorBack="#00000000"
         colorTint="#e11d48"
         repetition={1.2}
