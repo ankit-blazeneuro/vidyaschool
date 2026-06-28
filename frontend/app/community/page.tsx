@@ -50,6 +50,54 @@ interface OnlineUser {
   image?: string | null
 }
 
+function CommunitySkeleton() {
+  return (
+    <div className="flex h-[calc(100vh-var(--header-height))] w-full bg-background overflow-hidden animate-pulse">
+      {/* Sidebar Skeleton */}
+      <div className="hidden md:flex w-60 border-r border-border bg-muted/10 flex-col p-4 space-y-4 shrink-0">
+        <div className="h-6 w-32 bg-muted/60 rounded-md mb-4" />
+        <div className="space-y-3">
+          <div className="h-8 w-full bg-muted/60 rounded-md" />
+          <div className="h-8 w-4/5 bg-muted/60 rounded-md" />
+          <div className="h-8 w-full bg-muted/60 rounded-md" />
+          <div className="h-8 w-3/4 bg-muted/60 rounded-md" />
+        </div>
+      </div>
+      {/* Main Chat Panel Skeleton */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header Skeleton */}
+        <div className="h-14 border-b border-border flex items-center px-6 justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 bg-muted/60 rounded-md" />
+            <div className="h-5 w-28 bg-muted/60 rounded-md" />
+          </div>
+          <div className="h-5 w-16 bg-muted/60 rounded-md" />
+        </div>
+        {/* Messages List Skeleton */}
+        <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex gap-4 items-start">
+              <div className="size-10 rounded-full bg-muted/60 shrink-0" />
+              <div className="space-y-2 flex-1">
+                <div className="flex gap-2 items-center">
+                  <div className="h-4 w-24 bg-muted/60 rounded-md" />
+                  <div className="h-3 w-16 bg-muted/60 rounded-md" />
+                </div>
+                <div className="h-4 w-full bg-muted/60 rounded-md" />
+                <div className="h-4 w-2/3 bg-muted/60 rounded-md" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Input Area Skeleton */}
+        <div className="p-4 bg-transparent shrink-0">
+          <div className="h-12 w-full bg-muted/60 border border-border rounded-lg" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function CommunityChatPage() {
   const [currentUser, setCurrentUser] = React.useState<any>(null)
   const [userProfile, setUserProfile] = React.useState<any>(null)
@@ -65,8 +113,11 @@ export default function CommunityChatPage() {
   const [replyingTo, setReplyingTo] = React.useState<Message | null>(null)
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null)
   const [editText, setEditText] = React.useState("")
+  const [hasMore, setHasMore] = React.useState(false)
+  const [loadingMore, setLoadingMore] = React.useState(false)
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
+  const chatContainerRef = React.useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -122,9 +173,27 @@ export default function CommunityChatPage() {
       setOnlineUsers(users)
     })
 
-    socketInstance.on("recent_messages", (history: Message[]) => {
-      setMessages(history)
+    socketInstance.on("recent_messages", (data: { messages: Message[]; hasMore: boolean }) => {
+      setMessages(data.messages || [])
+      setHasMore(data.hasMore || false)
       setTimeout(scrollToBottom, 100)
+    })
+
+    socketInstance.on("more_messages", (data: { messages: Message[]; hasMore: boolean }) => {
+      if (chatContainerRef.current) {
+        const container = chatContainerRef.current
+        const previousScrollHeight = container.scrollHeight
+        const previousScrollTop = container.scrollTop
+
+        setMessages((prev) => [...(data.messages || []), ...prev])
+        setHasMore(data.hasMore || false)
+        setLoadingMore(false)
+
+        // Restore scroll position after DOM renders prepended messages!
+        setTimeout(() => {
+          container.scrollTop = container.scrollHeight - previousScrollHeight + previousScrollTop
+        }, 0)
+      }
     })
 
     socketInstance.on("new_message", (msg: Message) => {
@@ -179,6 +248,15 @@ export default function CommunityChatPage() {
     socket.emit("delete_message", { messageId })
   }
 
+  const handleScroll = () => {
+    if (!chatContainerRef.current || !socket || !connected || !hasMore || loadingMore) return
+    const container = chatContainerRef.current
+    if (container.scrollTop <= 5 && messages.length > 0) {
+      setLoadingMore(true)
+      socket.emit("load_more", { before: messages[0].timestamp })
+    }
+  }
+
   const getInitials = (name: string) => {
     return name ? name.charAt(0).toUpperCase() : "?"
   }
@@ -230,14 +308,7 @@ export default function CommunityChatPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex h-[calc(100vh-var(--header-height))] w-full items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground font-medium animate-pulse">Initializing Community Space...</p>
-        </div>
-      </div>
-    )
+    return <CommunitySkeleton />
   }
 
   if (!currentUser) {
@@ -321,7 +392,17 @@ export default function CommunityChatPage() {
         <main className="flex-1 flex flex-col bg-background overflow-hidden min-w-0">
           
           {/* Scrollable Message List */}
-          <div className="flex-1 overflow-y-auto pt-6 space-y-[2px] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+          <div 
+            ref={chatContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto pt-6 space-y-[2px] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
+          >
+            {loadingMore && (
+              <div className="w-full py-3 flex items-center justify-center gap-2 select-none">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-xs text-muted-foreground font-semibold">Loading older messages...</span>
+              </div>
+            )}
             {messages.length > 0 ? (
               messages.map((msg, index) => {
                 const isMe = msg.userId === currentUser.id

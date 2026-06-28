@@ -55,15 +55,23 @@ async def join(sid, data):
     await sio.enter_room(sid, 'community')
     await sio.emit('online_users', list(active_users.values()), room='community')
     
-    # Load recent 100 messages from the database
+    # Load recent 30 messages from the database
     with Session(engine) as db:
         from models import CommunityMessage, User
+        import json
         results = db.query(CommunityMessage, User).join(
             User, CommunityMessage.user_id == User.id
-        ).order_by(CommunityMessage.created_at.desc()).limit(100).all()
+        ).order_by(CommunityMessage.created_at.desc()).limit(30).all()
         
         recent = []
         for msg, u in reversed(results):
+            reply_to_val = None
+            if msg.reply_to:
+                try:
+                    reply_to_val = json.loads(msg.reply_to)
+                except Exception:
+                    reply_to_val = msg.reply_to
+                    
             recent.append({
                 "id": msg.id,
                 "userId": msg.user_id,
@@ -72,10 +80,62 @@ async def join(sid, data):
                 "image": u.image,
                 "content": msg.content,
                 "timestamp": msg.created_at.isoformat() + "Z",
-                "replyTo": msg.reply_to
+                "replyTo": reply_to_val
             })
             
-        await sio.emit('recent_messages', recent, to=sid)
+        await sio.emit('recent_messages', {
+            "messages": recent,
+            "hasMore": len(results) == 30
+        }, to=sid)
+
+@sio.event
+async def load_more(sid, data):
+    sender = active_users.get(sid)
+    if not sender:
+        return
+        
+    before_str = data.get("before")
+    if not before_str:
+        return
+        
+    try:
+        timestamp_str = before_str.replace("Z", "+00:00")
+        before_dt = datetime.fromisoformat(timestamp_str)
+    except Exception as e:
+        print(f"Error parsing before timestamp: {e}")
+        return
+        
+    with Session(engine) as db:
+        from models import CommunityMessage, User
+        import json
+        results = db.query(CommunityMessage, User).join(
+            User, CommunityMessage.user_id == User.id
+        ).filter(CommunityMessage.created_at < before_dt).order_by(CommunityMessage.created_at.desc()).limit(30).all()
+        
+        more_msgs = []
+        for msg, u in reversed(results):
+            reply_to_val = None
+            if msg.reply_to:
+                try:
+                    reply_to_val = json.loads(msg.reply_to)
+                except Exception:
+                    reply_to_val = msg.reply_to
+                    
+            more_msgs.append({
+                "id": msg.id,
+                "userId": msg.user_id,
+                "name": u.name,
+                "role": u.role,
+                "image": u.image,
+                "content": msg.content,
+                "timestamp": msg.created_at.isoformat() + "Z",
+                "replyTo": reply_to_val
+            })
+            
+        await sio.emit('more_messages', {
+            "messages": more_msgs,
+            "hasMore": len(results) == 30
+        }, to=sid)
 
 @sio.event
 async def send_message(sid, data):
@@ -87,13 +147,18 @@ async def send_message(sid, data):
     timestamp = datetime.utcnow()
     
     # Store message in DB
+    import json
+    reply_to_str = None
+    if data.get("replyTo"):
+        reply_to_str = json.dumps(data.get("replyTo"))
+
     with Session(engine) as db:
         from models import CommunityMessage
         db_msg = CommunityMessage(
             id=msg_id,
             user_id=sender["userId"],
             content=data.get("content"),
-            reply_to=data.get("replyTo"),
+            reply_to=reply_to_str,
             created_at=timestamp,
             updated_at=timestamp
         )
