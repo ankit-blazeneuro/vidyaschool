@@ -34,39 +34,43 @@ export default async function AdminDashboardPage({ params }: PageProps) {
 
   const cookieHeader = (await headers()).get("cookie") || ""
 
-  // Fetch stats from FastAPI backend
+  // Fetch stats and performance in parallel to significantly reduce latency!
   try {
-    const res = await fetch("http://localhost:8000/api/admin/stats", {
-      headers: {
-        "cookie": cookieHeader,
-      },
-      cache: "no-store",
-    })
-    if (res.ok) {
-      const stats = await res.json()
+    const [statsRes, perfRes] = await Promise.all([
+      fetch("http://localhost:8000/api/admin/stats", {
+        headers: {
+          "cookie": cookieHeader,
+        },
+        cache: "no-store",
+      }).catch(err => {
+        console.error("Stats fetch error:", err)
+        return null
+      }),
+      fetch("http://localhost:8000/api/admin/performance", {
+        headers: {
+          "cookie": cookieHeader,
+        },
+        cache: "no-store",
+      }).catch(err => {
+        console.error("Performance fetch error:", err)
+        return null
+      })
+    ])
+
+    if (statsRes && statsRes.ok) {
+      const stats = await statsRes.json()
       totalFeesPaid = stats.total_fee_received || 0
       expectedFeesToCollect = stats.expected_fee_to_collect || 0
       activeAccounts = stats.active_accounts || 0
     }
-  } catch (err) {
-    console.error("Failed to fetch admin stats from FastAPI backend:", err)
-  }
 
-  // Fetch performance from FastAPI backend
-  try {
-    const res = await fetch("http://localhost:8000/api/admin/performance", {
-      headers: {
-        "cookie": cookieHeader,
-      },
-      cache: "no-store",
-    })
-    if (res.ok) {
-      const perf = await res.json()
+    if (perfRes && perfRes.ok) {
+      const perf = await perfRes.json()
       performanceData = perf.performance || []
       schoolAverage = perf.school_average || 78.5
     }
   } catch (err) {
-    console.error("Failed to fetch performance stats from FastAPI backend:", err)
+    console.error("Failed to fetch admin stats in parallel:", err)
   }
 
   return (

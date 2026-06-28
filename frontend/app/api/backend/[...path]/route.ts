@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+const BACKEND_URL = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
   const pathStr = path.join('/')
   const searchParams = req.nextUrl.searchParams.toString()
-  const url = `http://localhost:8000/${pathStr}${searchParams ? `?${searchParams}` : ''}`
+  const url = `${BACKEND_URL}/${pathStr}${searchParams ? `?${searchParams}` : ''}`
   
   try {
     const cookieHeader = req.headers.get('cookie') || ''
@@ -34,7 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ path
 export async function POST(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
   const pathStr = path.join('/')
-  const url = `http://localhost:8000/${pathStr}`
+  const url = `${BACKEND_URL}/${pathStr}`
   
   try {
     const cookieHeader = req.headers.get('cookie') || ''
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
   const pathStr = path.join('/')
-  const url = `http://localhost:8000/${pathStr}`
+  const url = `${BACKEND_URL}/${pathStr}`
   
   try {
     const cookieHeader = req.headers.get('cookie') || ''
@@ -104,7 +106,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
   const pathStr = path.join('/')
-  const url = `http://localhost:8000/${pathStr}`
+  const url = `${BACKEND_URL}/${pathStr}`
   
   try {
     const cookieHeader = req.headers.get('cookie') || ''
@@ -139,7 +141,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ path
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
   const pathStr = path.join('/')
-  const url = `http://localhost:8000/${pathStr}`
+  const url = `${BACKEND_URL}/${pathStr}`
   
   try {
     const cookieHeader = req.headers.get('cookie') || ''

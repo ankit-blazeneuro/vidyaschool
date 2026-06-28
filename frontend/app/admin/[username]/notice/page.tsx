@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Spinner } from "@/components/ui/spinner"
 import { toast } from "sonner"
 import { useSession } from "@/lib/auth-client"
 
@@ -270,8 +271,9 @@ export default function AdminNoticePage() {
 
           <div className="grid gap-6 px-6 lg:px-8">
             {loading ? (
-              <div className="py-16 text-center text-muted-foreground text-sm">
-                Loading school bulletins...
+              <div className="py-24 flex flex-col items-center justify-center gap-3">
+                <Spinner size="lg" />
+                <p className="text-sm text-muted-foreground font-semibold">Loading school bulletins...</p>
               </div>
             ) : filteredNotices.length > 0 ? (
               filteredNotices.map((notice) => (

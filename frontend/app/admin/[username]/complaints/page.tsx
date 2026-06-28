@@ -4,6 +4,7 @@ import * as React from "react"
 import { AlertTriangle, Search, Calendar, FileText, CheckCircle2, RefreshCw, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Spinner } from "@/components/ui/spinner"
 import { toast } from "sonner"
 
 interface Complaint {
@@ -127,8 +128,9 @@ export default function AdminComplaintsPage() {
       {/* Complaints List */}
       <div className="grid gap-6 px-6 lg:px-8">
         {loading ? (
-          <div className="py-16 text-center text-muted-foreground text-sm">
-            Loading complaints...
+          <div className="py-24 flex flex-col items-center justify-center gap-3">
+            <Spinner size="lg" />
+            <p className="text-sm text-muted-foreground font-semibold">Loading complaints...</p>
           </div>
         ) : filteredComplaints.length > 0 ? (
           filteredComplaints.map((comp) => (

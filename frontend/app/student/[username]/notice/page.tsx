@@ -4,6 +4,7 @@ import * as React from "react"
 import { Megaphone, Search, Calendar, AlertTriangle, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Spinner } from "@/components/ui/spinner"
 import { toast } from "sonner"
 
 interface Notice {
@@ -107,8 +108,9 @@ export default function StudentNoticePage() {
       {/* Notices List */}
       <div className="grid gap-6 px-6 lg:px-8">
         {loading ? (
-          <div className="py-16 text-center text-muted-foreground text-sm">
-            Loading notices...
+          <div className="py-24 flex flex-col items-center justify-center gap-3">
+            <Spinner size="lg" />
+            <p className="text-sm text-muted-foreground font-semibold">Loading notices...</p>
           </div>
         ) : filteredNotices.length > 0 ? (
           filteredNotices.map((notice) => (
