@@ -95,7 +95,7 @@ export default function CommunityChatPage() {
     if (!currentUser) return
 
     // Connect directly to FastAPI backend on port 8000
-    const socketInstance = io("http://localhost:8000", {
+    const socketInstance = io(process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000", {
       withCredentials: true,
       transports: ["websocket", "polling"],
     })

@@ -358,7 +358,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
 
     // 3. Setup Socket.IO listener for real-time notification triggers
-    const socket = io("http://localhost:8000", {
+    const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000", {
       transports: ["websocket", "polling"]
     })
 
