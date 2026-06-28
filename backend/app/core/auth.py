@@ -35,7 +35,8 @@ def log_request_debug(request: Request) -> None:
 def get_current_user(request: Request, db: Session = Depends(get_db)):
     log_request_debug(request)
 
-    token = decode_session_token(request.cookies.get("better-auth.session_token"))
+    raw_token = request.cookies.get("better-auth.session_token") or request.cookies.get("__Secure-better-auth.session_token")
+    token = decode_session_token(raw_token)
     if not token:
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
