@@ -12,18 +12,19 @@ sentry_sdk.init(
 )
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import SQLModel, create_engine, Session, select
+from typing import Optional
 import socketio
 
-from app.core.auth import decode_session_token
-from app.core.database import init_db
+from app.core.auth import decode_session_token, require_role, get_current_user
+from app.core.database import init_db, get_db
 from app.core.fees import build_default_fee_installments
 from app.routes.fees import router as fees_router
 from app.routes.teacher import router as teacher_router
 from app.routes.slider import router as slider_router
-from app.routes.slider import router as slider_router
+from models import User
 
 # Load env variables from .env
 load_dotenv()
@@ -343,10 +344,10 @@ async def reject_teacher(sid, data):
 
 app = FastAPI(title="VidyaSchool Fees Backend API")
 
-# Enable CORS for Next.js frontend
+# Enable CORS for Next.js frontend and mobile apps
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "https://vidyaschool.vercel.app", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -355,6 +356,165 @@ app.add_middleware(
 app.include_router(fees_router)
 app.include_router(teacher_router)
 app.include_router(slider_router)
+
+# Admin endpoints for teacher approval and subject requests
+@app.get("/api/admin/requests")
+async def get_admin_subject_requests(
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Get all pending subject-class requests for admin"""
+    from models import SubjectClassRequest, User as UserModel
+    requests = db.exec(
+        select(SubjectClassRequest, UserModel)
+        .join(UserModel, SubjectClassRequest.teacher_id == UserModel.id)
+        .where(SubjectClassRequest.status == "pending")
+    ).all()
+    
+    return [
+        {
+            "id": r.id,
+            "class": r.class_,
+            "section": r.section,
+            "subject": r.subject,
+            "status": r.status,
+            "createdAt": r.created_at.isoformat(),
+            "teacher": {
+                "id": u.id,
+                "name": u.name,
+                "email": u.email
+            }
+        } for r, u in requests
+    ]
+
+@app.get("/api/admin/teacher-requests")
+async def get_teacher_approval_requests(
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Get all pending teacher approval requests"""
+    from models import TeacherRequest, User as UserModel
+    requests = db.exec(
+        select(TeacherRequest, UserModel)
+        .join(UserModel, TeacherRequest.user_id == UserModel.id)
+        .where(TeacherRequest.status == "pending")
+    ).all()
+    
+    return [
+        {
+            "id": r.id,
+            "userId": r.user_id,
+            "status": r.status,
+            "createdAt": r.created_at.isoformat(),
+            "user": {
+                "id": u.id,
+                "name": u.name,
+                "email": u.email,
+                "image": u.image
+            }
+        } for r, u in requests
+    ]
+
+@app.post("/api/admin/requests/{request_id}/approve")
+async def approve_subject_request(
+    request_id: str,
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Approve a subject-class request"""
+    from models import SubjectClassRequest, SubjectClassAssignment
+    import uuid
+    
+    req = db.get(SubjectClassRequest, request_id)
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    req.status = "approved"
+    req.updated_at = datetime.utcnow()
+    db.add(req)
+    
+    # Create assignment
+    assignment = SubjectClassAssignment(
+        id=f"asgn_{uuid.uuid4().hex[:8]}",
+        teacher_id=req.teacher_id,
+        class_=req.class_,
+        section=req.section,
+        subject=req.subject
+    )
+    db.add(assignment)
+    db.commit()
+    return {"status": "success"}
+
+@app.post("/api/admin/requests/{request_id}/reject")
+async def reject_subject_request(
+    request_id: str,
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Reject a subject-class request"""
+    from models import SubjectClassRequest
+    
+    req = db.get(SubjectClassRequest, request_id)
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    req.status = "rejected"
+    req.updated_at = datetime.utcnow()
+    db.add(req)
+    db.commit()
+    return {"status": "success"}
+
+@app.post("/api/admin/teacher-requests/{request_id}/approve")
+async def approve_teacher_request(
+    request_id: str,
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Approve a teacher approval request"""
+    from models import TeacherRequest, User as UserModel
+    
+    req = db.get(TeacherRequest, request_id)
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    # Update user role to teacher
+    user = db.get(UserModel, req.user_id)
+    if user:
+        user.role = "teacher"
+        db.add(user)
+    
+    req.status = "approved"
+    req.admin_id = current_user.id
+    req.updated_at = datetime.utcnow()
+    db.add(req)
+    db.commit()
+    return {"status": "success"}
+
+@app.post("/api/admin/teacher-requests/{request_id}/reject")
+async def reject_teacher_request(
+    request_id: str,
+    reason: str = None,
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Reject a teacher approval request"""
+    from models import TeacherRequest
+    from pydantic import BaseModel
+    
+    class RejectRequest(BaseModel):
+        reason: Optional[str] = None
+    
+    req = db.get(TeacherRequest, request_id)
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    
+    req.status = "rejected"
+    req.admin_id = current_user.id
+    req.rejection_reason = reason
+    req.updated_at = datetime.utcnow()
+    db.add(req)
+    db.commit()
+    return {"status": "success"}
 
 
 @app.get("/accounts/dashboard")
