@@ -822,6 +822,14 @@ def register_teacher_preference(
     return {"success": True}
 
 
+@router.get("/api/public/user-role/{email}")
+def get_user_role(email: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == email).first()
+    if user:
+        return {"role": user.role, "name": user.name, "image": user.image}
+    return {"role": "student", "name": None, "image": None}
+
+
 from sqlmodel import or_
 
 @router.get("/api/users/search")
