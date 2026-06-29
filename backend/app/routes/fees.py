@@ -548,19 +548,20 @@ def get_fee_management(
 from pydantic import Field
 
 class OnboardingSubmitRequest(BaseModel):
-    admissionNumber: str
+    admissionNumber: Optional[str] = None
     username: str
-    phoneNumber: str
+    phoneNumber: Optional[str] = None
     parentName: Optional[str] = None
     parentPhone: Optional[str] = None
     parentEmail: Optional[str] = None
-    address: str
-    city: str
-    state: str
-    pincode: str
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    pincode: Optional[str] = None
     class_: Optional[str] = Field(default=None, alias="class")
     section: Optional[str] = None
     transportMode: Optional[str] = Field(default=None, alias="transportMode")
+    secondaryRole: Optional[str] = None  # For admin users choosing secondary role
 
     class Config:
         populate_by_name = True
@@ -588,31 +589,38 @@ def submit_onboarding(
         if existing and existing.user_id != current_user.id:
             raise HTTPException(status_code=400, detail="Username already taken")
             
-    # Check if admission number is unique
+    # Check if admission number is unique (only if provided)
     if data.admissionNumber:
         existing = db.query(UserProfile).filter(UserProfile.admission_number == data.admissionNumber).first()
         if existing and existing.user_id != current_user.id:
             msg = "Teacher ID already exists" if current_user.role == "teacher" else "Admission number already exists"
             raise HTTPException(status_code=400, detail=msg)
+    
+    # Handle secondary role for admin users
+    if current_user.role == "admin" and data.secondaryRole:
+        user = db.query(User).filter(User.id == current_user.id).first()
+        if user:
+            user.secondary_role = data.secondaryRole
+            db.add(user)
             
     # Update or insert profile
     profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
     import uuid
     from datetime import datetime
     if profile:
-        profile.admission_number = data.admissionNumber
+        if data.admissionNumber: profile.admission_number = data.admissionNumber
         profile.username = data.username
-        profile.phone_number = data.phoneNumber
-        profile.parent_name = data.parentName
-        profile.parent_phone = data.parentPhone
-        profile.parent_email = data.parentEmail
-        profile.address = data.address
-        profile.city = data.city
-        profile.state = data.state
-        profile.pincode = data.pincode
-        profile.class_ = data.class_
-        profile.section = data.section
-        profile.transport_mode = data.transportMode
+        if data.phoneNumber: profile.phone_number = data.phoneNumber
+        if data.parentName: profile.parent_name = data.parentName
+        if data.parentPhone: profile.parent_phone = data.parentPhone
+        if data.parentEmail: profile.parent_email = data.parentEmail
+        if data.address: profile.address = data.address
+        if data.city: profile.city = data.city
+        if data.state: profile.state = data.state
+        if data.pincode: profile.pincode = data.pincode
+        if data.class_: profile.class_ = data.class_
+        if data.section: profile.section = data.section
+        if data.transportMode: profile.transport_mode = data.transportMode
         profile.class_section_last_updated = datetime.utcnow()
         profile.onboarding_completed = True
         profile.updated_at = datetime.utcnow()
