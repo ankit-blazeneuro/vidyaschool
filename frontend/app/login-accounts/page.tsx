@@ -104,19 +104,24 @@ export default function LoginAccountsPage() {
     let os = "Unknown OS"
     let browser = "Unknown Browser"
 
-    if (ua.includes("windows")) os = "Windows"
-    else if (ua.includes("macintosh") || ua.includes("mac os")) os = "macOS"
-    else if (ua.includes("linux")) os = "Linux"
-    else if (ua.includes("android")) os = "Android"
-    else if (ua.includes("iphone") || ua.includes("ipad")) os = "iOS"
+    if (ua.includes("android app") || ua.includes("android-app") || ua.includes("okhttp")) {
+      os = "Android"
+      browser = "Android App"
+    } else {
+      if (ua.includes("windows")) os = "Windows"
+      else if (ua.includes("macintosh") || ua.includes("mac os")) os = "macOS"
+      else if (ua.includes("linux")) os = "Linux"
+      else if (ua.includes("android")) os = "Android"
+      else if (ua.includes("iphone") || ua.includes("ipad")) os = "iOS"
 
-    if (ua.includes("chrome") || ua.includes("chromium")) browser = "Chrome"
-    else if (ua.includes("safari")) browser = "Safari"
-    else if (ua.includes("firefox")) browser = "Firefox"
-    else if (ua.includes("edge")) browser = "Edge"
-    else if (ua.includes("opera") || ua.includes("opr")) browser = "Opera"
+      if (ua.includes("chrome") || ua.includes("chromium")) browser = "Chrome"
+      else if (ua.includes("safari")) browser = "Safari"
+      else if (ua.includes("firefox")) browser = "Firefox"
+      else if (ua.includes("edge")) browser = "Edge"
+      else if (ua.includes("opera") || ua.includes("opr")) browser = "Opera"
+    }
 
-    return { device: os, browser: `${browser} on ${os}`, isMobile: os === "Android" || os === "iOS" }
+    return { device: os, browser: browser === "Android App" ? "Android App" : `${browser} on ${os}`, isMobile: os === "Android" || os === "iOS" }
   }
 
   if (loading) {

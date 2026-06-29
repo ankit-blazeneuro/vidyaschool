@@ -833,12 +833,17 @@ def get_user_role(email: str, db: Session = Depends(get_db)):
 from datetime import timedelta
 
 @router.post("/api/public/create-session")
-def create_session(payload: dict[str, str], db: Session = Depends(get_db)):
+def create_session(payload: dict[str, str], request: Request, db: Session = Depends(get_db)):
     email = payload.get("email")
     user = db.query(User).filter(User.email == email).first()
     if not user:
         return {"success": False, "message": "User not found"}
     
+    # Capture client IP from X-Forwarded-For header or fallback to client host
+    ip_address = request.headers.get("x-forwarded-for") or (request.client.host if request.client else None)
+    if ip_address and "," in ip_address:
+        ip_address = ip_address.split(",")[0].strip()
+        
     session_id = str(uuid.uuid4())
     token = str(uuid.uuid4())
     expires_at = datetime.utcnow() + timedelta(days=30)
@@ -848,6 +853,7 @@ def create_session(payload: dict[str, str], db: Session = Depends(get_db)):
         expires_at=expires_at,
         token=token,
         user_id=user.id,
+        ip_address=ip_address,
         user_agent="Android App",
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow()
