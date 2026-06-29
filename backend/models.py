@@ -26,6 +26,16 @@ class Session(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+class SliderImage(SQLModel, table=True):
+    __tablename__ = "slider_image"
+    id: int = Field(primary_key=True)
+    url: str
+    title: str
+    enabled: bool = Field(default=True)
+    order: int = Field(default=0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
 class UserProfile(SQLModel, table=True):
     __tablename__ = "user_profile"
     id: str = Field(primary_key=True)
