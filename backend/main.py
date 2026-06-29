@@ -22,6 +22,8 @@ from app.core.database import init_db
 from app.core.fees import build_default_fee_installments
 from app.routes.fees import router as fees_router
 from app.routes.teacher import router as teacher_router
+from app.routes.slider import router as slider_router
+from app.routes.slider import router as slider_router
 
 # Load env variables from .env
 load_dotenv()
@@ -352,6 +354,7 @@ app.add_middleware(
 
 app.include_router(fees_router)
 app.include_router(teacher_router)
+app.include_router(slider_router)
 
 
 @app.get("/accounts/dashboard")
