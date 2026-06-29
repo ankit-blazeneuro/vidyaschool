@@ -1,0 +1,22 @@
+[
+    {
+        "merged": "/home/ankit/.gradle/daemon/8.2/com.vidyaschool.app-merged_res-60:/drawable_ic_custom_home.xml.flat",
+        "source": "/home/ankit/.gradle/daemon/8.2/com.vidyaschool.app-main-62:/drawable/ic_custom_home.xml"
+    },
+    {
+        "merged": "/home/ankit/.gradle/daemon/8.2/com.vidyaschool.app-merged_res-60:/drawable_ic_custom_search.xml.flat",
+        "source": "/home/ankit/.gradle/daemon/8.2/com.vidyaschool.app-main-62:/drawable/ic_custom_search.xml"
+    },
+    {
+        "merged": "/home/ankit/.gradle/daemon/8.2/com.vidyaschool.app-merged_res-60:/drawable_ic_custom_profile.xml.flat",
+        "source": "/home/ankit/.gradle/daemon/8.2/com.vidyaschool.app-main-62:/drawable/ic_custom_profile.xml"
+    },
+    {
+        "merged": "/home/ankit/.gradle/daemon/8.2/com.vidyaschool.app-merged_res-60:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "/home/ankit/.gradle/daemon/8.2/com.vidyaschool.app-main-62:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.vidyaschool.app-merged_res-60:/drawable_ic_custom_profile.xml.flat",
+        "source": "com.vidyaschool.app-main-62:/drawable/ic_custom_profile.xml"
+    }
+]

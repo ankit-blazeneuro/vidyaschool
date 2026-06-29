@@ -1,0 +1,15 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="72"
+    android:viewportHeight="72">
+    <!-- User Head (Opaque) -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M 35.5 10 Q 43.8 9.8 47 14.5 Q 50.7 17.3 50 24.5 L 45.5 32 Q 42.7 35.7 35.5 35 L 28 30.5 Q 24.3 27.7 25 20.5 L 29.5 13 L 35.5 10 Z" />
+    <!-- User Body/Shoulders (0.4 Alpha) -->
+    <path
+        android:fillColor="#FF000000"
+        android:fillAlpha="0.4"
+        android:pathData="M 31.5 40 Q 49.2 38.3 57 46.5 Q 60.3 50.2 59 58.5 L 58 61 L 55.5 62 L 19.5 62 L 17 61 Q 15 58 16 50.5 L 21.5 43 L 31.5 40 Z" />
+</vector>
