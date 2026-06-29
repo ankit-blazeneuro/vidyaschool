@@ -39,7 +39,6 @@ fun TeacherScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .systemBarsPadding()
         ) {
             Column(
                 modifier = Modifier

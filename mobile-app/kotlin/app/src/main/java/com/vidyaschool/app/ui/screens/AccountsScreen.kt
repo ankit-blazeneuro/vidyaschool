@@ -39,7 +39,6 @@ fun AccountsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .systemBarsPadding()
         ) {
             Column(
                 modifier = Modifier

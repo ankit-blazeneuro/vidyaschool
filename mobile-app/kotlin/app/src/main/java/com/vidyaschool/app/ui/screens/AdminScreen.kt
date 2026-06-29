@@ -61,7 +61,6 @@ fun AdminScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .systemBarsPadding()
         ) {
             Column(
                 modifier = Modifier
