@@ -17,7 +17,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, ImageIcon } from "lucide-react"
 import { useSession } from "@/lib/auth-client"
 import { io } from "socket.io-client"
 
@@ -99,6 +99,7 @@ function useAdminUrls() {
     requests: `${base}/requests`,
     feeManagement: `${base}/fee-management`,
     notices: `${base}/notice`,
+    slider: `${base}/slider`,
   }
 }
 
@@ -556,6 +557,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: adminUrls.notices,
           icon: <BellIcon />,
           hasNotification: unreadNotices,
+        },
+        {
+          title: "Slider Banners",
+          url: adminUrls.slider,
+          icon: <ImageIcon />,
         },
       ]
     : [
