@@ -166,7 +166,7 @@ fun DashboardLayout(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
                 .background(MaterialTheme.colorScheme.background)
         ) {
             when (selectedTab) {
@@ -233,7 +233,8 @@ fun SearchTabContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
+                .statusBarsPadding()
+                .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
         ) {
             Text(
                 text = "Search Users",
@@ -349,7 +350,8 @@ fun ProfileTabContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .statusBarsPadding()
+                .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -537,7 +539,8 @@ fun NoticeTabContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
+                .statusBarsPadding()
+                .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
         ) {
             Text(
                 text = "Notice Board",
@@ -635,7 +638,8 @@ fun CommunityTabContent(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .statusBarsPadding()
+                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -662,7 +666,8 @@ fun CommunityTabContent(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp)
+                    .statusBarsPadding()
+                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
             ) {
                 Text(
                     text = "Community",

@@ -72,7 +72,8 @@ fun StudentScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(start = 24.dp, end = 24.dp, top = 0.dp, bottom = 24.dp)
+                    .statusBarsPadding()
+                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
             ) {
                 Text(
                     text = "Welcome, ${name.ifEmpty { "Student" }}",
