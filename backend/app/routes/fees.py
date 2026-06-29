@@ -909,6 +909,53 @@ def set_academic_slider(payload: dict):
     return {"success": True, "value": val}
 
 
+SLIDER_IMAGES_FILE = "slider_images.json"
+
+DEFAULT_SLIDER_IMAGES = [
+    {
+        "id": 1,
+        "url": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=600&auto=format&fit=crop",
+        "title": "Welcome to Vidyaschool",
+        "enabled": True
+    },
+    {
+        "id": 2,
+        "url": "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?q=80&w=600&auto=format&fit=crop",
+        "title": "Explore the Library",
+        "enabled": True
+    },
+    {
+        "id": 3,
+        "url": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=600&auto=format&fit=crop",
+        "title": "New Sports Complex",
+        "enabled": True
+    },
+    {
+        "id": 4,
+        "url": "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=600&auto=format&fit=crop",
+        "title": "Science Fair 2026",
+        "enabled": False
+    }
+]
+
+@router.get("/api/public/slider-images")
+def get_slider_images():
+    if os.path.exists(SLIDER_IMAGES_FILE):
+        try:
+            with open(SLIDER_IMAGES_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return DEFAULT_SLIDER_IMAGES
+
+
+@router.post("/api/admin/slider-images")
+def set_slider_images(payload: list):
+    with open(SLIDER_IMAGES_FILE, "w") as f:
+        json.dump(payload, f)
+    return {"success": True, "images": payload}
+
+
 from sqlmodel import or_
 
 @router.get("/api/users/search")
