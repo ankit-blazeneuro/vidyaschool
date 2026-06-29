@@ -597,11 +597,7 @@ def submit_onboarding(
             raise HTTPException(status_code=400, detail=msg)
     
     # Handle secondary role for admin users
-    if current_user.role == "admin" and data.secondaryRole:
-        user = db.query(User).filter(User.id == current_user.id).first()
-        if user:
-            user.secondary_role = data.secondaryRole
-            db.add(user)
+    secondary_role_val = data.secondaryRole if (current_user.role == "admin" and data.secondaryRole) else None
             
     # Update or insert profile
     profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
@@ -621,6 +617,7 @@ def submit_onboarding(
         if data.class_: profile.class_ = data.class_
         if data.section: profile.section = data.section
         if data.transportMode: profile.transport_mode = data.transportMode
+        if secondary_role_val: profile.secondary_role = secondary_role_val
         profile.class_section_last_updated = datetime.utcnow()
         profile.onboarding_completed = True
         profile.updated_at = datetime.utcnow()
@@ -641,6 +638,7 @@ def submit_onboarding(
             pincode=data.pincode,
             class_=data.class_,
             section=data.section,
+            secondary_role=secondary_role_val,
             transport_mode=data.transportMode,
             class_section_last_updated=datetime.utcnow(),
             onboarding_completed=True,
