@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { PageHeader } from "@/components/page-header"
+import { SiteHeader } from "@/components/site-header"
 
 interface Message {
   id: string
@@ -328,49 +328,16 @@ export default function CommunityChatPage() {
     : `/teacher/${userProfile?.username || ""}`
 
   return (
-    <div className="flex flex-col h-[calc(100vh-var(--header-height))] bg-background text-foreground font-sans overflow-hidden">
-      
-      {/* Page Header */}
-      <PageHeader
-        title="Community"
-        onToggleSidebar={() => setShowMemberList(!showMemberList)}
-        actions={
-          <div className="flex items-center gap-3">
-            {connected ? (
-              <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 gap-1.5">
-                <Wifi className="h-3 w-3" />
-                Online
-              </Badge>
-            ) : (
-              <Badge variant="destructive" className="bg-destructive/10 text-destructive border-destructive/20 gap-1.5 animate-pulse">
-                <WifiOff className="h-3 w-3" />
-                Offline
-              </Badge>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowMemberList(!showMemberList)}
-              className="hidden md:flex"
-            >
-              <Users className="h-5 w-5" />
-            </Button>
-          </div>
-        }
-      />
-
-      {/* Main Container */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
+    <div className="flex flex-1 overflow-hidden h-full">
+      {/* Chat Area */}
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         
-        {/* Chat Area */}
-        <main className="flex-1 flex flex-col bg-background overflow-hidden min-w-0">
-          
-          {/* Scrollable Message List */}
-          <div 
-            ref={chatContainerRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto pt-6 space-y-[2px] scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
-          >
+        {/* Scrollable Message List */}
+        <div 
+          ref={chatContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-6 pt-6 space-y-[2px]"
+        >
             {loadingMore && (
               <div className="w-full py-3 flex items-center justify-center gap-2 select-none">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -540,12 +507,12 @@ export default function CommunityChatPage() {
           </div>
 
           {/* Chat Input Bar with Docked Reply Banner */}
-          <footer className="px-4 pb-6 pt-0 bg-transparent shrink-0">
+          <footer className="p-4 border-t shrink-0">
             <div className="flex flex-col w-full bg-muted border border-border rounded-lg shadow-sm">
               
               {/* Replying To Preview Banner */}
               {replyingTo && (
-                <div className="flex items-center justify-between px-4 py-2 border-b border-border text-xs text-muted-foreground bg-muted/40 rounded-t-lg animate-in slide-in-from-top-2 duration-200">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-border text-xs text-muted-foreground bg-muted/40 rounded-t-lg">
                   <div className="flex items-center gap-2 truncate">
                     <CornerUpLeft className="h-3.5 w-3.5" />
                     <span>Replying to <span className="font-semibold text-foreground/80">@{replyingTo.name}</span></span>
@@ -561,7 +528,7 @@ export default function CommunityChatPage() {
                 </div>
               )}
 
-              <form onSubmit={handleSendMessage} className="flex items-center gap-4 px-4 py-2.5 w-full">
+              <form onSubmit={handleSendMessage} className="flex items-center gap-3 px-4 py-3 w-full">
                 <button 
                   type="button" 
                   className="bg-secondary text-secondary-foreground hover:bg-muted rounded-full p-1.5 transition-colors shrink-0"
@@ -577,7 +544,7 @@ export default function CommunityChatPage() {
                   className="bg-transparent border-0 outline-none text-foreground placeholder-muted-foreground flex-1 text-sm focus:ring-0 focus-visible:ring-0 p-0"
                 />
                 
-                <div className="flex items-center gap-3 text-muted-foreground shrink-0">
+                <div className="flex items-center gap-2 text-muted-foreground shrink-0">
                   <button type="button" className="hover:text-foreground transition-colors">
                     <Smile className="h-5 w-5" />
                   </button>
@@ -594,47 +561,36 @@ export default function CommunityChatPage() {
           </footer>
         </main>
 
-        {/* Sidebar: Online Members List */}
+        {/* Member List Sidebar */}
         {showMemberList && (
-          <aside className="w-60 hidden md:flex flex-col bg-muted/20 border-l border-border overflow-hidden shrink-0 select-none animate-in slide-in-from-right duration-200">
-            <div className="px-4 pt-6 pb-2 shrink-0">
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Staff Members — {onlineUsers.length}
+          <aside className="w-60 border-l bg-muted/10 flex flex-col shrink-0">
+            <div className="p-4 border-b">
+              <h3 className="text-sm font-semibold text-muted-foreground">
+                Online — {onlineUsers.length}
               </h3>
             </div>
-
-            <div className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
-              {onlineUsers.length > 0 ? (
-                onlineUsers.map((userObj) => (
-                  <div
-                    key={userObj.sid}
-                    className="flex items-center gap-3 px-2 py-1.5 rounded-md hover:bg-muted/50 cursor-pointer group"
-                  >
-                    <div className="relative shrink-0">
-                      <Avatar className={`h-8 w-8 rounded-full shadow-xs ${getAvatarGradient(userObj.role)}`}>
-                        <AvatarImage src={userObj.image || undefined} alt={userObj.name} />
-                        <AvatarFallback className="font-semibold text-xs">{getInitials(userObj.name)}</AvatarFallback>
-                      </Avatar>
-                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-background" />
-                    </div>
-                    
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-[15px] font-medium truncate group-hover:text-foreground ${getRoleTextColor(userObj.role)}`}>
-                        {userObj.name}
-                      </p>
-                    </div>
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {onlineUsers.map((user) => (
+                <div
+                  key={user.sid}
+                  className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-muted/50 transition-colors"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.image || undefined} />
+                    <AvatarFallback className="text-xs">
+                      {user.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{user.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-xs text-muted-foreground">
-                  No members online
                 </div>
-              )}
+              ))}
             </div>
           </aside>
         )}
 
       </div>
-    </div>
   )
 }

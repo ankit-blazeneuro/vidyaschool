@@ -2,6 +2,15 @@ import os
 import uuid
 from datetime import datetime
 
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn="https://42fb3541f8375e80add25a786495678f@o4511647082872832.ingest.de.sentry.io/4511647092179024",
+    send_default_pii=True,
+    traces_sample_rate=1.0,
+    enable_logs=True,
+)
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
