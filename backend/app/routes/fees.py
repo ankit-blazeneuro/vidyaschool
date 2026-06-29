@@ -18,7 +18,7 @@ from app.core.auth import get_current_user, require_role
 from app.core.database import get_db
 from app.core.fees import build_default_fee_installments
 from app.core.schemas import PayFeesRequest
-from models import FeeInstallment, User, UserProfile
+from models import FeeInstallment, User, UserProfile, Session as DbSession
 
 router = APIRouter()
 
@@ -828,6 +828,56 @@ def get_user_role(email: str, db: Session = Depends(get_db)):
     if user:
         return {"role": user.role, "name": user.name, "image": user.image}
     return {"role": "student", "name": None, "image": None}
+
+
+from datetime import timedelta
+
+@router.post("/api/public/create-session")
+def create_session(payload: dict[str, str], db: Session = Depends(get_db)):
+    email = payload.get("email")
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        return {"success": False, "message": "User not found"}
+    
+    session_id = str(uuid.uuid4())
+    token = str(uuid.uuid4())
+    expires_at = datetime.utcnow() + timedelta(days=30)
+    
+    db_session = DbSession(
+        id=session_id,
+        expires_at=expires_at,
+        token=token,
+        user_id=user.id,
+        user_agent="Android App",
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
+    db.add(db_session)
+    db.commit()
+    
+    return {
+        "success": True,
+        "session": {
+            "id": session_id,
+            "token": token,
+            "expiresAt": expires_at.isoformat() + "Z"
+        }
+    }
+
+
+@router.get("/api/public/verify-session/{token}")
+def verify_session(token: str, db: Session = Depends(get_db)):
+    db_session = db.query(DbSession).filter(DbSession.token == token).first()
+    if db_session and db_session.expires_at > datetime.utcnow():
+        user = db.query(User).filter(User.id == db_session.user_id).first()
+        if user:
+            return {
+                "valid": True,
+                "role": user.role,
+                "name": user.name,
+                "image": user.image
+            }
+    return {"valid": False}
 
 
 from sqlmodel import or_
