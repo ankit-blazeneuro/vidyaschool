@@ -886,6 +886,29 @@ def verify_session(token: str, db: Session = Depends(get_db)):
     return {"valid": False}
 
 
+SLIDER_FILE = "academic_slider.json"
+
+@router.get("/api/public/academic-slider")
+def get_academic_slider():
+    if os.path.exists(SLIDER_FILE):
+        try:
+            with open(SLIDER_FILE, "r") as f:
+                data = json.load(f)
+                return {"value": float(data.get("value", 85.0))}
+        except Exception:
+            pass
+    return {"value": 85.0}
+
+
+@router.post("/api/admin/academic-slider")
+def set_academic_slider(payload: dict):
+    val = float(payload.get("value", 85.0))
+    val = max(0.0, min(100.0, val))
+    with open(SLIDER_FILE, "w") as f:
+        json.dump({"value": val}, f)
+    return {"success": True, "value": val}
+
+
 from sqlmodel import or_
 
 @router.get("/api/users/search")
