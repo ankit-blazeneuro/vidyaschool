@@ -125,7 +125,7 @@ fun DashboardLayout(
     Scaffold(
         bottomBar = {
             NavigationBar(
-                modifier = Modifier.height(64.dp),
+                modifier = Modifier.height(70.dp),
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
                 contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) {
@@ -133,31 +133,31 @@ fun DashboardLayout(
                     selected = selectedTab == "home",
                     onClick = { selectedTab = "home" },
                     label = { Text("Home", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_home), contentDescription = "Home", modifier = Modifier.size(20.dp)) }
+                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_home), contentDescription = "Home", modifier = Modifier.size(22.dp)) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == "notice",
                     onClick = { selectedTab = "notice" },
                     label = { Text("Notice", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_notice), contentDescription = "Notice", modifier = Modifier.size(20.dp)) }
+                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_notice), contentDescription = "Notice", modifier = Modifier.size(22.dp)) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == "community",
                     onClick = { selectedTab = "community" },
                     label = { Text("Community", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_community), contentDescription = "Community", modifier = Modifier.size(20.dp)) }
+                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_community), contentDescription = "Community", modifier = Modifier.size(22.dp)) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == "search",
                     onClick = { selectedTab = "search" },
                     label = { Text("Search", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_search), contentDescription = "Search", modifier = Modifier.size(20.dp)) }
+                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_search), contentDescription = "Search", modifier = Modifier.size(22.dp)) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == "profile",
                     onClick = { selectedTab = "profile" },
                     label = { Text("Profile", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_profile), contentDescription = "Profile", modifier = Modifier.size(20.dp)) }
+                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_profile), contentDescription = "Profile", modifier = Modifier.size(22.dp)) }
                 )
             }
         }
