@@ -109,7 +109,7 @@ interface AuthApi {
     @POST("api/backend/api/admin/academic-slider")
     suspend fun updateSliderValue(@Body request: UpdateSliderRequest): Response<UpdateSliderResponse>
 
-    @GET("api/slider/images")
+    @GET("api/backend/api/slider/images")
     suspend fun getSliderImages(
         @Query("role") role: String,
         @Query("student_class") studentClass: String? = null
