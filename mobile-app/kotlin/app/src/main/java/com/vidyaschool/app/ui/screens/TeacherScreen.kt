@@ -84,7 +84,7 @@ fun TeacherScreen(
                         IconButton(
                             onClick = { /* Open menu */ },
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(36.dp)
                                 .border(
                                     1.dp,
                                     MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
@@ -95,7 +95,7 @@ fun TeacherScreen(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_custom_menu),
                                 contentDescription = "Menu",
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(18.dp),
                                 tint = MaterialTheme.colorScheme.onBackground
                             )
                         }
@@ -118,7 +118,7 @@ fun TeacherScreen(
                     IconButton(
                         onClick = { /* Notifications */ },
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(36.dp)
                             .border(
                                 1.dp,
                                 MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
@@ -129,7 +129,7 @@ fun TeacherScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_custom_notification),
                             contentDescription = "Notifications",
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(18.dp),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
