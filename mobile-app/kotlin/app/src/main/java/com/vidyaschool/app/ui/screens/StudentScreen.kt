@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vidyaschool.app.api.RetrofitClient
+import com.vidyaschool.app.ui.components.SliderSkeleton
 import com.vidyaschool.app.api.SliderImage
 import coil.compose.AsyncImage
 import androidx.compose.foundation.pager.HorizontalPager
@@ -43,8 +44,10 @@ fun StudentScreen(
     onLogout: () -> Unit
 ) {
     var sliderImages by remember { mutableStateOf<List<SliderImage>>(emptyList()) }
+    var isLoadingSlider by remember { mutableStateOf(true) }
     
     LaunchedEffect(studentClass) {
+        isLoadingSlider = true
         try {
             val response = RetrofitClient.authApi.getSliderImages(
                 role = "student",
@@ -55,6 +58,8 @@ fun StudentScreen(
             }
         } catch (e: Exception) {
             android.util.Log.e("StudentScreen", "Failed to fetch slider images: ${e.message}")
+        } finally {
+            isLoadingSlider = false
         }
     }
     
@@ -95,15 +100,24 @@ fun StudentScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 // Auto-playing Image Slider at the top
-                val enabledImages = sliderImages.filter { it.enabled }
-                if (enabledImages.isNotEmpty()) {
-                    ImageSlider(
-                        images = enabledImages,
+                if (isLoadingSlider) {
+                    SliderSkeleton(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(180.dp)
                     )
                     Spacer(modifier = Modifier.height(24.dp))
+                } else {
+                    val enabledImages = sliderImages.filter { it.enabled }
+                    if (enabledImages.isNotEmpty()) {
+                        ImageSlider(
+                            images = enabledImages,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
                 }
                 
                 Card(

@@ -8,6 +8,7 @@ import retrofit2.http.POST
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Header
 
 data class LoginRequest(
     val email: String,
@@ -85,6 +86,31 @@ data class SliderImage(
     @SerializedName("target_classes") val targetClasses: String = "all"
 )
 
+data class FeeInstallment(
+    val id: Int,
+    @SerializedName("user_id") val userId: String,
+    val month: String,
+    val year: Int,
+    val amount: Double,
+    @SerializedName("due_date") val dueDate: String?,
+    val status: String,
+    @SerializedName("paid_date") val paidDate: String?,
+    @SerializedName("receipt_no") val receiptNo: String?,
+    @SerializedName("payment_method") val paymentMethod: String?,
+    @SerializedName("qr_data_url") val qrDataUrl: String?
+)
+
+data class PayFeesRequest(
+    @SerializedName("installment_ids") val installmentIds: List<Int>,
+    @SerializedName("payment_method") val paymentMethod: String? = "Card / Online"
+)
+
+data class PayFeesResponse(
+    val success: Boolean,
+    @SerializedName("receipt_no") val receiptNo: String?,
+    @SerializedName("paid_date") val paidDate: String?
+)
+
 data class UpdateSliderImagesResponse(
     val success: Boolean,
     val images: List<SliderImage>
@@ -117,4 +143,15 @@ interface AuthApi {
 
     @POST("api/backend/api/admin/slider-images")
     suspend fun updateSliderImages(@Body request: List<SliderImage>): Response<UpdateSliderImagesResponse>
+
+    @GET("api/backend/api/fees")
+    suspend fun getMyFees(
+        @Header("Authorization") authHeader: String
+    ): Response<List<FeeInstallment>>
+
+    @POST("api/backend/api/fees/pay")
+    suspend fun payFees(
+        @Header("Authorization") authHeader: String,
+        @Body request: PayFeesRequest
+    ): Response<PayFeesResponse>
 }

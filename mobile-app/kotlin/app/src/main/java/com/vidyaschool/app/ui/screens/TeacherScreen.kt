@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vidyaschool.app.api.RetrofitClient
+import com.vidyaschool.app.ui.components.SliderSkeleton
 import com.vidyaschool.app.api.SliderImage
 
 @Composable
@@ -29,8 +30,10 @@ fun TeacherScreen(
     onLogout: () -> Unit
 ) {
     var sliderImages by remember { mutableStateOf<List<SliderImage>>(emptyList()) }
+    var isLoadingSlider by remember { mutableStateOf(true) }
     
     LaunchedEffect(Unit) {
+        isLoadingSlider = true
         try {
             val response = RetrofitClient.authApi.getSliderImages(role = "teacher")
             if (response.isSuccessful) {
@@ -38,6 +41,8 @@ fun TeacherScreen(
             }
         } catch (e: Exception) {
             android.util.Log.e("TeacherScreen", "Failed to fetch slider images: ${e.message}")
+        } finally {
+            isLoadingSlider = false
         }
     }
     
@@ -78,15 +83,24 @@ fun TeacherScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 // Image Slider for Teachers at the top
-                val enabledImages = sliderImages.filter { it.enabled }
-                if (enabledImages.isNotEmpty()) {
-                    ImageSlider(
-                        images = enabledImages,
+                if (isLoadingSlider) {
+                    SliderSkeleton(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(180.dp)
                     )
                     Spacer(modifier = Modifier.height(24.dp))
+                } else {
+                    val enabledImages = sliderImages.filter { it.enabled }
+                    if (enabledImages.isNotEmpty()) {
+                        ImageSlider(
+                            images = enabledImages,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
                 }
                 
                 Card(
