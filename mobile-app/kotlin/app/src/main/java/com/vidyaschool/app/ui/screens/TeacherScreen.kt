@@ -7,7 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vidyaschool.app.api.RetrofitClient
+import com.vidyaschool.app.api.SliderImage
 
 @Composable
 fun TeacherScreen(
@@ -26,6 +28,19 @@ fun TeacherScreen(
     onThemeChange: (String) -> Unit = {},
     onLogout: () -> Unit
 ) {
+    var sliderImages by remember { mutableStateOf<List<SliderImage>>(emptyList()) }
+    
+    LaunchedEffect(Unit) {
+        try {
+            val response = RetrofitClient.authApi.getSliderImages(role = "teacher")
+            if (response.isSuccessful) {
+                sliderImages = response.body() ?: emptyList()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("TeacherScreen", "Failed to fetch slider images: ${e.message}")
+        }
+    }
+    
     DashboardLayout(
         role = "teacher",
         provider = provider,
@@ -61,6 +76,19 @@ fun TeacherScreen(
                 )
                 
                 Spacer(modifier = Modifier.height(24.dp))
+                
+                // Image Slider for Teachers at the top
+                val enabledImages = sliderImages.filter { it.enabled }
+                if (enabledImages.isNotEmpty()) {
+                    ImageSlider(
+                        images = enabledImages,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+                
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),

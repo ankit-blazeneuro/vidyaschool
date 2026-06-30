@@ -42,7 +42,7 @@ import com.vidyaschool.app.api.CreateSessionRequest
 fun LoginScreen(
     viewModel: AuthViewModel,
     onBackClick: () -> Unit,
-    onLoginSuccess: (String, String, String?, String, String?, String?) -> Unit
+    onLoginSuccess: (String, String, String?, String, String?, String?, String?) -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -81,11 +81,13 @@ fun LoginScreen(
                 scope.launch {
                     var role = "student"
                     var apiAvatarUrl: String? = result.userInfo.avatarUrl
+                    var studentClass: String? = null
                     try {
                         val roleResponse = RetrofitClient.authApi.getUserRole(result.userInfo.email)
                         if (roleResponse.isSuccessful) {
                             role = roleResponse.body()?.role ?: "student"
                             apiAvatarUrl = roleResponse.body()?.image ?: result.userInfo.avatarUrl
+                            studentClass = roleResponse.body()?.studentClass
                         } else {
                             // Local fallback for quick testing before deploying backend changes
                             role = when (result.userInfo.email) {
@@ -133,7 +135,8 @@ fun LoginScreen(
                         result.userInfo.name,
                         role,
                         apiAvatarUrl,
-                        sessionToken
+                        sessionToken,
+                        studentClass
                     )
                     viewModel.resetState()
                 }
@@ -165,11 +168,25 @@ fun LoginScreen(
                     
                     if (response.isSuccessful) {
                         val user = response.body()?.user
-                        val role = user?.role ?: "student"
-                        val avatarUrl = user?.image
                         val sessionToken = response.body()?.session?.token
+                        
+                        var role = user?.role ?: "student"
+                        var avatarUrl = user?.image
+                        var studentClass: String? = null
+                        
+                        try {
+                            val roleResponse = RetrofitClient.authApi.getUserRole(user?.email ?: email)
+                            if (roleResponse.isSuccessful) {
+                                role = roleResponse.body()?.role ?: role
+                                avatarUrl = roleResponse.body()?.image ?: avatarUrl
+                                studentClass = roleResponse.body()?.studentClass
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("LoginScreen", "Failed to fetch user role: ${e.message}")
+                        }
+                        
                         Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
-                        onLoginSuccess("Email", user?.email ?: email, user?.name, role, avatarUrl, sessionToken)
+                        onLoginSuccess("Email", user?.email ?: email, user?.name, role, avatarUrl, sessionToken, studentClass)
                     } else {
                         Toast.makeText(
                             context,

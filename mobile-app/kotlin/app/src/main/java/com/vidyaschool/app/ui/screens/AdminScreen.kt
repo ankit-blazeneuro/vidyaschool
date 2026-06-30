@@ -36,10 +36,11 @@ fun AdminScreen(
     
     var newTitle by remember { mutableStateOf("") }
     var newUrl by remember { mutableStateOf("") }
+    var newTargetAudience by remember { mutableStateOf("all") }
     
     LaunchedEffect(Unit) {
         try {
-            val response = RetrofitClient.authApi.getSliderImages()
+            val response = RetrofitClient.authApi.getSliderImages(role = "admin")
             if (response.isSuccessful) {
                 sliderImages = response.body() ?: emptyList()
             }
@@ -123,7 +124,7 @@ fun AdminScreen(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "ID: ${img.id}",
+                                        text = "ID: ${img.id} • Target: ${img.targetAudience}",
                                         fontSize = 11.sp,
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                     )
@@ -133,6 +134,57 @@ fun AdminScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
+                                    // Target Audience Dropdown
+                                    var expanded by remember { mutableStateOf(false) }
+                                    Box {
+                                        TextButton(
+                                            onClick = { expanded = true },
+                                            modifier = Modifier.height(32.dp)
+                                        ) {
+                                            Text(
+                                                text = when(img.targetAudience) {
+                                                    "students" -> "👨‍🎓"
+                                                    "teachers" -> "👨‍🏫"
+                                                    else -> "👥"
+                                                },
+                                                fontSize = 16.sp
+                                            )
+                                        }
+                                        DropdownMenu(
+                                            expanded = expanded,
+                                            onDismissRequest = { expanded = false }
+                                        ) {
+                                            listOf("all", "students", "teachers").forEach { target ->
+                                                DropdownMenuItem(
+                                                    text = { 
+                                                        Text(
+                                                            text = when(target) {
+                                                                "students" -> "👨‍🎓 Students"
+                                                                "teachers" -> "👨‍🏫 Teachers"
+                                                                else -> "👥 All"
+                                                            }
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        val updatedList = sliderImages.map {
+                                                            if (it.id == img.id) it.copy(targetAudience = target) else it
+                                                        }
+                                                        sliderImages = updatedList
+                                                        expanded = false
+                                                        
+                                                        scope.launch {
+                                                            try {
+                                                                RetrofitClient.authApi.updateSliderImages(updatedList)
+                                                            } catch (e: Exception) {
+                                                                android.util.Log.e("AdminScreen", "Failed to update slider images: ${e.message}")
+                                                            }
+                                                        }
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                    
                                     Switch(
                                         checked = img.enabled,
                                         onCheckedChange = { checked ->
@@ -203,6 +255,36 @@ fun AdminScreen(
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Target Audience Selection
+                        Text(
+                            text = "Show to:",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FilterChip(
+                                selected = newTargetAudience == "all",
+                                onClick = { newTargetAudience = "all" },
+                                label = { Text("👥 All") }
+                            )
+                            FilterChip(
+                                selected = newTargetAudience == "students",
+                                onClick = { newTargetAudience = "students" },
+                                label = { Text("👨‍🎓 Students") }
+                            )
+                            FilterChip(
+                                selected = newTargetAudience == "teachers",
+                                onClick = { newTargetAudience = "teachers" },
+                                label = { Text("👨‍🏫 Teachers") }
+                            )
+                        }
+                        
                         Spacer(modifier = Modifier.height(12.dp))
                         Button(
                             onClick = {
@@ -212,7 +294,8 @@ fun AdminScreen(
                                         id = nextId,
                                         url = newUrl,
                                         title = newTitle,
-                                        enabled = true
+                                        enabled = true,
+                                        targetAudience = newTargetAudience
                                     )
                                     val updatedList = sliderImages + newImg
                                     sliderImages = updatedList
@@ -221,6 +304,7 @@ fun AdminScreen(
                                             RetrofitClient.authApi.updateSliderImages(updatedList)
                                             newTitle = ""
                                             newUrl = ""
+                                            newTargetAudience = "all"
                                         } catch (e: Exception) {
                                             android.util.Log.e("AdminScreen", "Failed to add slider image: ${e.message}")
                                         }

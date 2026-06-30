@@ -832,8 +832,13 @@ def register_teacher_preference(
 def get_user_role(email: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == email).first()
     if user:
-        return {"role": user.role, "name": user.name, "image": user.image}
-    return {"role": "student", "name": None, "image": None}
+        student_class = None
+        if user.role == "student":
+            profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+            if profile:
+                student_class = profile.class_
+        return {"role": user.role, "name": user.name, "image": user.image, "student_class": student_class}
+    return {"role": "student", "name": None, "image": None, "student_class": None}
 
 
 from datetime import timedelta
@@ -850,17 +855,20 @@ def create_session(payload: dict[str, str], request: Request, db: Session = Depe
     if ip_address and "," in ip_address:
         ip_address = ip_address.split(",")[0].strip()
         
-    session_id = str(uuid.uuid4())
+    user_agent = request.headers.get("user-agent")
+    
+    import uuid
     token = str(uuid.uuid4())
-    expires_at = datetime.utcnow() + timedelta(days=30)
+    session_id = str(uuid.uuid4())
+    expires_at = datetime.utcnow() + timedelta(days=7)
     
     db_session = DbSession(
         id=session_id,
-        expires_at=expires_at,
         token=token,
         user_id=user.id,
+        expires_at=expires_at,
         ip_address=ip_address,
-        user_agent="Android App",
+        user_agent=user_agent,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow()
     )
@@ -883,11 +891,17 @@ def verify_session(token: str, db: Session = Depends(get_db)):
     if db_session and db_session.expires_at > datetime.utcnow():
         user = db.query(User).filter(User.id == db_session.user_id).first()
         if user:
+            student_class = None
+            if user.role == "student":
+                profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+                if profile:
+                    student_class = profile.class_
             return {
                 "valid": True,
                 "role": user.role,
                 "name": user.name,
-                "image": user.image
+                "image": user.image,
+                "student_class": student_class
             }
     return {"valid": False}
 

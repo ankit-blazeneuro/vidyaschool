@@ -102,8 +102,8 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                 LoginScreen(
                     viewModel = viewModel,
                     onBackClick = { navController.popBackStack() },
-                    onLoginSuccess = { provider, email, name, role, avatarUrl, sessionToken ->
-                        sessionManager.saveSession(provider, email, name, role, avatarUrl, sessionToken)
+                    onLoginSuccess = { provider, email, name, role, avatarUrl, sessionToken, studentClass ->
+                        sessionManager.saveSession(provider, email, name, role, avatarUrl, sessionToken, studentClass)
                         val destination = when (role.lowercase()) {
                             "admin" -> "admin"
                             "teacher" -> "teacher"
@@ -122,6 +122,7 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                     email = sessionManager.getEmail() ?: "",
                     name = sessionManager.getName() ?: "",
                     avatarUrl = sessionManager.getAvatarUrl() ?: "",
+                    studentClass = sessionManager.getStudentClass() ?: "",
                     themeMode = themeMode,
                     onThemeChange = { mode ->
                         sessionManager.setThemeMode(mode)

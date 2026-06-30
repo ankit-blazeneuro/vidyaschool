@@ -37,15 +37,19 @@ fun StudentScreen(
     email: String = "",
     name: String = "",
     avatarUrl: String = "",
+    studentClass: String = "",
     themeMode: String = "system",
     onThemeChange: (String) -> Unit = {},
     onLogout: () -> Unit
 ) {
     var sliderImages by remember { mutableStateOf<List<SliderImage>>(emptyList()) }
     
-    LaunchedEffect(Unit) {
+    LaunchedEffect(studentClass) {
         try {
-            val response = RetrofitClient.authApi.getSliderImages()
+            val response = RetrofitClient.authApi.getSliderImages(
+                role = "student",
+                studentClass = studentClass.takeIf { it.isNotEmpty() }
+            )
             if (response.isSuccessful) {
                 sliderImages = response.body() ?: emptyList()
             }
@@ -89,6 +93,19 @@ fun StudentScreen(
                 )
                 
                 Spacer(modifier = Modifier.height(24.dp))
+                
+                // Auto-playing Image Slider at the top
+                val enabledImages = sliderImages.filter { it.enabled }
+                if (enabledImages.isNotEmpty()) {
+                    ImageSlider(
+                        images = enabledImages,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+                
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
@@ -113,18 +130,6 @@ fun StudentScreen(
                         )
                         
                         Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Auto-playing Image Slider (Controlled by Admin Panel)
-                        val enabledImages = sliderImages.filter { it.enabled }
-                        if (enabledImages.isNotEmpty()) {
-                            ImageSlider(
-                                images = enabledImages,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(150.dp)
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                        }
                         
                         AcademicPerformanceChart(
                             data = listOf(65f, 80f, 75f, 90f, 85f, 95f),

@@ -1,11 +1,13 @@
 package com.vidyaschool.app.api
 
+import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 data class LoginRequest(
     val email: String,
@@ -34,7 +36,8 @@ data class Session(
 data class UserRoleResponse(
     val role: String,
     val name: String?,
-    val image: String? = null
+    val image: String? = null,
+    @SerializedName("student_class") val studentClass: String? = null
 )
 
 data class CreateSessionRequest(
@@ -56,7 +59,8 @@ data class VerifySessionResponse(
     val valid: Boolean,
     val role: String?,
     val name: String?,
-    val image: String?
+    val image: String?,
+    @SerializedName("student_class") val studentClass: String? = null
 )
 
 data class SliderValueResponse(
@@ -76,7 +80,9 @@ data class SliderImage(
     val id: Int,
     val url: String,
     val title: String,
-    val enabled: Boolean
+    val enabled: Boolean,
+    @SerializedName("target_audience") val targetAudience: String = "all",
+    @SerializedName("target_classes") val targetClasses: String = "all"
 )
 
 data class UpdateSliderImagesResponse(
@@ -104,7 +110,10 @@ interface AuthApi {
     suspend fun updateSliderValue(@Body request: UpdateSliderRequest): Response<UpdateSliderResponse>
 
     @GET("api/slider/images")
-    suspend fun getSliderImages(): Response<List<SliderImage>>
+    suspend fun getSliderImages(
+        @Query("role") role: String,
+        @Query("student_class") studentClass: String? = null
+    ): Response<List<SliderImage>>
 
     @POST("api/backend/api/admin/slider-images")
     suspend fun updateSliderImages(@Body request: List<SliderImage>): Response<UpdateSliderImagesResponse>
