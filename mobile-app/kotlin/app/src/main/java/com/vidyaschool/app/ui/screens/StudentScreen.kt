@@ -31,6 +31,9 @@ import coil.compose.AsyncImage
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.border
+import androidx.compose.ui.res.painterResource
+import com.vidyaschool.app.R
 
 @Composable
 fun StudentScreen(
@@ -85,18 +88,63 @@ fun StudentScreen(
                     .statusBarsPadding()
                     .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
             ) {
-                Text(
-                    text = "Welcome, ${name.ifEmpty { "Student" }}",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Student Portal",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        IconButton(
+                            onClick = { /* Open menu */ },
+                            modifier = Modifier
+                                .size(40.dp)
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                                    shape = CircleShape
+                                )
+                                .clip(CircleShape)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_custom_menu),
+                                contentDescription = "Menu",
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                        
+                        Column {
+                            Text(
+                                text = "Welcome, ${name.ifEmpty { "Student" }}",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Text(
+                                text = "Student Portal",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                    
+                    IconButton(
+                        onClick = { /* Notifications */ },
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_custom_notification),
+                            contentDescription = "Notifications",
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                }
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
