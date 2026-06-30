@@ -95,7 +95,7 @@ fun TeacherScreen(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_custom_menu),
                                 contentDescription = "Menu",
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier.size(20.dp),
                                 tint = MaterialTheme.colorScheme.onBackground
                             )
                         }
@@ -119,12 +119,17 @@ fun TeacherScreen(
                         onClick = { /* Notifications */ },
                         modifier = Modifier
                             .size(40.dp)
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                                shape = CircleShape
+                            )
                             .clip(CircleShape)
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_custom_notification),
                             contentDescription = "Notifications",
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
