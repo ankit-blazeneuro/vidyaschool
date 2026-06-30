@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.ui.components.SliderSkeleton
 import com.vidyaschool.app.api.SliderImage
+import kotlinx.coroutines.delay
 
 @Composable
 fun TeacherScreen(
@@ -35,6 +36,7 @@ fun TeacherScreen(
     LaunchedEffect(Unit) {
         isLoadingSlider = true
         try {
+            delay(2000) // Deliberate delay to show skeleton shimmer
             val response = RetrofitClient.authApi.getSliderImages(role = "teacher")
             if (response.isSuccessful) {
                 sliderImages = response.body() ?: emptyList()

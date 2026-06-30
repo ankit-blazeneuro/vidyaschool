@@ -49,6 +49,7 @@ fun StudentScreen(
     LaunchedEffect(studentClass) {
         isLoadingSlider = true
         try {
+            delay(2000) // Deliberate delay to show skeleton shimmer
             val response = RetrofitClient.authApi.getSliderImages(
                 role = "student",
                 studentClass = studentClass.takeIf { it.isNotEmpty() }
