@@ -258,7 +258,22 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
                 preview.forEachIndexed { idx, book ->
                     val renewalsLeft = 3 - book.renewalsUsed
                     if (idx == preview.lastIndex && hasMore) {
-                        Box(modifier = Modifier.fillMaxWidth()) {
+                        Box(modifier = Modifier
+                            .fillMaxWidth()
+                            .drawBehind {
+                                val gradientBrush = Brush.horizontalGradient(
+                                    0.0f to androidx.compose.ui.graphics.Color.Transparent,
+                                    0.15f to border,
+                                    0.85f to border,
+                                    1.0f to androidx.compose.ui.graphics.Color.Transparent
+                                )
+                                drawRect(
+                                    brush = gradientBrush,
+                                    topLeft = androidx.compose.ui.geometry.Offset(0f, 0f),
+                                    size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx())
+                                )
+                            }
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()

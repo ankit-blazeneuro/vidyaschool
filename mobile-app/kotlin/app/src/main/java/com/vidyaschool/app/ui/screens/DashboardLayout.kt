@@ -128,8 +128,11 @@ fun DashboardLayout(
     
     Scaffold(
         bottomBar = {
-            Column {
+            Column(
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+            ) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+                Spacer(modifier = Modifier.height(4.dp))
                 NavigationBar(
                     modifier = Modifier.height(70.dp),
                     containerColor = MaterialTheme.colorScheme.surface,
