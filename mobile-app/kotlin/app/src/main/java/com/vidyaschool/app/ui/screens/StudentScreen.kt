@@ -89,14 +89,25 @@ fun StudentScreen(
         onThemeChange = onThemeChange,
         onLogout = onLogout
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
+        val scrollState = rememberScrollState()
+        // ~60dp threshold: when welcome text has scrolled out of view
+        val headerCollapsed by remember { derivedStateOf { scrollState.value > 160 } }
+        val headerAlpha by animateFloatAsState(
+            targetValue = if (headerCollapsed) 1f else 0f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerAlpha"
+        )
+        val headerSlide by animateFloatAsState(
+            targetValue = if (headerCollapsed) 0f else -24f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerSlide"
+        )
+
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .statusBarsPadding()
                     .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
             ) {
@@ -191,6 +202,45 @@ fun StudentScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 LibraryBooksSection(onShowMore = onShowLibrary)
+            }
+
+            // Sticky collapsed header
+            if (headerAlpha > 0f) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { alpha = headerAlpha; translationY = headerSlide }
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+                    Spacer(modifier = Modifier.windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                    IconButton(
+                        onClick = { /* Open menu */ },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                            .clip(CircleShape)
+                    ) {
+                        Icon(painter = painterResource(id = R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                    }
+                    Text("Dashboard", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    IconButton(
+                        onClick = { /* Notifications */ },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                            .clip(CircleShape)
+                    ) {
+                        Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                    }
+                }
+                }
             }
         }
     }
