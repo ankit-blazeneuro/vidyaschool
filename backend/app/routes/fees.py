@@ -22,8 +22,20 @@ from models import FeeInstallment, User, UserProfile, Session as DbSession
 
 router = APIRouter()
 
+def _read_secret(name: str) -> str | None:
+    """Read from env var first, then Render secret file fallback."""
+    val = os.getenv(name)
+    if val:
+        return val
+    try:
+        with open(f"/etc/secrets/{name}") as f:
+            return f.read().strip() or None
+    except OSError:
+        return None
+
+
 def _get_razorpay_creds():
-    return os.getenv("RAZORPAY_KEY_ID"), os.getenv("RAZORPAY_KEY_SECRET")
+    return _read_secret("RAZORPAY_KEY_ID"), _read_secret("RAZORPAY_KEY_SECRET")
 
 
 def generate_receipt_qr_data_url(payload: str) -> str:

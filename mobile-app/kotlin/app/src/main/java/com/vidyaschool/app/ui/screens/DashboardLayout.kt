@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -834,6 +835,7 @@ fun FeesTabContent(
     var installments by remember { mutableStateOf<List<FeeInstallment>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var isProcessingPayment by remember { mutableStateOf<String?>(null) }
+    var paymentError by remember { mutableStateOf<String?>(null) }
 
     val fetchFees: () -> Unit = {
         isLoading = true
@@ -875,40 +877,37 @@ fun FeesTabContent(
                 }
                 val order = orderResp.body()!!
 
-                // Mock payment fallback (when Razorpay creds not configured on server)
-                if (order.mockPayment == true) {
-                    val payResp = RetrofitClient.authApi.payFees(
-                        authHeader = "Bearer $token",
-                        request = PayFeesRequest(installmentIds = listOf(inst.id), paymentMethod = "Mock")
-                    )
-                    if (payResp.isSuccessful && payResp.body()?.success == true) {
-                        android.widget.Toast.makeText(context, "✅ Payment successful! Receipt: ${payResp.body()?.receiptNo}", android.widget.Toast.LENGTH_LONG).show()
-                        fetchFees()
-                    }
-                    isProcessingPayment = null
-                    return@launch
-                }
-
-                // Real Razorpay checkout
                 val activity = context as? com.vidyaschool.app.MainActivity ?: run { isProcessingPayment = null; return@launch }
                 activity.pendingInstallmentId = inst.id
                 activity.pendingOrderId = order.orderId ?: ""
+                activity.pendingIsMock = order.mockPayment == true
                 activity.onPaymentDone = {
                     isProcessingPayment = null
                     fetchFees()
+                }
+                activity.onPaymentFailed = { msg ->
+                    isProcessingPayment = null
+                    paymentError = msg
                 }
                 val checkout = com.razorpay.Checkout()
                 checkout.setKeyID(order.keyId ?: "")
                 val options = org.json.JSONObject().apply {
                     put("name", "Vidya School")
                     put("description", "Fee: ${inst.month} ${inst.year}")
-                    put("order_id", order.orderId)
                     put("amount", order.amount)
                     put("currency", order.currency ?: "INR")
+                    if (order.mockPayment != true && !order.orderId.isNullOrEmpty()) {
+                        put("order_id", order.orderId)
+                    }
                     put("prefill", org.json.JSONObject().apply {
                         put("email", sessionManager.getEmail() ?: "")
+                        put("contact", "9999999999")
                     })
                     put("theme", org.json.JSONObject().apply { put("color", "#6750A4") })
+                    put("modal", org.json.JSONObject().apply {
+                        put("confirm_close", false)
+                        put("animation", false)
+                    })
                 }
                 checkout.open(activity, options)
             } catch (e: Exception) {
@@ -1010,6 +1009,26 @@ fun FeesTabContent(
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
+
+                if (paymentError != null) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(paymentError!!, color = MaterialTheme.colorScheme.onErrorContainer, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            IconButton(onClick = { paymentError = null }, modifier = Modifier.size(20.dp)) {
+                                Icon(imageVector = Icons.Default.Close, contentDescription = "Dismiss",
+                                    tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(14.dp))
+                            }
+                        }
+                    }
+                }
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),

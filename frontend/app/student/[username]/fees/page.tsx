@@ -232,24 +232,15 @@ export default function StudentFeesPage() {
 
       const isDarkMode = document.documentElement.classList.contains("dark") || window.matchMedia("(prefers-color-scheme: dark)").matches
 
-      if (orderData.mock_payment) {
-        setPaymentMessage(orderData.detail || "Mock payment mode is active. Your payment was simulated successfully.")
-        await fetchData()
-        setSelectedMonths([])
-        setCheckoutData(null)
-        return
-      }
-
       const options = {
         key: orderData.key_id,
         amount: orderData.amount,
-        currency: orderData.currency,
+        currency: orderData.currency ?? "INR",
         name: "Vidya School",
         description: checkoutData.subtitle,
         order_id: orderData.order_id,
         prefill: {
           name: studentProfile?.name || "Student",
-          email: "student@example.com",
           contact: "9999999999"
         },
         handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
@@ -283,22 +274,6 @@ export default function StudentFeesPage() {
         modal: {
           ondismiss: () => {
             setPaymentMessage("Payment cancelled. No charges were made.")
-          }
-        },
-        display: {
-          blocks: {
-            upi: {
-              name: "Pay via UPI",
-              instruments: [{ method: "upi" }]
-            },
-            card: {
-              name: "Pay via Card",
-              instruments: [{ method: "card" }]
-            }
-          },
-          sequence: ["block.upi", "block.card"],
-          preferences: {
-            show_default_blocks: false
           }
         },
         theme: {

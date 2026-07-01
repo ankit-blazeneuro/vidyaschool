@@ -2,9 +2,9 @@ package com.vidyaschool.app
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,14 +39,16 @@ import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.api.VerifyPaymentRequest
 import com.vidyaschool.app.api.PayFeesRequest
 
-class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
+class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
     private lateinit var viewModel: AuthViewModel
     private lateinit var sessionManager: SessionManager
 
     // Pending Razorpay payment state
     var pendingInstallmentId: String = ""
     var pendingOrderId: String = ""
+    var pendingIsMock: Boolean = false
     var onPaymentDone: (() -> Unit)? = null
+    var onPaymentFailed: ((String) -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +64,7 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         viewModel = AuthViewModel(authRepository)
         
         intent?.let { handleIntent(it) }
-        
+        com.razorpay.Checkout.preload(applicationContext)
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
@@ -93,23 +95,33 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
         val paymentId = razorpayPaymentId ?: paymentData?.paymentId ?: return
         val signature = paymentData?.signature ?: ""
         if (pendingInstallmentId.isEmpty()) return
+        val installmentId = pendingInstallmentId
+        val orderId = pendingOrderId
+        val isMock = pendingIsMock
+        pendingInstallmentId = ""; pendingOrderId = ""; pendingIsMock = false
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val token = sessionManager.getSessionToken() ?: return@launch
-                RetrofitClient.authApi.verifyPayment(
-                    authHeader = "Bearer $token",
-                    request = VerifyPaymentRequest(
-                        orderId = pendingOrderId,
-                        paymentId = paymentId,
-                        signature = signature,
-                        installmentIds = listOf(pendingInstallmentId)
+                if (isMock) {
+                    // No real order_id — just mark paid directly
+                    RetrofitClient.authApi.payFees(
+                        authHeader = "Bearer $token",
+                        request = PayFeesRequest(installmentIds = listOf(installmentId), paymentMethod = "Razorpay")
                     )
-                )
+                } else {
+                    RetrofitClient.authApi.verifyPayment(
+                        authHeader = "Bearer $token",
+                        request = VerifyPaymentRequest(
+                            orderId = orderId,
+                            paymentId = paymentId,
+                            signature = signature,
+                            installmentIds = listOf(installmentId)
+                        )
+                    )
+                }
             } catch (e: Exception) {
-                android.util.Log.e("Razorpay", "Verify failed: ${e.message}")
+                android.util.Log.e("Razorpay", "Post-payment failed: ${e.message}")
             } finally {
-                pendingInstallmentId = ""
-                pendingOrderId = ""
                 onPaymentDone?.invoke()
                 onPaymentDone = null
             }
@@ -119,9 +131,16 @@ class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
     override fun onPaymentError(code: Int, response: String?, paymentData: PaymentData?) {
         pendingInstallmentId = ""
         pendingOrderId = ""
-        onPaymentDone?.invoke()
+        pendingIsMock = false
+        val message = when (code) {
+            0 -> "Payment cancelled"
+            1 -> "Payment failed. Please try again."
+            2 -> "Network error. Check your connection."
+            else -> "Payment failed. Please try again."
+        }
+        onPaymentFailed?.invoke(message)
+        onPaymentFailed = null
         onPaymentDone = null
-        android.widget.Toast.makeText(this, "Payment failed: $response", android.widget.Toast.LENGTH_SHORT).show()
     }
 }
 
