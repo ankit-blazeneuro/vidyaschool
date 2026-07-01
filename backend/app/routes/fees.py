@@ -22,9 +22,8 @@ from models import FeeInstallment, User, UserProfile, Session as DbSession
 
 router = APIRouter()
 
-RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
-RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
-RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET") or RAZORPAY_KEY_SECRET
+def _get_razorpay_creds():
+    return os.getenv("RAZORPAY_KEY_ID"), os.getenv("RAZORPAY_KEY_SECRET")
 
 
 def generate_receipt_qr_data_url(payload: str) -> str:
@@ -102,16 +101,18 @@ def _mark_installments_paid(db: Session, installments: list[FeeInstallment], pay
 
 @router.get("/api/debug-razorpay")
 def debug_razorpay():
+    key_id, key_secret = _get_razorpay_creds()
     return {
-        "key_id_set": bool(RAZORPAY_KEY_ID),
-        "key_id_prefix": RAZORPAY_KEY_ID[:10] if RAZORPAY_KEY_ID else None,
-        "secret_set": bool(RAZORPAY_KEY_SECRET),
+        "key_id_set": bool(key_id),
+        "key_id_prefix": key_id[:10] if key_id else None,
+        "secret_set": bool(key_secret),
         "env_keys_with_razor": [k for k in os.environ if "RAZOR" in k.upper()],
         "live_key_id": os.getenv("RAZORPAY_KEY_ID", "NOT_SET")[:10],
     }
 
 
 def _create_razorpay_order(amount: int, receipt: str) -> dict[str, Any]:
+    RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET = _get_razorpay_creds()
     if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
         return {
             "order_id": f"mock_order_{uuid.uuid4().hex[:12]}",
@@ -233,12 +234,13 @@ def create_order(payload: dict[str, Any], user: User = Depends(get_current_user)
         **order,
         "receipt": receipt,
         "installment_ids": installment_ids,
-        "key_id": RAZORPAY_KEY_ID,
+        "key_id": _get_razorpay_creds()[0],
     }
 
 
 @router.post("/api/verify-payment")
 def verify_payment(payload: dict[str, Any], user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    _, RAZORPAY_KEY_SECRET = _get_razorpay_creds()
     if not RAZORPAY_KEY_SECRET:
         raise HTTPException(status_code=500, detail="Razorpay secret is not configured")
 
@@ -274,6 +276,8 @@ def verify_payment(payload: dict[str, Any], user: User = Depends(get_current_use
 async def razorpay_webhook(request: Request):
     payload = await request.body()
     signature = request.headers.get("x-razorpay-signature", "")
+    _, key_secret = _get_razorpay_creds()
+    RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET") or key_secret
 
     if not RAZORPAY_WEBHOOK_SECRET:
         raise HTTPException(status_code=500, detail="Razorpay webhook secret is not configured")
