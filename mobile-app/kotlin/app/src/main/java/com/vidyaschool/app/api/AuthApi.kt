@@ -144,53 +144,53 @@ interface AuthApi {
     @POST("api/auth/sign-in/email")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
-    @GET("api/backend/api/public/user-role/{email}")
+    @GET("api/public/user-role/{email}")
     suspend fun getUserRole(@Path("email") email: String): Response<UserRoleResponse>
 
-    @POST("api/backend/api/public/create-session")
+    @POST("api/public/create-session")
     suspend fun createSession(@Body request: CreateSessionRequest): Response<CreateSessionResponse>
 
-    @GET("api/backend/api/public/verify-session/{token}")
+    @GET("api/public/verify-session/{token}")
     suspend fun verifySession(@Path("token") token: String): Response<VerifySessionResponse>
 
-    @GET("api/backend/api/public/academic-slider")
+    @GET("api/public/academic-slider")
     suspend fun getSliderValue(): Response<SliderValueResponse>
 
-    @POST("api/backend/api/admin/academic-slider")
+    @POST("api/admin/academic-slider")
     suspend fun updateSliderValue(@Body request: UpdateSliderRequest): Response<UpdateSliderResponse>
 
-    @GET("api/backend/api/slider/images")
+    @GET("api/slider/images")
     suspend fun getSliderImages(
         @Query("role") role: String,
         @Query("student_class") studentClass: String? = null
     ): Response<List<SliderImage>>
 
-    @POST("api/backend/api/admin/slider-images")
+    @POST("api/admin/slider-images")
     suspend fun updateSliderImages(@Body request: List<SliderImage>): Response<UpdateSliderImagesResponse>
 
-    @GET("api/backend/api/fees")
+    @GET("api/fees")
     suspend fun getMyFees(
         @Header("Authorization") authHeader: String
     ): Response<List<FeeInstallment>>
 
-    @GET("api/backend/api/fees/receipt/{receiptNo}")
+    @GET("api/fees/receipt/{receiptNo}")
     suspend fun verifyReceipt(
         @Path("receiptNo") receiptNo: String
     ): Response<Map<String, Any?>>
 
-    @POST("api/backend/api/fees/pay")
+    @POST("api/fees/pay")
     suspend fun payFees(
         @Header("Authorization") authHeader: String,
         @Body request: PayFeesRequest
     ): Response<PayFeesResponse>
 
-    @POST("api/backend/api/create-order")
+    @POST("api/create-order")
     suspend fun createOrder(
         @Header("Authorization") authHeader: String,
         @Body request: CreateOrderRequest
     ): Response<CreateOrderResponse>
 
-    @POST("api/backend/api/verify-payment")
+    @POST("api/verify-payment")
     suspend fun verifyPayment(
         @Header("Authorization") authHeader: String,
         @Body request: VerifyPaymentRequest

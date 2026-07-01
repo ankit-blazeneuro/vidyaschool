@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-33:12
-INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-33:12
-INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-33:12
-INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-33:12
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-44:12
+INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-44:12
+INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-44:12
+INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-44:12
 MERGED from [androidx.navigation:navigation-common:2.7.6] /home/ankit/.gradle/caches/transforms-3/262ae6c23a3af364621c3177850012f9/transformed/navigation-common-2.7.6/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-runtime:2.7.6] /home/ankit/.gradle/caches/transforms-3/d4506cfaa3b24a49b0c3d77d052ece1d/transformed/navigation-runtime-2.7.6/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-common-ktx:2.7.6] /home/ankit/.gradle/caches/transforms-3/94ae3459fca4b31ec2e37ea02fbd65a1/transformed/navigation-common-ktx-2.7.6/AndroidManifest.xml:2:1-7:12
@@ -109,8 +109,8 @@ MERGED from [com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d
 	android:name
 		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:3:22-64
 application
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:5:5-32:19
-INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:5:5-32:19
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:5:5-43:19
+INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:5:5-43:19
 MERGED from [androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:23:5-42:19
 MERGED from [androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:23:5-42:19
 MERGED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:46:5-74:19
@@ -158,7 +158,7 @@ MERGED from [com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d
 	android:usesCleartextTraffic
 		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:9:9-44
 activity#com.vidyaschool.app.MainActivity
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:10:9-31:20
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:10:9-42:20
 	android:launchMode
 		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:15:13-44
 	android:windowSoftInputMode
@@ -201,6 +201,12 @@ ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidM
 		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:21-41
 	android:scheme
 		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:21-57
+	android:pathPrefix
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:40:21-55
+intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:vidyaschool.vercel.app+data:pathPrefix:/fee/payment/+data:scheme:https
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:33:13-41:29
+	android:autoVerify
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:33:28-53
 uses-sdk
 INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml
