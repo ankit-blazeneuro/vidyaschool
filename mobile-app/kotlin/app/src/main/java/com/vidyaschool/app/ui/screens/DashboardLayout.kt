@@ -1,6 +1,7 @@
 package com.vidyaschool.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -19,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -830,8 +832,8 @@ fun FeesTabContent(
     val scope = rememberCoroutineScope()
     var installments by remember { mutableStateOf<List<FeeInstallment>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
-    var isProcessingPayment by remember { mutableStateOf<Int?>(null) }
-    
+    var isProcessingPayment by remember { mutableStateOf<String?>(null) }
+
     val fetchFees: () -> Unit = {
         isLoading = true
         scope.launch {
@@ -839,236 +841,311 @@ fun FeesTabContent(
                 val token = sessionManager.getSessionToken()
                 if (!token.isNullOrEmpty()) {
                     val response = RetrofitClient.authApi.getMyFees("Bearer $token")
-                    if (response.isSuccessful) {
-                        installments = response.body() ?: emptyList()
-                    } else {
-                        android.widget.Toast.makeText(context, "Failed to load fees: ${response.message()}", android.widget.Toast.LENGTH_SHORT).show()
-                    }
+                    if (response.isSuccessful) installments = response.body() ?: emptyList()
                 }
             } catch (e: Exception) {
-                android.util.Log.e("FeesTabContent", "Error fetching fees: ${e.message}")
-                android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                android.util.Log.e("FeesTabContent", "Error: ${e.message}")
             } finally {
                 isLoading = false
             }
         }
     }
-    
-    LaunchedEffect(Unit) {
-        fetchFees()
-    }
-    
-    LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            fetchFees()
-        }
-    }
-    
+
+    LaunchedEffect(Unit) { fetchFees() }
+    LaunchedEffect(isRefreshing) { if (isRefreshing) fetchFees() }
+
     val handlePayFee: (FeeInstallment) -> Unit = { inst ->
         isProcessingPayment = inst.id
         scope.launch {
             try {
-                val token = sessionManager.getSessionToken()
-                if (!token.isNullOrEmpty()) {
-                    val response = RetrofitClient.authApi.payFees(
-                        authHeader = "Bearer $token",
-                        request = PayFeesRequest(installmentIds = listOf(inst.id))
+                val token = sessionManager.getSessionToken() ?: return@launch
+                val amountPaise = (inst.amount * 100).toInt()
+                val orderResp = RetrofitClient.authApi.createOrder(
+                    authHeader = "Bearer $token",
+                    request = com.vidyaschool.app.api.CreateOrderRequest(
+                        installmentIds = listOf(inst.id),
+                        amount = amountPaise
                     )
-                    if (response.isSuccessful && response.body()?.success == true) {
-                        android.widget.Toast.makeText(context, "Payment successful! Receipt: ${response.body()?.receiptNo}", android.widget.Toast.LENGTH_LONG).show()
-                        fetchFees()
-                    } else {
-                        android.widget.Toast.makeText(context, "Payment failed: ${response.message()}", android.widget.Toast.LENGTH_SHORT).show()
-                    }
+                )
+                if (!orderResp.isSuccessful || orderResp.body() == null) {
+                    android.widget.Toast.makeText(context, "Order creation failed", android.widget.Toast.LENGTH_SHORT).show()
+                    isProcessingPayment = null
+                    return@launch
                 }
+                val order = orderResp.body()!!
+
+                // Mock payment fallback (when Razorpay creds not configured on server)
+                if (order.mockPayment == true) {
+                    val payResp = RetrofitClient.authApi.payFees(
+                        authHeader = "Bearer $token",
+                        request = PayFeesRequest(installmentIds = listOf(inst.id), paymentMethod = "Mock")
+                    )
+                    if (payResp.isSuccessful && payResp.body()?.success == true) {
+                        android.widget.Toast.makeText(context, "✅ Payment successful! Receipt: ${payResp.body()?.receiptNo}", android.widget.Toast.LENGTH_LONG).show()
+                        fetchFees()
+                    }
+                    isProcessingPayment = null
+                    return@launch
+                }
+
+                // Real Razorpay checkout
+                val activity = context as? com.vidyaschool.app.MainActivity ?: run { isProcessingPayment = null; return@launch }
+                activity.pendingInstallmentId = inst.id
+                activity.pendingOrderId = order.orderId ?: ""
+                activity.onPaymentDone = {
+                    isProcessingPayment = null
+                    fetchFees()
+                }
+                val checkout = com.razorpay.Checkout()
+                checkout.setKeyID(order.keyId ?: "")
+                val options = org.json.JSONObject().apply {
+                    put("name", "Vidya School")
+                    put("description", "Fee: ${inst.month} ${inst.year}")
+                    put("order_id", order.orderId)
+                    put("amount", order.amount)
+                    put("currency", order.currency ?: "INR")
+                    put("prefill", org.json.JSONObject().apply {
+                        put("email", sessionManager.getEmail() ?: "")
+                    })
+                    put("theme", org.json.JSONObject().apply { put("color", "#6750A4") })
+                }
+                checkout.open(activity, options)
             } catch (e: Exception) {
-                android.widget.Toast.makeText(context, "Error making payment: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-            } finally {
+                android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                 isProcessingPayment = null
             }
         }
     }
-    
+
+    val scrollState = rememberScrollState()
+    val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
+    val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (headerCollapsed) 1f else 0f,
+        animationSpec = androidx.compose.animation.core.tween(220), label = "feeHeaderAlpha"
+    )
+    val headerSlide by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (headerCollapsed) 0f else -24f,
+        animationSpec = androidx.compose.animation.core.tween(220), label = "feeHeaderSlide"
+    )
+
+    val unpaidInstallments = installments.filter { it.status != "paid" }
+    val totalOutstanding = unpaidInstallments.sumOf { it.amount }
+
     PullToRefreshBox(
         isRefreshing = isRefreshing || isLoading,
-        onRefresh = {
-            onRefresh()
-            fetchFees()
-        },
+        onRefresh = { onRefresh(); fetchFees() },
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
-        ) {
-            Text(
-                text = "Pay Fees",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "Manage and clear your academic installments",
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-            )
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            // Total Outstanding Card
-            val unpaidInstallments = installments.filter { it.status != "paid" }
-            val totalOutstanding = unpaidInstallments.sumOf { it.amount }
-            
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .statusBarsPadding()
+                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp)
+                // Inline header (scrolls away)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "Total Outstanding",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "₹${"%,d".format(totalOutstanding.toInt())}",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    if (unpaidInstallments.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "${unpaidInstallments.size} installments pending",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                            fontWeight = FontWeight.Medium
-                        )
-                    } else if (installments.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "🎉 All fees fully paid!",
-                            fontSize = 12.sp,
-                            color = Color(0xFF10B981),
-                            fontWeight = FontWeight.Bold
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        IconButton(
+                            onClick = { /* Open menu */ },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                                    shape = CircleShape
+                                )
+                                .clip(CircleShape)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_custom_menu),
+                                contentDescription = "Menu",
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                        
+                        Column {
+                            Text(
+                                text = "Pay Fees",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Text(
+                                text = "Student Portal",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                    
+                    IconButton(
+                        onClick = { /* Notifications */ },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                                shape = CircleShape
+                            )
+                            .clip(CircleShape)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_custom_notification),
+                            contentDescription = "Notifications",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
-            }
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                items(installments.size) { index ->
-                    val inst = installments[index]
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text("Total Outstanding", fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("₹${"%,d".format(totalOutstanding.toInt())}", fontSize = 32.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        if (unpaidInstallments.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("${unpaidInstallments.size} installments pending", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f), fontWeight = FontWeight.Medium)
+                        } else if (installments.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("🎉 All fees fully paid!", fontSize = 12.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                if (isLoading && installments.isEmpty()) {
+                    repeat(3) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Box(modifier = Modifier.fillMaxWidth(0.4f).height(16.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)))
+                                    Box(modifier = Modifier.fillMaxWidth(0.3f).height(13.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)))
+                                }
+                                Box(modifier = Modifier.width(60.dp).height(32.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)))
+                            }
+                        }
+                    }
+                } else if (!isLoading && installments.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("No fee records found", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                            Text("Pull down to refresh", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                        }
+                    }
+                }
+
+                installments.forEachIndexed { _, inst ->
                     val isPaid = inst.status == "paid"
                     val isProcessing = isProcessingPayment == inst.id
-                    
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            if (isPaid) Color(0xFF10B981).copy(alpha = 0.3f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                        )
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isPaid) Color(0xFF10B981).copy(alpha = 0.3f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "${inst.month} ${inst.year}",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
+                                Text("${inst.month} ${inst.year}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Amount: ₹${"%,d".format(inst.amount.toInt())}",
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                                )
+                                Text("Amount: ₹${"%,d".format(inst.amount.toInt())}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
                                 if (isPaid && !inst.receiptNo.isNullOrEmpty()) {
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "Receipt: ${inst.receiptNo}",
-                                        fontSize = 11.sp,
-                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                        color = Color(0xFF10B981),
-                                        fontWeight = FontWeight.SemiBold
-                                    )
+                                    Text("Receipt: ${inst.receiptNo}", fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, color = Color(0xFF10B981), fontWeight = FontWeight.SemiBold)
                                 } else if (!inst.dueDate.isNullOrEmpty()) {
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "Due: ${inst.dueDate}",
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                                    )
+                                    Text("Due: ${inst.dueDate}", fontSize = 11.sp, color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f))
                                 }
                             }
-                            
-                            Box(contentAlignment = Alignment.Center) {
-                                if (isPaid) {
-                                    Surface(
-                                        color = Color(0xFF10B981).copy(alpha = 0.15f),
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Text(
-                                            text = "Paid",
-                                            color = Color(0xFF10B981),
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                        )
-                                    }
-                                } else {
-                                    Button(
-                                        onClick = { handlePayFee(inst) },
-                                        enabled = !isProcessing && isProcessingPayment == null,
-                                        shape = RoundedCornerShape(10.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary
-                                        ),
-                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                        modifier = Modifier.height(36.dp)
-                                    ) {
-                                        if (isProcessing) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(16.dp),
-                                                color = MaterialTheme.colorScheme.onPrimary,
-                                                strokeWidth = 2.dp
-                                            )
-                                        } else {
-                                            Text(
-                                                text = "Pay",
-                                                fontSize = 13.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                    }
+                            if (isPaid) {
+                                Surface(color = Color(0xFF10B981).copy(alpha = 0.15f), shape = RoundedCornerShape(8.dp)) {
+                                    Text("Paid", color = Color(0xFF10B981), fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                                }
+                            } else {
+                                Button(
+                                    onClick = { handlePayFee(inst) },
+                                    enabled = !isProcessing && isProcessingPayment == null,
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                    modifier = Modifier.height(36.dp)
+                                ) {
+                                    if (isProcessing) CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                                    else Text("Pay", fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
                     }
+                }
+            }
+
+            // Sticky collapsed header
+            if (headerAlpha > 0f) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { alpha = headerAlpha; translationY = headerSlide }
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+                    Spacer(modifier = Modifier.windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        IconButton(
+                            onClick = { /* Open menu */ },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                                .clip(CircleShape)
+                        ) {
+                            Icon(painter = painterResource(id = R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                        }
+                        Text("Pay Fees", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        IconButton(
+                            onClick = { /* Notifications */ },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                                .clip(CircleShape)
+                        ) {
+                            Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                        }
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), thickness = 1.dp)
                 }
             }
         }

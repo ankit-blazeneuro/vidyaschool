@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.vidyaschool.app-mergeDebugResources-58:/values-ta/values-ta.xml",
+            "outputFile": "com.vidyaschool.app-mergeDebugResources-62:/values-ta/values-ta.xml",
             "map": [
                 {
                     "source": "/home/ankit/.gradle/caches/transforms-3/a310c16191919c118b0875689b80baa0/transformed/jetified-ui-release/res/values-ta/values-ta.xml",
@@ -18,6 +18,23 @@
                         "startOffsets": "3848,3945,6382,6476,6577,6981,7064,13752,13843,13938,14020,14188,14278,14363,14436,14608,14688,14757",
                         "endColumns": "96,83,93,100,90,82,108,90,94,81,85,89,84,72,70,79,68,119",
                         "endOffsets": "3940,4024,6471,6572,6663,7059,7168,13838,13933,14015,14101,14273,14358,14431,14502,14683,14752,14872"
+                    }
+                },
+                {
+                    "source": "/home/ankit/.gradle/caches/transforms-3/20b072d3dc779f3f1a3c2f52692231b3/transformed/jetified-play-services-wallet-18.1.3/res/values-ta/values.xml",
+                    "from": {
+                        "startLines": "4",
+                        "startColumns": "0",
+                        "startOffsets": "202",
+                        "endColumns": "74",
+                        "endOffsets": "276"
+                    },
+                    "to": {
+                        "startLines": "139",
+                        "startColumns": "4",
+                        "startOffsets": "15068",
+                        "endColumns": "78",
+                        "endOffsets": "15142"
                     }
                 },
                 {

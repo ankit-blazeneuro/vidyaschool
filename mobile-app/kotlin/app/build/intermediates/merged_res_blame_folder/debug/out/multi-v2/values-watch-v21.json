@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.vidyaschool.app-mergeDebugResources-58:/values-watch-v21/values-watch-v21.xml",
+            "outputFile": "com.vidyaschool.app-mergeDebugResources-62:/values-watch-v21/values-watch-v21.xml",
             "map": [
                 {
                     "source": "/home/ankit/.gradle/caches/transforms-3/af226701e07b6e5753175ffad1df9a85/transformed/appcompat-1.6.1/res/values-watch-v21/values-watch-v21.xml",

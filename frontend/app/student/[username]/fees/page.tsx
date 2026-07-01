@@ -12,7 +12,8 @@ import {
   CircleDollarSign, 
   Clock, 
   GraduationCap,
-  Loader2Icon
+  Loader2Icon,
+  Share2
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -677,6 +678,22 @@ export default function StudentFeesPage() {
                   <p className="text-xs text-muted-foreground mt-0.5">Vidya School Academic Billing</p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={() => {
+                      const url = `${window.location.origin}/fee/payment/${receiptMonth.receiptNo}`
+                      if (navigator.share) {
+                        navigator.share({ title: "Fee Payment Receipt", text: `Fee receipt for ${receiptMonth.month} ${receiptMonth.year}`, url })
+                      } else {
+                        navigator.clipboard.writeText(url)
+                      }
+                    }}
+                    className="h-8.5 w-8.5 rounded-lg border-border hover:bg-muted"
+                    title="Share receipt link"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
                   <Button 
                     variant="outline" 
                     size="icon"

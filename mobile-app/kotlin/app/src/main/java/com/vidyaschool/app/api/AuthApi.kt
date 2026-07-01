@@ -77,6 +77,11 @@ data class UpdateSliderResponse(
     val value: Float
 )
 
+data class UpdateSliderImagesResponse(
+    val success: Boolean,
+    val images: List<SliderImage>
+)
+
 data class SliderImage(
     val id: Int,
     val url: String,
@@ -87,10 +92,10 @@ data class SliderImage(
 )
 
 data class FeeInstallment(
-    val id: Int,
+    val id: String,
     @SerializedName("user_id") val userId: String,
     val month: String,
-    val year: Int,
+    val year: String,
     val amount: Double,
     @SerializedName("due_date") val dueDate: String?,
     val status: String,
@@ -101,7 +106,7 @@ data class FeeInstallment(
 )
 
 data class PayFeesRequest(
-    @SerializedName("installment_ids") val installmentIds: List<Int>,
+    @SerializedName("installment_ids") val installmentIds: List<String>,
     @SerializedName("payment_method") val paymentMethod: String? = "Card / Online"
 )
 
@@ -111,9 +116,28 @@ data class PayFeesResponse(
     @SerializedName("paid_date") val paidDate: String?
 )
 
-data class UpdateSliderImagesResponse(
-    val success: Boolean,
-    val images: List<SliderImage>
+data class CreateOrderRequest(
+    @SerializedName("installment_ids") val installmentIds: List<String>,
+    val amount: Int,
+    val receipt: String? = null
+)
+
+data class CreateOrderResponse(
+    @SerializedName("order_id") val orderId: String?,
+    val amount: Int?,
+    val currency: String?,
+    val receipt: String?,
+    @SerializedName("installment_ids") val installmentIds: List<String>?,
+    @SerializedName("key_id") val keyId: String?,
+    @SerializedName("mock_payment") val mockPayment: Boolean? = false
+)
+
+data class VerifyPaymentRequest(
+    @SerializedName("order_id") val orderId: String,
+    @SerializedName("payment_id") val paymentId: String,
+    val signature: String,
+    @SerializedName("installment_ids") val installmentIds: List<String>,
+    @SerializedName("payment_method") val paymentMethod: String = "Razorpay"
 )
 
 interface AuthApi {
@@ -149,9 +173,26 @@ interface AuthApi {
         @Header("Authorization") authHeader: String
     ): Response<List<FeeInstallment>>
 
+    @GET("api/backend/api/fees/receipt/{receiptNo}")
+    suspend fun verifyReceipt(
+        @Path("receiptNo") receiptNo: String
+    ): Response<Map<String, Any?>>
+
     @POST("api/backend/api/fees/pay")
     suspend fun payFees(
         @Header("Authorization") authHeader: String,
         @Body request: PayFeesRequest
+    ): Response<PayFeesResponse>
+
+    @POST("api/backend/api/create-order")
+    suspend fun createOrder(
+        @Header("Authorization") authHeader: String,
+        @Body request: CreateOrderRequest
+    ): Response<CreateOrderResponse>
+
+    @POST("api/backend/api/verify-payment")
+    suspend fun verifyPayment(
+        @Header("Authorization") authHeader: String,
+        @Body request: VerifyPaymentRequest
     ): Response<PayFeesResponse>
 }

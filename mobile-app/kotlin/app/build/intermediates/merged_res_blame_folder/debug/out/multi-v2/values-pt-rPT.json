@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.vidyaschool.app-mergeDebugResources-58:/values-pt-rPT/values-pt-rPT.xml",
+            "outputFile": "com.vidyaschool.app-mergeDebugResources-62:/values-pt-rPT/values-pt-rPT.xml",
             "map": [
                 {
                     "source": "/home/ankit/.gradle/caches/transforms-3/4ca8b2b2c7f6630b277542ddc5ce7760/transformed/core-1.13.1/res/values-pt-rPT/values-pt-rPT.xml",
@@ -154,6 +154,23 @@
                         "startOffsets": "2836,2953",
                         "endColumns": "116,121",
                         "endOffsets": "2948,3070"
+                    }
+                },
+                {
+                    "source": "/home/ankit/.gradle/caches/transforms-3/20b072d3dc779f3f1a3c2f52692231b3/transformed/jetified-play-services-wallet-18.1.3/res/values-pt-rPT/values.xml",
+                    "from": {
+                        "startLines": "4",
+                        "startColumns": "0",
+                        "startOffsets": "206",
+                        "endColumns": "75",
+                        "endOffsets": "281"
+                    },
+                    "to": {
+                        "startLines": "139",
+                        "startColumns": "4",
+                        "startOffsets": "14900",
+                        "endColumns": "79",
+                        "endOffsets": "14975"
                     }
                 }
             ]

@@ -138,6 +138,28 @@ def _create_razorpay_order(amount: int, receipt: str) -> dict[str, Any]:
     return {"order_id": resp_data.get("id"), "amount": resp_data.get("amount"), "currency": resp_data.get("currency")}
 
 
+@router.get("/api/fees/receipt/{receipt_no}")
+def verify_receipt(receipt_no: str, db: Session = Depends(get_db)):
+    inst = db.query(FeeInstallment).filter(FeeInstallment.receipt_no == receipt_no, FeeInstallment.status == "paid").first()
+    if not inst:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+    user = db.query(User).filter(User.id == inst.user_id).first()
+    profile = db.query(UserProfile).filter(UserProfile.user_id == inst.user_id).first()
+    return {
+        "receipt_no": inst.receipt_no,
+        "student_name": user.name if user else "Unknown",
+        "admission_number": profile.admission_number if profile else None,
+        "class": profile.class_ if profile else None,
+        "section": profile.section if profile else None,
+        "month": inst.month,
+        "year": inst.year,
+        "amount": inst.amount,
+        "paid_date": inst.paid_date.isoformat() if inst.paid_date else None,
+        "payment_method": inst.payment_method,
+        "status": inst.status,
+    }
+
+
 @router.get("/api/fees")
 def get_my_fees(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     installments = db.query(FeeInstallment).filter(FeeInstallment.user_id == user.id).order_by(FeeInstallment.due_date).all()

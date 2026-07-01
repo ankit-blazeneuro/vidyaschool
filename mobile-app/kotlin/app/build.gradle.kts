@@ -74,6 +74,8 @@ dependencies {
     // AppAuth for GitHub OAuth
     implementation("net.openid:appauth:0.11.1")
     
+    // Razorpay
+    implementation("com.razorpay:checkout:1.6.40")
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.6.0")
 }

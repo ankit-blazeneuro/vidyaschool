@@ -1,38 +1,38 @@
 [
     {
-        "merged": "com.vidyaschool.app-merged_res-60:/drawable_ic_custom_menu.xml.flat",
-        "source": "com.vidyaschool.app-main-62:/drawable/ic_custom_menu.xml"
+        "merged": "com.vidyaschool.app-merged_res-64:/drawable_ic_custom_menu.xml.flat",
+        "source": "com.vidyaschool.app-main-66:/drawable/ic_custom_menu.xml"
     },
     {
-        "merged": "com.vidyaschool.app-merged_res-60:/drawable_ic_custom_notification.xml.flat",
-        "source": "com.vidyaschool.app-main-62:/drawable/ic_custom_notification.xml"
+        "merged": "com.vidyaschool.app-merged_res-64:/drawable_ic_custom_community.xml.flat",
+        "source": "com.vidyaschool.app-main-66:/drawable/ic_custom_community.xml"
     },
     {
-        "merged": "com.vidyaschool.app-merged_res-60:/mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "com.vidyaschool.app-main-62:/mipmap-xxxhdpi/ic_launcher.png"
+        "merged": "com.vidyaschool.app-merged_res-64:/drawable_ic_custom_pay_fees.xml.flat",
+        "source": "com.vidyaschool.app-main-66:/drawable/ic_custom_pay_fees.xml"
     },
     {
-        "merged": "com.vidyaschool.app-merged_res-60:/drawable_ic_custom_home.xml.flat",
-        "source": "com.vidyaschool.app-main-62:/drawable/ic_custom_home.xml"
+        "merged": "com.vidyaschool.app-merged_res-64:/drawable_ic_custom_profile.xml.flat",
+        "source": "com.vidyaschool.app-main-66:/drawable/ic_custom_profile.xml"
     },
     {
-        "merged": "com.vidyaschool.app-merged_res-60:/drawable_ic_custom_search.xml.flat",
-        "source": "com.vidyaschool.app-main-62:/drawable/ic_custom_search.xml"
+        "merged": "com.vidyaschool.app-merged_res-64:/drawable_ic_custom_notification.xml.flat",
+        "source": "com.vidyaschool.app-main-66:/drawable/ic_custom_notification.xml"
     },
     {
-        "merged": "com.vidyaschool.app-merged_res-60:/drawable_ic_custom_notice.xml.flat",
-        "source": "com.vidyaschool.app-main-62:/drawable/ic_custom_notice.xml"
+        "merged": "com.vidyaschool.app-merged_res-64:/drawable_ic_custom_notice.xml.flat",
+        "source": "com.vidyaschool.app-main-66:/drawable/ic_custom_notice.xml"
     },
     {
-        "merged": "com.vidyaschool.app-merged_res-60:/drawable_ic_custom_profile.xml.flat",
-        "source": "com.vidyaschool.app-main-62:/drawable/ic_custom_profile.xml"
+        "merged": "com.vidyaschool.app-merged_res-64:/drawable_ic_custom_home.xml.flat",
+        "source": "com.vidyaschool.app-main-66:/drawable/ic_custom_home.xml"
     },
     {
-        "merged": "com.vidyaschool.app-merged_res-60:/drawable_ic_custom_pay_fees.xml.flat",
-        "source": "com.vidyaschool.app-main-62:/drawable/ic_custom_pay_fees.xml"
+        "merged": "com.vidyaschool.app-merged_res-64:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.vidyaschool.app-main-66:/mipmap-xxxhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.vidyaschool.app-merged_res-60:/drawable_ic_custom_community.xml.flat",
-        "source": "com.vidyaschool.app-main-62:/drawable/ic_custom_community.xml"
+        "merged": "com.vidyaschool.app-merged_res-64:/drawable_ic_custom_search.xml.flat",
+        "source": "com.vidyaschool.app-main-66:/drawable/ic_custom_search.xml"
     }
 ]

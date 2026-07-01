@@ -10,9 +10,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ path
   
   try {
     const cookieHeader = req.headers.get('cookie') || ''
+    const authHeader = req.headers.get('authorization') || ''
     const res = await fetch(url, {
       headers: {
         'cookie': cookieHeader,
+        ...(authHeader && { 'authorization': authHeader }),
       },
     })
     
@@ -40,6 +42,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
   
   try {
     const cookieHeader = req.headers.get('cookie') || ''
+    const authHeader = req.headers.get('authorization') || ''
     const body = await req.json()
     
     const res = await fetch(url, {
@@ -47,6 +50,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
       headers: {
         'cookie': cookieHeader,
         'Content-Type': 'application/json',
+        ...(authHeader && { 'authorization': authHeader }),
       },
       body: JSON.stringify(body),
     })
@@ -75,6 +79,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
   
   try {
     const cookieHeader = req.headers.get('cookie') || ''
+    const authHeader = req.headers.get('authorization') || ''
     const body = await req.json()
     
     const res = await fetch(url, {
@@ -82,6 +87,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
       headers: {
         'cookie': cookieHeader,
         'Content-Type': 'application/json',
+        ...(authHeader && { 'authorization': authHeader }),
       },
       body: JSON.stringify(body),
     })
@@ -110,6 +116,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ path
   
   try {
     const cookieHeader = req.headers.get('cookie') || ''
+    const authHeader = req.headers.get('authorization') || ''
     const body = await req.json()
     
     const res = await fetch(url, {
@@ -117,6 +124,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ path
       headers: {
         'cookie': cookieHeader,
         'Content-Type': 'application/json',
+        ...(authHeader && { 'authorization': authHeader }),
       },
       body: JSON.stringify(body),
     })
@@ -145,10 +153,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ p
   
   try {
     const cookieHeader = req.headers.get('cookie') || ''
+    const authHeader = req.headers.get('authorization') || ''
     const res = await fetch(url, {
       method: 'DELETE',
       headers: {
         'cookie': cookieHeader,
+        ...(authHeader && { 'authorization': authHeader }),
       },
     })
     

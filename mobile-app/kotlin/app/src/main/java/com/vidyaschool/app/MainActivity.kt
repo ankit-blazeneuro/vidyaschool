@@ -27,11 +27,26 @@ import com.vidyaschool.app.ui.screens.TeacherScreen
 import com.vidyaschool.app.ui.screens.AccountsScreen
 import com.vidyaschool.app.ui.screens.LibraryHubScreen
 import com.vidyaschool.app.ui.screens.AdminScreen
+import com.vidyaschool.app.ui.screens.FeeReceiptScreen
 import com.vidyaschool.app.ui.theme.VidyaSchoolTheme
 
-class MainActivity : ComponentActivity() {
+import com.razorpay.PaymentResultWithDataListener
+import com.razorpay.PaymentData
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import com.vidyaschool.app.api.RetrofitClient
+import com.vidyaschool.app.api.VerifyPaymentRequest
+import com.vidyaschool.app.api.PayFeesRequest
+
+class MainActivity : ComponentActivity(), PaymentResultWithDataListener {
     private lateinit var viewModel: AuthViewModel
     private lateinit var sessionManager: SessionManager
+
+    // Pending Razorpay payment state
+    var pendingInstallmentId: String = ""
+    var pendingOrderId: String = ""
+    var onPaymentDone: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,11 +75,53 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
+    var pendingReceiptNo: String? = null
+
     private fun handleIntent(intent: Intent) {
         val uri = intent.data
-        if (uri != null && uri.scheme == "com.vidyaschool.app") {
-            viewModel.handleGitHubCallback(intent)
+        if (uri != null) {
+            when {
+                uri.scheme == "com.vidyaschool.app" -> viewModel.handleGitHubCallback(intent)
+                uri.scheme == "https" && uri.host == "vidyaschool.vercel.app" && uri.path?.startsWith("/fee/payment/") == true -> {
+                    pendingReceiptNo = uri.lastPathSegment
+                }
+            }
         }
+    }
+
+    override fun onPaymentSuccess(razorpayPaymentId: String?, paymentData: PaymentData?) {
+        val paymentId = razorpayPaymentId ?: paymentData?.paymentId ?: return
+        val signature = paymentData?.signature ?: ""
+        if (pendingInstallmentId.isEmpty()) return
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val token = sessionManager.getSessionToken() ?: return@launch
+                RetrofitClient.authApi.verifyPayment(
+                    authHeader = "Bearer $token",
+                    request = VerifyPaymentRequest(
+                        orderId = pendingOrderId,
+                        paymentId = paymentId,
+                        signature = signature,
+                        installmentIds = listOf(pendingInstallmentId)
+                    )
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("Razorpay", "Verify failed: ${e.message}")
+            } finally {
+                pendingInstallmentId = ""
+                pendingOrderId = ""
+                onPaymentDone?.invoke()
+                onPaymentDone = null
+            }
+        }
+    }
+
+    override fun onPaymentError(code: Int, response: String?, paymentData: PaymentData?) {
+        pendingInstallmentId = ""
+        pendingOrderId = ""
+        onPaymentDone?.invoke()
+        onPaymentDone = null
+        android.widget.Toast.makeText(this, "Payment failed: $response", android.widget.Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -76,10 +133,11 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
         "dark" -> true
         else -> isSystemInDarkTheme()
     }
-    
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     VidyaSchoolTheme(darkTheme = isDarkTheme) {
         val navController = rememberNavController()
-        
+
         val startDestination = if (sessionManager.isLoggedIn()) {
             val role = sessionManager.getRole() ?: "student"
             when (role.lowercase()) {
@@ -91,7 +149,17 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
         } else {
             "welcome"
         }
-        
+
+        // Handle deep link receipt after nav is ready
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            val activity = context as? MainActivity
+            val receiptNo = activity?.pendingReceiptNo
+            if (!receiptNo.isNullOrEmpty()) {
+                activity.pendingReceiptNo = null
+                navController.navigate("feeReceipt/$receiptNo")
+            }
+        }
+
         NavHost(navController = navController, startDestination = startDestination) {
             composable("welcome") {
                 WelcomeScreen(
@@ -197,6 +265,10 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                         }
                     }
                 )
+            }
+            composable("feeReceipt/{receiptNo}") { backStackEntry ->
+                val receiptNo = backStackEntry.arguments?.getString("receiptNo") ?: ""
+                FeeReceiptScreen(receiptNo = receiptNo, onBack = { navController.popBackStack() })
             }
         }
     }
