@@ -358,6 +358,11 @@ app.include_router(teacher_router)
 app.include_router(slider_router)
 
 # Admin endpoints for teacher approval and subject requests
+@app.get("/api/health")
+def health():
+    return {"ok": True}
+
+
 @app.get("/api/admin/requests")
 async def get_admin_subject_requests(
     current_user: User = Depends(require_role(["admin"])),
