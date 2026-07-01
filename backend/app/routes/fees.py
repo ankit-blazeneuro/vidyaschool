@@ -100,6 +100,15 @@ def _mark_installments_paid(db: Session, installments: list[FeeInstallment], pay
     return {"success": True, "receipt_no": receipt_no, "paid_date": paid_date}
 
 
+@router.get("/api/debug-razorpay")
+def debug_razorpay():
+    return {
+        "key_id_set": bool(RAZORPAY_KEY_ID),
+        "key_id_prefix": RAZORPAY_KEY_ID[:10] if RAZORPAY_KEY_ID else None,
+        "secret_set": bool(RAZORPAY_KEY_SECRET),
+    }
+
+
 def _create_razorpay_order(amount: int, receipt: str) -> dict[str, Any]:
     if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
         return {
