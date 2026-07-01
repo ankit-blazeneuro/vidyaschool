@@ -106,6 +106,8 @@ def debug_razorpay():
         "key_id_set": bool(RAZORPAY_KEY_ID),
         "key_id_prefix": RAZORPAY_KEY_ID[:10] if RAZORPAY_KEY_ID else None,
         "secret_set": bool(RAZORPAY_KEY_SECRET),
+        "env_keys_with_razor": [k for k in os.environ if "RAZOR" in k.upper()],
+        "live_key_id": os.getenv("RAZORPAY_KEY_ID", "NOT_SET")[:10],
     }
 
 
