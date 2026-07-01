@@ -162,13 +162,26 @@ fun LoginScreen(
             isLoading = true
             scope.launch {
                 try {
-                    val response = RetrofitClient.authApi.login(
+                    val response = RetrofitClient.frontendApi.login(
                         LoginRequest(email, password)
                     )
                     
                     if (response.isSuccessful) {
                         val user = response.body()?.user
-                        val sessionToken = response.body()?.session?.token
+                        // Better Auth returns token at top level, not inside session
+                        var sessionToken = response.body()?.token ?: response.body()?.session?.token
+                        if (sessionToken.isNullOrEmpty()) {
+                            try {
+                                val sessResp = RetrofitClient.authApi.createSession(
+                                    CreateSessionRequest(user?.email ?: email)
+                                )
+                                if (sessResp.isSuccessful && sessResp.body()?.success == true) {
+                                    sessionToken = sessResp.body()?.session?.token
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("LoginScreen", "Failed to create session: ${e.message}")
+                            }
+                        }
                         
                         var role = user?.role ?: "student"
                         var avatarUrl = user?.image

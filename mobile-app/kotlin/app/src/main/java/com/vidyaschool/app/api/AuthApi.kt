@@ -17,6 +17,7 @@ data class LoginRequest(
 
 data class LoginResponse(
     val user: User?,
+    val token: String?,
     val session: Session?,
     val message: String?
 )
@@ -62,19 +63,6 @@ data class VerifySessionResponse(
     val name: String?,
     val image: String?,
     @SerializedName("student_class") val studentClass: String? = null
-)
-
-data class SliderValueResponse(
-    val value: Float
-)
-
-data class UpdateSliderRequest(
-    val value: Float
-)
-
-data class UpdateSliderResponse(
-    val success: Boolean,
-    val value: Float
 )
 
 data class UpdateSliderImagesResponse(
@@ -152,12 +140,6 @@ interface AuthApi {
 
     @GET("api/public/verify-session/{token}")
     suspend fun verifySession(@Path("token") token: String): Response<VerifySessionResponse>
-
-    @GET("api/public/academic-slider")
-    suspend fun getSliderValue(): Response<SliderValueResponse>
-
-    @POST("api/admin/academic-slider")
-    suspend fun updateSliderValue(@Body request: UpdateSliderRequest): Response<UpdateSliderResponse>
 
     @GET("api/slider/images")
     suspend fun getSliderImages(

@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -1088,8 +1089,33 @@ fun FeesTabContent(
                                 }
                             }
                             if (isPaid) {
-                                Surface(color = Color(0xFF10B981).copy(alpha = 0.15f), shape = RoundedCornerShape(8.dp)) {
-                                    Text("Paid", color = Color(0xFF10B981), fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    if (!inst.receiptNo.isNullOrEmpty()) {
+                                        IconButton(
+                                            onClick = {
+                                                val url = "https://vidyaschool.vercel.app/fee/payment/${inst.receiptNo}"
+                                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                                    type = "text/plain"
+                                                    putExtra(android.content.Intent.EXTRA_TEXT, "Fee receipt for ${inst.month} ${inst.year}: $url")
+                                                }
+                                                context.startActivity(android.content.Intent.createChooser(intent, "Share Receipt"))
+                                            },
+                                            modifier = Modifier.size(32.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Share,
+                                                contentDescription = "Share receipt",
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                    Surface(color = Color(0xFF10B981).copy(alpha = 0.15f), shape = RoundedCornerShape(8.dp)) {
+                                        Text("Paid", color = Color(0xFF10B981), fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
+                                    }
                                 }
                             } else {
                                 Button(

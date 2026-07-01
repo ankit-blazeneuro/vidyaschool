@@ -7,6 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
     private const val BASE_URL = "https://vidyaschool-backend.onrender.com/"
+    private const val FRONTEND_URL = "https://vidyaschool.vercel.app/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
@@ -28,5 +29,12 @@ object RetrofitClient {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
+    private val frontendRetrofit = Retrofit.Builder()
+        .baseUrl(FRONTEND_URL)
+        .client(client)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
+    val frontendApi: AuthApi = frontendRetrofit.create(AuthApi::class.java)
 }
