@@ -1,8 +1,14 @@
-import { CheckCircle2, XCircle, ShieldCheck } from "lucide-react"
+"use client"
+
+import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
+import { CheckCircle2, XCircle, ShieldCheck, Printer, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface ReceiptData {
   receipt_no: string
   student_name: string
+  username: string | null
   admission_number: string | null
   class: string | null
   section: string | null
@@ -11,27 +17,38 @@ interface ReceiptData {
   amount: number
   paid_date: string | null
   payment_method: string | null
-  status: string
 }
 
-async function getReceipt(token: string): Promise<ReceiptData | null> {
-  try {
-    const res = await fetch(
-      `${process.env.BACKEND_URL || "http://localhost:8000"}/api/fees/receipt/${token}`,
-      { cache: "no-store" }
+export default function FeeReceiptPage() {
+  const { token } = useParams<{ token: string }>()
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+
+  useEffect(() => {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+    fetch(`${backendUrl}/api/fees/receipt/${token}`, { cache: "no-store" })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: ReceiptData | null) => {
+        if (data) setReceipt(data)
+        else setNotFound(true)
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false))
+  }, [token])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="text-sm">Loading receipt...</span>
+        </div>
+      </div>
     )
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
   }
-}
 
-export default async function FeePaymentVerifyPage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params
-  const receipt = await getReceipt(token)
-
-  if (!receipt) {
+  if (notFound || !receipt) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="max-w-md w-full rounded-xl border border-destructive/30 bg-card p-8 text-center space-y-4 shadow-lg">
@@ -47,10 +64,21 @@ export default async function FeePaymentVerifyPage({ params }: { params: Promise
     ? `${receipt.class === "Nursery" || receipt.class === "KG" ? receipt.class : `Class ${receipt.class}`}${receipt.section ? ` - ${receipt.section}` : ""}`
     : "N/A"
 
+  const rows: [string, string][] = [
+    ["Student Name", receipt.student_name],
+    ["Username", receipt.username ? `@${receipt.username}` : "N/A"],
+    ["Admission No.", receipt.admission_number ?? "N/A"],
+    ["Class", classLabel],
+    ["Month Paid", `${receipt.month} ${receipt.year}`],
+    ["Amount", `₹${receipt.amount.toLocaleString("en-IN")}`],
+    ["Paid On", receipt.paid_date ? new Date(receipt.paid_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "—"],
+    ["Payment Mode", receipt.payment_method ?? "—"],
+    ["Receipt No.", receipt.receipt_no],
+  ]
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="max-w-md w-full rounded-xl border border-border bg-card shadow-xl overflow-hidden">
-        {/* Header */}
         <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-6 py-5 flex items-center gap-3">
           <CheckCircle2 className="h-8 w-8 text-emerald-500 shrink-0" />
           <div>
@@ -59,30 +87,28 @@ export default async function FeePaymentVerifyPage({ params }: { params: Promise
           </div>
         </div>
 
-        {/* Body */}
         <div className="px-6 py-5 space-y-4">
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
-            {[
-              ["Receipt No.", receipt.receipt_no],
-              ["Student Name", receipt.student_name],
-              ["Admission No.", receipt.admission_number ?? "N/A"],
-              ["Class", classLabel],
-              ["Month", `${receipt.month} ${receipt.year}`],
-              ["Amount Paid", `₹${receipt.amount.toLocaleString("en-IN")}`],
-              ["Paid On", receipt.paid_date ? new Date(receipt.paid_date).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "—"],
-              ["Payment Mode", receipt.payment_method ?? "—"],
-            ].map(([label, value]) => (
+            {rows.map(([label, value]) => (
               <div key={label}>
                 <span className="text-muted-foreground text-xs block">{label}</span>
-                <span className="font-semibold text-foreground">{value}</span>
+                <span className="font-semibold text-foreground break-all">{value}</span>
               </div>
             ))}
           </div>
 
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-emerald-500/5 border border-emerald-500/15 rounded-lg p-3 mt-2">
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-emerald-500/5 border border-emerald-500/15 rounded-lg p-3">
             <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
-            <span>This receipt has been verified against the Vidya School database. No physical signature required.</span>
+            <span>Verified against the Vidya School database. No physical signature required.</span>
           </div>
+
+          <Button
+            onClick={() => window.print()}
+            variant="outline"
+            className="w-full flex items-center gap-2"
+          >
+            <Printer className="h-4 w-4" /> Print Receipt
+          </Button>
         </div>
       </div>
     </div>

@@ -111,18 +111,6 @@ def _mark_installments_paid(db: Session, installments: list[FeeInstallment], pay
     return {"success": True, "receipt_no": receipt_no, "paid_date": paid_date}
 
 
-@router.get("/api/debug-razorpay")
-def debug_razorpay():
-    key_id, key_secret = _get_razorpay_creds()
-    return {
-        "key_id_set": bool(key_id),
-        "key_id_prefix": key_id[:10] if key_id else None,
-        "secret_set": bool(key_secret),
-        "env_keys_with_razor": [k for k in os.environ if "RAZOR" in k.upper()],
-        "live_key_id": os.getenv("RAZORPAY_KEY_ID", "NOT_SET")[:10],
-    }
-
-
 def _create_razorpay_order(amount: int, receipt: str) -> dict[str, Any]:
     RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET = _get_razorpay_creds()
     if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
@@ -178,6 +166,7 @@ def verify_receipt(receipt_no: str, db: Session = Depends(get_db)):
     return {
         "receipt_no": inst.receipt_no,
         "student_name": user.name if user else "Unknown",
+        "username": profile.username if profile else None,
         "admission_number": profile.admission_number if profile else None,
         "class": profile.class_ if profile else None,
         "section": profile.section if profile else None,
