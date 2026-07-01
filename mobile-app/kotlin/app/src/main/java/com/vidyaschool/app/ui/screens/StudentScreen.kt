@@ -2,8 +2,12 @@ package com.vidyaschool.app.ui.screens
 
 import android.graphics.Paint
 import android.graphics.Typeface
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -13,7 +17,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -174,38 +184,269 @@ fun StudentScreen(
                     }
                 }
                 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
+                AcademicPerformanceCard()
+            }
+        }
+    }
+}
+
+@Composable
+fun AcademicPerformanceCard() {
+    val tabs = listOf("Performance", "Subject", "Attendance")
+    var selectedTab by remember { mutableStateOf(0) }
+
+    // Auto-slide every 10 seconds
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(10_000)
+            selectedTab = (selectedTab + 1) % tabs.size
+        }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp)) {
+            Text(
+                text = "Academic Performance",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "School Highlights & Analytics",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Graph content
+            when (selectedTab) {
+                0 -> AcademicPerformanceChart(
+                    data = listOf(65f, 80f, 75f, 90f, 85f, 95f),
+                    labels = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun"),
+                    modifier = Modifier.fillMaxWidth().height(180.dp)
+                )
+                1 -> SubjectBarChart(
+                    data = listOf(72f, 68f, 85f, 78f, 91f, 88f),
+                    labels = listOf("Math", "Sci", "Eng", "His", "Geo", "Art"),
+                    modifier = Modifier.fillMaxWidth().height(180.dp)
+                )
+                2 -> AttendancePieChart(
+                    present = 82f,
+                    absent = 10f,
+                    modifier = Modifier.fillMaxWidth().height(180.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Shadcn-style tab strip with sliding animation
+            val pillColor = MaterialTheme.colorScheme.surface
+            var stripWidth by remember { mutableStateOf(0) }
+            var stripHeight by remember { mutableStateOf(0) }
+            val pillOffsetX by animateIntAsState(
+                targetValue = if (stripWidth > 0) stripWidth / tabs.size * selectedTab else 0,
+                animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
+                label = "tabSlide"
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    .padding(3.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onSizeChanged { stripWidth = it.width; stripHeight = it.height }
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp)
-                    ) {
-                        Text(
-                            text = "Academic Performance",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "School Highlights & Analytics",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        AcademicPerformanceChart(
-                            data = listOf(65f, 80f, 75f, 90f, 85f, 95f),
-                            labels = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun"),
+                    tabs.forEachIndexed { index, title ->
+                        val selected = selectedTab == index
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp)
-                        )
+                                .weight(1f)
+                                .clickable(
+                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                    indication = null
+                                ) { selectedTab = index }
+                                .padding(vertical = 3.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = title,
+                                fontSize = 11.sp,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (selected) MaterialTheme.colorScheme.onSurface
+                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                    }
+                }
+
+                // Animated pill drawn after Row so size is known, but visually behind via zIndex
+                if (stripWidth > 0 && stripHeight > 0) {
+                    val density = androidx.compose.ui.platform.LocalDensity.current
+                    val pillW = with(density) { (stripWidth / tabs.size).toDp() }
+                    val pillH = with(density) { stripHeight.toDp() }
+                    val offsetDp = with(density) { pillOffsetX.toDp() }
+                    Box(
+                        modifier = Modifier
+                            .offset(x = offsetDp)
+                            .width(pillW)
+                            .height(pillH)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(pillColor)
+                            .zIndex(-1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SubjectBarChart(
+    data: List<Float>,
+    labels: List<String>,
+    modifier: Modifier = Modifier
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+    val textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+    val barColors = listOf(
+        Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFF06B6D4),
+        Color(0xFF10B981), Color(0xFFF59E0B), Color(0xFFEF4444)
+    )
+
+    Canvas(modifier = modifier) {
+        val w = size.width; val h = size.height
+        val pL = 8f; val pR = 8f; val pT = 12f; val pB = 28f
+        val cW = w - pL - pR; val cH = h - pT - pB
+
+        for (i in 0..4) {
+            val y = pT + cH * (i.toFloat() / 4)
+            drawLine(gridColor, androidx.compose.ui.geometry.Offset(pL, y),
+                androidx.compose.ui.geometry.Offset(w - pR, y), strokeWidth = 1f)
+        }
+
+        val slotW = cW / data.size
+        val barW = slotW * 0.42f
+
+        data.forEachIndexed { i, value ->
+            val barH = cH * (value / 100f)
+            val cx = pL + i * slotW + slotW / 2f
+            val left = cx - barW / 2f; val right = cx + barW / 2f
+            val top = pT + cH - barH; val bottom = pT + cH
+            val r = barW / 2.5f
+            val color = barColors[i % barColors.size]
+
+            // Track bar (ghost)
+            drawRoundRect(
+                color = color.copy(alpha = 0.1f),
+                topLeft = androidx.compose.ui.geometry.Offset(left, pT),
+                size = androidx.compose.ui.geometry.Size(barW, cH),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(r)
+            )
+            // Filled bar
+            drawRoundRect(
+                color = color,
+                topLeft = androidx.compose.ui.geometry.Offset(left, top),
+                size = androidx.compose.ui.geometry.Size(barW, barH),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(r)
+            )
+        }
+
+        val paint = Paint().apply {
+            color = textColor.toArgb()
+            textSize = 10.sp.toPx()
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+        }
+        drawIntoCanvas { canvas ->
+            labels.forEachIndexed { i, label ->
+                canvas.nativeCanvas.drawText(label, pL + i * slotW + slotW / 2f, h - 10f, paint)
+            }
+        }
+    }
+}
+
+@Composable
+fun AttendancePieChart(
+    present: Float,
+    absent: Float,
+    modifier: Modifier = Modifier
+) {
+    val presentColor = Color(0xFF6366F1)
+    val absentColor  = Color(0xFFEF4444)
+    val leaveColor   = Color(0xFFF59E0B)
+    val leave        = 100f - present - absent
+    val onSurface    = MaterialTheme.colorScheme.onSurface
+    val trackColor   = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Donut
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val sz = minOf(size.width, size.height)
+                val cx = size.width / 2f; val cy = size.height / 2f
+                val outerR = sz / 2f * 0.78f
+                val strokeW = outerR * 0.30f
+                val r = outerR - strokeW / 2f
+                val arcSz = androidx.compose.ui.geometry.Size(r * 2, r * 2)
+                val tl = androidx.compose.ui.geometry.Offset(cx - r, cy - r)
+                val gap = 3f
+                val total = present + absent + leave
+                val pSweep = 360f * (present / total)
+                val aSweep = 360f * (absent  / total)
+                val lSweep = 360f * (leave   / total)
+
+                drawArc(trackColor, 0f, 360f, false, style = Stroke(strokeW), topLeft = tl, size = arcSz)
+
+                drawArc(presentColor, -90f, pSweep - gap, false,
+                    style = Stroke(strokeW, cap = androidx.compose.ui.graphics.StrokeCap.Round), topLeft = tl, size = arcSz)
+                drawArc(absentColor, -90f + pSweep + gap, aSweep - gap, false,
+                    style = Stroke(strokeW, cap = androidx.compose.ui.graphics.StrokeCap.Round), topLeft = tl, size = arcSz)
+                drawArc(leaveColor, -90f + pSweep + aSweep + gap * 2, lSweep - gap, false,
+                    style = Stroke(strokeW, cap = androidx.compose.ui.graphics.StrokeCap.Round), topLeft = tl, size = arcSz)
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("${present.toInt()}%", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = onSurface)
+                Text("Present", fontSize = 10.sp, color = onSurface.copy(alpha = 0.45f))
+            }
+        }
+
+        // Legend
+        Column(
+            modifier = Modifier.padding(start = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            listOf(
+                Triple(presentColor, "Present", "${present.toInt()}%"),
+                Triple(absentColor,  "Absent",  "${absent.toInt()}%"),
+                Triple(leaveColor,   "Leave",   "${leave.toInt()}%")
+            ).forEach { (color, label, value) ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
+                    Column {
+                        Text(label, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface)
+                        Text(value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = color)
                     }
                 }
             }
@@ -301,114 +542,87 @@ fun AcademicPerformanceChart(
     modifier: Modifier = Modifier
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
-    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-    val textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-    val backgroundColor = MaterialTheme.colorScheme.background
-    
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+    val textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+    val surfaceColor = MaterialTheme.colorScheme.surface
+
     Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
-        
-        val paddingLeft = 40f
-        val paddingRight = 20f
-        val paddingTop = 20f
-        val paddingBottom = 40f
-        
-        val chartWidth = width - paddingLeft - paddingRight
-        val chartHeight = height - paddingTop - paddingBottom
-        
-        // Draw grid lines
-        val gridLines = 4
-        for (i in 0..gridLines) {
-            val y = paddingTop + chartHeight * (i.toFloat() / gridLines)
-            drawLine(
-                color = gridColor,
-                start = androidx.compose.ui.geometry.Offset(paddingLeft, y),
-                end = androidx.compose.ui.geometry.Offset(width - paddingRight, y),
-                strokeWidth = 1f
-            )
+        val w = size.width
+        val h = size.height
+        val pL = 8f; val pR = 8f; val pT = 16f; val pB = 28f
+        val cW = w - pL - pR
+        val cH = h - pT - pB
+
+        // Dashed-style subtle grid
+        for (i in 0..4) {
+            val y = pT + cH * (i.toFloat() / 4)
+            drawLine(gridColor, androidx.compose.ui.geometry.Offset(pL, y),
+                androidx.compose.ui.geometry.Offset(w - pR, y), strokeWidth = 1f)
         }
-        
-        // Draw path
+
         if (data.size > 1) {
-            val points = data.indices.map { index ->
-                val x = paddingLeft + chartWidth * (index.toFloat() / (data.size - 1))
-                val percentage = (data[index] - 0f) / 100f // range 0..100
-                val y = paddingTop + chartHeight * (1f - percentage)
+            val points = data.indices.map { i ->
+                val x = pL + cW * (i.toFloat() / (data.size - 1))
+                val y = pT + cH * (1f - data[i] / 100f)
                 androidx.compose.ui.geometry.Offset(x, y)
             }
-            
-            // Build smooth cubic curve
+
             val strokePath = Path().apply {
-                if (points.isNotEmpty()) {
-                    moveTo(points.first().x, points.first().y)
-                    for (i in 1 until points.size) {
-                        val prev = points[i - 1]
-                        val curr = points[i]
-                        val controlX1 = prev.x + (curr.x - prev.x) / 2f
-                        val controlY1 = prev.y
-                        val controlX2 = prev.x + (curr.x - prev.x) / 2f
-                        val controlY2 = curr.y
-                        cubicTo(controlX1, controlY1, controlX2, controlY2, curr.x, curr.y)
-                    }
+                moveTo(points.first().x, points.first().y)
+                for (i in 1 until points.size) {
+                    val p = points[i - 1]; val c = points[i]
+                    val cx1 = p.x + (c.x - p.x) / 2f
+                    cubicTo(cx1, p.y, cx1, c.y, c.x, c.y)
                 }
             }
-            
-            // Draw Gradient Area under curve
-            val fillPath = Path().apply {
-                addPath(strokePath)
-                lineTo(points.last().x, paddingTop + chartHeight)
-                lineTo(points.first().x, paddingTop + chartHeight)
-                close()
+
+            // Multi-layer glow fill
+            listOf(0.18f, 0.10f, 0.05f).forEachIndexed { idx, alpha ->
+                val fillPath = Path().apply {
+                    addPath(strokePath)
+                    lineTo(points.last().x, pT + cH)
+                    lineTo(points.first().x, pT + cH)
+                    close()
+                }
+                drawPath(
+                    fillPath,
+                    brush = Brush.verticalGradient(
+                        colors = listOf(primaryColor.copy(alpha = alpha + idx * 0.04f), Color.Transparent),
+                        startY = points.minOf { it.y }, endY = pT + cH
+                    )
+                )
             }
-            
+
+            // Stroke with sweep gradient for color shift
             drawPath(
-                path = fillPath,
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        primaryColor.copy(alpha = 0.3f),
-                        Color.Transparent
-                    ),
-                    startY = points.minOf { it.y },
-                    endY = paddingTop + chartHeight
-                )
+                strokePath,
+                brush = Brush.linearGradient(
+                    colors = listOf(secondaryColor.copy(alpha = 0.8f), primaryColor),
+                    start = androidx.compose.ui.geometry.Offset(pL, 0f),
+                    end = androidx.compose.ui.geometry.Offset(w - pR, 0f)
+                ),
+                style = Stroke(width = 2.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
             )
-            
-            // Draw Stroke line
-            drawPath(
-                path = strokePath,
-                color = primaryColor,
-                style = Stroke(width = 3.dp.toPx())
-            )
-            
-            // Draw data points & outer rings
-            points.forEach { point ->
-                drawCircle(
-                    color = primaryColor,
-                    radius = 5.dp.toPx(),
-                    center = point
-                )
-                drawCircle(
-                    color = backgroundColor,
-                    radius = 2.dp.toPx(),
-                    center = point
-                )
+
+            // Dots with glow
+            points.forEach { pt ->
+                drawCircle(primaryColor.copy(alpha = 0.2f), radius = 9.dp.toPx(), center = pt)
+                drawCircle(primaryColor, radius = 4.dp.toPx(), center = pt)
+                drawCircle(surfaceColor, radius = 2.dp.toPx(), center = pt)
             }
         }
-        
-        // Draw labels
+
         val paint = Paint().apply {
             color = textColor.toArgb()
             textSize = 10.sp.toPx()
             textAlign = Paint.Align.CENTER
             typeface = Typeface.DEFAULT_BOLD
         }
-        
         drawIntoCanvas { canvas ->
-            labels.forEachIndexed { index, label ->
-                val x = paddingLeft + chartWidth * (index.toFloat() / (labels.size - 1))
-                val y = height - 10f
-                canvas.nativeCanvas.drawText(label, x, y, paint)
+            labels.forEachIndexed { i, label ->
+                val x = pL + cW * (i.toFloat() / (labels.size - 1))
+                canvas.nativeCanvas.drawText(label, x, h - 10f, paint)
             }
         }
     }

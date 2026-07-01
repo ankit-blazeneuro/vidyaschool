@@ -692,7 +692,12 @@ drawable ic_call_answer_video
 drawable ic_call_answer_video_low
 drawable ic_call_decline
 drawable ic_call_decline_low
+drawable ic_custom_community
 drawable ic_custom_home
+drawable ic_custom_menu
+drawable ic_custom_notice
+drawable ic_custom_notification
+drawable ic_custom_pay_fees
 drawable ic_custom_profile
 drawable ic_custom_search
 drawable ic_other_sign_in

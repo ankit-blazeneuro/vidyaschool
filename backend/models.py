@@ -32,6 +32,8 @@ class SliderImage(SQLModel, table=True):
     url: str
     title: str
     enabled: bool = Field(default=True)
+    target_audience: str = Field(default="all")  # "all", "students", "teachers"
+    target_classes: str = Field(default="all")  # "all" or comma-separated class IDs: "1,2,3,4,5,6,7,8,9,10,11,12"
     order: int = Field(default=0)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
