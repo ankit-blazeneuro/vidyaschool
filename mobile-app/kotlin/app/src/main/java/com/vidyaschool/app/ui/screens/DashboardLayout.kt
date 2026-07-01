@@ -918,16 +918,6 @@ fun FeesTabContent(
     }
 
     val scrollState = rememberScrollState()
-    val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
-    val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (headerCollapsed) 1f else 0f,
-        animationSpec = androidx.compose.animation.core.tween(220), label = "feeHeaderAlpha"
-    )
-    val headerSlide by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (headerCollapsed) 0f else -24f,
-        animationSpec = androidx.compose.animation.core.tween(220), label = "feeHeaderSlide"
-    )
-
     val unpaidInstallments = installments.filter { it.status != "paid" }
     val totalOutstanding = unpaidInstallments.sumOf { it.amount }
 
@@ -936,261 +926,181 @@ fun FeesTabContent(
         onRefresh = { onRefresh(); fetchFees() },
         modifier = Modifier.fillMaxSize()
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .statusBarsPadding()
-                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
-            ) {
-                // Inline header (scrolls away)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 16.dp)
+        ) {
+            // Header
+            Text("Fee Payments", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Text("Academic Year 2025–26", fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f))
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Error banner
+            if (paymentError != null) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.errorContainer)
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        IconButton(
-                            onClick = { /* Open menu */ },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .border(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                                    shape = CircleShape
-                                )
-                                .clip(CircleShape)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_custom_menu),
-                                contentDescription = "Menu",
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
-                        
-                        Column {
-                            Text(
-                                text = "Pay Fees",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Text(
-                                text = "Student Portal",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                            )
-                        }
-                    }
-                    
-                    IconButton(
-                        onClick = { /* Notifications */ },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                                shape = CircleShape
-                            )
-                            .clip(CircleShape)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_custom_notification),
-                            contentDescription = "Notifications",
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
+                    Text(paymentError!!, fontSize = 13.sp, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.weight(1f))
+                    IconButton(onClick = { paymentError = null }, modifier = Modifier.size(18.dp)) {
+                        Icon(Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(14.dp))
                     }
                 }
+                Spacer(modifier = Modifier.height(14.dp))
+            }
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                if (paymentError != null) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(paymentError!!, color = MaterialTheme.colorScheme.onErrorContainer, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                            IconButton(onClick = { paymentError = null }, modifier = Modifier.size(20.dp)) {
-                                Icon(imageVector = Icons.Default.Close, contentDescription = "Dismiss",
-                                    tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(14.dp))
-                            }
-                        }
-                    }
-                }
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text("Total Outstanding", fontSize = 14.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("₹${"%,d".format(totalOutstanding.toInt())}", fontSize = 32.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                        if (unpaidInstallments.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("${unpaidInstallments.size} installments pending", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f), fontWeight = FontWeight.Medium)
-                        } else if (installments.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("🎉 All fees fully paid!", fontSize = 12.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                if (isLoading && installments.isEmpty()) {
-                    repeat(3) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Box(modifier = Modifier.fillMaxWidth(0.4f).height(16.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)))
-                                    Box(modifier = Modifier.fillMaxWidth(0.3f).height(13.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)))
-                                }
-                                Box(modifier = Modifier.width(60.dp).height(32.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)))
-                            }
-                        }
-                    }
-                } else if (!isLoading && installments.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("No fee records found", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
-                            Text("Pull down to refresh", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-                        }
-                    }
-                }
-
-                installments.forEachIndexed { _, inst ->
-                    val isPaid = inst.status == "paid"
-                    val isProcessing = isProcessingPayment == inst.id
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 14.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, if (isPaid) Color(0xFF10B981).copy(alpha = 0.3f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("${inst.month} ${inst.year}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text("Amount: ₹${"%,d".format(inst.amount.toInt())}", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
-                                if (isPaid && !inst.receiptNo.isNullOrEmpty()) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text("Receipt: ${inst.receiptNo}", fontSize = 11.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, color = Color(0xFF10B981), fontWeight = FontWeight.SemiBold)
-                                } else if (!inst.dueDate.isNullOrEmpty()) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text("Due: ${inst.dueDate}", fontSize = 11.sp, color = MaterialTheme.colorScheme.error.copy(alpha = 0.8f))
-                                }
-                            }
-                            if (isPaid) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    if (!inst.receiptNo.isNullOrEmpty()) {
-                                        IconButton(
-                                            onClick = {
-                                                val url = "https://vidyaschool.vercel.app/fee/payment/${inst.receiptNo}"
-                                                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                                                    type = "text/plain"
-                                                    putExtra(android.content.Intent.EXTRA_TEXT, "Fee receipt for ${inst.month} ${inst.year}: $url")
-                                                }
-                                                context.startActivity(android.content.Intent.createChooser(intent, "Share Receipt"))
-                                            },
-                                            modifier = Modifier.size(32.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Share,
-                                                contentDescription = "Share receipt",
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                    }
-                                    Surface(color = Color(0xFF10B981).copy(alpha = 0.15f), shape = RoundedCornerShape(8.dp)) {
-                                        Text("Paid", color = Color(0xFF10B981), fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp))
-                                    }
-                                }
-                            } else {
-                                Button(
-                                    onClick = { handlePayFee(inst) },
-                                    enabled = !isProcessing && isProcessingPayment == null,
-                                    shape = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                    modifier = Modifier.height(36.dp)
-                                ) {
-                                    if (isProcessing) CircularProgressIndicator(modifier = Modifier.size(16.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-                                    else Text("Pay", fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                    }
+            // Summary card
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .padding(20.dp)
+            ) {
+                Column {
+                    Text("Outstanding Balance", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f), fontWeight = FontWeight.Medium)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "₹${"%,d".format(totalOutstanding.toInt())}",
+                        fontSize = 34.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        if (unpaidInstallments.isEmpty() && installments.isNotEmpty()) "All fees paid ✓"
+                        else "${unpaidInstallments.size} month${if (unpaidInstallments.size != 1) "s" else ""} pending",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.65f)
+                    )
                 }
             }
 
-            // Sticky collapsed header
-            if (headerAlpha > 0f) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer { alpha = headerAlpha; translationY = headerSlide }
-                        .background(MaterialTheme.colorScheme.background)
-                ) {
-                    Spacer(modifier = Modifier.windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars))
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Section label
+            Text(
+                "Installments",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
+                letterSpacing = 0.8.sp
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Skeleton
+            if (isLoading && installments.isEmpty()) {
+                repeat(4) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 8.dp),
+                            .padding(vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        IconButton(
-                            onClick = { /* Open menu */ },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
-                                .clip(CircleShape)
-                        ) {
-                            Icon(painter = painterResource(id = R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Box(modifier = Modifier.width(100.dp).height(14.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)))
+                            Box(modifier = Modifier.width(70.dp).height(11.dp).clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)))
                         }
-                        Text("Pay Fees", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                        IconButton(
-                            onClick = { /* Notifications */ },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
-                                .clip(CircleShape)
+                        Box(modifier = Modifier.width(56.dp).height(30.dp).clip(RoundedCornerShape(8.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)))
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f))
+                }
+            } else if (!isLoading && installments.isEmpty()) {
+                Box(modifier = Modifier.fillMaxWidth().padding(vertical = 48.dp), contentAlignment = Alignment.Center) {
+                    Text("No records found", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                }
+            }
+
+            // Installment rows
+            installments.forEachIndexed { index, inst ->
+                val isPaid = inst.status == "paid"
+                val isOverdue = inst.status == "overdue"
+                val isProcessing = isProcessingPayment == inst.id
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Left: month + meta
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(inst.month, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                            if (isOverdue) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(MaterialTheme.colorScheme.error.copy(alpha = 0.12f))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text("Overdue", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            if (isPaid && !inst.receiptNo.isNullOrEmpty()) inst.receiptNo!!
+                            else "₹${"%,d".format(inst.amount.toInt())}",
+                            fontSize = 12.sp,
+                            color = if (isPaid) Color(0xFF10B981) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                            fontFamily = if (isPaid) androidx.compose.ui.text.font.FontFamily.Monospace else androidx.compose.ui.text.font.FontFamily.Default
+                        )
+                    }
+
+                    // Right: action
+                    if (isPaid) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if (!inst.receiptNo.isNullOrEmpty()) {
+                                IconButton(
+                                    onClick = {
+                                        val url = "https://vidyaschool.vercel.app/fee/payment/${inst.receiptNo}"
+                                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(android.content.Intent.EXTRA_TEXT, url)
+                                        }
+                                        context.startActivity(android.content.Intent.createChooser(intent, "Share Receipt"))
+                                    },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(Icons.Default.Share, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f), modifier = Modifier.size(15.dp))
+                                }
+                            }
+                            Text("Paid", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF10B981))
+                        }
+                    } else {
+                        Button(
+                            onClick = { handlePayFee(inst) },
+                            enabled = !isProcessing && isProcessingPayment == null,
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                            ),
+                            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 0.dp),
+                            modifier = Modifier.height(32.dp)
                         ) {
-                            Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                            if (isProcessing)
+                                CircularProgressIndicator(modifier = Modifier.size(14.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                            else
+                                Text("Pay", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), thickness = 1.dp)
+                }
+
+                if (index < installments.lastIndex) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f))
                 }
             }
         }
