@@ -26,8 +26,8 @@ from app.routes.teacher import router as teacher_router
 from app.routes.slider import router as slider_router
 from models import User
 
-# Load env variables from .env
-load_dotenv()
+# Load env variables from .env (local dev only — on Render, system env vars take precedence)
+load_dotenv(override=False)
 
 # Load database URL and adjust for SQLAlchemy PostgreSQL driver
 db_url = os.getenv("DATABASE_URL")
