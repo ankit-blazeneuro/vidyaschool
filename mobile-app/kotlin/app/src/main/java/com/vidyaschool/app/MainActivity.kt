@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,6 +52,7 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
     var onPaymentFailed: ((String) -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         
         sessionManager = SessionManager(this)
@@ -65,6 +67,19 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
         
         intent?.let { handleIntent(it) }
         com.razorpay.Checkout.preload(applicationContext)
+
+        // Fade out splash screen
+        splashScreen.setOnExitAnimationListener { provider ->
+            val fadeOut = android.animation.ObjectAnimator.ofFloat(provider.view, android.view.View.ALPHA, 1f, 0f)
+            fadeOut.duration = 400
+            fadeOut.addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    provider.remove()
+                }
+            })
+            fadeOut.start()
+        }
+
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {

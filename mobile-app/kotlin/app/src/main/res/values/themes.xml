@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.VidyaSchool.Splash" parent="Theme.SplashScreen">
+        <!-- Icon shown in the center of splash -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <!-- Background color (light mode) -->
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <!-- Animation duration -->
+        <item name="windowSplashScreenAnimationDuration">600</item>
+        <!-- Theme to switch to after splash -->
+        <item name="postSplashScreenTheme">@style/Theme.AppCompat.NoActionBar</item>
+    </style>
+</resources>
