@@ -128,50 +128,66 @@ fun DashboardLayout(
     
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                modifier = Modifier.height(70.dp),
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ) {
-                NavigationBarItem(
-                    selected = selectedTab == "home",
-                    onClick = { selectedTab = "home" },
-                    label = { Text("Home", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_home), contentDescription = "Home", modifier = Modifier.size(22.dp)) }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == "notice",
-                    onClick = { selectedTab = "notice" },
-                    label = { Text("Notice", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_notice), contentDescription = "Notice", modifier = Modifier.size(22.dp)) }
-                )
-                if (currentRole.value.equals("student", ignoreCase = true)) {
-                    NavigationBarItem(
-                        selected = selectedTab == "fees",
-                        onClick = { selectedTab = "fees" },
-                        label = { Text("Pay Fees", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                        icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_pay_fees), contentDescription = "Pay Fees", modifier = Modifier.size(22.dp)) }
+            Column {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
+                NavigationBar(
+                    modifier = Modifier.height(70.dp),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 0.dp
+                ) {
+                    val navItemColors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        indicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
                     )
-                } else {
                     NavigationBarItem(
-                        selected = selectedTab == "community",
-                        onClick = { selectedTab = "community" },
-                        label = { Text("Community", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                        icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_community), contentDescription = "Community", modifier = Modifier.size(22.dp)) }
+                        selected = selectedTab == "home",
+                        onClick = { selectedTab = "home" },
+                        label = { Text("Home", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                        icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_home), contentDescription = "Home", modifier = Modifier.size(22.dp)) },
+                        colors = navItemColors
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == "notice",
+                        onClick = { selectedTab = "notice" },
+                        label = { Text("Notice", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                        icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_notice), contentDescription = "Notice", modifier = Modifier.size(22.dp)) },
+                        colors = navItemColors
+                    )
+                    if (currentRole.value.equals("student", ignoreCase = true)) {
+                        NavigationBarItem(
+                            selected = selectedTab == "fees",
+                            onClick = { selectedTab = "fees" },
+                            label = { Text("Pay Fees", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                            icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_pay_fees), contentDescription = "Pay Fees", modifier = Modifier.size(22.dp)) },
+                            colors = navItemColors
+                        )
+                    } else {
+                        NavigationBarItem(
+                            selected = selectedTab == "community",
+                            onClick = { selectedTab = "community" },
+                            label = { Text("Community", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                            icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_community), contentDescription = "Community", modifier = Modifier.size(22.dp)) },
+                            colors = navItemColors
+                        )
+                    }
+                    NavigationBarItem(
+                        selected = selectedTab == "search",
+                        onClick = { selectedTab = "search" },
+                        label = { Text("Search", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                        icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_search), contentDescription = "Search", modifier = Modifier.size(22.dp)) },
+                        colors = navItemColors
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == "profile",
+                        onClick = { selectedTab = "profile" },
+                        label = { Text("Profile", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                        icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_profile), contentDescription = "Profile", modifier = Modifier.size(22.dp)) },
+                        colors = navItemColors
                     )
                 }
-                NavigationBarItem(
-                    selected = selectedTab == "search",
-                    onClick = { selectedTab = "search" },
-                    label = { Text("Search", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_search), contentDescription = "Search", modifier = Modifier.size(22.dp)) }
-                )
-                NavigationBarItem(
-                    selected = selectedTab == "profile",
-                    onClick = { selectedTab = "profile" },
-                    label = { Text("Profile", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                    icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_profile), contentDescription = "Profile", modifier = Modifier.size(22.dp)) }
-                )
             }
         }
     ) { innerPadding ->

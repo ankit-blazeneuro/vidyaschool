@@ -25,6 +25,7 @@ import com.vidyaschool.app.ui.screens.StudentScreen
 import com.vidyaschool.app.ui.screens.WelcomeScreen
 import com.vidyaschool.app.ui.screens.TeacherScreen
 import com.vidyaschool.app.ui.screens.AccountsScreen
+import com.vidyaschool.app.ui.screens.LibraryHubScreen
 import com.vidyaschool.app.ui.screens.AdminScreen
 import com.vidyaschool.app.ui.theme.VidyaSchoolTheme
 
@@ -128,6 +129,7 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                         sessionManager.setThemeMode(mode)
                         themeMode = mode
                     },
+                    onShowLibrary = { navController.navigate("library") },
                     onLogout = {
                         sessionManager.clearSession()
                         navController.navigate("welcome") {
@@ -135,6 +137,9 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                         }
                     }
                 )
+            }
+            composable("library") {
+                LibraryHubScreen(onBack = { navController.popBackStack() })
             }
             composable("teacher") {
                 TeacherScreen(

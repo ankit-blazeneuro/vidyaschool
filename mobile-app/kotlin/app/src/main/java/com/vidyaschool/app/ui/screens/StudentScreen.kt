@@ -5,6 +5,7 @@ import android.graphics.Typeface
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,6 +55,7 @@ fun StudentScreen(
     studentClass: String = "",
     themeMode: String = "system",
     onThemeChange: (String) -> Unit = {},
+    onShowLibrary: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     var sliderImages by remember { mutableStateOf<List<SliderImage>>(emptyList()) }
@@ -185,6 +187,273 @@ fun StudentScreen(
                 }
                 
                 AcademicPerformanceCard()
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                LibraryBooksSection(onShowMore = onShowLibrary)
+            }
+        }
+    }
+}
+
+@Composable
+fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
+    data class IssuedBook(val title: String, val author: String, val dueDate: String, val renewalsUsed: Int)
+
+    val allBooks = remember {
+        mutableStateListOf(
+            IssuedBook("The Alchemist", "Paulo Coelho", "Jul 10, 2026", 0),
+            IssuedBook("Clean Code", "Robert C. Martin", "Jul 05, 2026", 2),
+            IssuedBook("Atomic Habits", "James Clear", "Jul 15, 2026", 3),
+            IssuedBook("Deep Work", "Cal Newport", "Jul 20, 2026", 1),
+            IssuedBook("Sapiens", "Yuval Noah Harari", "Jul 25, 2026", 0),
+        )
+    }
+
+    val preview = allBooks.take(3)
+    val hasMore = allBooks.size > 3
+    val border = MaterialTheme.colorScheme.outline
+    val onSurface = MaterialTheme.colorScheme.onSurface
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text("Library Books", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = onSurface)
+                Text("Issued books & renewals", fontSize = 12.sp, color = onSurface.copy(alpha = 0.45f))
+            }
+            if (hasMore) {
+                Text(
+                    text = "View all →",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = null
+                    ) { onShowMore() }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))        // Shadcn card: bordered, no fill, clean
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .border(
+                    width = 1.dp,
+                    brush = Brush.verticalGradient(
+                        0.0f to border,
+                        0.65f to border,
+                        1.0f to Color.Transparent
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+        ) {
+            Column {
+                preview.forEachIndexed { idx, book ->
+                    val renewalsLeft = 3 - book.renewalsUsed
+                    if (idx == preview.lastIndex && hasMore) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Monochrome initial avatar
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(onSurface.copy(alpha = 0.06f))
+                                        .border(1.dp, border, RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = book.title.first().toString(),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = onSurface
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(book.title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurface)
+                                    Text(book.author, fontSize = 11.sp, color = onSurface.copy(alpha = 0.45f))
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text(
+                                            text = "Due ${book.dueDate}",
+                                            fontSize = 10.sp,
+                                            color = if (renewalsLeft == 0) onSurface else onSurface.copy(alpha = 0.45f)
+                                        )
+                                        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                                            repeat(3) { i ->
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(width = 10.dp, height = 3.dp)
+                                                        .clip(RoundedCornerShape(2.dp))
+                                                        .background(
+                                                            if (i < book.renewalsUsed) onSurface.copy(alpha = 0.15f)
+                                                            else onSurface.copy(alpha = 0.7f)
+                                                        )
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                if (renewalsLeft > 0) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .border(1.dp, border, RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Text("Renew", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface)
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(onSurface.copy(alpha = 0.06f))
+                                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Text("Max", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface.copy(alpha = 0.35f))
+                                    }
+                                }
+                            }
+
+                            // Half-gradient overlay + Show More button directly on the item
+                            Box(
+                                modifier = Modifier
+                                    .matchParentSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
+                                                MaterialTheme.colorScheme.background
+                                            )
+                                        )
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.surface)
+                                        .border(1.dp, border, RoundedCornerShape(8.dp))
+                                        .clickable(
+                                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                            indication = null
+                                        ) { onShowMore() }
+                                        .padding(horizontal = 18.dp, vertical = 8.dp)
+                                ) {
+                                    Text(
+                                        text = "Show ${allBooks.size - 3} more books",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = onSurface
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Monochrome initial avatar
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(onSurface.copy(alpha = 0.06f))
+                                    .border(1.dp, border, RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = book.title.first().toString(),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = onSurface
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(book.title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurface)
+                                Text(book.author, fontSize = 11.sp, color = onSurface.copy(alpha = 0.45f))
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(
+                                        text = "Due ${book.dueDate}",
+                                        fontSize = 10.sp,
+                                        color = if (renewalsLeft == 0) onSurface else onSurface.copy(alpha = 0.45f)
+                                    )
+                                    // Pip track — filled = used (dim), empty = remaining (solid)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                                        repeat(3) { i ->
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(width = 10.dp, height = 3.dp)
+                                                    .clip(RoundedCornerShape(2.dp))
+                                                    .background(
+                                                        if (i < book.renewalsUsed) onSurface.copy(alpha = 0.15f)
+                                                        else onSurface.copy(alpha = 0.7f)
+                                                    )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            if (renewalsLeft > 0) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .border(1.dp, border, RoundedCornerShape(8.dp))
+                                        .clickable(
+                                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                            indication = null
+                                        ) { allBooks[idx] = book.copy(renewalsUsed = book.renewalsUsed + 1) }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Renew", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface)
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(onSurface.copy(alpha = 0.06f))
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Max", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface.copy(alpha = 0.35f))
+                                }
+                            }
+                        }
+                    }
+
+                    // Divider between rows, not after last
+                    if (idx < preview.lastIndex) {
+                        HorizontalDivider(color = border, thickness = 1.dp)
+                    }
+                }
             }
         }
     }
@@ -322,10 +591,8 @@ fun SubjectBarChart(
     val primaryColor = MaterialTheme.colorScheme.primary
     val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
     val textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-    val barColors = listOf(
-        Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFF06B6D4),
-        Color(0xFF10B981), Color(0xFFF59E0B), Color(0xFFEF4444)
-    )
+    // Theme-aware opacity steps instead of hue colors
+    val barAlphas = listOf(1f, 0.8f, 0.65f, 0.5f, 0.38f, 0.25f)
 
     Canvas(modifier = modifier) {
         val w = size.width; val h = size.height
@@ -344,21 +611,19 @@ fun SubjectBarChart(
         data.forEachIndexed { i, value ->
             val barH = cH * (value / 100f)
             val cx = pL + i * slotW + slotW / 2f
-            val left = cx - barW / 2f; val right = cx + barW / 2f
+            val left = cx - barW / 2f
             val top = pT + cH - barH; val bottom = pT + cH
             val r = barW / 2.5f
-            val color = barColors[i % barColors.size]
+            val alpha = barAlphas[i % barAlphas.size]
 
-            // Track bar (ghost)
             drawRoundRect(
-                color = color.copy(alpha = 0.1f),
+                color = primaryColor.copy(alpha = 0.08f),
                 topLeft = androidx.compose.ui.geometry.Offset(left, pT),
                 size = androidx.compose.ui.geometry.Size(barW, cH),
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(r)
             )
-            // Filled bar
             drawRoundRect(
-                color = color,
+                color = primaryColor.copy(alpha = alpha),
                 topLeft = androidx.compose.ui.geometry.Offset(left, top),
                 size = androidx.compose.ui.geometry.Size(barW, barH),
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(r)
@@ -385,22 +650,20 @@ fun AttendancePieChart(
     absent: Float,
     modifier: Modifier = Modifier
 ) {
-    val presentColor = Color(0xFF6366F1)
-    val absentColor  = Color(0xFFEF4444)
-    val leaveColor   = Color(0xFFF59E0B)
-    val leave        = 100f - present - absent
     val onSurface    = MaterialTheme.colorScheme.onSurface
     val trackColor   = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
+    // Theme-aware: primary=solid, 60%, 30% opacity for 3 segments
+    val presentColor = onSurface
+    val absentColor  = onSurface.copy(alpha = 0.55f)
+    val leaveColor   = onSurface.copy(alpha = 0.25f)
+    val leave        = 100f - present - absent
 
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Donut
         Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
+            modifier = Modifier.weight(1f).fillMaxHeight(),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -418,7 +681,6 @@ fun AttendancePieChart(
                 val lSweep = 360f * (leave   / total)
 
                 drawArc(trackColor, 0f, 360f, false, style = Stroke(strokeW), topLeft = tl, size = arcSz)
-
                 drawArc(presentColor, -90f, pSweep - gap, false,
                     style = Stroke(strokeW, cap = androidx.compose.ui.graphics.StrokeCap.Round), topLeft = tl, size = arcSz)
                 drawArc(absentColor, -90f + pSweep + gap, aSweep - gap, false,
@@ -432,7 +694,6 @@ fun AttendancePieChart(
             }
         }
 
-        // Legend
         Column(
             modifier = Modifier.padding(start = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -446,7 +707,7 @@ fun AttendancePieChart(
                     Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
                     Column {
                         Text(label, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface)
-                        Text(value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = color)
+                        Text(value, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = onSurface)
                     }
                 }
             }
