@@ -27,6 +27,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.auth.SessionManager
 import com.vidyaschool.app.ui.components.CustomTextField
@@ -920,82 +922,117 @@ fun FeesTabContent(
     val scrollState = rememberScrollState()
     val unpaidInstallments = installments.filter { it.status != "paid" }
     val totalOutstanding = unpaidInstallments.sumOf { it.amount }
+    val isDark = isSystemInDarkTheme()
+    val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
+    val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (headerCollapsed) 1f else 0f,
+        animationSpec = androidx.compose.animation.core.tween(220), label = "feeHeaderAlpha"
+    )
+    val headerSlide by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (headerCollapsed) 0f else -24f,
+        animationSpec = androidx.compose.animation.core.tween(220), label = "feeHeaderSlide"
+    )
 
     PullToRefreshBox(
         isRefreshing = isRefreshing || isLoading,
         onRefresh = { onRefresh(); fetchFees() },
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .statusBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
-        ) {
-            // Header
-            Text("Fee Payments", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-            Text("Academic Year 2025–26", fontSize = 13.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f))
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // Error banner
-            if (paymentError != null) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .statusBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+            ) {
+                // Home-style header
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(MaterialTheme.colorScheme.errorContainer)
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(paymentError!!, fontSize = 13.sp, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.weight(1f))
-                    IconButton(onClick = { paymentError = null }, modifier = Modifier.size(18.dp)) {
-                        Icon(Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(14.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        IconButton(
+                            onClick = { },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                                .clip(CircleShape)
+                        ) {
+                            Icon(painter = androidx.compose.ui.res.painterResource(id = com.vidyaschool.app.R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                        }
+                        Column {
+                            Text("Pay Fees", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            Text("Student Portal", fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+                        }
+                    }
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                            .clip(CircleShape)
+                    ) {
+                        Icon(painter = androidx.compose.ui.res.painterResource(id = com.vidyaschool.app.R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
                     }
                 }
-                Spacer(modifier = Modifier.height(14.dp))
-            }
 
-            // Summary card
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .padding(20.dp)
-            ) {
-                Column {
-                    Text("Outstanding Balance", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f), fontWeight = FontWeight.Medium)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "₹${"%,d".format(totalOutstanding.toInt())}",
-                        fontSize = 34.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        if (unpaidInstallments.isEmpty() && installments.isNotEmpty()) "All fees paid ✓"
-                        else "${unpaidInstallments.size} month${if (unpaidInstallments.size != 1) "s" else ""} pending",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.65f)
-                    )
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Error banner
+                if (paymentError != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.errorContainer)
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(paymentError!!, fontSize = 13.sp, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.weight(1f))
+                        IconButton(onClick = { paymentError = null }, modifier = Modifier.size(18.dp)) {
+                            Icon(Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.size(14.dp))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(14.dp))
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                // Summary card — primary in light, gray+border in dark
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .then(
+                            if (isDark) Modifier.border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
+                            else Modifier
+                        )
+                        .background(
+                            if (isDark) MaterialTheme.colorScheme.surfaceVariant
+                            else MaterialTheme.colorScheme.primary
+                        )
+                        .padding(20.dp)
+                ) {
+                    val contentColor = if (isDark) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
+                    Column {
+                        Text("Outstanding Balance", fontSize = 12.sp, color = contentColor.copy(alpha = 0.6f), fontWeight = FontWeight.Medium)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("₹${"%,d".format(totalOutstanding.toInt())}", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = contentColor)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            if (unpaidInstallments.isEmpty() && installments.isNotEmpty()) "All fees paid ✓"
+                            else "${unpaidInstallments.size} month${if (unpaidInstallments.size != 1) "s" else ""} pending",
+                            fontSize = 12.sp, color = contentColor.copy(alpha = 0.55f)
+                        )
+                    }
+                }
 
-            // Section label
-            Text(
-                "Installments",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
-                letterSpacing = 0.8.sp
-            )
-            Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Section label
+                Text("Installments", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f), letterSpacing = 0.8.sp)
+                Spacer(modifier = Modifier.height(10.dp))
 
             // Skeleton
             if (isLoading && installments.isEmpty()) {
@@ -1103,7 +1140,48 @@ fun FeesTabContent(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f))
                 }
             }
+        } // end Column
+
+        // Sticky collapsed header
+        if (headerAlpha > 0f) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer { alpha = headerAlpha; translationY = headerSlide }
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                Spacer(modifier = Modifier.windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                            .clip(CircleShape)
+                    ) {
+                        Icon(painter = androidx.compose.ui.res.painterResource(id = com.vidyaschool.app.R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                    }
+                    Text("Pay Fees", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    IconButton(
+                        onClick = { },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                            .clip(CircleShape)
+                    ) {
+                        Icon(painter = androidx.compose.ui.res.painterResource(id = com.vidyaschool.app.R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                    }
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
+            }
         }
-    }
+    } // end Box
+  } // end PullToRefreshBox
 }
 
