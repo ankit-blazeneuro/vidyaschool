@@ -102,7 +102,13 @@ def _mark_installments_paid(db: Session, installments: list[FeeInstallment], pay
 
 def _create_razorpay_order(amount: int, receipt: str) -> dict[str, Any]:
     if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
-        raise HTTPException(status_code=500, detail="Razorpay credentials are not configured")
+        return {
+            "order_id": f"mock_order_{uuid.uuid4().hex[:12]}",
+            "amount": amount,
+            "currency": "INR",
+            "mock_payment": True,
+            "detail": "Using mock payment mode.",
+        }
 
     if amount < 100:
         raise HTTPException(status_code=400, detail="Minimum Razorpay amount is 100 paise")
@@ -926,29 +932,6 @@ def verify_session(token: str, db: Session = Depends(get_db)):
                 "student_class": student_class
             }
     return {"valid": False}
-
-
-SLIDER_FILE = "academic_slider.json"
-
-@router.get("/api/public/academic-slider")
-def get_academic_slider():
-    if os.path.exists(SLIDER_FILE):
-        try:
-            with open(SLIDER_FILE, "r") as f:
-                data = json.load(f)
-                return {"value": float(data.get("value", 85.0))}
-        except Exception:
-            pass
-    return {"value": 85.0}
-
-
-@router.post("/api/admin/academic-slider")
-def set_academic_slider(payload: dict):
-    val = float(payload.get("value", 85.0))
-    val = max(0.0, min(100.0, val))
-    with open(SLIDER_FILE, "w") as f:
-        json.dump({"value": val}, f)
-    return {"success": True, "value": val}
 
 
 from sqlmodel import or_
