@@ -8,6 +8,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -366,7 +368,7 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                                 modifier = androidx.compose.ui.Modifier.padding(bottom = 16.dp)
                             )
                             androidx.compose.material3.LinearProgressIndicator(
-                                progress = downloadProgress,
+                                progress = { downloadProgress },
                                 modifier = androidx.compose.ui.Modifier.fillMaxWidth()
                             )
                         }
