@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.isSystemInDarkTheme
+import android.content.Intent
+import android.net.Uri
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.auth.SessionManager
 import com.vidyaschool.app.api.UpdateChecker
@@ -149,17 +151,35 @@ fun DashboardLayout(
                         isDownloading = isDownloading,
                         downloadProgress = downloadProgress,
                         onUpdateClick = {
-                            isDownloading = true
-                            downloadProgress = 0f
-                            scope.launch {
-                                val apkUri = UpdateChecker.downloadApk(context, info.downloadUrl) { progress ->
-                                    downloadProgress = progress
+                            val canInstall = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                context.packageManager.canRequestPackageInstalls()
+                            } else {
+                                true
+                            }
+                            if (!canInstall) {
+                                try {
+                                    val intent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                                        data = Uri.parse("package:${context.packageName}")
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    context.startActivity(intent)
+                                    android.widget.Toast.makeText(context, "Please enable 'Install unknown apps' to update.", android.widget.Toast.LENGTH_LONG).show()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
                                 }
-                                isDownloading = false
-                                if (apkUri != null) {
-                                    UpdateChecker.installApk(context, apkUri)
+                            } else {
+                                isDownloading = true
+                                downloadProgress = 0f
+                                scope.launch {
+                                    val apkUri = UpdateChecker.downloadApk(context, info.downloadUrl) { progress ->
+                                        downloadProgress = progress
+                                    }
+                                    isDownloading = false
+                                    if (apkUri != null) {
+                                        UpdateChecker.installApk(context, apkUri)
+                                    }
+                                    UpdateChecker.updateInfoState.value = null
                                 }
-                                UpdateChecker.updateInfoState.value = null
                             }
                         },
                         onDismissClick = {
