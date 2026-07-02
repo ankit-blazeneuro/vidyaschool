@@ -62,6 +62,16 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         
+        // Clean up any downloaded update APKs on startup
+        try {
+            val updateApk = java.io.File(cacheDir, "update.apk")
+            if (updateApk.exists()) {
+                updateApk.delete()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        
         sessionManager = SessionManager(this)
         val isSplashFinished = androidx.compose.runtime.mutableStateOf(false)
         
