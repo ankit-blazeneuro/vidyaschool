@@ -1,12 +1,17 @@
 package com.vidyaschool.app.api
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.core.content.FileProvider
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.File
+import java.io.FileOutputStream
 
 data class UpdateInfo(
     val versionName: String,
@@ -56,6 +61,65 @@ object UpdateChecker {
             e.printStackTrace()
         }
         return@withContext null
+    }
+
+    suspend fun downloadApk(
+        context: Context,
+        url: String,
+        onProgress: (Float) -> Unit
+    ): Uri? = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder().url(url).build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return@withContext null
+                val body = response.body ?: return@withContext null
+                val contentLength = body.contentLength()
+
+                val destinationFile = File(context.cacheDir, "update.apk")
+                if (destinationFile.exists()) {
+                    destinationFile.delete()
+                }
+
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                var totalBytesRead = 0L
+
+                body.byteStream().use { inputStream ->
+                    FileOutputStream(destinationFile).use { outputStream ->
+                        while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                            outputStream.write(buffer, 0, bytesRead)
+                            totalBytesRead += bytesRead
+                            if (contentLength > 0) {
+                                val progress = totalBytesRead.toFloat() / contentLength
+                                onProgress(progress)
+                            }
+                        }
+                    }
+                }
+
+                return@withContext FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    destinationFile
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return@withContext null
+    }
+
+    fun installApk(context: Context, apkUri: Uri) {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(apkUri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        try {
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun isNewerVersion(current: String, latest: String): Boolean {

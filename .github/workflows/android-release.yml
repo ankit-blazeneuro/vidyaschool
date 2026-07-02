@@ -33,6 +33,10 @@ jobs:
           TAG_NAME="v$VERSION_NAME.${{ github.run_number }}"
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
           echo "Extracted Version: $VERSION_NAME, Tag: $TAG_NAME"
+          
+          # Inject build versioning into build.gradle.kts before compiling the APK
+          sed -i "s/versionName = \"$VERSION_NAME\"/versionName = \"$VERSION_NAME.${{ github.run_number }}\"/" mobile-app/kotlin/app/build.gradle.kts
+          sed -i "s/versionCode = [0-9]*/versionCode = ${{ github.run_number }}/" mobile-app/kotlin/app/build.gradle.kts
 
       - name: Build Debug APK
         run: |
