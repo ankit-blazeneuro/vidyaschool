@@ -22,7 +22,8 @@ fun BottomDrawer(
             .fillMaxWidth()
             .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 40.dp)
+            .navigationBarsPadding()
+            .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 24.dp)
     ) {
         Box(
             modifier = Modifier

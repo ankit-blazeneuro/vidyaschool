@@ -1,0 +1,50 @@
+name: Android Build and Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build and Release APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x mobile-app/kotlin/gradlew
+
+      - name: Extract Version Name
+        id: get_version
+        run: |
+          VERSION_NAME=$(grep "versionName =" mobile-app/kotlin/app/build.gradle.kts | awk -F'"' '{print $2}')
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          TAG_NAME="v$VERSION_NAME.${{ github.run_number }}"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "Extracted Version: $VERSION_NAME, Tag: $TAG_NAME"
+
+      - name: Build Debug APK
+        run: |
+          cd mobile-app/kotlin
+          ./gradlew assembleDebug
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ env.TAG_NAME }} \
+            mobile-app/kotlin/app/build/outputs/apk/debug/app-debug.apk \
+            --title "Release ${{ env.TAG_NAME }}" \
+            --notes "Automatic release built from commit ${{ github.sha }}. Download the APK below to update." \
+            --target main

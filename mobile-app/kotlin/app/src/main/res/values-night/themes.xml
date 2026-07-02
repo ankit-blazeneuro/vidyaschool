@@ -3,16 +3,16 @@
     <style name="Theme.VidyaSchool.Splash" parent="Theme.SplashScreen">
         <!-- Icon shown in the center of splash -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
-        <!-- Background color (light mode) -->
+        <!-- Background color (dark mode) -->
         <item name="windowSplashScreenBackground">@color/splash_background</item>
         <!-- Animation duration -->
         <item name="windowSplashScreenAnimationDuration">600</item>
         <!-- Theme to switch to after splash -->
         <item name="postSplashScreenTheme">@style/Theme.AppCompat.NoActionBar</item>
-        <!-- Status Bar and Navigation Bar customization for seamless look in light mode -->
+        <!-- Status Bar and Navigation Bar customization for seamless look in dark mode -->
         <item name="android:statusBarColor">@color/splash_background</item>
         <item name="android:navigationBarColor">@color/splash_background</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 </resources>

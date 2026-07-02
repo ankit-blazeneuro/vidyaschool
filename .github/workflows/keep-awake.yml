@@ -1,0 +1,16 @@
+name: Keep Backend Server Awake
+
+on:
+  schedule:
+    # Run every 13 minutes from 2:00 AM UTC (7:30 AM IST) to 5:59 PM UTC (11:29 PM IST)
+    - cron: '*/13 2-17 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  ping:
+    name: Ping Backend Server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send GET Request to Render Backend
+        run: |
+          curl -s -I https://vidyaschool-backend.onrender.com/

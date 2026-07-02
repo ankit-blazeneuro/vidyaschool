@@ -3,6 +3,7 @@ package com.vidyaschool.app
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -39,6 +40,9 @@ import kotlinx.coroutines.launch
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.api.VerifyPaymentRequest
 import com.vidyaschool.app.api.PayFeesRequest
+import com.vidyaschool.app.api.UpdateChecker
+import com.vidyaschool.app.api.UpdateInfo
+import android.net.Uri
 
 class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
     private lateinit var viewModel: AuthViewModel
@@ -56,6 +60,7 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
         super.onCreate(savedInstanceState)
         
         sessionManager = SessionManager(this)
+        val isSplashFinished = androidx.compose.runtime.mutableStateOf(false)
         
         val googleProvider = GoogleAuthProvider(webClientId = "841705301007-pv1r9dtukce7jg9ag6aa8ogi4f7aveon.apps.googleusercontent.com")
         val githubProvider = GitHubAuthProvider(
@@ -75,14 +80,38 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
             fadeOut.addListener(object : android.animation.AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: android.animation.Animator) {
                     provider.remove()
+                    isSplashFinished.value = true
+                    // Re-apply edge-to-edge settings once splash screen is removed
+                    enableEdgeToEdge(
+                        statusBarStyle = SystemBarStyle.auto(
+                            android.graphics.Color.TRANSPARENT,
+                            android.graphics.Color.TRANSPARENT
+                        ),
+                        navigationBarStyle = SystemBarStyle.auto(
+                            android.graphics.Color.TRANSPARENT,
+                            android.graphics.Color.TRANSPARENT
+                        )
+                    )
+                    WindowCompat.setDecorFitsSystemWindows(window, false)
                 }
             })
             fadeOut.start()
         }
 
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.auto(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            )
+        )
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
+            @Suppress("UNUSED_VARIABLE")
+            val finished = isSplashFinished.value
             VidyaSchoolApp(viewModel, sessionManager)
         }
     }
@@ -168,6 +197,11 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
         else -> isSystemInDarkTheme()
     }
     val context = androidx.compose.ui.platform.LocalContext.current
+
+    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        updateInfo = UpdateChecker.checkForUpdates(context)
+    }
 
     VidyaSchoolTheme(darkTheme = isDarkTheme) {
         val navController = rememberNavController()
@@ -304,6 +338,32 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                 val receiptNo = backStackEntry.arguments?.getString("receiptNo") ?: ""
                 FeeReceiptScreen(receiptNo = receiptNo, onBack = { navController.popBackStack() })
             }
+        }
+
+        if (updateInfo != null) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { updateInfo = null },
+                title = { androidx.compose.material3.Text("Update Available") },
+                text = { androidx.compose.material3.Text("A new version (${updateInfo?.versionName}) is available. Would you like to update now?") },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo?.downloadUrl))
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        updateInfo = null
+                    }) {
+                        androidx.compose.material3.Text("Update Now")
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { updateInfo = null }) {
+                        androidx.compose.material3.Text("Later")
+                    }
+                }
+            )
         }
     }
 }

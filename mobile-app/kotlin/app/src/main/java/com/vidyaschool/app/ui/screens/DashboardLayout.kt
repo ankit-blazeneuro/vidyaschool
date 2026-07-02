@@ -135,13 +135,11 @@ fun DashboardLayout(
     Scaffold(
         bottomBar = {
             Column(
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                modifier = Modifier.background(MaterialTheme.colorScheme.background)
             ) {
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
-                Spacer(modifier = Modifier.height(4.dp))
                 NavigationBar(
                     modifier = Modifier.height(70.dp),
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = MaterialTheme.colorScheme.background,
                     tonalElevation = 0.dp
                 ) {
                     val navItemColors = NavigationBarItemDefaults.colors(
@@ -203,8 +201,8 @@ fun DashboardLayout(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = innerPadding.calculateBottomPadding())
                 .background(MaterialTheme.colorScheme.background)
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
             when (selectedTab) {
                 "home" -> {
