@@ -146,10 +146,14 @@ fun DashboardLayout(
                 modifier = Modifier.background(MaterialTheme.colorScheme.background)
             ) {
                 updateInfo?.let { info ->
+                    val updateApk = remember(info) { java.io.File(context.cacheDir, "update.apk") }
+                    var isApkDownloaded by remember(info) { mutableStateOf(updateApk.exists() && updateApk.length() > 0) }
+
                     UpdateBanner(
                         updateInfo = info,
                         isDownloading = isDownloading,
                         downloadProgress = downloadProgress,
+                        isDownloaded = isApkDownloaded,
                         onUpdateClick = {
                             val canInstall = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                                 context.packageManager.canRequestPackageInstalls()
@@ -168,17 +172,28 @@ fun DashboardLayout(
                                     e.printStackTrace()
                                 }
                             } else {
-                                isDownloading = true
-                                downloadProgress = 0f
-                                scope.launch {
-                                    val apkUri = UpdateChecker.downloadApk(context, info.downloadUrl) { progress ->
-                                        downloadProgress = progress
-                                    }
-                                    isDownloading = false
-                                    if (apkUri != null) {
-                                        UpdateChecker.installApk(context, apkUri)
-                                    }
+                                if (isApkDownloaded) {
+                                    val apkUri = androidx.core.content.FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.fileprovider",
+                                        updateApk
+                                    )
+                                    UpdateChecker.installApk(context, apkUri)
                                     UpdateChecker.updateInfoState.value = null
+                                } else {
+                                    isDownloading = true
+                                    downloadProgress = 0f
+                                    scope.launch {
+                                        val apkUri = UpdateChecker.downloadApk(context, info.downloadUrl) { progress ->
+                                            downloadProgress = progress
+                                        }
+                                        isDownloading = false
+                                        if (apkUri != null) {
+                                            isApkDownloaded = true
+                                            UpdateChecker.installApk(context, apkUri)
+                                        }
+                                        UpdateChecker.updateInfoState.value = null
+                                    }
                                 }
                             }
                         },
@@ -1238,6 +1253,7 @@ fun UpdateBanner(
     updateInfo: UpdateInfo,
     isDownloading: Boolean,
     downloadProgress: Float,
+    isDownloaded: Boolean,
     onUpdateClick: () -> Unit,
     onDismissClick: () -> Unit
 ) {
@@ -1307,7 +1323,11 @@ fun UpdateBanner(
                                 contentColor = MaterialTheme.colorScheme.surface
                             )
                         ) {
-                            Text("Update", fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                            Text(
+                                text = if (isDownloaded) "Install" else "Update",
+                                fontSize = 12.sp,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                            )
                         }
                     }
                 }
