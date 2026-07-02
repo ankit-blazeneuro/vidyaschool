@@ -1,0 +1,32 @@
+name: Ping backend
+
+on:
+  schedule:
+    # GitHub Actions cron uses UTC. Run every 13 minutes, then skip
+    # requests during 12:00 AM-5:59 AM India Standard Time in the job.
+    - cron: '*/13 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Send backend keep-alive request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip during India night hours
+        id: india_time
+        run: |
+          current_hour=$(TZ=Asia/Kolkata date +%H)
+          echo "current_hour=$current_hour" >> "$GITHUB_OUTPUT"
+
+          if [ "$current_hour" -ge 0 ] && [ "$current_hour" -lt 6 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping ping because it is between 12:00 AM and 6:00 AM IST."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Send GET request
+        if: steps.india_time.outputs.skip != 'true'
+        run: |
+          curl --fail --silent --show-error --max-time 30 \
+            https://vidyaschool-backend.onrender.com
