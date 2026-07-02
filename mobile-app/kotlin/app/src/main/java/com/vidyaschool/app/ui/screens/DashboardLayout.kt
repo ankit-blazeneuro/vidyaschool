@@ -31,6 +31,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.isSystemInDarkTheme
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.auth.SessionManager
+import com.vidyaschool.app.api.UpdateChecker
+import com.vidyaschool.app.api.UpdateInfo
 import com.vidyaschool.app.ui.components.CustomTextField
 import coil.compose.AsyncImage
 import com.vidyaschool.app.api.FeeInstallment
@@ -56,6 +58,10 @@ fun DashboardLayout(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val sessionManager = remember { SessionManager(context) }
+    
+    val updateInfo by UpdateChecker.updateInfoState
+    var isDownloading by UpdateChecker.isDownloadingState
+    var downloadProgress by UpdateChecker.downloadProgressState
     
     val currentRole = remember { mutableStateOf(role) }
     val currentName = remember { mutableStateOf(name) }
@@ -137,6 +143,30 @@ fun DashboardLayout(
             Column(
                 modifier = Modifier.background(MaterialTheme.colorScheme.background)
             ) {
+                updateInfo?.let { info ->
+                    UpdateBanner(
+                        updateInfo = info,
+                        isDownloading = isDownloading,
+                        downloadProgress = downloadProgress,
+                        onUpdateClick = {
+                            isDownloading = true
+                            downloadProgress = 0f
+                            scope.launch {
+                                val apkUri = UpdateChecker.downloadApk(context, info.downloadUrl) { progress ->
+                                    downloadProgress = progress
+                                }
+                                isDownloading = false
+                                if (apkUri != null) {
+                                    UpdateChecker.installApk(context, apkUri)
+                                }
+                                UpdateChecker.updateInfoState.value = null
+                            }
+                        },
+                        onDismissClick = {
+                            UpdateChecker.updateInfoState.value = null
+                        }
+                    )
+                }
                 NavigationBar(
                     modifier = Modifier.height(70.dp),
                     containerColor = MaterialTheme.colorScheme.background,
@@ -1182,4 +1212,113 @@ fun FeesTabContent(
     } // end Box
   } // end PullToRefreshBox
 }
+
+@Composable
+fun UpdateBanner(
+    updateInfo: UpdateInfo,
+    isDownloading: Boolean,
+    downloadProgress: Float,
+    onUpdateClick: () -> Unit,
+    onDismissClick: () -> Unit
+) {
+    androidx.compose.material3.Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+        ),
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (isDownloading) "Downloading Update" else "New Version Available",
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (isDownloading) {
+                            "Installing version ${updateInfo.versionName}..."
+                        } else {
+                            "Version ${updateInfo.versionName} is ready to install."
+                        },
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (!isDownloading) {
+                    Row(
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Dismiss/Later button (Shadcn Outline variant)
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = onDismissClick,
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                            modifier = Modifier.height(32.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
+                        ) {
+                            Text("Later", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
+                        }
+
+                        // Update Now button (Shadcn Primary variant)
+                        androidx.compose.material3.Button(
+                            onClick = onUpdateClick,
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(6.dp),
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                            modifier = Modifier.height(32.dp),
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.onSurface,
+                                contentColor = MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Text("Update", fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+
+            if (isDownloading) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    androidx.compose.material3.LinearProgressIndicator(
+                        progress = { downloadProgress },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(6.dp),
+                        strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                    )
+                    Text(
+                        text = "${(downloadProgress * 100).toInt()}%",
+                        fontSize = 11.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
 

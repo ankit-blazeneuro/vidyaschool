@@ -29,6 +29,10 @@ private data class GitHubAsset(
 )
 
 object UpdateChecker {
+    val updateInfoState = androidx.compose.runtime.mutableStateOf<UpdateInfo?>(null)
+    val isDownloadingState = androidx.compose.runtime.mutableStateOf(false)
+    val downloadProgressState = androidx.compose.runtime.mutableStateOf(0f)
+
     private val client = OkHttpClient()
     private val gson = Gson()
 

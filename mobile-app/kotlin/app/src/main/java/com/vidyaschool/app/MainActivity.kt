@@ -201,13 +201,8 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
     }
     val context = androidx.compose.ui.platform.LocalContext.current
 
-    var updateInfo by remember { mutableStateOf<UpdateInfo?>(null) }
-    var isDownloading by remember { mutableStateOf(false) }
-    var downloadProgress by remember { mutableStateOf(0f) }
-    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
-
     androidx.compose.runtime.LaunchedEffect(Unit) {
-        updateInfo = UpdateChecker.checkForUpdates(context)
+        UpdateChecker.updateInfoState.value = UpdateChecker.checkForUpdates(context)
     }
 
     VidyaSchoolTheme(darkTheme = isDarkTheme) {
@@ -347,63 +342,5 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
             }
         }
 
-        if (updateInfo != null) {
-            androidx.compose.material3.AlertDialog(
-                onDismissRequest = { 
-                    if (!isDownloading) updateInfo = null 
-                },
-                title = { 
-                    androidx.compose.material3.Text(
-                        if (isDownloading) "Downloading Update" else "Update Available"
-                    ) 
-                },
-                text = {
-                    if (isDownloading) {
-                        androidx.compose.foundation.layout.Column(
-                            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-                            modifier = androidx.compose.ui.Modifier.fillMaxWidth()
-                        ) {
-                            androidx.compose.material3.Text(
-                                text = "Downloading: ${(downloadProgress * 100).toInt()}%",
-                                modifier = androidx.compose.ui.Modifier.padding(bottom = 16.dp)
-                            )
-                            androidx.compose.material3.LinearProgressIndicator(
-                                progress = { downloadProgress },
-                                modifier = androidx.compose.ui.Modifier.fillMaxWidth()
-                            )
-                        }
-                    } else {
-                        androidx.compose.material3.Text("A new version (${updateInfo?.versionName}) is available. Would you like to update now?")
-                    }
-                },
-                confirmButton = {
-                    if (!isDownloading) {
-                        androidx.compose.material3.TextButton(onClick = {
-                            isDownloading = true
-                            downloadProgress = 0f
-                            coroutineScope.launch {
-                                val apkUri = UpdateChecker.downloadApk(context, updateInfo!!.downloadUrl) { progress ->
-                                    downloadProgress = progress
-                                }
-                                isDownloading = false
-                                if (apkUri != null) {
-                                    UpdateChecker.installApk(context, apkUri)
-                                }
-                                updateInfo = null
-                            }
-                        }) {
-                            androidx.compose.material3.Text("Update Now")
-                        }
-                    }
-                },
-                dismissButton = {
-                    if (!isDownloading) {
-                        androidx.compose.material3.TextButton(onClick = { updateInfo = null }) {
-                            androidx.compose.material3.Text("Later")
-                        }
-                    }
-                }
-            )
-        }
     }
 }
