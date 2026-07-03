@@ -13,6 +13,7 @@ export async function GET() {
         createdAt: teacherRequest.createdAt,
         userName: user.name,
         userEmail: user.email,
+        preferredRole: user.preferredRole,
       })
       .from(teacherRequest)
       .leftJoin(user, eq(teacherRequest.userId, user.id))

@@ -68,8 +68,8 @@ export async function GET(req: NextRequest) {
       )
       .orderBy(desc(notice.createdAt))
 
-    } else if (userRole === 'teacher') {
-      // Teachers see: notices targeted to all or teachers, or notices they posted themselves
+    } else if (userRole === 'teacher' || userRole === 'librarian') {
+      // Teachers and librarians see: notices targeted to all or teachers/librarians, or notices they posted themselves
       noticesData = await db.select({
         id: notice.id,
         title: notice.title,
@@ -89,6 +89,7 @@ export async function GET(req: NextRequest) {
         or(
           eq(notice.targetRole, 'all'),
           eq(notice.targetRole, 'teacher'),
+          eq(notice.targetRole, 'librarian'),
           eq(notice.senderId, userId)
         )
       )
@@ -123,7 +124,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user || (session.user.role !== 'teacher' && session.user.role !== 'admin')) {
+  if (!session?.user || (session.user.role !== 'teacher' && session.user.role !== 'librarian' && session.user.role !== 'admin')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -145,8 +146,8 @@ export async function POST(req: NextRequest) {
       isUrgent: !!isUrgent,
       senderId: session.user.id,
       targetRole: session.user.role === 'admin' ? (targetRole || 'all') : 'class',
-      targetClass: session.user.role === 'teacher' ? targetClass : null,
-      targetSection: session.user.role === 'teacher' ? (targetSection || null) : null,
+      targetClass: (session.user.role === 'teacher' || session.user.role === 'librarian') ? targetClass : null,
+      targetSection: (session.user.role === 'teacher' || session.user.role === 'librarian') ? (targetSection || null) : null,
       createdAt: new Date(),
       updatedAt: new Date(),
     }

@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   try {
     const { userId, preferredRole } = await request.json()
     
-    if (preferredRole === "teacher") {
+    if (preferredRole === "teacher" || preferredRole === "librarian") {
       const requestId = crypto.randomUUID()
       
       await db.insert(teacherRequest).values({
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       
       const userData = await db.update(user)
         .set({ 
-          preferredRole: "teacher",
+          preferredRole: preferredRole,
           teacherApprovalStatus: "pending"
         })
         .where(eq(user.id, userId))

@@ -4,8 +4,8 @@ import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
-
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Header
@@ -62,7 +62,8 @@ data class VerifySessionResponse(
     val role: String?,
     val name: String?,
     val image: String?,
-    @SerializedName("student_class") val studentClass: String? = null
+    @SerializedName("student_class") val studentClass: String? = null,
+    val username: String? = null
 )
 
 data class UpdateSliderImagesResponse(
@@ -177,4 +178,96 @@ interface AuthApi {
         @Header("Authorization") authHeader: String,
         @Body request: VerifyPaymentRequest
     ): Response<PayFeesResponse>
+
+    @GET("api/users/search")
+    suspend fun searchUsers(
+        @Header("Authorization") authHeader: String,
+        @Query("q") query: String?
+    ): Response<List<SearchUserResponse>>
+
+    @PATCH("api/profile")
+    suspend fun updateProfile(
+        @Header("Authorization") authHeader: String,
+        @Body request: ProfileUpdateRequest
+    ): Response<Map<String, Any?>>
+
+    @GET("api/profile")
+    suspend fun getProfile(
+        @Header("Authorization") authHeader: String
+    ): Response<ProfileResponse>
+
+    @GET("api/student/borrowings")
+    suspend fun getStudentBorrowings(
+        @Header("Authorization") authHeader: String
+    ): Response<List<StudentBorrowingResponse>>
+
+    @PATCH("api/student/borrowings")
+    suspend fun renewBook(
+        @Header("Authorization") authHeader: String,
+        @Body request: StudentRenewRequest
+    ): Response<Map<String, Any?>>
 }
+
+data class SearchUserResponse(
+    val name: String,
+    val username: String,
+    val role: String
+)
+
+data class ProfileResponse(
+    val user: User,
+    val profile: UserProfileData?
+)
+
+data class UserProfileData(
+    val id: String?,
+    @SerializedName("user_id") val userId: String?,
+    val admissionNumber: String?,
+    val username: String?,
+    val phoneNumber: String?,
+    val parentName: String?,
+    val parentPhone: String?,
+    val parentEmail: String?,
+    val address: String?,
+    val city: String?,
+    val state: String?,
+    val pincode: String?,
+    val `class`: String?,
+    val section: String?,
+    val secondaryRole: String?,
+    val transportMode: String?,
+    val onboardingCompleted: Boolean?,
+    val classSectionLastUpdated: String?,
+    val classSectionChanges: String?
+)
+
+data class ProfileUpdateRequest(
+    val username: String? = null,
+    val phoneNumber: String? = null,
+    val address: String? = null,
+    val city: String? = null,
+    val state: String? = null,
+    val pincode: String? = null,
+    val parentName: String? = null,
+    val parentPhone: String? = null,
+    val parentEmail: String? = null,
+    @SerializedName("class") val class_: String? = null,
+    val section: String? = null
+)
+
+data class StudentBorrowingResponse(
+    val id: String,
+    val bookId: String,
+    val issueDate: String,
+    val dueDate: String,
+    val returnDate: String?,
+    val renewalsCount: Int,
+    val status: String,
+    val title: String,
+    val author: String,
+    val isbn: String
+)
+
+data class StudentRenewRequest(
+    val id: String
+)

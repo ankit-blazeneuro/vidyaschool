@@ -16,6 +16,8 @@ import {
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { Spinner } from "@/components/ui/spinner"
 import {
   Table,
   TableBody,
@@ -38,52 +40,59 @@ interface BookIssue {
   renewalsCount: number
 }
 
-const initialIssues: BookIssue[] = [
-  { id: "1", title: "Introduction to Algorithms", author: "Thomas H. Cormen", isbn: "978-0262033848", issueDate: "2026-06-10", dueDate: "2026-07-10", status: "active", renewalsCount: 0 },
-  { id: "2", title: "A Brief History of Time", author: "Stephen Hawking", isbn: "978-0553380163", issueDate: "2026-06-05", dueDate: "2026-06-20", status: "overdue", renewalsCount: 1 },
-  { id: "3", title: "The Art of Computer Programming", author: "Donald E. Knuth", isbn: "978-0201896831", issueDate: "2026-05-15", dueDate: "2026-06-15", status: "returned", returnDate: "2026-06-14", renewalsCount: 0 },
-  { id: "4", title: "Clean Code", author: "Robert C. Martin", isbn: "978-0132350884", issueDate: "2026-06-12", dueDate: "2026-07-12", status: "active", renewalsCount: 0 },
-  { id: "5", title: "Design Patterns", author: "Erich Gamma", isbn: "978-0201633610", issueDate: "2026-04-10", dueDate: "2026-05-10", status: "returned", returnDate: "2026-05-08", renewalsCount: 0 },
-]
-
 export default function StudentLibraryPage() {
-  const [issues, setIssues] = React.useState<BookIssue[]>(initialIssues)
+  const [issues, setIssues] = React.useState<BookIssue[]>([])
+  const [loading, setLoading] = React.useState(true)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<"all" | "active" | "overdue" | "returned">("all")
   
   const [renewingBook, setRenewingBook] = React.useState<BookIssue | null>(null)
   const [isProcessing, setIsProcessing] = React.useState(false)
 
+  const fetchIssues = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/backend/api/student/borrowings")
+      if (!res.ok) throw new Error("Failed to fetch library borrowings")
+      const data = await res.json()
+      setIssues(data)
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load library logs")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    fetchIssues()
+  }, [fetchIssues])
+
   // Calculations
   const activeCount = issues.filter(b => b.status === "active").length
   const overdueCount = issues.filter(b => b.status === "overdue").length
   const historyCount = issues.filter(b => b.status === "returned").length
 
-  const handleRenew = () => {
+  const handleRenew = async () => {
     if (!renewingBook) return
     setIsProcessing(true)
     
-    // Simulate server response
-    setTimeout(() => {
-      setIssues(prev => prev.map(book => {
-        if (book.id === renewingBook.id) {
-          const currentDue = new Date(book.dueDate)
-          currentDue.setDate(currentDue.getDate() + 14) // Extend by 14 days
-          const newDueDateStr = currentDue.toISOString().split("T")[0]
-
-          return {
-            ...book,
-            dueDate: newDueDateStr,
-            status: "active", // Reset to active if it was overdue
-            renewalsCount: book.renewalsCount + 1
-          }
-        }
-        return book
-      }))
+    try {
+      const res = await fetch("/api/backend/api/student/borrowings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: renewingBook.id }),
+      })
       
-      setIsProcessing(false)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to renew book")
+      
+      toast.success(`Book "${renewingBook.title}" renewed successfully`)
+      fetchIssues()
       setRenewingBook(null)
-    }, 1500)
+    } catch (err: any) {
+      toast.error(err.message || "Failed to renew book")
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   // Search & Filter items
@@ -94,6 +103,7 @@ export default function StudentLibraryPage() {
     if (statusFilter === "all") return matchesSearch
     return matchesSearch && book.status === statusFilter
   })
+
 
   return (
     <div className="flex flex-col gap-6 py-6 min-h-screen bg-background">
@@ -196,9 +206,19 @@ export default function StudentLibraryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredIssues.length > 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-sm animate-pulse">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Spinner size="lg" />
+                      <span className="font-semibold text-xs text-muted-foreground mt-2">Retrieving library logs...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : filteredIssues.length > 0 ? (
                 filteredIssues.map((book) => {
                   const isActive = book.status === "active"
+
                   const isOverdue = book.status === "overdue"
                   const isReturned = book.status === "returned"
 

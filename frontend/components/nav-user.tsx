@@ -93,7 +93,7 @@ export function NavUser() {
 
   const accountUrl = user.role === 'admin'
     ? (username ? `/admin/${username}/account` : '/admin')
-    : user.role === 'teacher'
+    : (user.role === 'teacher' || user.role === 'librarian')
     ? (username ? `/teacher/${username}/account` : '/teacher')
     : (username ? `/student/${username}/account` : '/student')
 

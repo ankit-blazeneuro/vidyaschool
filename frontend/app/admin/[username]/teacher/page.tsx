@@ -1,7 +1,7 @@
 import { requireRole } from "@/lib/auth-helpers"
 import { db } from "@/lib/db"
 import { user, userProfile } from "@/lib/schema"
-import { eq, desc } from "drizzle-orm"
+import { eq, desc, or } from "drizzle-orm"
 import { TeacherList } from "./teacher-list"
 
 export default async function AdminTeachersPage() {
@@ -26,7 +26,7 @@ export default async function AdminTeachersPage() {
     })
     .from(user)
     .leftJoin(userProfile, eq(user.id, userProfile.userId))
-    .where(eq(user.role, 'teacher'))
+    .where(or(eq(user.role, 'teacher'), eq(user.role, 'librarian')))
     .orderBy(desc(user.createdAt))
 
   const teachers = rawTeachers.map(t => ({

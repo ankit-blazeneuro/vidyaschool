@@ -44,6 +44,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
     const cookieHeader = req.headers.get('cookie') || ''
     const authHeader = req.headers.get('authorization') || ''
     const body = await req.json()
+    console.log(`PROXY [POST] Request to ${url} with body:`, JSON.stringify(body))
     
     const res = await fetch(url, {
       method: 'POST',
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
     
     if (!res.ok) {
       const errorText = await res.text()
+      console.error(`PROXY [POST] Error response from ${url} (status: ${res.status}):`, errorText)
       let parsedError = errorText
       try {
         const jsonError = JSON.parse(errorText)

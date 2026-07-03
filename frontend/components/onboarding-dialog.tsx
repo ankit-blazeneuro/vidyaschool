@@ -29,7 +29,7 @@ import {
 import { toast } from "sonner"
 
 interface OnboardingDialogProps {
-  userRole: "student" | "teacher"
+  userRole: "student" | "teacher" | "librarian"
   userEmail: string
   onSuccess: (username: string) => void
 }
@@ -68,7 +68,7 @@ export function OnboardingDialog({ userRole, userEmail, onSuccess }: OnboardingD
     // Basic validation per step
     if (step === 1) {
       if (!admissionNumber) {
-        toast.error(isStudent ? "Please enter your Admission Number" : "Please enter your Teacher ID")
+        toast.error(isStudent ? "Please enter your Admission Number" : userRole === "librarian" ? "Please enter your Librarian ID" : "Please enter your Teacher ID")
         return
       }
       if (!phoneNumber) {
@@ -255,12 +255,14 @@ export function OnboardingDialog({ userRole, userEmail, onSuccess }: OnboardingD
                   </div>
                   
                   <div className="space-y-1.5">
-                    <Label htmlFor="admission">{isStudent ? "Admission Number" : "Faculty Employee ID"}</Label>
+                    <Label htmlFor="admission">
+                      {isStudent ? "Admission Number" : userRole === "librarian" ? "Librarian Employee ID" : "Faculty Employee ID"}
+                    </Label>
                     <Input
                       id="admission"
                       value={admissionNumber}
                       onChange={(e) => setAdmissionNumber(e.target.value.toUpperCase())}
-                      placeholder={isStudent ? "e.g., 2024/STU/102" : "e.g., TCH/2026/04"}
+                      placeholder={isStudent ? "e.g., 2024/STU/102" : userRole === "librarian" ? "e.g., LIB/2026/04" : "e.g., TCH/2026/04"}
                       required
                     />
                   </div>

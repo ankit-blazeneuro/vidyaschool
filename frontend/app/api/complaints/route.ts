@@ -40,6 +40,8 @@ export async function GET(req: NextRequest) {
     let results
     if (role === 'teacher') {
       results = await query.where(eq(complaint.recipient, 'Teacher'))
+    } else if (role === 'librarian') {
+      results = await query.where(eq(complaint.recipient, 'Librarian'))
     } else if (role === 'admin') {
       results = await query.where(like(complaint.recipient, '%Admin%'))
     } else {

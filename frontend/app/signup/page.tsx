@@ -14,7 +14,7 @@ export default function SignUpPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [preferredRole, setPreferredRole] = useState<"student" | "teacher">("student")
+  const [preferredRole, setPreferredRole] = useState<"student" | "teacher" | "librarian">("student")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
@@ -32,7 +32,7 @@ export default function SignUpPage() {
         preferredRole,
       })
       
-      if (preferredRole === "teacher" && data?.user?.id) {
+      if ((preferredRole === "teacher" || preferredRole === "librarian") && data?.user?.id) {
         await fetch("/api/admin/teacher-requests/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -140,18 +140,19 @@ export default function SignUpPage() {
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="role">Preferred Role</FieldLabel>
-                  <Select value={preferredRole} onValueChange={(value: "student" | "teacher") => setPreferredRole(value)}>
+                  <Select value={preferredRole} onValueChange={(value: "student" | "teacher" | "librarian") => setPreferredRole(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="student">Student</SelectItem>
                       <SelectItem value="teacher">Teacher</SelectItem>
+                      <SelectItem value="librarian">Librarian</SelectItem>
                     </SelectContent>
                   </Select>
-                  {preferredRole === "teacher" && (
+                  {(preferredRole === "teacher" || preferredRole === "librarian") && (
                     <FieldDescription>
-                      Teacher accounts require admin approval
+                      Teacher and Librarian accounts require admin approval
                     </FieldDescription>
                   )}
                 </Field>

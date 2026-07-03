@@ -16,9 +16,10 @@ class SessionManager(context: Context) {
         private const val KEY_SESSION_TOKEN = "session_token"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_STUDENT_CLASS = "student_class"
+        private const val KEY_USERNAME = "username"
     }
 
-    fun saveSession(provider: String, email: String, name: String?, role: String, avatarUrl: String? = null, sessionToken: String? = null, studentClass: String? = null) {
+    fun saveSession(provider: String, email: String, name: String?, role: String, avatarUrl: String? = null, sessionToken: String? = null, studentClass: String? = null, username: String? = null) {
         prefs.edit().apply {
             putBoolean(KEY_IS_LOGGED_IN, true)
             putString(KEY_PROVIDER, provider)
@@ -28,6 +29,7 @@ class SessionManager(context: Context) {
             putString(KEY_AVATAR_URL, avatarUrl)
             putString(KEY_SESSION_TOKEN, sessionToken)
             putString(KEY_STUDENT_CLASS, studentClass)
+            putString(KEY_USERNAME, username)
             apply()
         }
     }
@@ -51,6 +53,7 @@ class SessionManager(context: Context) {
     fun getAvatarUrl(): String? = prefs.getString(KEY_AVATAR_URL, null)
     fun getSessionToken(): String? = prefs.getString(KEY_SESSION_TOKEN, null)
     fun getStudentClass(): String? = prefs.getString(KEY_STUDENT_CLASS, null)
+    fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
 
     fun clearSession() {
         prefs.edit().clear().apply()

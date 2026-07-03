@@ -13,7 +13,7 @@ export default async function UsernameLayout({
   params: Promise<{ username: string }>
 }) {
   const { username } = await params
-  const user = await requireRole(['student', 'admin'])
+  const user = await requireRole(['student'])
 
   // Fetch profiles concurrently to optimize latency
   const [currentProfile, requestedProfile] = await Promise.all([

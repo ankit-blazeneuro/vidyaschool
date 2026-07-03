@@ -7,12 +7,13 @@ const publicRoutes = ['/', '/login', '/signup', '/unauthorized']
 
 // FIREWALL: Protected routes with required roles
 const protectedRoutes = {
-  '/community': ['admin', 'teacher'],
-  '/student': ['student', 'admin'],
-  '/teacher': ['teacher', 'admin'],
+  '/community': ['admin', 'teacher', 'librarian'],
+  '/student': ['student'],
+  '/teacher': ['teacher', 'admin', 'librarian'],
+  '/librarian': ['librarian', 'admin'],
   '/admin': ['admin'],
   '/accounts': ['admin', 'account'],
-  '/login-accounts': ['student', 'teacher', 'admin', 'account'],
+  '/login-accounts': ['student', 'teacher', 'admin', 'account', 'librarian'],
 }
 
 // Routes that bypass role check (but still require auth)
@@ -59,8 +60,8 @@ export async function middleware(request: NextRequest) {
   if (session?.user) {
     const user = session.user as any
     
-    // Special handling for teacher approval flow
-    if (user.preferredRole === 'teacher' && user.teacherApprovalStatus === 'pending') {
+    // Special handling for teacher/librarian approval flow
+    if ((user.preferredRole === 'teacher' || user.preferredRole === 'librarian') && user.teacherApprovalStatus === 'pending') {
       if (!pathname.startsWith('/auth/waiting-room') && !pathname.startsWith('/api')) {
         return NextResponse.redirect(new URL('/auth/waiting-room', request.url))
       }

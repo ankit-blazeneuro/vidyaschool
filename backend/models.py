@@ -164,4 +164,31 @@ class Notice(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+class LibraryBook(SQLModel, table=True):
+    __tablename__ = "library_book"
+    id: str = Field(primary_key=True)
+    title: str
+    author: str
+    isbn: str = Field(unique=True)
+    category: str = Field(default="General")
+    quantity: int = Field(default=1)
+    available_quantity: int = Field(default=1, alias="available_quantity")
+    location: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class LibraryBookIssue(SQLModel, table=True):
+    __tablename__ = "library_book_issue"
+    id: str = Field(primary_key=True)
+    book_id: str = Field(alias="book_id", foreign_key="library_book.id")
+    user_id: str = Field(alias="user_id", foreign_key="user.id")
+    issue_date: datetime = Field(default_factory=datetime.utcnow, alias="issue_date")
+    due_date: datetime = Field(alias="due_date")
+    return_date: Optional[datetime] = Field(default=None, alias="return_date")
+    renewals_count: int = Field(default=0, alias="renewals_count")
+    status: str = Field(default="active")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 

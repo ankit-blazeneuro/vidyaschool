@@ -2,7 +2,7 @@
 DROP TYPE IF EXISTS "role" CASCADE;
 
 -- Create enum type
-CREATE TYPE "role" AS ENUM('student', 'teacher', 'admin', 'account');
+CREATE TYPE "role" AS ENUM('student', 'teacher', 'admin', 'account', 'librarian');
 
 -- Add column if not exists
 ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "role" "role" DEFAULT 'student' NOT NULL;

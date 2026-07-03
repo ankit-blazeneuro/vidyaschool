@@ -68,7 +68,10 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
 
 def require_role(allowed_roles: List[str]):
     def dependency(user: User = Depends(get_current_user)):
-        if user.role not in allowed_roles:
+        roles = list(allowed_roles)
+        if "teacher" in roles and "librarian" not in roles:
+            roles.append("librarian")
+        if user.role not in roles:
             raise HTTPException(status_code=403, detail="Forbidden: Access denied")
         return user
 

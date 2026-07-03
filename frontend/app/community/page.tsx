@@ -267,6 +267,7 @@ export default function CommunityChatPage() {
       case "admin":
         return "bg-gradient-to-br from-rose-500 to-red-600 text-white"
       case "teacher":
+      case "librarian":
         return "bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
       case "account":
         return "bg-gradient-to-br from-emerald-500 to-teal-600 text-white"
@@ -280,6 +281,7 @@ export default function CommunityChatPage() {
       case "admin":
         return "text-rose-600 dark:text-rose-400 font-bold"
       case "teacher":
+      case "librarian":
         return "text-blue-600 dark:text-blue-400 font-bold"
       case "account":
         return "text-emerald-600 dark:text-emerald-400 font-bold"
@@ -454,7 +456,7 @@ export default function CommunityChatPage() {
                             
                             <span className={`text-[10px] font-bold uppercase rounded-sm px-1 py-0.25 select-none shrink-0 ${
                               msg.role === 'admin' ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' :
-                              msg.role === 'teacher' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                              (msg.role === 'teacher' || msg.role === 'librarian') ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
                               'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                             }`}>
                               {msg.role}

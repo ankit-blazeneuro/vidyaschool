@@ -66,7 +66,7 @@ function TeacherOnboardingContent() {
 
       {showOnboarding && session?.user && (
         <OnboardingDialog
-          userRole="teacher"
+          userRole={session.user.role as any}
           userEmail={session.user.email}
           onSuccess={(newUsername) => {
             // Optimize page change without reload

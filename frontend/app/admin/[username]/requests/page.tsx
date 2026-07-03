@@ -43,6 +43,7 @@ interface TeacherRequest {
   userEmail: string
   status: string
   createdAt: string
+  preferredRole?: string
 }
 
 export default function AdminRequestsPage() {
@@ -202,7 +203,7 @@ export default function AdminRequestsPage() {
         <TabsList>
           <TabsTrigger value="teachers">
             <UserCheck className="h-4 w-4 mr-2" />
-            Teacher Accounts ({teacherRequests.filter(r => r.status === "pending").length})
+            Staff / Teacher Accounts ({teacherRequests.filter(r => r.status === "pending").length})
           </TabsTrigger>
           <TabsTrigger value="subjects">
             <BookOpen className="h-4 w-4 mr-2" />
@@ -213,9 +214,9 @@ export default function AdminRequestsPage() {
         <TabsContent value="teachers">
           <Card>
             <CardHeader>
-              <CardTitle>Teacher Account Requests</CardTitle>
+              <CardTitle>Staff & Teacher Account Requests</CardTitle>
               <CardDescription>
-                Approve or reject teacher account applications
+                Approve or reject teacher and librarian account applications
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -226,6 +227,7 @@ export default function AdminRequestsPage() {
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
+                        <TableHead>Requested Role</TableHead>
                         <TableHead>Date Requested</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -241,6 +243,11 @@ export default function AdminRequestsPage() {
                           <TableCell>
                             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                               <Mail className="h-3 w-3 text-muted-foreground/60" /> {req.userEmail}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="capitalize text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                              {req.preferredRole || "teacher"}
                             </span>
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
@@ -286,7 +293,7 @@ export default function AdminRequestsPage() {
                 </div>
               ) : (
                 <div className="text-center py-16 text-muted-foreground text-sm border border-dashed rounded-lg">
-                  No pending teacher account requests
+                  No pending staff or teacher account requests
                 </div>
               )}
             </CardContent>

@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS "user" CASCADE;
 DROP TYPE IF EXISTS "role" CASCADE;
 
 -- Create enum
-CREATE TYPE "role" AS ENUM('student', 'teacher', 'admin', 'account');
+CREATE TYPE "role" AS ENUM('student', 'teacher', 'admin', 'account', 'librarian');
 
 -- Create user table with role
 CREATE TABLE "user" (

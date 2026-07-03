@@ -12,7 +12,7 @@ Go to your Neon dashboard (https://console.neon.tech) and run this SQL:
 DROP TYPE IF EXISTS "role" CASCADE;
 
 -- Create enum type
-CREATE TYPE "role" AS ENUM('student', 'teacher', 'admin', 'account');
+CREATE TYPE "role" AS ENUM('student', 'teacher', 'admin', 'account', 'librarian');
 
 -- Drop existing column if it exists
 ALTER TABLE "user" DROP COLUMN IF EXISTS "role";

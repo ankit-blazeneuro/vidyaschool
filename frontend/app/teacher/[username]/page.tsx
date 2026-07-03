@@ -5,7 +5,7 @@ import { requireRole } from "@/lib/auth-helpers"
 import data from "../data.json"
 
 export default async function TeacherDashboardPage() {
-  const user = await requireRole(['teacher', 'admin'])
+  const user = await requireRole(['teacher', 'librarian', 'admin'])
   
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">

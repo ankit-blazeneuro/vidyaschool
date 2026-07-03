@@ -24,6 +24,7 @@ from app.core.fees import build_default_fee_installments
 from app.routes.fees import router as fees_router
 from app.routes.teacher import router as teacher_router
 from app.routes.slider import router as slider_router
+from app.routes.library import router as library_router
 from models import User
 
 # Load env variables from .env (local dev only — on Render, system env vars take precedence)
@@ -299,9 +300,9 @@ async def approve_teacher(sid, data):
             user = db.query(User).filter(User.id == request.user_id).first()
             print(f"Found user: {user}")
             if user:
-                user.role = "teacher"
+                user.role = user.preferred_role if user.preferred_role in ("teacher", "librarian") else "teacher"
                 user.teacher_approval_status = "approved"
-                print(f"Updated user role to teacher")
+                print(f"Updated user role to {user.role}")
                 
             db.add(request)
             db.add(user)
@@ -356,6 +357,7 @@ app.add_middleware(
 app.include_router(fees_router)
 app.include_router(teacher_router)
 app.include_router(slider_router)
+app.include_router(library_router)
 
 # Admin endpoints for teacher approval and subject requests
 @app.get("/api/health")
@@ -482,10 +484,10 @@ async def approve_teacher_request(
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
     
-    # Update user role to teacher
+    # Update user role to teacher/librarian
     user = db.get(UserModel, req.user_id)
     if user:
-        user.role = "teacher"
+        user.role = user.preferred_role if user.preferred_role in ("teacher", "librarian") else "teacher"
         db.add(user)
     
     req.status = "approved"

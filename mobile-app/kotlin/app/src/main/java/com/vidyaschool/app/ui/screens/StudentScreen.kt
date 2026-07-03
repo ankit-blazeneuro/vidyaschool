@@ -43,6 +43,9 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.border
+import androidx.compose.ui.platform.LocalContext
+import com.vidyaschool.app.auth.SessionManager
+import kotlinx.coroutines.launch
 import androidx.compose.ui.res.painterResource
 import com.vidyaschool.app.R
 
@@ -87,7 +90,8 @@ fun StudentScreen(
         avatarUrl = avatarUrl.takeIf { it.isNotEmpty() },
         themeMode = themeMode,
         onThemeChange = onThemeChange,
-        onLogout = onLogout
+        onLogout = onLogout,
+        onShowLibrary = onShowLibrary
     ) {
         val scrollState = rememberScrollState()
         // ~60dp threshold: when welcome text has scrolled out of view
@@ -249,22 +253,68 @@ fun StudentScreen(
 
 @Composable
 fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
-    data class IssuedBook(val title: String, val author: String, val dueDate: String, val renewalsUsed: Int)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val sessionManager = remember { SessionManager(context) }
+    val sessionToken = sessionManager.getSessionToken()
 
-    val allBooks = remember {
-        mutableStateListOf(
-            IssuedBook("The Alchemist", "Paulo Coelho", "Jul 10, 2026", 0),
-            IssuedBook("Clean Code", "Robert C. Martin", "Jul 05, 2026", 2),
-            IssuedBook("Atomic Habits", "James Clear", "Jul 15, 2026", 3),
-            IssuedBook("Deep Work", "Cal Newport", "Jul 20, 2026", 1),
-            IssuedBook("Sapiens", "Yuval Noah Harari", "Jul 25, 2026", 0),
-        )
+    val allBooks = remember { mutableStateListOf<com.vidyaschool.app.api.StudentBorrowingResponse>() }
+    var isLoading by remember { mutableStateOf(false) }
+
+    fun loadBooks() {
+        if (!sessionToken.isNullOrEmpty()) {
+            isLoading = true
+            scope.launch {
+                try {
+                    val res = RetrofitClient.authApi.getStudentBorrowings("Bearer $sessionToken")
+                    if (res.isSuccessful) {
+                        allBooks.clear()
+                        res.body()?.let { allBooks.addAll(it) }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("LibraryBooksSection", "Error fetching books: ${e.message}")
+                } finally {
+                    isLoading = false
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(sessionToken) {
+        loadBooks()
     }
 
     val preview = allBooks.take(3)
     val hasMore = allBooks.size > 3
     val border = MaterialTheme.colorScheme.outline
     val onSurface = MaterialTheme.colorScheme.onSurface
+
+    fun formatIsoDate(isoStr: String): String {
+        return try {
+            val parts = isoStr.split("T")[0].split("-")
+            val year = parts[0]
+            val monthNum = parts[1].toInt()
+            val day = parts[2].toInt()
+            val month = when (monthNum) {
+                1 -> "Jan"
+                2 -> "Feb"
+                3 -> "Mar"
+                4 -> "Apr"
+                5 -> "May"
+                6 -> "Jun"
+                7 -> "Jul"
+                8 -> "Aug"
+                9 -> "Sep"
+                10 -> "Oct"
+                11 -> "Nov"
+                12 -> "Dec"
+                else -> "Month"
+            }
+            "$month $day, $year"
+        } catch (e: Exception) {
+            isoStr
+        }
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -290,48 +340,196 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))        // Shadcn card: bordered, no fill, clean
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .border(
-                    width = 1.dp,
-                    brush = Brush.verticalGradient(
-                        0.0f to border,
-                        0.65f to border,
-                        1.0f to Color.Transparent
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                )
-        ) {
-            Column {
-                preview.forEachIndexed { idx, book ->
-                    val renewalsLeft = 3 - book.renewalsUsed
-                    if (idx == preview.lastIndex && hasMore) {
-                        Box(modifier = Modifier
-                            .fillMaxWidth()
-                            .drawBehind {
-                                val gradientBrush = Brush.horizontalGradient(
-                                    0.0f to androidx.compose.ui.graphics.Color.Transparent,
-                                    0.15f to border,
-                                    0.85f to border,
-                                    1.0f to androidx.compose.ui.graphics.Color.Transparent
-                                )
-                                drawRect(
-                                    brush = gradientBrush,
-                                    topLeft = androidx.compose.ui.geometry.Offset(0f, 0f),
-                                    size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx())
-                                )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (isLoading && allBooks.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            }
+        } else if (allBooks.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(1.dp, border, RoundedCornerShape(12.dp))
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("No books currently issued", fontSize = 13.sp, color = onSurface.copy(alpha = 0.5f))
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(
+                        width = 1.dp,
+                        brush = Brush.verticalGradient(
+                            0.0f to border,
+                            0.65f to border,
+                            1.0f to Color.Transparent
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+            ) {
+                Column {
+                    preview.forEachIndexed { idx, book ->
+                        val renewalsLeft = 3 - book.renewalsCount
+                        if (idx == preview.lastIndex && hasMore) {
+                            Box(modifier = Modifier
+                                .fillMaxWidth()
+                                .drawBehind {
+                                    val gradientBrush = Brush.horizontalGradient(
+                                        0.0f to androidx.compose.ui.graphics.Color.Transparent,
+                                        0.15f to border,
+                                        0.85f to border,
+                                        1.0f to androidx.compose.ui.graphics.Color.Transparent
+                                    )
+                                    drawRect(
+                                        brush = gradientBrush,
+                                        topLeft = androidx.compose.ui.geometry.Offset(0f, 0f),
+                                        size = androidx.compose.ui.geometry.Size(size.width, 1.dp.toPx())
+                                    )
+                                }
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(38.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(onSurface.copy(alpha = 0.06f))
+                                            .border(1.dp, border, RoundedCornerShape(8.dp)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = book.title.firstOrNull()?.toString() ?: "",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = onSurface
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(book.title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurface)
+                                        Text(book.author, fontSize = 11.sp, color = onSurface.copy(alpha = 0.45f))
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                            Text(
+                                                text = "Due ${formatIsoDate(book.dueDate)}",
+                                                fontSize = 10.sp,
+                                                color = if (renewalsLeft == 0) onSurface else onSurface.copy(alpha = 0.45f)
+                                            )
+                                            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                                                repeat(3) { i ->
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(width = 10.dp, height = 3.dp)
+                                                            .clip(RoundedCornerShape(2.dp))
+                                                            .background(
+                                                                if (i < book.renewalsCount) onSurface.copy(alpha = 0.15f)
+                                                                else onSurface.copy(alpha = 0.7f)
+                                                            )
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(8.dp))
+
+                                    if (renewalsLeft > 0) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .border(1.dp, border, RoundedCornerShape(8.dp))
+                                                .clickable(
+                                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                                    indication = null
+                                                ) {
+                                                    scope.launch {
+                                                        try {
+                                                            val res = RetrofitClient.authApi.renewBook("Bearer $sessionToken", com.vidyaschool.app.api.StudentRenewRequest(id = book.id))
+                                                            if (res.isSuccessful) {
+                                                                android.widget.Toast.makeText(context, "Book renewed successfully", android.widget.Toast.LENGTH_SHORT).show()
+                                                                loadBooks()
+                                                            } else {
+                                                                android.widget.Toast.makeText(context, "Failed to renew book", android.widget.Toast.LENGTH_SHORT).show()
+                                                            }
+                                                        } catch (e: Exception) {
+                                                            android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    }
+                                                }
+                                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                        ) {
+                                            Text("Renew", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface)
+                                        }
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(onSurface.copy(alpha = 0.06f))
+                                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                                        ) {
+                                            Text("Max", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface.copy(alpha = 0.35f))
+                                        }
+                                    }
+                                }
+
+                                // Half-gradient overlay + Show More button directly on the item
+                                Box(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                        .background(
+                                            Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
+                                                    MaterialTheme.colorScheme.background
+                                                )
+                                            )
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(MaterialTheme.colorScheme.surface)
+                                            .border(1.dp, border, RoundedCornerShape(8.dp))
+                                            .clickable(
+                                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                                indication = null
+                                            ) { onShowMore() }
+                                            .padding(horizontal = 18.dp, vertical = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = "Show ${allBooks.size - 3} more books",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = onSurface
+                                        )
+                                    }
+                                }
                             }
-                        ) {
+                        } else {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 14.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Monochrome initial avatar
                                 Box(
                                     modifier = Modifier
                                         .size(38.dp)
@@ -341,7 +539,7 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = book.title.first().toString(),
+                                        text = book.title.firstOrNull()?.toString() ?: "",
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = onSurface
@@ -356,7 +554,7 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                         Text(
-                                            text = "Due ${book.dueDate}",
+                                            text = "Due ${formatIsoDate(book.dueDate)}",
                                             fontSize = 10.sp,
                                             color = if (renewalsLeft == 0) onSurface else onSurface.copy(alpha = 0.45f)
                                         )
@@ -367,7 +565,7 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
                                                         .size(width = 10.dp, height = 3.dp)
                                                         .clip(RoundedCornerShape(2.dp))
                                                         .background(
-                                                            if (i < book.renewalsUsed) onSurface.copy(alpha = 0.15f)
+                                                            if (i < book.renewalsCount) onSurface.copy(alpha = 0.15f)
                                                             else onSurface.copy(alpha = 0.7f)
                                                         )
                                                 )
@@ -383,6 +581,24 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(8.dp))
                                             .border(1.dp, border, RoundedCornerShape(8.dp))
+                                            .clickable(
+                                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                                indication = null
+                                            ) {
+                                                scope.launch {
+                                                    try {
+                                                        val res = RetrofitClient.authApi.renewBook("Bearer $sessionToken", com.vidyaschool.app.api.StudentRenewRequest(id = book.id))
+                                                        if (res.isSuccessful) {
+                                                            android.widget.Toast.makeText(context, "Book renewed successfully", android.widget.Toast.LENGTH_SHORT).show()
+                                                            loadBooks()
+                                                        } else {
+                                                            android.widget.Toast.makeText(context, "Failed to renew book", android.widget.Toast.LENGTH_SHORT).show()
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            }
                                             .padding(horizontal = 12.dp, vertical = 6.dp)
                                     ) {
                                         Text("Renew", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface)
@@ -398,126 +614,11 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
                                     }
                                 }
                             }
-
-                            // Half-gradient overlay + Show More button directly on the item
-                            Box(
-                                modifier = Modifier
-                                    .matchParentSize()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Transparent,
-                                                MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
-                                                MaterialTheme.colorScheme.background
-                                            )
-                                        )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(MaterialTheme.colorScheme.surface)
-                                        .border(1.dp, border, RoundedCornerShape(8.dp))
-                                        .clickable(
-                                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                            indication = null
-                                        ) { onShowMore() }
-                                        .padding(horizontal = 18.dp, vertical = 8.dp)
-                                ) {
-                                    Text(
-                                        text = "Show ${allBooks.size - 3} more books",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = onSurface
-                                    )
-                                }
-                            }
                         }
-                    } else {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Monochrome initial avatar
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(onSurface.copy(alpha = 0.06f))
-                                    .border(1.dp, border, RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = book.title.first().toString(),
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = onSurface
-                                )
-                            }
 
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(book.title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurface)
-                                Text(book.author, fontSize = 11.sp, color = onSurface.copy(alpha = 0.45f))
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text(
-                                        text = "Due ${book.dueDate}",
-                                        fontSize = 10.sp,
-                                        color = if (renewalsLeft == 0) onSurface else onSurface.copy(alpha = 0.45f)
-                                    )
-                                    // Pip track — filled = used (dim), empty = remaining (solid)
-                                    Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                                        repeat(3) { i ->
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(width = 10.dp, height = 3.dp)
-                                                    .clip(RoundedCornerShape(2.dp))
-                                                    .background(
-                                                        if (i < book.renewalsUsed) onSurface.copy(alpha = 0.15f)
-                                                        else onSurface.copy(alpha = 0.7f)
-                                                    )
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            if (renewalsLeft > 0) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .border(1.dp, border, RoundedCornerShape(8.dp))
-                                        .clickable(
-                                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                            indication = null
-                                        ) { allBooks[idx] = book.copy(renewalsUsed = book.renewalsUsed + 1) }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                                ) {
-                                    Text("Renew", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface)
-                                }
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(onSurface.copy(alpha = 0.06f))
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                                ) {
-                                    Text("Max", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = onSurface.copy(alpha = 0.35f))
-                                }
-                            }
+                        if (idx < preview.lastIndex) {
+                            HorizontalDivider(color = border.copy(alpha = 0.4f))
                         }
-                    }
-
-                    // Divider between rows, not after last
-                    if (idx < preview.lastIndex) {
-                        HorizontalDivider(color = border, thickness = 1.dp)
                     }
                 }
             }

@@ -243,6 +243,7 @@ export function NavMain({
                   {isStudent ? (
                     <>
                       <SelectItem value="Teacher">Teacher</SelectItem>
+                      <SelectItem value="Librarian">Librarian</SelectItem>
                       <SelectItem value="Tech Support (Admin)">Tech Support (Admin)</SelectItem>
                       <SelectItem value="Principal (Admin)">Principal (Admin)</SelectItem>
                       <SelectItem value="Vice-Principal (Admin)">Vice-Principal (Admin)</SelectItem>

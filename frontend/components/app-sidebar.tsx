@@ -75,6 +75,32 @@ function useTeacherUrls() {
   }
 }
 
+// Hook to get username-based URLs for librarians
+function useLibrarianUrls() {
+  const [username, setUsername] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    fetch('/api/profile/username')
+      .then(res => res.json())
+      .then(data => {
+        if (data.username) {
+          setUsername(data.username)
+        }
+      })
+      .catch(() => setUsername(null))
+  }, [])
+
+  const base = username ? `/librarian/${username}` : '/librarian'
+  
+  return {
+    dashboard: base,
+    books: `${base}/books`,
+    borrowings: `${base}/borrowings`,
+    notice: `${base}/notice`,
+    account: `${base}/account`,
+  }
+}
+
 // Hook to get username-based URLs for admins
 function useAdminUrls() {
   const [username, setUsername] = React.useState<string | null>(null)
@@ -295,12 +321,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
   const userRole = session?.user?.role
   
+  const isLibrarian = userRole === "librarian" || (userRole === undefined && pathname?.startsWith("/librarian"))
   const isTeacher = userRole === "teacher" || (userRole === undefined && pathname?.startsWith("/teacher"))
   const isAdmin = userRole === "admin" || (userRole === undefined && pathname?.startsWith("/admin"))
   const isAccount = userRole === "account" || (userRole === undefined && pathname?.startsWith("/accounts"))
   
   const urls = useStudentUrls()
   const teacherUrls = useTeacherUrls()
+  const librarianUrls = useLibrarianUrls()
   const adminUrls = useAdminUrls()
   const accountUrls = useAccountUrls()
 
@@ -332,7 +360,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (!session?.user) return
 
     // 1. Fetch complaints status
-    const roleParam = isTeacher ? "teacher" : isAdmin ? "admin" : ""
+    const roleParam = isTeacher || isLibrarian ? "teacher" : isAdmin ? "admin" : ""
     if (roleParam) {
       fetch(`/api/complaints?role=${roleParam}`)
         .then(res => res.json())
@@ -468,6 +496,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Settings",
           url: accountUrls.settings,
           icon: <Settings2Icon />,
+        },
+      ]
+    : isLibrarian
+    ? [
+        {
+          title: "Dashboard",
+          url: librarianUrls.dashboard,
+          icon: <LayoutDashboardIcon />,
+        },
+        {
+          title: "Manage Books",
+          url: librarianUrls.books,
+          icon: <BookOpenIcon />,
+        },
+        {
+          title: "Book Issues",
+          url: librarianUrls.borrowings,
+          icon: <GitPullRequest />,
+        },
+        {
+          title: "Notices",
+          url: librarianUrls.notice,
+          icon: <BellIcon />,
+          hasNotification: unreadNotices,
+        },
+        {
+          title: "Community Chat",
+          url: "/community",
+          icon: <MessageSquare />,
+          hasNotification: unreadCommunity,
         },
       ]
     : isTeacher

@@ -50,6 +50,7 @@ async def get_slider_images(role: str = "student", student_class: str = None, db
             target == "all" or 
             target == f"{role}s" or 
             (role == "teacher" and target == "teachers") or 
+            (role == "librarian" and target == "teachers") or 
             (role == "student" and target == "students")
         )
         

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from './auth'
 import { headers } from 'next/headers'
 
-export type Role = 'student' | 'teacher' | 'admin' | 'account'
+export type Role = 'student' | 'teacher' | 'admin' | 'account' | 'librarian'
 
 export async function getCurrentUser() {
   const session = await auth.api.getSession({
@@ -26,8 +26,11 @@ export async function requireRole(allowedRoles: Role | Role[]) {
   const user = await requireAuth()
   
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
+  const rolesWithLibrarian = roles.includes('teacher') && !roles.includes('librarian')
+    ? [...roles, 'librarian' as Role]
+    : roles
   
-  if (!roles.includes(user.role as Role)) {
+  if (!rolesWithLibrarian.includes(user.role as Role)) {
     redirect('/unauthorized')
   }
   
@@ -36,5 +39,8 @@ export async function requireRole(allowedRoles: Role | Role[]) {
 
 export function checkRole(userRole: string, allowedRoles: Role | Role[]): boolean {
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
-  return roles.includes(userRole as Role)
+  const rolesWithLibrarian = roles.includes('teacher') && !roles.includes('librarian')
+    ? [...roles, 'librarian' as Role]
+    : roles
+  return rolesWithLibrarian.includes(userRole as Role)
 }

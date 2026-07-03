@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, boolean, pgEnum, integer, date } from 'drizzle-orm/pg-core'
 
-export const roleEnum = pgEnum('role', ['student', 'teacher', 'admin', 'account'])
+export const roleEnum = pgEnum('role', ['student', 'teacher', 'admin', 'account', 'librarian'])
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -177,5 +177,32 @@ export const notice = pgTable('notice', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
+
+export const libraryBook = pgTable('library_book', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  author: text('author').notNull(),
+  isbn: text('isbn').notNull().unique(),
+  category: text('category').notNull().default('General'),
+  quantity: integer('quantity').notNull().default(1),
+  availableQuantity: integer('available_quantity').notNull().default(1),
+  location: text('location'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const libraryBookIssue = pgTable('library_book_issue', {
+  id: text('id').primaryKey(),
+  bookId: text('book_id').notNull().references(() => libraryBook.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  issueDate: timestamp('issue_date').notNull().defaultNow(),
+  dueDate: timestamp('due_date').notNull(),
+  returnDate: timestamp('return_date'),
+  renewalsCount: integer('renewals_count').notNull().default(0),
+  status: text('status').notNull().default('active'), // 'active', 'overdue', 'returned'
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 
 

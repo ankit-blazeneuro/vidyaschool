@@ -13,6 +13,8 @@ export default async function DashboardRedirectPage() {
   
   if (role === 'teacher') {
     redirect('/teacher')
+  } else if (role === 'librarian') {
+    redirect('/librarian')
   } else if (role === 'admin') {
     redirect('/admin')
   } else if (role === 'account') {

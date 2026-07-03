@@ -25,7 +25,10 @@ export function useRequireRole(allowedRoles: Role | Role[]) {
   useEffect(() => {
     if (!isPending && user) {
       const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
-      if (!roles.includes(user.role as Role)) {
+      const rolesWithLibrarian = roles.includes('teacher') && !roles.includes('librarian')
+        ? [...roles, 'librarian' as Role]
+        : roles
+      if (!rolesWithLibrarian.includes(user.role as Role)) {
         router.push('/unauthorized')
       }
     }
@@ -40,5 +43,8 @@ export function useCheckRole(allowedRoles: Role | Role[]): boolean {
   if (!session?.user) return false
   
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
-  return roles.includes(session.user.role as Role)
+  const rolesWithLibrarian = roles.includes('teacher') && !roles.includes('librarian')
+    ? [...roles, 'librarian' as Role]
+    : roles
+  return rolesWithLibrarian.includes(session.user.role as Role)
 }

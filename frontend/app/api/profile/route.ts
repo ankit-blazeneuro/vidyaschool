@@ -43,7 +43,7 @@ export async function PATCH(req: NextRequest) {
 
     if (isClassChanged || isSectionChanged) {
       const now = new Date();
-      if (session.user.role === 'teacher') {
+      if (session.user.role === 'teacher' || session.user.role === 'librarian') {
         let changes: string[] = [];
         try {
           if (existingProfile.classSectionChanges) {

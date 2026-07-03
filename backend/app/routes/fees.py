@@ -637,7 +637,7 @@ def submit_onboarding(
     if data.admissionNumber:
         existing = db.query(UserProfile).filter(UserProfile.admission_number == data.admissionNumber).first()
         if existing and existing.user_id != current_user.id:
-            msg = "Teacher ID already exists" if current_user.role == "teacher" else "Admission number already exists"
+            msg = "Teacher/Librarian ID already exists" if current_user.role in ("teacher", "librarian") else "Admission number already exists"
             raise HTTPException(status_code=400, detail=msg)
     
     # Handle secondary role for admin users
@@ -777,7 +777,7 @@ async def approve_teacher_request(
     
     target_user = db.query(User).filter(User.id == req.user_id).first()
     if target_user:
-        target_user.role = "teacher"
+        target_user.role = target_user.preferred_role if target_user.preferred_role in ("teacher", "librarian") else "teacher"
         target_user.updated_at = datetime.utcnow()
         db.add(target_user)
         
@@ -936,16 +936,19 @@ def verify_session(token: str, db: Session = Depends(get_db)):
         user = db.query(User).filter(User.id == db_session.user_id).first()
         if user:
             student_class = None
-            if user.role == "student":
-                profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-                if profile:
+            username = None
+            profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+            if profile:
+                username = profile.username
+                if user.role == "student":
                     student_class = profile.class_
             return {
                 "valid": True,
                 "role": user.role,
                 "name": user.name,
                 "image": user.image,
-                "student_class": student_class
+                "student_class": student_class,
+                "username": username
             }
     return {"valid": False}
 
@@ -958,8 +961,8 @@ def search_users(q: Optional[str] = None, current_user: User = Depends(get_curre
     if q:
         query = query.filter(
             or_(
-                User.name.like(f"%{q}%"),
-                UserProfile.username.like(f"%{q}%")
+                User.name.ilike(f"%{q}%"),
+                UserProfile.username.ilike(f"%{q}%")
             )
         )
     results = query.limit(20).all()
