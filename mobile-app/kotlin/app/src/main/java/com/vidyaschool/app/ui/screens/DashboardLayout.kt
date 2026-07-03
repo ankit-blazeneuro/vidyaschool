@@ -332,6 +332,11 @@ fun DashboardLayout(
                         username = currentUsername.value,
                         onUpdateUsername = { newUsername ->
                             currentUsername.value = newUsername
+                            val token = sessionManager.getSessionToken()
+                            val studentClass = sessionManager.getStudentClass()
+                            sessionManager.saveSession(
+                                provider, email, currentName.value, currentRole.value, currentAvatarUrl.value, token, studentClass, newUsername
+                            )
                         },
                         themeMode = themeMode,
                         onThemeChange = onThemeChange,
@@ -832,6 +837,11 @@ fun ProfileTabContent(
                         editParentEmail = profileData.parentEmail ?: ""
                         editClass = profileData.`class` ?: ""
                         editSection = profileData.section ?: ""
+                        
+                        val fetchedUsername = profileData.username ?: ""
+                        if (fetchedUsername.isNotEmpty() && fetchedUsername != username) {
+                            onUpdateUsername(fetchedUsername)
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -916,6 +926,70 @@ fun ProfileTabContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // Header same design as home screen
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    IconButton(
+                        onClick = { /* Open menu */ },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                                shape = CircleShape
+                            )
+                            .clip(CircleShape)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_custom_menu),
+                            contentDescription = "Menu",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "Welcome, ${name.ifEmpty { role.replaceFirstChar { it.uppercase() } }}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = "${role.lowercase().replaceFirstChar { it.uppercase() }} Portal",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = { /* Notifications */ },
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(
+                            1.dp,
+                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                            shape = CircleShape
+                        )
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_custom_notification),
+                        contentDescription = "Notifications",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+
             // Profile Card (Shadcn style with thin border)
             Card(
                 modifier = Modifier
