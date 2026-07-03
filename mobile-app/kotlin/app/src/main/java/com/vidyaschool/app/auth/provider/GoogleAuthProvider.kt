@@ -39,7 +39,7 @@ class GoogleAuthProvider(
     }
     
     fun handleSignInResult(data: Intent?): AuthResult {
-        return try {
+        val result = try {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             val account = task.getResult(ApiException::class.java)
             
@@ -62,6 +62,8 @@ class GoogleAuthProvider(
         } catch (e: Exception) {
             AuthResult.Error("Error: ${e.message}", e)
         }
+        GoogleAuthCallback.invoke(result)
+        return result
     }
 }
 
