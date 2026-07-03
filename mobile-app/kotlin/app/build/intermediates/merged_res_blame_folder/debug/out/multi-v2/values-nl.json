@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.vidyaschool.app-mergeDebugResources-62:/values-nl/values-nl.xml",
+            "outputFile": "com.vidyaschool.app-mergeDebugResources-63:/values-nl/values-nl.xml",
             "map": [
                 {
                     "source": "/home/ankit/.gradle/caches/transforms-3/31f7bf23a876d4a09975b7ec2317787e/transformed/jetified-foundation-release/res/values-nl/values-nl.xml",

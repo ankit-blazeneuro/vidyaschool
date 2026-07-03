@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.vidyaschool.app"
-    android:versionCode="1"
+    android:versionCode="9"
     android:versionName="1.0" >
 
     <uses-sdk
@@ -9,13 +9,16 @@
         android:targetSdkVersion="34" />
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.NFC" />
-
-    <uses-feature
-        android:name="android.hardware.nfc"
-        android:required="false" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+
+            <category android:name="android.intent.category.BROWSABLE" />
+
+            <data android:scheme="https" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
 
@@ -44,14 +47,13 @@
         <intent>
             <action android:name="rzp.device_token.share" />
         </intent>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
+    </queries>
 
-            <category android:name="android.intent.category.BROWSABLE" />
+    <uses-permission android:name="android.permission.NFC" />
 
-            <data android:scheme="https" />
-        </intent>
-    </queries> <!-- Include required permissions for Google Maps API to run. -->
+    <uses-feature
+        android:name="android.hardware.nfc"
+        android:required="false" /> <!-- Include required permissions for Google Maps API to run. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <uses-feature
@@ -70,14 +72,16 @@
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:debuggable="true"
         android:extractNativeLibs="false"
+        android:icon="@mipmap/ic_launcher"
         android:label="Vidya School"
-        android:theme="@android:style/Theme.Material.NoActionBar"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
         android:usesCleartextTraffic="true" >
         <activity
             android:name="com.vidyaschool.app.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
+            android:theme="@style/Theme.VidyaSchool.Splash"
             android:windowSoftInputMode="adjustResize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -109,6 +113,35 @@
                     android:host="vidyaschool.vercel.app"
                     android:pathPrefix="/fee/payment/"
                     android:scheme="https" />
+            </intent-filter>
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.vidyaschool.app.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <activity
+            android:name="net.openid.appauth.AuthorizationManagementActivity"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.AppCompat.Translucent.NoTitleBar" />
+        <activity
+            android:name="net.openid.appauth.RedirectUriReceiverActivity"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="com.vidyaschool.app" />
             </intent-filter>
         </activity>
 
@@ -190,25 +223,6 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
-
-        <activity
-            android:name="net.openid.appauth.AuthorizationManagementActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden"
-            android:exported="false"
-            android:launchMode="singleTask"
-            android:theme="@style/Theme.AppCompat.Translucent.NoTitleBar" />
-        <activity
-            android:name="net.openid.appauth.RedirectUriReceiverActivity"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="com.vidyaschool.app" />
-            </intent-filter>
-        </activity>
 
         <receiver
             android:name="androidx.profileinstaller.ProfileInstallReceiver"
