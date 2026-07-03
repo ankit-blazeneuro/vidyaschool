@@ -174,7 +174,11 @@ fun StudentScreen(
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(24.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 12.dp, bottom = 16.dp),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+                )
                 
                 // Auto-playing Image Slider at the top
                 if (isLoadingSlider) {
@@ -240,6 +244,7 @@ fun StudentScreen(
                         Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
                     }
                 }
+                HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                 }
             }
         }

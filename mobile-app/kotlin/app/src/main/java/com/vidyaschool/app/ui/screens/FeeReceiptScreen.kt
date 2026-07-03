@@ -57,6 +57,10 @@ fun FeeReceiptScreen(receiptNo: String, onBack: () -> Unit) {
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.width(64.dp))
         }
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+        )
 
         when {
             isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

@@ -82,8 +82,11 @@ fun AdminScreen(
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
-                
-                Spacer(modifier = Modifier.height(24.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 12.dp, bottom = 16.dp),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+                )
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),

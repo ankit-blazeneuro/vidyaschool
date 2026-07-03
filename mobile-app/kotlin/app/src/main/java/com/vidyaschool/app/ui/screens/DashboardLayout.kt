@@ -349,7 +349,11 @@ fun SearchTabContent(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(top = 12.dp, bottom = 16.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+            )
             
             CustomTextField(
                 value = searchQuery,
@@ -462,13 +466,22 @@ fun ProfileTabContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "My Profile",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(24.dp))
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = "My Profile",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 12.dp, bottom = 16.dp),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+                )
+            }
             
             Card(
                 modifier = Modifier
@@ -655,7 +668,11 @@ fun NoticeTabContent(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(
+                modifier = Modifier.padding(top = 12.dp, bottom = 16.dp),
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+            )
             
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -782,7 +799,11 @@ fun CommunityTabContent(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 12.dp, bottom = 16.dp),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+                )
                 
                 // Post creation bar
                 Card(
@@ -1041,7 +1062,11 @@ fun FeesTabContent(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 12.dp, bottom = 16.dp),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f)
+                )
 
                 // Error banner
                 if (paymentError != null) {
