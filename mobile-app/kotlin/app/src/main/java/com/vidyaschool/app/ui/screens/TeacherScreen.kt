@@ -101,12 +101,19 @@ fun TeacherScreen(
                         }
                         
                         Column {
-                            Text(
-                                text = "Welcome, ${name.ifEmpty { "Teacher" }}",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
+                            Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                                Text(
+                                    text = "Welcome, ${name.ifEmpty { "Teacher" }}",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(top = 2.dp),
+                                    thickness = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                             Text(
                                 text = "Teacher Portal",
                                 fontSize = 12.sp,

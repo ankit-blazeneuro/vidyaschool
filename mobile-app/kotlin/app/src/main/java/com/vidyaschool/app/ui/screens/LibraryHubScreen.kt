@@ -46,7 +46,14 @@ fun LibraryHubScreen(onBack: () -> Unit) {
             TopAppBar(
                 title = {
                     Column {
-                        Text("Library Hub", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                            Text("Library Hub", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            HorizontalDivider(
+                                modifier = Modifier.padding(top = 2.dp),
+                                thickness = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                         Text("${books.size} books issued", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                 },

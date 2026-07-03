@@ -140,12 +140,19 @@ fun StudentScreen(
                         }
                         
                         Column {
-                            Text(
-                                text = "Welcome, ${name.ifEmpty { "Student" }}",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
+                            Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                                Text(
+                                    text = "Welcome, ${name.ifEmpty { "Student" }}",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(top = 2.dp),
+                                    thickness = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                             Text(
                                 text = "Student Portal",
                                 fontSize = 12.sp,
@@ -229,7 +236,14 @@ fun StudentScreen(
                     ) {
                         Icon(painter = painterResource(id = R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
                     }
-                    Text("Dashboard", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                        Text("Dashboard", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        HorizontalDivider(
+                            modifier = Modifier.padding(top = 2.dp),
+                            thickness = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     IconButton(
                         onClick = { /* Notifications */ },
                         modifier = Modifier

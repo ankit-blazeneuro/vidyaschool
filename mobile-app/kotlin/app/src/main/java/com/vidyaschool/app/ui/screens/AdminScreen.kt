@@ -70,12 +70,19 @@ fun AdminScreen(
                     .statusBarsPadding()
                     .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
             ) {
-                Text(
-                    text = "Welcome, ${name.ifEmpty { "Admin" }}",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                    Text(
+                        text = "Welcome, ${name.ifEmpty { "Admin" }}",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(top = 2.dp),
+                        thickness = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Administration Console",

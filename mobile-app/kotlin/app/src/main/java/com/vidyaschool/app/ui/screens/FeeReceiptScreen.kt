@@ -53,7 +53,14 @@ fun FeeReceiptScreen(receiptNo: String, onBack: () -> Unit) {
         ) {
             TextButton(onClick = onBack) { Text("← Back") }
             Spacer(modifier = Modifier.weight(1f))
-            Text("Fee Receipt", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                Text("Fee Receipt", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 2.dp),
+                    thickness = 2.dp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.width(64.dp))
         }

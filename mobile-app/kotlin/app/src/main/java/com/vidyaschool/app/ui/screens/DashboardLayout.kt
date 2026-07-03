@@ -343,12 +343,19 @@ fun SearchTabContent(
                 .statusBarsPadding()
                 .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
         ) {
-            Text(
-                text = "Search Users",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                Text(
+                    text = "Search Users",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 4.dp),
+                    thickness = 2.dp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
             
             CustomTextField(
@@ -462,12 +469,22 @@ fun ProfileTabContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "My Profile",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            Column(
+                modifier = Modifier.width(IntrinsicSize.Max),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = "My Profile",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 4.dp),
+                    thickness = 2.dp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Spacer(modifier = Modifier.height(24.dp))
             
             Card(
@@ -649,12 +666,19 @@ fun NoticeTabContent(
                 .statusBarsPadding()
                 .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
         ) {
-            Text(
-                text = "Notice Board",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                Text(
+                    text = "Notice Board",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(top = 4.dp),
+                    thickness = 2.dp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
             
             LazyColumn(
@@ -776,12 +800,19 @@ fun CommunityTabContent(
                     .statusBarsPadding()
                     .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
             ) {
-                Text(
-                    text = "Community",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                    Text(
+                        text = "Community",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(top = 4.dp),
+                        thickness = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 // Post creation bar
@@ -1026,7 +1057,14 @@ fun FeesTabContent(
                             Icon(painter = androidx.compose.ui.res.painterResource(id = com.vidyaschool.app.R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
                         }
                         Column {
-                            Text("Pay Fees", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                            Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                                Text("Pay Fees", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(top = 2.dp),
+                                    thickness = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                             Text("Student Portal", fontSize = 12.sp, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                         }
                     }
@@ -1230,7 +1268,14 @@ fun FeesTabContent(
                     ) {
                         Icon(painter = androidx.compose.ui.res.painterResource(id = com.vidyaschool.app.R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
                     }
-                    Text("Pay Fees", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Column(modifier = Modifier.width(IntrinsicSize.Max)) {
+                        Text("Pay Fees", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        HorizontalDivider(
+                            modifier = Modifier.padding(top = 2.dp),
+                            thickness = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     IconButton(
                         onClick = { },
                         modifier = Modifier

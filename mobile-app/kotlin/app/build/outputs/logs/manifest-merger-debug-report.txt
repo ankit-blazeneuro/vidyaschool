@@ -1,14 +1,22 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-44:12
-INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-44:12
-INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-44:12
-INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-44:12
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-57:12
+INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-57:12
+INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-57:12
+INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:1-57:12
+MERGED from [androidx.core:core-splashscreen:1.0.1] /home/ankit/.gradle/caches/transforms-3/bd0ee3d05057df3c55dcc86f0beed8b2/transformed/jetified-core-splashscreen-1.0.1/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.navigation:navigation-common:2.7.6] /home/ankit/.gradle/caches/transforms-3/262ae6c23a3af364621c3177850012f9/transformed/navigation-common-2.7.6/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-runtime:2.7.6] /home/ankit/.gradle/caches/transforms-3/d4506cfaa3b24a49b0c3d77d052ece1d/transformed/navigation-runtime-2.7.6/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-common-ktx:2.7.6] /home/ankit/.gradle/caches/transforms-3/94ae3459fca4b31ec2e37ea02fbd65a1/transformed/navigation-common-ktx-2.7.6/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.navigation:navigation-runtime-ktx:2.7.6] /home/ankit/.gradle/caches/transforms-3/1746712c30421d07e523cd7cbfbffc47/transformed/navigation-runtime-ktx-2.7.6/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.navigation:navigation-compose:2.7.6] /home/ankit/.gradle/caches/transforms-3/1e0700b97d9b0c695f81afc2bb4bfdb9/transformed/jetified-navigation-compose-2.7.6/AndroidManifest.xml:2:1-7:12
+MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:15:1-55:12
+MERGED from [io.coil-kt:coil-compose:2.6.0] /home/ankit/.gradle/caches/transforms-3/d854ccf4dab4ab24afae2104a227bbb6/transformed/jetified-coil-compose-2.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt:coil-compose-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/f31b9d331e27cdbc5a09e84e5eb5d8be/transformed/jetified-coil-compose-base-2.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt:coil:2.6.0] /home/ankit/.gradle/caches/transforms-3/9805aba035b20b8614ec5a44f994a7ea/transformed/jetified-coil-2.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt:coil-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/eb3b589bd23bf1f09c56806237d5cf98/transformed/jetified-coil-base-2.6.0/AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/ankit/.gradle/caches/transforms-3/b40471635c2f8dda8e984f151e403694/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.appcompat:appcompat:1.6.1] /home/ankit/.gradle/caches/transforms-3/af226701e07b6e5753175ffad1df9a85/transformed/appcompat-1.6.1/AndroidManifest.xml:17:1-22:12
 MERGED from [com.google.android.libraries.identity.googleid:googleid:1.1.1] /home/ankit/.gradle/caches/transforms-3/3d054c26ccc1a1bee68f11ff582f90c9/transformed/jetified-googleid-1.1.1/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.credentials:credentials:1.3.0] /home/ankit/.gradle/caches/transforms-3/907b6613bc78c6329220e840651ecb74/transformed/jetified-credentials-1.3.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:17:1-44:12
@@ -24,13 +32,6 @@ MERGED from [com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.grad
 MERGED from [com.google.android.gms:play-services-base:18.3.0] /home/ankit/.gradle/caches/transforms-3/e62a0849eef3482c6cc40bcf09250feb/transformed/jetified-play-services-base-18.3.0/AndroidManifest.xml:16:1-24:12
 MERGED from [com.google.android.gms:play-services-tasks:18.1.0] /home/ankit/.gradle/caches/transforms-3/8b5902bd30ec93becc4a3032ab70c340/transformed/jetified-play-services-tasks-18.1.0/AndroidManifest.xml:2:1-6:12
 MERGED from [com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/e77b6aafb4ad253e036d783ac586f435/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:16:1-26:12
-MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:15:1-55:12
-MERGED from [io.coil-kt:coil-compose:2.6.0] /home/ankit/.gradle/caches/transforms-3/d854ccf4dab4ab24afae2104a227bbb6/transformed/jetified-coil-compose-2.6.0/AndroidManifest.xml:2:1-7:12
-MERGED from [io.coil-kt:coil-compose-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/f31b9d331e27cdbc5a09e84e5eb5d8be/transformed/jetified-coil-compose-base-2.6.0/AndroidManifest.xml:2:1-7:12
-MERGED from [io.coil-kt:coil:2.6.0] /home/ankit/.gradle/caches/transforms-3/9805aba035b20b8614ec5a44f994a7ea/transformed/jetified-coil-2.6.0/AndroidManifest.xml:2:1-7:12
-MERGED from [io.coil-kt:coil-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/eb3b589bd23bf1f09c56806237d5cf98/transformed/jetified-coil-base-2.6.0/AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/ankit/.gradle/caches/transforms-3/b40471635c2f8dda8e984f151e403694/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.appcompat:appcompat:1.6.1] /home/ankit/.gradle/caches/transforms-3/af226701e07b6e5753175ffad1df9a85/transformed/appcompat-1.6.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.fragment:fragment:1.5.7] /home/ankit/.gradle/caches/transforms-3/634f7fe63034e4d7138cf681cdd6c9e6/transformed/fragment-1.5.7/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.activity:activity:1.8.2] /home/ankit/.gradle/caches/transforms-3/9c1fc1562dc02c13cd2175e1d12d6cf1/transformed/jetified-activity-1.8.2/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.compose.material3:material3-android:1.3.0] /home/ankit/.gradle/caches/transforms-3/95aed3804301558857c3db38164fe11c/transformed/jetified-material3-release/AndroidManifest.xml:17:1-22:12
@@ -50,12 +51,12 @@ MERGED from [androidx.compose.ui:ui-unit-android:1.7.0] /home/ankit/.gradle/cach
 MERGED from [androidx.loader:loader:1.1.0] /home/ankit/.gradle/caches/transforms-3/7ffe3fcc2745d43e00f460c074da7e9b/transformed/loader-1.1.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /home/ankit/.gradle/caches/transforms-3/36b8545e10f4aab96466af2eb2abc869/transformed/jetified-emoji2-views-helper-1.3.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/a14dc4444a6b6e71c1628f70a54e6460/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:17:1-35:12
-MERGED from [androidx.browser:browser:1.3.0] /home/ankit/.gradle/caches/transforms-3/2934ea7ff488215997048d850ce26446/transformed/browser-1.3.0/AndroidManifest.xml:17:1-24:12
-MERGED from [androidx.viewpager:viewpager:1.0.0] /home/ankit/.gradle/caches/transforms-3/8ec4b573f4cd7e8c5b5b7d1ef665b2df/transformed/viewpager-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /home/ankit/.gradle/caches/transforms-3/149cf0c7d192de5a7b6fc9c48ef79a0f/transformed/drawerlayout-1.0.0/AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.customview:customview:1.0.0] /home/ankit/.gradle/caches/transforms-3/b78f0edb34b83458e68ac064a1747747/transformed/customview-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.browser:browser:1.3.0] /home/ankit/.gradle/caches/transforms-3/2934ea7ff488215997048d850ce26446/transformed/browser-1.3.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /home/ankit/.gradle/caches/transforms-3/97b7c4db7d57f9862eac14712ffdb75d/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /home/ankit/.gradle/caches/transforms-3/fda8d97d58f9c4911a77a3233bde6bbf/transformed/vectordrawable-1.1.0/AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.viewpager:viewpager:1.0.0] /home/ankit/.gradle/caches/transforms-3/8ec4b573f4cd7e8c5b5b7d1ef665b2df/transformed/viewpager-1.0.0/AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.customview:customview:1.0.0] /home/ankit/.gradle/caches/transforms-3/b78f0edb34b83458e68ac064a1747747/transformed/customview-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /home/ankit/.gradle/caches/transforms-3/5215fbf1cccdba070e54c984292fdbf2/transformed/jetified-customview-poolingcontainer-1.0.0/AndroidManifest.xml:17:1-23:12
 MERGED from [androidx.core:core-ktx:1.13.1] /home/ankit/.gradle/caches/transforms-3/126a2b8b57712e6c3ff763cf5e0e68ba/transformed/jetified-core-ktx-1.13.1/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.autofill:autofill:1.0.0] /home/ankit/.gradle/caches/transforms-3/2819a152afa0cdb4325cc77fa788552f/transformed/jetified-autofill-1.0.0/AndroidManifest.xml:17:1-24:12
@@ -80,12 +81,12 @@ MERGED from [androidx.compose.runtime:runtime-saveable-android:1.7.0] /home/anki
 MERGED from [androidx.compose.runtime:runtime-android:1.7.0] /home/ankit/.gradle/caches/transforms-3/5ed5af440ee5832a0900bdf11823a747/transformed/jetified-runtime-release/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.annotation:annotation-experimental:1.4.0] /home/ankit/.gradle/caches/transforms-3/b67909d1a711549e5fb13e9f96c3715a/transformed/jetified-annotation-experimental-1.4.0/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/ankit/.gradle/caches/transforms-3/09a2cd8c134e62d6cf73fc6e22c05804/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:17:1-27:12
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/ankit/.gradle/caches/transforms-3/e21e013573ba165400a6887dc3f5c897/transformed/cursoradapter-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] /home/ankit/.gradle/caches/transforms-3/1e96b204fe1df1541c103ca139cecd1e/transformed/interpolator-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:17:1-55:12
 MERGED from [androidx.startup:startup-runtime:1.1.1] /home/ankit/.gradle/caches/transforms-3/79cca1d4c1316294a431152e5012586a/transformed/jetified-startup-runtime-1.1.1/AndroidManifest.xml:17:1-33:12
 MERGED from [androidx.tracing:tracing:1.0.0] /home/ankit/.gradle/caches/transforms-3/f8027178234377f7a5cbdb794067a47e/transformed/jetified-tracing-1.0.0/AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.exifinterface:exifinterface:1.3.7] /home/ankit/.gradle/caches/transforms-3/1892b20ed20c46bce5c2d7e4c3d0d068/transformed/exifinterface-1.3.7/AndroidManifest.xml:17:1-24:12
-MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/ankit/.gradle/caches/transforms-3/e21e013573ba165400a6887dc3f5c897/transformed/cursoradapter-1.0.0/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/ankit/.gradle/caches/transforms-3/8e0d1de627058a0ecd200583a07c48b2/transformed/core-runtime-2.2.0/AndroidManifest.xml:17:1-22:12
 MERGED from [com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:2:1-30:12
 	package
@@ -98,19 +99,25 @@ MERGED from [com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d
 		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:2:11-69
 uses-permission#android.permission.INTERNET
 ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:3:5-67
+MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:22:5-67
+MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:22:5-67
 MERGED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:8:5-67
 MERGED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:8:5-67
 MERGED from [com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/d755d926c2c13ae7fc76f796e5b71658/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:24:5-67
 MERGED from [com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/d755d926c2c13ae7fc76f796e5b71658/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:24:5-67
-MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:22:5-67
-MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:22:5-67
 MERGED from [com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:7:5-67
 MERGED from [com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:7:5-67
 	android:name
 		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:3:22-64
+uses-permission#android.permission.REQUEST_INSTALL_PACKAGES
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:4:5-83
+	android:name
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:4:22-80
 application
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:5:5-43:19
-INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:5:5-43:19
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:6:5-56:19
+INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:6:5-56:19
+MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:34:5-53:19
+MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:34:5-53:19
 MERGED from [androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:23:5-42:19
 MERGED from [androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:23:5-42:19
 MERGED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:46:5-74:19
@@ -129,8 +136,6 @@ MERGED from [com.google.android.gms:play-services-tasks:18.1.0] /home/ankit/.gra
 MERGED from [com.google.android.gms:play-services-tasks:18.1.0] /home/ankit/.gradle/caches/transforms-3/8b5902bd30ec93becc4a3032ab70c340/transformed/jetified-play-services-tasks-18.1.0/AndroidManifest.xml:5:5-20
 MERGED from [com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/e77b6aafb4ad253e036d783ac586f435/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:20:5-24:19
 MERGED from [com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/e77b6aafb4ad253e036d783ac586f435/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:20:5-24:19
-MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:34:5-53:19
-MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:34:5-53:19
 MERGED from [androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/a14dc4444a6b6e71c1628f70a54e6460/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/a14dc4444a6b6e71c1628f70a54e6460/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/4ca8b2b2c7f6630b277542ddc5ce7760/transformed/core-1.13.1/AndroidManifest.xml:28:5-89
@@ -150,67 +155,89 @@ MERGED from [com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/4ca8b2b2c7f6630b277542ddc5ce7760/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
 	android:label
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:7:9-37
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:10:9-37
+	android:roundIcon
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:9:9-48
+	android:icon
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:8:9-43
 	android:allowBackup
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:6:9-35
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:7:9-35
 	android:theme
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:8:9-66
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:11:9-59
 	android:usesCleartextTraffic
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:9:9-44
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:12:9-44
 activity#com.vidyaschool.app.MainActivity
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:10:9-42:20
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:13:9-45:20
 	android:launchMode
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:15:13-44
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:18:13-44
 	android:windowSoftInputMode
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:13:13-55
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:16:13-55
 	android:exported
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:12:13-36
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:15:13-36
 	android:theme
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:14:13-75
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:17:13-60
 	android:name
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:11:13-41
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:14:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:16:13-19:29
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:19:13-22:29
 action#android.intent.action.MAIN
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:17:17-69
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:20:17-69
 	android:name
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:17:25-66
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:20:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:18:17-77
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:21:17-77
 	android:name
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:18:27-74
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:21:27-74
 intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:oauth+data:path:/github/callback+data:scheme:com.vidyaschool.app
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:22:13-30:29
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:25:13-33:29
 action#android.intent.action.VIEW
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:23:17-69
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:17-69
 	android:name
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:23:25-66
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:25-66
 category#android.intent.category.DEFAULT
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:24:17-76
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-76
 	android:name
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:24:27-73
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:27-73
 category#android.intent.category.BROWSABLE
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:25:17-78
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-78
 	android:name
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:25:27-75
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-75
 data
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:17-29:55
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-32:55
 	android:path
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:21-52
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:32:21-52
 	android:host
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:21-41
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-41
 	android:scheme
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:21-57
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:21-57
 	android:pathPrefix
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:40:21-55
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:43:21-55
 intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:vidyaschool.vercel.app+data:pathPrefix:/fee/payment/+data:scheme:https
-ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:33:13-41:29
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:36:13-44:29
 	android:autoVerify
-		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:33:28-53
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:36:28-53
+provider#androidx.core.content.FileProvider
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:47:9-55:20
+	android:grantUriPermissions
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:51:13-47
+	android:authorities
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:49:13-67
+	android:exported
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:50:13-37
+	android:name
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:48:13-62
+meta-data#android.support.FILE_PROVIDER_PATHS
+ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:52:13-54:54
+	android:resource
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:54:17-51
+	android:name
+		ADDED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:53:17-67
 uses-sdk
 INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml
 INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml
+MERGED from [androidx.core:core-splashscreen:1.0.1] /home/ankit/.gradle/caches/transforms-3/bd0ee3d05057df3c55dcc86f0beed8b2/transformed/jetified-core-splashscreen-1.0.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core-splashscreen:1.0.1] /home/ankit/.gradle/caches/transforms-3/bd0ee3d05057df3c55dcc86f0beed8b2/transformed/jetified-core-splashscreen-1.0.1/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.navigation:navigation-common:2.7.6] /home/ankit/.gradle/caches/transforms-3/262ae6c23a3af364621c3177850012f9/transformed/navigation-common-2.7.6/AndroidManifest.xml:20:5-44
 MERGED from [androidx.navigation:navigation-common:2.7.6] /home/ankit/.gradle/caches/transforms-3/262ae6c23a3af364621c3177850012f9/transformed/navigation-common-2.7.6/AndroidManifest.xml:20:5-44
 MERGED from [androidx.navigation:navigation-runtime:2.7.6] /home/ankit/.gradle/caches/transforms-3/d4506cfaa3b24a49b0c3d77d052ece1d/transformed/navigation-runtime-2.7.6/AndroidManifest.xml:20:5-44
@@ -221,6 +248,20 @@ MERGED from [androidx.navigation:navigation-runtime-ktx:2.7.6] /home/ankit/.grad
 MERGED from [androidx.navigation:navigation-runtime-ktx:2.7.6] /home/ankit/.gradle/caches/transforms-3/1746712c30421d07e523cd7cbfbffc47/transformed/navigation-runtime-ktx-2.7.6/AndroidManifest.xml:5:5-44
 MERGED from [androidx.navigation:navigation-compose:2.7.6] /home/ankit/.gradle/caches/transforms-3/1e0700b97d9b0c695f81afc2bb4bfdb9/transformed/jetified-navigation-compose-2.7.6/AndroidManifest.xml:5:5-44
 MERGED from [androidx.navigation:navigation-compose:2.7.6] /home/ankit/.gradle/caches/transforms-3/1e0700b97d9b0c695f81afc2bb4bfdb9/transformed/jetified-navigation-compose-2.7.6/AndroidManifest.xml:5:5-44
+MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:18:5-20:41
+MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:18:5-20:41
+MERGED from [io.coil-kt:coil-compose:2.6.0] /home/ankit/.gradle/caches/transforms-3/d854ccf4dab4ab24afae2104a227bbb6/transformed/jetified-coil-compose-2.6.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-compose:2.6.0] /home/ankit/.gradle/caches/transforms-3/d854ccf4dab4ab24afae2104a227bbb6/transformed/jetified-coil-compose-2.6.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-compose-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/f31b9d331e27cdbc5a09e84e5eb5d8be/transformed/jetified-coil-compose-base-2.6.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-compose-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/f31b9d331e27cdbc5a09e84e5eb5d8be/transformed/jetified-coil-compose-base-2.6.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil:2.6.0] /home/ankit/.gradle/caches/transforms-3/9805aba035b20b8614ec5a44f994a7ea/transformed/jetified-coil-2.6.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil:2.6.0] /home/ankit/.gradle/caches/transforms-3/9805aba035b20b8614ec5a44f994a7ea/transformed/jetified-coil-2.6.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/eb3b589bd23bf1f09c56806237d5cf98/transformed/jetified-coil-base-2.6.0/AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/eb3b589bd23bf1f09c56806237d5cf98/transformed/jetified-coil-base-2.6.0/AndroidManifest.xml:5:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/ankit/.gradle/caches/transforms-3/b40471635c2f8dda8e984f151e403694/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/ankit/.gradle/caches/transforms-3/b40471635c2f8dda8e984f151e403694/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat:1.6.1] /home/ankit/.gradle/caches/transforms-3/af226701e07b6e5753175ffad1df9a85/transformed/appcompat-1.6.1/AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat:1.6.1] /home/ankit/.gradle/caches/transforms-3/af226701e07b6e5753175ffad1df9a85/transformed/appcompat-1.6.1/AndroidManifest.xml:20:5-44
 MERGED from [com.google.android.libraries.identity.googleid:googleid:1.1.1] /home/ankit/.gradle/caches/transforms-3/3d054c26ccc1a1bee68f11ff582f90c9/transformed/jetified-googleid-1.1.1/AndroidManifest.xml:5:5-44
 MERGED from [com.google.android.libraries.identity.googleid:googleid:1.1.1] /home/ankit/.gradle/caches/transforms-3/3d054c26ccc1a1bee68f11ff582f90c9/transformed/jetified-googleid-1.1.1/AndroidManifest.xml:5:5-44
 MERGED from [androidx.credentials:credentials:1.3.0] /home/ankit/.gradle/caches/transforms-3/907b6613bc78c6329220e840651ecb74/transformed/jetified-credentials-1.3.0/AndroidManifest.xml:5:5-44
@@ -251,20 +292,6 @@ MERGED from [com.google.android.gms:play-services-tasks:18.1.0] /home/ankit/.gra
 MERGED from [com.google.android.gms:play-services-tasks:18.1.0] /home/ankit/.gradle/caches/transforms-3/8b5902bd30ec93becc4a3032ab70c340/transformed/jetified-play-services-tasks-18.1.0/AndroidManifest.xml:4:5-43
 MERGED from [com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/e77b6aafb4ad253e036d783ac586f435/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:18:5-43
 MERGED from [com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/e77b6aafb4ad253e036d783ac586f435/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:18:5-43
-MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:18:5-20:41
-MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:18:5-20:41
-MERGED from [io.coil-kt:coil-compose:2.6.0] /home/ankit/.gradle/caches/transforms-3/d854ccf4dab4ab24afae2104a227bbb6/transformed/jetified-coil-compose-2.6.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil-compose:2.6.0] /home/ankit/.gradle/caches/transforms-3/d854ccf4dab4ab24afae2104a227bbb6/transformed/jetified-coil-compose-2.6.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil-compose-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/f31b9d331e27cdbc5a09e84e5eb5d8be/transformed/jetified-coil-compose-base-2.6.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil-compose-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/f31b9d331e27cdbc5a09e84e5eb5d8be/transformed/jetified-coil-compose-base-2.6.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil:2.6.0] /home/ankit/.gradle/caches/transforms-3/9805aba035b20b8614ec5a44f994a7ea/transformed/jetified-coil-2.6.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil:2.6.0] /home/ankit/.gradle/caches/transforms-3/9805aba035b20b8614ec5a44f994a7ea/transformed/jetified-coil-2.6.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/eb3b589bd23bf1f09c56806237d5cf98/transformed/jetified-coil-base-2.6.0/AndroidManifest.xml:5:5-44
-MERGED from [io.coil-kt:coil-base:2.6.0] /home/ankit/.gradle/caches/transforms-3/eb3b589bd23bf1f09c56806237d5cf98/transformed/jetified-coil-base-2.6.0/AndroidManifest.xml:5:5-44
-MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/ankit/.gradle/caches/transforms-3/b40471635c2f8dda8e984f151e403694/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:20:5-44
-MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /home/ankit/.gradle/caches/transforms-3/b40471635c2f8dda8e984f151e403694/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:20:5-44
-MERGED from [androidx.appcompat:appcompat:1.6.1] /home/ankit/.gradle/caches/transforms-3/af226701e07b6e5753175ffad1df9a85/transformed/appcompat-1.6.1/AndroidManifest.xml:20:5-44
-MERGED from [androidx.appcompat:appcompat:1.6.1] /home/ankit/.gradle/caches/transforms-3/af226701e07b6e5753175ffad1df9a85/transformed/appcompat-1.6.1/AndroidManifest.xml:20:5-44
 MERGED from [androidx.fragment:fragment:1.5.7] /home/ankit/.gradle/caches/transforms-3/634f7fe63034e4d7138cf681cdd6c9e6/transformed/fragment-1.5.7/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.fragment:fragment:1.5.7] /home/ankit/.gradle/caches/transforms-3/634f7fe63034e4d7138cf681cdd6c9e6/transformed/fragment-1.5.7/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.activity:activity:1.8.2] /home/ankit/.gradle/caches/transforms-3/9c1fc1562dc02c13cd2175e1d12d6cf1/transformed/jetified-activity-1.8.2/AndroidManifest.xml:20:5-44
@@ -303,18 +330,18 @@ MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /home/ankit/.gradle/cach
 MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] /home/ankit/.gradle/caches/transforms-3/36b8545e10f4aab96466af2eb2abc869/transformed/jetified-emoji2-views-helper-1.3.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/a14dc4444a6b6e71c1628f70a54e6460/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:21:5-44
 MERGED from [androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/a14dc4444a6b6e71c1628f70a54e6460/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:21:5-44
-MERGED from [androidx.browser:browser:1.3.0] /home/ankit/.gradle/caches/transforms-3/2934ea7ff488215997048d850ce26446/transformed/browser-1.3.0/AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.browser:browser:1.3.0] /home/ankit/.gradle/caches/transforms-3/2934ea7ff488215997048d850ce26446/transformed/browser-1.3.0/AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.viewpager:viewpager:1.0.0] /home/ankit/.gradle/caches/transforms-3/8ec4b573f4cd7e8c5b5b7d1ef665b2df/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.viewpager:viewpager:1.0.0] /home/ankit/.gradle/caches/transforms-3/8ec4b573f4cd7e8c5b5b7d1ef665b2df/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /home/ankit/.gradle/caches/transforms-3/149cf0c7d192de5a7b6fc9c48ef79a0f/transformed/drawerlayout-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] /home/ankit/.gradle/caches/transforms-3/149cf0c7d192de5a7b6fc9c48ef79a0f/transformed/drawerlayout-1.0.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.customview:customview:1.0.0] /home/ankit/.gradle/caches/transforms-3/b78f0edb34b83458e68ac064a1747747/transformed/customview-1.0.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.customview:customview:1.0.0] /home/ankit/.gradle/caches/transforms-3/b78f0edb34b83458e68ac064a1747747/transformed/customview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.browser:browser:1.3.0] /home/ankit/.gradle/caches/transforms-3/2934ea7ff488215997048d850ce26446/transformed/browser-1.3.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.browser:browser:1.3.0] /home/ankit/.gradle/caches/transforms-3/2934ea7ff488215997048d850ce26446/transformed/browser-1.3.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /home/ankit/.gradle/caches/transforms-3/97b7c4db7d57f9862eac14712ffdb75d/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] /home/ankit/.gradle/caches/transforms-3/97b7c4db7d57f9862eac14712ffdb75d/transformed/vectordrawable-animated-1.1.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /home/ankit/.gradle/caches/transforms-3/fda8d97d58f9c4911a77a3233bde6bbf/transformed/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] /home/ankit/.gradle/caches/transforms-3/fda8d97d58f9c4911a77a3233bde6bbf/transformed/vectordrawable-1.1.0/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.viewpager:viewpager:1.0.0] /home/ankit/.gradle/caches/transforms-3/8ec4b573f4cd7e8c5b5b7d1ef665b2df/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.viewpager:viewpager:1.0.0] /home/ankit/.gradle/caches/transforms-3/8ec4b573f4cd7e8c5b5b7d1ef665b2df/transformed/viewpager-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] /home/ankit/.gradle/caches/transforms-3/b78f0edb34b83458e68ac064a1747747/transformed/customview-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] /home/ankit/.gradle/caches/transforms-3/b78f0edb34b83458e68ac064a1747747/transformed/customview-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /home/ankit/.gradle/caches/transforms-3/5215fbf1cccdba070e54c984292fdbf2/transformed/jetified-customview-poolingcontainer-1.0.0/AndroidManifest.xml:20:5-21:38
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] /home/ankit/.gradle/caches/transforms-3/5215fbf1cccdba070e54c984292fdbf2/transformed/jetified-customview-poolingcontainer-1.0.0/AndroidManifest.xml:20:5-21:38
 MERGED from [androidx.core:core-ktx:1.13.1] /home/ankit/.gradle/caches/transforms-3/126a2b8b57712e6c3ff763cf5e0e68ba/transformed/jetified-core-ktx-1.13.1/AndroidManifest.xml:5:5-44
@@ -363,6 +390,8 @@ MERGED from [androidx.annotation:annotation-experimental:1.4.0] /home/ankit/.gra
 MERGED from [androidx.annotation:annotation-experimental:1.4.0] /home/ankit/.gradle/caches/transforms-3/b67909d1a711549e5fb13e9f96c3715a/transformed/jetified-annotation-experimental-1.4.0/AndroidManifest.xml:5:5-44
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/ankit/.gradle/caches/transforms-3/09a2cd8c134e62d6cf73fc6e22c05804/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /home/ankit/.gradle/caches/transforms-3/09a2cd8c134e62d6cf73fc6e22c05804/transformed/versionedparcelable-1.1.1/AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/ankit/.gradle/caches/transforms-3/e21e013573ba165400a6887dc3f5c897/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
+MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/ankit/.gradle/caches/transforms-3/e21e013573ba165400a6887dc3f5c897/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.interpolator:interpolator:1.0.0] /home/ankit/.gradle/caches/transforms-3/1e96b204fe1df1541c103ca139cecd1e/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.interpolator:interpolator:1.0.0] /home/ankit/.gradle/caches/transforms-3/1e96b204fe1df1541c103ca139cecd1e/transformed/interpolator-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:21:5-44
@@ -373,8 +402,6 @@ MERGED from [androidx.tracing:tracing:1.0.0] /home/ankit/.gradle/caches/transfor
 MERGED from [androidx.tracing:tracing:1.0.0] /home/ankit/.gradle/caches/transforms-3/f8027178234377f7a5cbdb794067a47e/transformed/jetified-tracing-1.0.0/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.exifinterface:exifinterface:1.3.7] /home/ankit/.gradle/caches/transforms-3/1892b20ed20c46bce5c2d7e4c3d0d068/transformed/exifinterface-1.3.7/AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.exifinterface:exifinterface:1.3.7] /home/ankit/.gradle/caches/transforms-3/1892b20ed20c46bce5c2d7e4c3d0d068/transformed/exifinterface-1.3.7/AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/ankit/.gradle/caches/transforms-3/e21e013573ba165400a6887dc3f5c897/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
-MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] /home/ankit/.gradle/caches/transforms-3/e21e013573ba165400a6887dc3f5c897/transformed/cursoradapter-1.0.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/ankit/.gradle/caches/transforms-3/8e0d1de627058a0ecd200583a07c48b2/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
 MERGED from [androidx.arch.core:core-runtime:2.2.0] /home/ankit/.gradle/caches/transforms-3/8e0d1de627058a0ecd200583a07c48b2/transformed/core-runtime-2.2.0/AndroidManifest.xml:20:5-44
 MERGED from [com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:5:5-44
@@ -383,6 +410,34 @@ MERGED from [com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d
 		INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml
 	android:minSdkVersion
 		INJECTED from /home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml
+queries
+ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:24:5-32:15
+MERGED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:15:5-44:15
+MERGED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:15:5-44:15
+intent#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+data:scheme:https
+ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:25:9-31:18
+activity#net.openid.appauth.AuthorizationManagementActivity
+ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:35:9-40:77
+	android:launchMode
+		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:39:13-44
+	android:exported
+		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:38:13-37
+	android:configChanges
+		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:37:13-115
+	android:theme
+		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:40:13-74
+	android:name
+		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:36:13-78
+activity#net.openid.appauth.RedirectUriReceiverActivity
+ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:41:9-52:20
+	android:exported
+		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:43:13-36
+	android:name
+		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:42:13-74
+intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:scheme:${appAuthRedirectScheme}
+ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:44:13-51:29
+intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:scheme:com.vidyaschool.app
+ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:44:13-51:29
 service#androidx.credentials.playservices.CredentialProviderMetadataHolder
 ADDED from [androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:24:9-32:19
 	android:enabled
@@ -423,10 +478,6 @@ ADDED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transf
 		ADDED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:13:9-33
 	android:name
 		ADDED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:12:9-44
-queries
-ADDED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:15:5-44:15
-MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:24:5-32:15
-MERGED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:24:5-32:15
 intent#action:name:android.intent.action.VIEW+data:mimeType:*/*+data:scheme:*
 ADDED from [com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:16:9-22:18
 intent#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+data:host:pay+data:mimeType:*/*+data:scheme:upi
@@ -547,30 +598,6 @@ ADDED from [com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.g
 		ADDED from [com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/e77b6aafb4ad253e036d783ac586f435/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:23:13-66
 	android:name
 		ADDED from [com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/e77b6aafb4ad253e036d783ac586f435/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:22:13-58
-intent#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+data:scheme:https
-ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:25:9-31:18
-activity#net.openid.appauth.AuthorizationManagementActivity
-ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:35:9-40:77
-	android:launchMode
-		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:39:13-44
-	android:exported
-		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:38:13-37
-	android:configChanges
-		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:37:13-115
-	android:theme
-		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:40:13-74
-	android:name
-		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:36:13-78
-activity#net.openid.appauth.RedirectUriReceiverActivity
-ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:41:9-52:20
-	android:exported
-		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:43:13-36
-	android:name
-		ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:42:13-74
-intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:scheme:${appAuthRedirectScheme}
-ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:44:13-51:29
-intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:scheme:com.vidyaschool.app
-ADDED from [net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:44:13-51:29
 meta-data#androidx.emoji2.text.EmojiCompatInitializer
 ADDED from [androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/a14dc4444a6b6e71c1628f70a54e6460/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
 	android:value

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.vidyaschool.app-mergeDebugResources-62:/values-es/values-es.xml",
+            "outputFile": "com.vidyaschool.app-mergeDebugResources-63:/values-es/values-es.xml",
             "map": [
                 {
                     "source": "/home/ankit/.gradle/caches/transforms-3/4ca8b2b2c7f6630b277542ddc5ce7760/transformed/core-1.13.1/res/values-es/values-es.xml",
