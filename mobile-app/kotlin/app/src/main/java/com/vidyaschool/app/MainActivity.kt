@@ -86,24 +86,43 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
         intent?.let { handleIntent(it) }
         com.razorpay.Checkout.preload(applicationContext)
 
+        val themeMode = sessionManager.getThemeMode()
+        val isDarkTheme = when (themeMode) {
+            "light" -> false
+            "dark" -> true
+            else -> {
+                val currentNightMode = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
+                currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
+            }
+        }
+        val statusBarStyle = if (isDarkTheme) {
+            SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        } else {
+            SystemBarStyle.light(
+                android.graphics.Color.TRANSPARENT,
+                android.graphics.Color.TRANSPARENT
+            )
+        }
+
         // Fade out splash screen
         splashScreen.setOnExitAnimationListener { provider ->
+            // Apply edge-to-edge immediately at the start of exit animation to prevent layout jump
+            enableEdgeToEdge(
+                statusBarStyle = statusBarStyle,
+                navigationBarStyle = statusBarStyle
+            )
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+
             val fadeOut = android.animation.ObjectAnimator.ofFloat(provider.view, android.view.View.ALPHA, 1f, 0f)
             fadeOut.duration = 400
             fadeOut.addListener(object : android.animation.AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: android.animation.Animator) {
                     provider.remove()
                     isSplashFinished.value = true
-                    // Re-apply edge-to-edge settings once splash screen is removed
+                    // Re-apply edge-to-edge settings once splash screen is removed to ensure consistency
                     enableEdgeToEdge(
-                        statusBarStyle = SystemBarStyle.auto(
-                            android.graphics.Color.TRANSPARENT,
-                            android.graphics.Color.TRANSPARENT
-                        ),
-                        navigationBarStyle = SystemBarStyle.auto(
-                            android.graphics.Color.TRANSPARENT,
-                            android.graphics.Color.TRANSPARENT
-                        )
+                        statusBarStyle = statusBarStyle,
+                        navigationBarStyle = statusBarStyle
                     )
                     WindowCompat.setDecorFitsSystemWindows(window, false)
                 }
@@ -112,14 +131,8 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
         }
 
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT
-            ),
-            navigationBarStyle = SystemBarStyle.auto(
-                android.graphics.Color.TRANSPARENT,
-                android.graphics.Color.TRANSPARENT
-            )
+            statusBarStyle = statusBarStyle,
+            navigationBarStyle = statusBarStyle
         )
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
