@@ -52,11 +52,14 @@ Google Credential Manager uses `GetSignInWithGoogleOption` which requires proper
    
 3. Get your SHA-1 certificate fingerprint:
    ```bash
-   # For debug builds
+   # For debug builds (using the project's packaged keystore)
    cd /home/ankit/Documents/Code/vs/mobile-app/kotlin
-   keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android
+   keytool -list -v -keystore app/debug.keystore -alias androiddebugkey -storepass android -keypass android
    ```
    
+   The SHA-1 fingerprint of the project's packaged debug key is:
+   `5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25`
+
 4. Add the SHA-1 fingerprint to your Android OAuth client in Google Cloud Console
 
 5. Make sure your Web OAuth client ID is also configured:
@@ -105,7 +108,7 @@ The `clientId` should be your **Web OAuth 2.0 Client ID** from Google Cloud Cons
 
 ### Get your debug SHA-1 (needed for Google Cloud Console):
 ```bash
-keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1
+keytool -list -v -keystore app/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1
 ```
 
 ### Rebuild and install app:
