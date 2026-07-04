@@ -21,6 +21,11 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -1736,6 +1741,12 @@ fun CommunityTabContent(
     var replyingTo by remember { mutableStateOf<CommunityMsg?>(null) }
     var editingMessage by remember { mutableStateOf<CommunityMsg?>(null) }
     
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            lazyListState.scrollToItem(messages.size - 1)
+        }
+    }
+    
     val token = remember { sessionManager.getSessionToken() ?: "" }
 
     LaunchedEffect(token) {
@@ -2058,6 +2069,23 @@ fun CommunityTabContent(
                 }
             }
 
+            // Bottom gradient overlay to fade out messages behind the floating input card
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(130.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.7f),
+                                MaterialTheme.colorScheme.background
+                            )
+                        )
+                    )
+            )
+
             // Floating Input bar Card
             Card(
                 modifier = Modifier
@@ -2197,28 +2225,33 @@ fun CommunityTabContent(
                             )
                         }
 
-                        // Text field Box
+                        // Text field Box (centered start vertical alignment)
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            contentAlignment = Alignment.CenterStart
                         ) {
                             if (inputText.isEmpty()) {
                                 Text(
                                     text = "Message #community",
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                    fontSize = 15.sp
+                                    fontSize = 15.sp,
+                                    modifier = Modifier.align(Alignment.CenterStart)
                                 )
                             }
                             androidx.compose.foundation.text.BasicTextField(
                                 value = inputText,
                                 onValueChange = { inputText = it },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .align(Alignment.CenterStart),
                                 textStyle = androidx.compose.ui.text.TextStyle(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     fontSize = 15.sp
                                 ),
                                 maxLines = 5,
+                                cursorBrush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.onSurface),
                                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                                     capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Sentences,
                                     autoCorrect = true
@@ -2252,6 +2285,47 @@ fun CommunityTabContent(
                             )
                         }
                     }
+                }
+            }
+
+            // Scroll to bottom button
+            val showScrollToBottomButton by remember {
+                derivedStateOf {
+                    val layoutInfo = lazyListState.layoutInfo
+                    val totalItems = layoutInfo.totalItemsCount
+                    if (totalItems == 0) {
+                        false
+                    } else {
+                        val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
+                        lastVisibleItem == null || lastVisibleItem.index < totalItems - 3
+                    }
+                }
+            }
+
+            androidx.compose.animation.AnimatedVisibility(
+                visible = showScrollToBottomButton,
+                enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 24.dp, bottom = 96.dp)
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            lazyListState.animateScrollToItem(messages.size - 1)
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shape = CircleShape,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Scroll to bottom",
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
         }
