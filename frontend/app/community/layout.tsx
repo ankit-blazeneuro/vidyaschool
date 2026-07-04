@@ -22,7 +22,7 @@ export default async function CommunityLayout({
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset>
+      <SidebarInset className="h-svh max-h-svh md:h-[calc(100svh-1rem)] md:max-h-[calc(100svh-1rem)] overflow-hidden flex flex-col">
         <SiteHeader title="Community" />
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="@container/main flex flex-1 flex-col overflow-hidden">

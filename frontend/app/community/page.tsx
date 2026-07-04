@@ -20,13 +20,17 @@ import {
   CornerUpLeft,
   Pencil,
   Trash2,
-  X
+  X,
+  ChevronDown
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { SiteHeader } from "@/components/site-header"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { createPortal } from "react-dom"
+import { CommunityHeaderActions } from "./header-actions"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 
 interface Message {
   id: string
@@ -54,16 +58,6 @@ interface OnlineUser {
 function CommunitySkeleton() {
   return (
     <div className="flex h-[calc(100vh-var(--header-height))] w-full bg-background overflow-hidden animate-pulse">
-      {/* Sidebar Skeleton */}
-      <div className="hidden md:flex w-60 border-r border-border bg-muted/10 flex-col p-4 space-y-4 shrink-0">
-        <div className="h-6 w-32 bg-muted/60 rounded-md mb-4" />
-        <div className="space-y-3">
-          <div className="h-8 w-full bg-muted/60 rounded-md" />
-          <div className="h-8 w-4/5 bg-muted/60 rounded-md" />
-          <div className="h-8 w-full bg-muted/60 rounded-md" />
-          <div className="h-8 w-3/4 bg-muted/60 rounded-md" />
-        </div>
-      </div>
       {/* Main Chat Panel Skeleton */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header Skeleton */}
@@ -92,15 +86,42 @@ function CommunitySkeleton() {
         </div>
         {/* Input Area Skeleton */}
         <div className="p-4 bg-transparent shrink-0">
-          <div className="h-12 w-full bg-muted/60 border border-border rounded-lg" />
+          <div className="flex items-center gap-3 px-4 py-3 w-full bg-muted/10 border border-border rounded-2xl">
+            {/* Plus Icon Skeleton */}
+            <div className="size-7 rounded-full bg-muted/60 shrink-0" />
+            {/* Textarea Placeholder Skeleton */}
+            <div className="h-5 flex-1 bg-muted/40 rounded-md" />
+            {/* Action Buttons Skeleton */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="size-5 rounded-full bg-muted/60" />
+              <div className="size-5 rounded-full bg-muted/60" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Member List Sidebar Skeleton on the Right */}
+      <div className="hidden md:flex w-60 my-4 mr-4 ml-0 border border-border bg-muted/10 rounded-2xl flex flex-col p-4 space-y-4 shrink-0 overflow-hidden h-[calc(100%-2rem)]">
+        <div className="h-6 w-32 bg-muted/60 rounded-md mb-4" />
+        <div className="space-y-3">
+          <div className="h-8 w-full bg-muted/60 rounded-md" />
+          <div className="h-8 w-4/5 bg-muted/60 rounded-md" />
+          <div className="h-8 w-full bg-muted/60 rounded-md" />
+          <div className="h-8 w-3/4 bg-muted/60 rounded-md" />
         </div>
       </div>
     </div>
   )
 }
 
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect
+
 export default function CommunityChatPage() {
   const [currentUser, setCurrentUser] = React.useState<any>(null)
+  const scrollRestorationRef = React.useRef<{
+    previousScrollHeight: number
+    previousScrollTop: number
+  } | null>(null)
   const [userProfile, setUserProfile] = React.useState<any>(null)
   const [messages, setMessages] = React.useState<Message[]>([])
   const [onlineUsers, setOnlineUsers] = React.useState<OnlineUser[]>([])
@@ -109,6 +130,7 @@ export default function CommunityChatPage() {
   const [connected, setConnected] = React.useState(false)
   const [loading, setLoading] = React.useState(true)
   const [showMemberList, setShowMemberList] = React.useState(true)
+  const [mounted, setMounted] = React.useState(false)
   
   // Reply & Edit state
   const [replyingTo, setReplyingTo] = React.useState<Message | null>(null)
@@ -116,9 +138,20 @@ export default function CommunityChatPage() {
   const [editText, setEditText] = React.useState("")
   const [hasMore, setHasMore] = React.useState(false)
   const [loadingMore, setLoadingMore] = React.useState(false)
+  const [showScrollBottom, setShowScrollBottom] = React.useState(false)
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
   const chatContainerRef = React.useRef<HTMLDivElement>(null)
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+
+  // Auto-resize textarea based on content height
+  React.useEffect(() => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      textarea.style.height = "auto"
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`
+    }
+  }, [inputText])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -126,6 +159,7 @@ export default function CommunityChatPage() {
 
   // Fetch session on mount
   React.useEffect(() => {
+    setMounted(true)
     fetch("/api/account")
       .then((res) => {
         if (!res.ok) throw new Error("Unauthorized")
@@ -183,17 +217,14 @@ export default function CommunityChatPage() {
     socketInstance.on("more_messages", (data: { messages: Message[]; hasMore: boolean }) => {
       if (chatContainerRef.current) {
         const container = chatContainerRef.current
-        const previousScrollHeight = container.scrollHeight
-        const previousScrollTop = container.scrollTop
+        scrollRestorationRef.current = {
+          previousScrollHeight: container.scrollHeight,
+          previousScrollTop: container.scrollTop,
+        }
 
         setMessages((prev) => [...(data.messages || []), ...prev])
         setHasMore(data.hasMore || false)
         setLoadingMore(false)
-
-        // Restore scroll position after DOM renders prepended messages!
-        setTimeout(() => {
-          container.scrollTop = container.scrollHeight - previousScrollHeight + previousScrollTop
-        }, 0)
       }
     })
 
@@ -219,6 +250,20 @@ export default function CommunityChatPage() {
     }
   }, [currentUser])
 
+  useIsomorphicLayoutEffect(() => {
+    if (scrollRestorationRef.current && chatContainerRef.current) {
+      const container = chatContainerRef.current
+      const { previousScrollHeight, previousScrollTop } = scrollRestorationRef.current
+      const newScrollHeight = container.scrollHeight
+      const scrollHeightDiff = newScrollHeight - previousScrollHeight
+      
+      if (scrollHeightDiff > 0) {
+        container.scrollTop = previousScrollTop + scrollHeightDiff
+        scrollRestorationRef.current = null
+      }
+    }
+  }, [messages])
+
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault()
     if (!inputText.trim() || !socket || !connected) return
@@ -237,6 +282,13 @@ export default function CommunityChatPage() {
     setReplyingTo(null)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage(e)
+    }
+  }
+
   const handleEditMessage = (messageId: string, content: string) => {
     if (!socket || !connected || !content.trim()) return
     socket.emit("edit_message", { messageId, content })
@@ -250,12 +302,18 @@ export default function CommunityChatPage() {
   }
 
   const handleScroll = () => {
-    if (!chatContainerRef.current || !socket || !connected || !hasMore || loadingMore) return
+    if (!chatContainerRef.current) return
     const container = chatContainerRef.current
-    if (container.scrollTop <= 5 && messages.length > 0) {
+    
+    // Check if scrolled near the top to load older messages
+    if (socket && connected && hasMore && !loadingMore && container.scrollTop <= 5 && messages.length > 0) {
       setLoadingMore(true)
       socket.emit("load_more", { before: messages[0].timestamp })
     }
+
+    // Check if scrolled away from bottom to show the jump-to-bottom button
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200
+    setShowScrollBottom(!isNearBottom)
   }
 
   const getInitials = (name: string) => {
@@ -331,15 +389,27 @@ export default function CommunityChatPage() {
 
   return (
     <div className="flex flex-1 overflow-hidden h-full">
+      {mounted && typeof document !== "undefined" && document.getElementById("site-header-actions") && 
+        createPortal(
+          <CommunityHeaderActions 
+            connected={connected} 
+            onToggleMembers={() => setShowMemberList((prev) => !prev)} 
+          />,
+          document.getElementById("site-header-actions")!
+        )
+      }
+
       {/* Chat Area */}
-      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <main className="relative flex-1 flex flex-col overflow-hidden min-w-0">
         
         {/* Scrollable Message List */}
-        <div 
+        <ScrollArea 
           ref={chatContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-6 pt-6 space-y-[2px]"
+          className="absolute inset-0"
+          viewportClassName="px-3 sm:px-6 pt-4 sm:pt-6"
         >
+          <div className="space-y-[2px] pb-28">
             {loadingMore && (
               <div className="w-full py-3 flex items-center justify-center gap-2 select-none">
                 <Loader2 className="h-4 w-4 animate-spin text-primary" />
@@ -364,7 +434,7 @@ export default function CommunityChatPage() {
                     
                     {/* Discord Style Curved Reply Connection */}
                     {msg.replyTo && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground/75 pl-[72px] mb-1 select-none">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground/75 pl-[52px] sm:pl-[72px] mb-1 select-none">
                         <div className="w-8 h-2.5 border-l-2 border-t-2 border-border rounded-tl-md mr-1 mt-1.5 shrink-0" />
                         <span className="font-bold hover:underline cursor-pointer">@{msg.replyTo.name}</span>
                         <span className="truncate opacity-75 italic">"{msg.replyTo.content}"</span>
@@ -413,8 +483,8 @@ export default function CommunityChatPage() {
 
                     {isGrouped ? (
                       // Grouped rendering
-                      <div className="pl-[72px] pr-16 py-[2px] hover:bg-muted/30 group/grouped relative flex items-center min-h-[22px]">
-                        <span className="absolute left-4 hidden group-hover/grouped:block text-[10px] text-muted-foreground select-none w-10 text-right">
+                      <div className="pl-[52px] sm:pl-[72px] pr-8 sm:pr-16 py-[2px] hover:bg-muted/30 group/grouped relative flex items-center min-h-[22px]">
+                        <span className="absolute left-1 sm:left-4 hidden group-hover/grouped:block text-[10px] text-muted-foreground select-none w-8 sm:w-10 text-right">
                           {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
                         </span>
                         
@@ -427,7 +497,7 @@ export default function CommunityChatPage() {
                               value={editText}
                               onChange={(e) => setEditText(e.target.value)}
                               onKeyDown={(e) => { if (e.key === "Escape") setEditingMessageId(null); }}
-                              className="bg-muted text-sm border-border w-full focus-visible:ring-1 focus-visible:ring-primary py-1 px-3 h-8"
+                              className="bg-muted text-base md:text-sm border-border w-full focus-visible:ring-1 focus-visible:ring-primary py-1 px-3 h-8"
                               autoFocus
                             />
                             <div className="text-[10px] text-muted-foreground mt-1 select-none">
@@ -442,8 +512,8 @@ export default function CommunityChatPage() {
                       </div>
                     ) : (
                       // Normal full rendering
-                      <div className="mt-2 pl-4 pr-16 py-[2px] hover:bg-muted/30 flex items-start gap-4">
-                        <Avatar className={`h-10 w-10 shrink-0 shadow-xs rounded-full cursor-pointer select-none ${getAvatarGradient(msg.role)}`}>
+                      <div className="mt-2 pl-2 sm:pl-4 pr-8 sm:pr-16 py-[2px] hover:bg-muted/30 flex items-start gap-3 sm:gap-4">
+                        <Avatar className={`h-8 w-8 sm:h-10 sm:w-10 shrink-0 shadow-xs rounded-full cursor-pointer select-none ${getAvatarGradient(msg.role)}`}>
                           <AvatarImage src={msg.image || undefined} alt={msg.name} />
                           <AvatarFallback className="font-semibold text-sm">{getInitials(msg.name)}</AvatarFallback>
                         </Avatar>
@@ -476,7 +546,7 @@ export default function CommunityChatPage() {
                                 value={editText}
                                 onChange={(e) => setEditText(e.target.value)}
                                 onKeyDown={(e) => { if (e.key === "Escape") setEditingMessageId(null); }}
-                                className="bg-muted text-sm border-border w-full focus-visible:ring-1 focus-visible:ring-primary py-1 px-3 h-8"
+                                className="bg-muted text-base md:text-sm border-border w-full focus-visible:ring-1 focus-visible:ring-primary py-1 px-3 h-8"
                                 autoFocus
                               />
                               <div className="text-[10px] text-muted-foreground mt-1 select-none">
@@ -507,14 +577,25 @@ export default function CommunityChatPage() {
             )}
             <div ref={messagesEndRef} />
           </div>
+        </ScrollArea>
 
-          {/* Chat Input Bar with Docked Reply Banner */}
-          <footer className="p-4 border-t shrink-0">
-            <div className="flex flex-col w-full bg-muted border border-border rounded-lg shadow-sm">
+        {showScrollBottom && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-[96px] right-8 p-2.5 rounded-full bg-background/80 backdrop-blur-md border border-border shadow-md text-muted-foreground hover:text-foreground hover:scale-105 hover:bg-background active:scale-95 transition-all z-20 pointer-events-auto flex items-center justify-center"
+            title="Scroll to bottom"
+          >
+            <ChevronDown className="h-5 w-5" />
+          </button>
+        )}
+
+        {/* Chat Input Bar with Docked Reply Banner */}
+        <footer className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 bg-gradient-to-t from-background via-gradient/90 to-transparent pointer-events-none z-10 shrink-0">
+            <div className="pointer-events-auto flex flex-col w-full bg-background/80 backdrop-blur-md border border-border rounded-2xl shadow-lg focus-within:border-primary/40 focus-within:shadow-primary/5 transition-all">
               
               {/* Replying To Preview Banner */}
               {replyingTo && (
-                <div className="flex items-center justify-between px-4 py-2 border-b border-border text-xs text-muted-foreground bg-muted/40 rounded-t-lg">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-border text-xs text-muted-foreground bg-muted/40 rounded-t-2xl">
                   <div className="flex items-center gap-2 truncate">
                     <CornerUpLeft className="h-3.5 w-3.5" />
                     <span>Replying to <span className="font-semibold text-foreground/80">@{replyingTo.name}</span></span>
@@ -530,23 +611,33 @@ export default function CommunityChatPage() {
                 </div>
               )}
 
-              <form onSubmit={handleSendMessage} className="flex items-center gap-3 px-4 py-3 w-full">
-                <button 
-                  type="button" 
-                  className="bg-secondary text-secondary-foreground hover:bg-muted rounded-full p-1.5 transition-colors shrink-0"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
+              <form onSubmit={handleSendMessage} className="flex items-end gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 w-full">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      type="button" 
+                      className="bg-secondary text-secondary-foreground hover:bg-muted rounded-full p-1.5 transition-colors shrink-0 mb-[2px]"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" align="center">
+                    <p>Comming Soon!</p>
+                  </TooltipContent>
+                </Tooltip>
                 
-                <input
+                <textarea
+                  ref={textareaRef}
                   placeholder="Message #community"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   disabled={!connected}
-                  className="bg-transparent border-0 outline-none text-foreground placeholder-muted-foreground flex-1 text-sm focus:ring-0 focus-visible:ring-0 p-0"
+                  rows={1}
+                  className="bg-transparent border-0 outline-none text-foreground placeholder-muted-foreground flex-1 text-sm focus:ring-0 focus-visible:ring-0 p-0 resize-none py-1 min-h-[20px] max-h-[200px]"
                 />
                 
-                <div className="flex items-center gap-2 text-muted-foreground shrink-0">
+                <div className="flex items-center gap-2 text-muted-foreground shrink-0 mb-[2px]">
                   <button type="button" className="hover:text-foreground transition-colors">
                     <Smile className="h-5 w-5" />
                   </button>
@@ -565,31 +656,45 @@ export default function CommunityChatPage() {
 
         {/* Member List Sidebar */}
         {showMemberList && (
-          <aside className="w-60 border-l bg-muted/10 flex flex-col shrink-0">
-            <div className="p-4 border-b">
-              <h3 className="text-sm font-semibold text-muted-foreground">
+          <aside className="w-60 border border-border bg-background/95 backdrop-blur-md rounded-2xl flex flex-col shrink-0 shadow-xl overflow-hidden h-[calc(100%-2rem)] absolute right-4 top-4 bottom-4 z-40 md:relative md:my-4 md:mr-4 md:ml-0 md:bg-background/50 md:backdrop-blur-sm md:shadow-sm">
+            <div className="p-4 border-b border-border/50 bg-muted/20 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
                 Online — {onlineUsers.length}
               </h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 md:hidden text-muted-foreground hover:text-foreground hover:bg-muted"
+                onClick={() => setShowMemberList(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {onlineUsers.map((user) => (
-                <div
-                  key={user.sid}
-                  className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-muted/50 transition-colors"
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.image || undefined} />
-                    <AvatarFallback className="text-xs">
-                      {user.name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{user.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+            <ScrollArea className="flex-1 min-h-0" viewportClassName="p-2">
+              <div className="space-y-1">
+                {onlineUsers.map((user) => (
+                  <div
+                    key={user.sid}
+                    className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-muted/50 transition-colors"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.image || undefined} />
+                      <AvatarFallback className="text-xs">
+                        {user.name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{user.name}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </ScrollArea>
           </aside>
         )}
 
