@@ -80,8 +80,9 @@ self.addEventListener("fetch", (event) => {
         .catch(() => {
           // Fallback to home page if offline and loading page document
           if (event.request.mode === "navigate") {
-            return caches.match("/")
+            return caches.match("/") || new Response("Offline", { status: 503 })
           }
+          return new Response("Offline", { status: 503 })
         })
     })
   )
