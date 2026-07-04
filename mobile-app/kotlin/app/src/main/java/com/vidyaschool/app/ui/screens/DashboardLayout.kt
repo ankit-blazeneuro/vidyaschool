@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -229,63 +230,65 @@ fun DashboardLayout(
                         }
                     )
                 }
-                NavigationBar(
-                    modifier = Modifier.height(70.dp),
-                    containerColor = MaterialTheme.colorScheme.background,
-                    tonalElevation = 0.dp
-                ) {
-                    val navItemColors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        selectedTextColor = MaterialTheme.colorScheme.primary,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        indicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == "home",
-                        onClick = { selectedTab = "home" },
-                        label = { Text("Home", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                        icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_home), contentDescription = "Home", modifier = Modifier.size(22.dp)) },
-                        colors = navItemColors
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == "notice",
-                        onClick = { selectedTab = "notice" },
-                        label = { Text("Notice", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                        icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_notice), contentDescription = "Notice", modifier = Modifier.size(22.dp)) },
-                        colors = navItemColors
-                    )
-                    if (currentRole.value.equals("student", ignoreCase = true)) {
+                if (selectedTab != "community") {
+                    NavigationBar(
+                        modifier = Modifier.height(70.dp),
+                        containerColor = MaterialTheme.colorScheme.background,
+                        tonalElevation = 0.dp
+                    ) {
+                        val navItemColors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            indicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                        )
                         NavigationBarItem(
-                            selected = selectedTab == "fees",
-                            onClick = { selectedTab = "fees" },
-                            label = { Text("Pay Fees", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                            icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_pay_fees), contentDescription = "Pay Fees", modifier = Modifier.size(22.dp)) },
+                            selected = selectedTab == "home",
+                            onClick = { selectedTab = "home" },
+                            label = { Text("Home", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                            icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_home), contentDescription = "Home", modifier = Modifier.size(22.dp)) },
                             colors = navItemColors
                         )
-                    } else {
                         NavigationBarItem(
-                            selected = selectedTab == "community",
-                            onClick = { selectedTab = "community" },
-                            label = { Text("Community", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                            icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_community), contentDescription = "Community", modifier = Modifier.size(22.dp)) },
+                            selected = selectedTab == "notice",
+                            onClick = { selectedTab = "notice" },
+                            label = { Text("Notice", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                            icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_notice), contentDescription = "Notice", modifier = Modifier.size(22.dp)) },
+                            colors = navItemColors
+                        )
+                        if (currentRole.value.equals("student", ignoreCase = true)) {
+                            NavigationBarItem(
+                                selected = selectedTab == "fees",
+                                onClick = { selectedTab = "fees" },
+                                label = { Text("Pay Fees", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                                icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_pay_fees), contentDescription = "Pay Fees", modifier = Modifier.size(22.dp)) },
+                                colors = navItemColors
+                            )
+                        } else {
+                            NavigationBarItem(
+                                selected = selectedTab == "community",
+                                onClick = { selectedTab = "community" },
+                                label = { Text("Community", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                                icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_community), contentDescription = "Community", modifier = Modifier.size(22.dp)) },
+                                colors = navItemColors
+                            )
+                        }
+                        NavigationBarItem(
+                            selected = selectedTab == "search",
+                            onClick = { selectedTab = "search" },
+                            label = { Text("Search", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                            icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_search), contentDescription = "Search", modifier = Modifier.size(22.dp)) },
+                            colors = navItemColors
+                        )
+                        NavigationBarItem(
+                            selected = selectedTab == "profile",
+                            onClick = { selectedTab = "profile" },
+                            label = { Text("Profile", fontSize = 10.sp, maxLines = 1, softWrap = false) },
+                            icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_profile), contentDescription = "Profile", modifier = Modifier.size(22.dp)) },
                             colors = navItemColors
                         )
                     }
-                    NavigationBarItem(
-                        selected = selectedTab == "search",
-                        onClick = { selectedTab = "search" },
-                        label = { Text("Search", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                        icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_search), contentDescription = "Search", modifier = Modifier.size(22.dp)) },
-                        colors = navItemColors
-                    )
-                    NavigationBarItem(
-                        selected = selectedTab == "profile",
-                        onClick = { selectedTab = "profile" },
-                        label = { Text("Profile", fontSize = 10.sp, maxLines = 1, softWrap = false) },
-                        icon = { Icon(painter = painterResource(id = R.drawable.ic_custom_profile), contentDescription = "Profile", modifier = Modifier.size(22.dp)) },
-                        colors = navItemColors
-                    )
                 }
             }
         }
@@ -318,7 +321,8 @@ fun DashboardLayout(
                         role = currentRole.value,
                         sessionManager = sessionManager,
                         isRefreshing = isRefreshing,
-                        onRefresh = triggerRefresh
+                        onRefresh = triggerRefresh,
+                        onBackClick = { selectedTab = "home" }
                     )
                 }
                 "fees" -> {
@@ -1716,7 +1720,8 @@ fun CommunityTabContent(
     role: String,
     sessionManager: SessionManager,
     isRefreshing: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -1942,7 +1947,7 @@ fun CommunityTabContent(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 IconButton(
-                    onClick = { /* Open menu */ },
+                    onClick = onBackClick,
                     modifier = Modifier
                         .size(36.dp)
                         .border(
@@ -1953,8 +1958,8 @@ fun CommunityTabContent(
                         .clip(CircleShape)
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_custom_menu),
-                        contentDescription = "Menu",
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back",
                         modifier = Modifier.size(18.dp),
                         tint = MaterialTheme.colorScheme.onBackground
                     )
@@ -1996,7 +2001,7 @@ fun CommunityTabContent(
 
         HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
 
-        // Chat list area
+        // Chat list area & floating input bar
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -2029,7 +2034,7 @@ fun CommunityTabContent(
                 LazyColumn(
                     state = lazyListState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     items(messages.size) { index ->
@@ -2052,180 +2057,197 @@ fun CommunityTabContent(
                     }
                 }
             }
-        }
 
-        // Input bar
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
-                .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            // Reply Preview Banner
-            val rep = replyingTo
-            if (rep != null) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_custom_community),
-                            contentDescription = "Reply",
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Replying to @${rep.name}",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "\"${rep.content}\"",
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                        )
-                    }
-                    IconButton(
-                        onClick = { replyingTo = null },
-                        modifier = Modifier.size(20.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Cancel",
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
-
-            // Edit Preview Banner
-            val edit = editingMessage
-            if (edit != null) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit",
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Editing message...",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    IconButton(
-                        onClick = { editingMessage = null },
-                        modifier = Modifier.size(20.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Cancel",
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-
-            // Input Row
-            Row(
+            // Floating Input bar Card
+            Card(
                 modifier = Modifier
+                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
-                        RoundedCornerShape(24.dp)
-                    )
-                    .background(MaterialTheme.colorScheme.background, RoundedCornerShape(24.dp))
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                    .navigationBarsPadding(),
+                shape = RoundedCornerShape(28.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 8.dp
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+                )
             ) {
-                IconButton(
-                    onClick = {
-                        android.widget.Toast.makeText(context, "Coming Soon!", android.widget.Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add",
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                    )
-                }
-
-                // Text field
-                Box(
+                Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 4.dp)
                 ) {
-                    CustomTextField(
-                        value = inputText,
-                        onValueChange = { inputText = it },
-                        placeholder = "Message #community"
-                    )
-                }
-
-                IconButton(
-                    onClick = {
-                        android.widget.Toast.makeText(context, "Coming Soon!", android.widget.Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_custom_profile),
-                        contentDescription = "Emoji",
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                    )
-                }
-
-                IconButton(
-                    onClick = {
-                        if (editingMessage != null) {
-                            onEditMessage(editingMessage!!.id, inputText)
-                        } else {
-                            onSendMessage()
+                    // Reply Preview Banner
+                    val rep = replyingTo
+                    if (rep != null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_custom_community),
+                                    contentDescription = "Reply",
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "Replying to @${rep.name}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Text(
+                                    text = "\"${rep.content}\"",
+                                    fontSize = 12.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                            IconButton(
+                                onClick = { replyingTo = null },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Cancel",
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                    },
-                    enabled = isConnected && inputText.trim().isNotEmpty(),
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = "Send",
-                        modifier = Modifier.size(20.dp),
-                        tint = if (isConnected && inputText.trim().isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
-                    )
+                    }
+
+                    // Edit Preview Banner
+                    val edit = editingMessage
+                    if (edit != null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit",
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "Editing message...",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            IconButton(
+                                onClick = { editingMessage = null },
+                                modifier = Modifier.size(20.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Cancel",
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
+                    // Input Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
+                                RoundedCornerShape(24.dp)
+                            )
+                            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(24.dp))
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = {
+                                android.widget.Toast.makeText(context, "Coming Soon!", android.widget.Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Add",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
+                        }
+
+                        // Text field
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 8.dp)
+                        ) {
+                            CustomTextField(
+                                value = inputText,
+                                onValueChange = { inputText = it },
+                                placeholder = "Message #community"
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                android.widget.Toast.makeText(context, "Coming Soon!", android.widget.Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_custom_profile),
+                                contentDescription = "Emoji",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                if (editingMessage != null) {
+                                    onEditMessage(editingMessage!!.id, inputText)
+                                } else {
+                                    onSendMessage()
+                                }
+                            },
+                            enabled = isConnected && inputText.trim().isNotEmpty(),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Send,
+                                contentDescription = "Send",
+                                modifier = Modifier.size(20.dp),
+                                tint = if (isConnected && inputText.trim().isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
+                            )
+                        }
+                    }
                 }
             }
         }
