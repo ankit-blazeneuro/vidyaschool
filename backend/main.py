@@ -695,7 +695,7 @@ def register_fcm_token(data: dict, current_user: User = Depends(get_current_user
     return {"success": True}
 
 @app.post("/api/notifications/send")
-async def send_custom_notification(data: dict, current_user: User = Depends(require_role(["admin"])), db: Session = Depends(get_db)):
+async def send_custom_notification(data: dict, current_user: User = Depends(require_role(["admin", "teacher", "librarian"])), db: Session = Depends(get_db)):
     title = data.get("title")
     body = data.get("body")
     target_role = data.get("targetRole", "all")
