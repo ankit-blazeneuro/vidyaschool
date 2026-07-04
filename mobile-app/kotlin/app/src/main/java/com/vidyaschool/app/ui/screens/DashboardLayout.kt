@@ -1752,6 +1752,8 @@ fun CommunityTabContent(
             val opts = IO.Options().apply {
                 transports = arrayOf("websocket", "polling")
                 forceNew = true
+                callFactory = com.vidyaschool.app.api.RetrofitClient.okHttpClient
+                webSocketFactory = com.vidyaschool.app.api.RetrofitClient.okHttpClient
             }
             val socketInstance = IO.socket("https://vidyaschool-backend.onrender.com", opts)
 

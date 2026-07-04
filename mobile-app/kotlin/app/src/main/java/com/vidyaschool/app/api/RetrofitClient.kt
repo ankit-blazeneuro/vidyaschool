@@ -13,7 +13,7 @@ object RetrofitClient {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
-    private val client = OkHttpClient.Builder()
+    val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
@@ -25,13 +25,13 @@ object RetrofitClient {
 
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
-        .client(client)
+        .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
     private val frontendRetrofit = Retrofit.Builder()
         .baseUrl(FRONTEND_URL)
-        .client(client)
+        .client(okHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
