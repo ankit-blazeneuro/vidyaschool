@@ -7,6 +7,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -38,6 +40,7 @@ import kotlinx.coroutines.launch
 
 import com.vidyaschool.app.api.CreateSessionRequest
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LoginScreen(
     viewModel: AuthViewModel,
@@ -243,8 +246,12 @@ fun LoginScreen(
         BottomDrawer(
             modifier = Modifier.align(Alignment.BottomCenter)
         ) {
+            val scrollState = rememberScrollState()
             Column(
-                modifier = Modifier.verticalScroll(rememberScrollState())
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+                    .imeNestedScroll()
             ) {
                 Text(
                     text = "Welcome back",
@@ -257,14 +264,16 @@ fun LoginScreen(
                 CustomTextField(
                     value = email,
                     onValueChange = { email = it },
-                    placeholder = "Email",
+                    label = "Email",
+                    placeholder = "e.g. you@school.edu",
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
                 CustomTextField(
                     value = password,
                     onValueChange = { password = it },
-                    placeholder = "Password",
+                    label = "Password",
+                    placeholder = "Enter your password",
                     isPassword = true,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )

@@ -147,6 +147,7 @@ class Complaint(SQLModel, table=True):
     file_url: Optional[str] = Field(default=None, alias="file_url")
     file_name: Optional[str] = Field(default=None, alias="file_name")
     status: str = Field(default="pending")
+    sort_order: int = Field(default=0, alias="sort_order")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

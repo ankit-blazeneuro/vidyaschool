@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vidyaschool.app.api.RetrofitClient
+import com.vidyaschool.app.ui.shadcn.Input
 import com.vidyaschool.app.api.SliderImage
 import kotlinx.coroutines.launch
 
@@ -240,20 +241,20 @@ fun AdminScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         
-                        OutlinedTextField(
+                        Input(
                             value = newTitle,
                             onValueChange = { newTitle = it },
-                            label = { Text("Image Title") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            label = "Image Title",
+                            placeholder = "e.g. Annual Day 2026",
+                            modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
+                        Input(
                             value = newUrl,
                             onValueChange = { newUrl = it },
-                            label = { Text("Image URL") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            label = "Image URL",
+                            placeholder = "e.g. https://example.com/image.jpg",
+                            modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         

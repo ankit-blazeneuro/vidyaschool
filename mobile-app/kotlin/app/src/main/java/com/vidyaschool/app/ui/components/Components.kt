@@ -22,6 +22,7 @@ fun BottomDrawer(
             .fillMaxWidth()
             .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
             .background(MaterialTheme.colorScheme.surface)
+            .imePadding()
             .navigationBarsPadding()
             .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 24.dp)
     ) {
@@ -121,36 +122,21 @@ fun CustomTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     modifier: Modifier = Modifier,
-    isPassword: Boolean = false
+    label: String? = null,
+    isPassword: Boolean = false,
+    readOnly: Boolean = false,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null
 ) {
-    OutlinedTextField(
+    com.vidyaschool.app.ui.shadcn.Input(
         value = value,
         onValueChange = onValueChange,
-        placeholder = { 
-            Text(
-                placeholder,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-            )
-        },
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        singleLine = true,
-        shape = RoundedCornerShape(8.dp),
-        textStyle = MaterialTheme.typography.bodyMedium.copy(
-            fontSize = 15.sp
-        ),
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            cursorColor = MaterialTheme.colorScheme.primary
-        ),
-        visualTransformation = if (isPassword) 
-            androidx.compose.ui.text.input.PasswordVisualTransformation() 
-        else 
-            androidx.compose.ui.text.input.VisualTransformation.None
+        placeholder = placeholder,
+        label = label,
+        modifier = modifier,
+        isPassword = isPassword,
+        readOnly = readOnly,
+        trailingIcon = trailingIcon,
+        onClick = onClick
     )
 }

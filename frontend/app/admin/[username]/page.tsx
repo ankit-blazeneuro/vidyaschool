@@ -1,8 +1,7 @@
 import { requireRole } from "@/lib/auth-helpers"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
+import { ComplaintsOutlineTable } from "@/components/complaints-outline-table"
 import { SectionCards } from "@/components/section-cards"
-import studentData from "../../student/[username]/data.json"
 import { headers } from "next/headers"
 
 interface PageProps {
@@ -115,7 +114,7 @@ export default async function AdminDashboardPage({ params }: PageProps) {
           hideTimeRangeToggle={true}
         />
       </div>
-      <DataTable data={studentData} />
+      <ComplaintsOutlineTable />
     </div>
   )
 }

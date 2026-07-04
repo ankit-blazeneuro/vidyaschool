@@ -160,6 +160,7 @@ export const complaint = pgTable('complaint', {
   fileUrl: text('file_url'),
   fileName: text('file_name'),
   status: text('status').notNull().default('pending'), // 'pending', 'resolved'
+  sortOrder: integer('sort_order').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })

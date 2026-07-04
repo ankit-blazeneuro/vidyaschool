@@ -42,8 +42,12 @@ import com.vidyaschool.app.auth.SessionManager
 import com.vidyaschool.app.api.UpdateChecker
 import com.vidyaschool.app.api.UpdateInfo
 import com.vidyaschool.app.ui.components.CustomTextField
+import com.vidyaschool.app.ui.shadcn.Input
+import com.vidyaschool.app.ui.shadcn.Select
+import com.vidyaschool.app.ui.shadcn.SelectOption
 import coil.compose.AsyncImage
 import com.vidyaschool.app.api.FeeInstallment
+import com.vidyaschool.app.api.NoticeResponse
 import com.vidyaschool.app.api.PayFeesRequest
 import com.vidyaschool.app.api.PayFeesResponse
 import com.vidyaschool.app.api.SearchUserResponse
@@ -294,6 +298,7 @@ fun DashboardLayout(
                 }
                 "notice" -> {
                     NoticeTabContent(
+                        sessionManager = sessionManager,
                         isRefreshing = isRefreshing,
                         onRefresh = triggerRefresh
                     )
@@ -430,30 +435,34 @@ fun SearchTabContent(
                 .statusBarsPadding()
                 .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp)
         ) {
-            // Search Input styled like Shadcn command input
-            OutlinedTextField(
+            // Search Input styled like shadcn
+            Input(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search pages, users, docs...", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)) },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                        }
-                    }
-                },
+                placeholder = "Search pages, users, docs...",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                ),
-                singleLine = true
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Clear",
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -1187,95 +1196,46 @@ fun ProfileTabContent(
                             HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f))
 
                             if (isEditing) {
-                                OutlinedTextField(
+                                Input(
                                     value = tempUsername,
                                     onValueChange = { tempUsername = it.toLowerCase().replace(Regex("[^a-z0-9_]"), "") },
-                                    label = { Text("Username") },
-                                    singleLine = true,
+                                    label = "Username",
+                                    placeholder = "e.g. student_name",
                                     modifier = Modifier.fillMaxWidth()
                                 )
 
-                                OutlinedTextField(
+                                Input(
                                     value = editPhoneNumber,
                                     onValueChange = { editPhoneNumber = it },
-                                    label = { Text("Phone Number") },
-                                    singleLine = true,
+                                    label = "Phone Number",
+                                    placeholder = "e.g. 9876543210",
                                     modifier = Modifier.fillMaxWidth()
                                 )
 
-                                var classMenuExpanded by remember { mutableStateOf(false) }
-                                Box(modifier = Modifier.fillMaxWidth()) {
-                                    OutlinedTextField(
-                                        value = if (editClass == "none" || editClass.isEmpty()) "Not assigned" else if (editClass == "Nursery" || editClass == "KG") editClass else "Class $editClass",
-                                        onValueChange = {},
-                                        readOnly = true,
-                                        label = { Text("Assigned Class") },
-                                        trailingIcon = {
-                                            IconButton(onClick = { classMenuExpanded = true }) {
-                                                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null)
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                    DropdownMenu(
-                                        expanded = classMenuExpanded,
-                                        onDismissRequest = { classMenuExpanded = false }
-                                    ) {
-                                        DropdownMenuItem(
-                                            text = { Text("Not assigned") },
-                                            onClick = {
-                                                editClass = "none"
-                                                classMenuExpanded = false
-                                            }
-                                        )
-                                        listOf("Nursery", "KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12").forEach { c ->
-                                            DropdownMenuItem(
-                                                text = { Text(if (c == "Nursery" || c == "KG") c else "Class $c") },
-                                                onClick = {
-                                                    editClass = c
-                                                    classMenuExpanded = false
-                                                }
+                                Select(
+                                    selectedValue = editClass.ifBlank { "none" },
+                                    onValueChange = { editClass = it },
+                                    options = listOf(SelectOption("none", "Not assigned")) +
+                                        listOf("Nursery", "KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12").map { c ->
+                                            SelectOption(
+                                                value = c,
+                                                label = if (c == "Nursery" || c == "KG") c else "Class $c"
                                             )
-                                        }
-                                    }
-                                }
+                                        },
+                                    label = "Assigned Class",
+                                    placeholder = "e.g. Class 10",
+                                    modifier = Modifier.fillMaxWidth()
+                                )
 
-                                var sectionMenuExpanded by remember { mutableStateOf(false) }
-                                Box(modifier = Modifier.fillMaxWidth()) {
-                                    OutlinedTextField(
-                                        value = if (editSection == "none" || editSection.isEmpty()) "Not assigned" else editSection,
-                                        onValueChange = {},
-                                        readOnly = true,
-                                        label = { Text("Assigned Section") },
-                                        trailingIcon = {
-                                            IconButton(onClick = { sectionMenuExpanded = true }) {
-                                                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null)
-                                            }
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                    DropdownMenu(
-                                        expanded = sectionMenuExpanded,
-                                        onDismissRequest = { sectionMenuExpanded = false }
-                                    ) {
-                                        DropdownMenuItem(
-                                            text = { Text("Not assigned") },
-                                            onClick = {
-                                                editSection = "none"
-                                                sectionMenuExpanded = false
-                                            }
-                                        )
-                                        listOf("A", "B", "C", "D", "E", "F").forEach { s ->
-                                            DropdownMenuItem(
-                                                text = { Text(s) },
-                                                onClick = {
-                                                    editSection = s
-                                                    sectionMenuExpanded = false
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
+                                Select(
+                                    selectedValue = editSection.ifBlank { "none" },
+                                    onValueChange = { editSection = it },
+                                    options = listOf(SelectOption("none", "Not assigned")) +
+                                        listOf("A", "B", "C", "D", "E", "F").map { SelectOption(it, it) },
+                                    label = "Assigned Section",
+                                    placeholder = "e.g. A",
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             } else {
                                 ProfileDetailRow(label = "ID / Admission No", value = userProfile?.admissionNumber ?: "N/A")
                                 ProfileDetailRow(label = "Username", value = if (tempUsername.isNotEmpty()) "@$tempUsername" else "Not set")
@@ -1306,25 +1266,25 @@ fun ProfileTabContent(
                                 HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f))
 
                                 if (isEditing) {
-                                    OutlinedTextField(
+                                    Input(
                                         value = editParentName,
                                         onValueChange = { editParentName = it },
-                                        label = { Text("Parent Name") },
-                                        singleLine = true,
+                                        label = "Parent Name",
+                                        placeholder = "e.g. Rajesh Kumar",
                                         modifier = Modifier.fillMaxWidth()
                                     )
-                                    OutlinedTextField(
+                                    Input(
                                         value = editParentPhone,
                                         onValueChange = { editParentPhone = it },
-                                        label = { Text("Parent Phone") },
-                                        singleLine = true,
+                                        label = "Parent Phone",
+                                        placeholder = "e.g. 9876543210",
                                         modifier = Modifier.fillMaxWidth()
                                     )
-                                    OutlinedTextField(
+                                    Input(
                                         value = editParentEmail,
                                         onValueChange = { editParentEmail = it },
-                                        label = { Text("Parent Email") },
-                                        singleLine = true,
+                                        label = "Parent Email",
+                                        placeholder = "e.g. parent@email.com",
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 } else {
@@ -1349,32 +1309,32 @@ fun ProfileTabContent(
                             HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f))
 
                             if (isEditing) {
-                                OutlinedTextField(
+                                Input(
                                     value = editAddress,
                                     onValueChange = { editAddress = it },
-                                    label = { Text("Street Address") },
-                                    singleLine = true,
+                                    label = "Street Address",
+                                    placeholder = "e.g. 42 MG Road, Block B",
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                OutlinedTextField(
+                                Input(
                                     value = editCity,
                                     onValueChange = { editCity = it },
-                                    label = { Text("City") },
-                                    singleLine = true,
+                                    label = "City",
+                                    placeholder = "e.g. Delhi",
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                OutlinedTextField(
+                                Input(
                                     value = editState,
                                     onValueChange = { editState = it },
-                                    label = { Text("State") },
-                                    singleLine = true,
+                                    label = "State",
+                                    placeholder = "e.g. Delhi",
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                OutlinedTextField(
+                                Input(
                                     value = editPincode,
                                     onValueChange = { editPincode = it },
-                                    label = { Text("Pincode") },
-                                    singleLine = true,
+                                    label = "Pincode",
+                                    placeholder = "e.g. 110001",
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             } else {
@@ -1528,19 +1488,46 @@ fun ProfileDetailRow(label: String, value: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoticeTabContent(
+    sessionManager: SessionManager,
     isRefreshing: Boolean,
     onRefresh: () -> Unit
 ) {
-    val notices = listOf(
-        Triple("Summer Vacation Announcement", "Summer vacation will commence from July 1st to August 15th. School will reopen on August 16th.", "2026-06-25"),
-        Triple("Annual Sports Day 2026", "Join us for the Annual Sports Day on July 10th at the main ground. Events start at 8:00 AM.", "2026-06-20"),
-        Triple("Fee Payment Deadline Extended", "The last date for second-term fee payment has been extended to July 5th without late fee.", "2026-06-18"),
-        Triple("Science Exhibition Registrations", "Registrations are open for the upcoming Science Exhibition. Contact your class teacher before June 30th.", "2026-06-15")
-    )
-    
+    val scope = rememberCoroutineScope()
+    var notices by remember { mutableStateOf<List<NoticeResponse>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var loadError by remember { mutableStateOf<String?>(null) }
+
+    val fetchNotices: () -> Unit = {
+        isLoading = true
+        loadError = null
+        scope.launch {
+            try {
+                val token = sessionManager.getSessionToken()
+                if (!token.isNullOrEmpty()) {
+                    val response = RetrofitClient.authApi.getNotices("Bearer $token")
+                    if (response.isSuccessful) {
+                        notices = response.body() ?: emptyList()
+                    } else {
+                        loadError = "Failed to load notices"
+                    }
+                } else {
+                    loadError = "Please sign in to view notices"
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("NoticeTabContent", "Error: ${e.message}")
+                loadError = e.message ?: "Failed to load notices"
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) { fetchNotices() }
+    LaunchedEffect(isRefreshing) { if (isRefreshing) fetchNotices() }
+
     PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = onRefresh,
+        isRefreshing = isRefreshing || isLoading,
+        onRefresh = { onRefresh(); fetchNotices() },
         modifier = Modifier.fillMaxSize()
     ) {
         Column(
@@ -1556,63 +1543,105 @@ fun NoticeTabContent(
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(16.dp))
-            
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(notices.size) { index ->
-                    val notice = notices[index]
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
+
+            loadError?.let { error ->
+                Text(
+                    text = error,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+            }
+
+            if (notices.isEmpty() && !isLoading && loadError == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No notices yet",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(notices.size) { index ->
+                        val notice = notices[index]
+                        val badgeLabel = when {
+                            notice.isUrgent -> "Urgent"
+                            notice.category.isNotBlank() -> notice.category
+                            else -> "Notice"
+                        }
+                        val badgeColor = if (notice.isUrgent) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        }
+                        val formattedDate = notice.createdAt.take(10)
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            )
                         ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(
+                                modifier = Modifier.padding(16.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .background(
-                                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(
+                                                color = badgeColor.copy(alpha = 0.15f),
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = badgeLabel,
+                                            color = badgeColor,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                     Text(
-                                        text = "Official",
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
+                                        text = formattedDate,
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                     )
                                 }
+                                notice.senderName?.takeIf { it.isNotBlank() }?.let { sender ->
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "By $sender",
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = notice.third,
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    text = notice.title,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = notice.content,
+                                    fontSize = 14.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                    lineHeight = 20.sp
                                 )
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = notice.first,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = notice.second,
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                lineHeight = 20.sp
-                            )
                         }
                     }
                 }
@@ -1716,7 +1745,7 @@ fun CommunityTabContent(
                             CustomTextField(
                                 value = newPostText,
                                 onValueChange = { newPostText = it },
-                                placeholder = "Share something with the school..."
+                                placeholder = "e.g. Share an update with the school..."
                             )
                         }
                     }

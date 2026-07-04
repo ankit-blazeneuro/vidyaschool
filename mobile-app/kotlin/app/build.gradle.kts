@@ -52,6 +52,12 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.4"
     }
+
+    sourceSets {
+        getByName("main") {
+            java.srcDirs("src/main/java", "../../shadcn/src/main/kotlin")
+        }
+    }
 }
 
 dependencies {

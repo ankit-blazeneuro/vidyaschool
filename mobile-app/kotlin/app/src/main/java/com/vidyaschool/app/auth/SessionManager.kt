@@ -55,6 +55,16 @@ class SessionManager(context: Context) {
     fun getStudentClass(): String? = prefs.getString(KEY_STUDENT_CLASS, null)
     fun getUsername(): String? = prefs.getString(KEY_USERNAME, null)
 
+    fun updateOnboardingData(username: String, studentClass: String?) {
+        prefs.edit().apply {
+            putString(KEY_USERNAME, username)
+            if (!studentClass.isNullOrEmpty()) {
+                putString(KEY_STUDENT_CLASS, studentClass)
+            }
+            apply()
+        }
+    }
+
     fun clearSession() {
         prefs.edit().clear().apply()
     }

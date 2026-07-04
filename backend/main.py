@@ -25,6 +25,7 @@ from app.routes.fees import router as fees_router
 from app.routes.teacher import router as teacher_router
 from app.routes.slider import router as slider_router
 from app.routes.library import router as library_router
+from app.routes.notices import router as notices_router
 from models import User
 
 # Load env variables from .env (local dev only — on Render, system env vars take precedence)
@@ -358,6 +359,7 @@ app.include_router(fees_router)
 app.include_router(teacher_router)
 app.include_router(slider_router)
 app.include_router(library_router)
+app.include_router(notices_router)
 
 # Admin endpoints for teacher approval and subject requests
 @app.get("/api/health")
@@ -574,6 +576,15 @@ async def get_accounts_dashboard():
 @app.post("/notify-teacher-request")
 async def notify_teacher_request(data: dict):
     await sio.emit('teacher_request_created', data, broadcast=True)
+    return {"success": True}
+
+
+@app.post("/notify-complaint")
+async def notify_complaint(data: dict):
+    event = data.get("event", "complaint_created")
+    payload = data.get("payload", data)
+    await sio.emit(event, payload, room='admin_room')
+    await sio.emit(event, payload, broadcast=True)
     return {"success": True}
 
 

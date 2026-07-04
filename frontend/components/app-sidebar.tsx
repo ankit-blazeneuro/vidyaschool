@@ -403,6 +403,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
     })
 
+    socket.on("complaint_created", () => {
+      if (isAdmin && !pathname?.includes("/complaints")) {
+        setUnreadComplaints(true)
+      }
+    })
+
     return () => {
       socket.disconnect()
     }

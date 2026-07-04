@@ -196,6 +196,17 @@ interface AuthApi {
         @Header("Authorization") authHeader: String
     ): Response<ProfileResponse>
 
+    @GET("api/onboarding/status")
+    suspend fun getOnboardingStatus(
+        @Header("Authorization") authHeader: String
+    ): Response<OnboardingStatusResponse>
+
+    @POST("api/onboarding")
+    suspend fun submitOnboarding(
+        @Header("Authorization") authHeader: String,
+        @Body request: OnboardingSubmitRequest
+    ): Response<Map<String, Any?>>
+
     @GET("api/student/borrowings")
     suspend fun getStudentBorrowings(
         @Header("Authorization") authHeader: String
@@ -206,6 +217,11 @@ interface AuthApi {
         @Header("Authorization") authHeader: String,
         @Body request: StudentRenewRequest
     ): Response<Map<String, Any?>>
+
+    @GET("api/notices")
+    suspend fun getNotices(
+        @Header("Authorization") authHeader: String
+    ): Response<List<NoticeResponse>>
 }
 
 data class SearchUserResponse(
@@ -255,6 +271,26 @@ data class ProfileUpdateRequest(
     val section: String? = null
 )
 
+data class OnboardingStatusResponse(
+    @SerializedName("onboardingCompleted") val onboardingCompleted: Boolean
+)
+
+data class OnboardingSubmitRequest(
+    val admissionNumber: String? = null,
+    val username: String,
+    val phoneNumber: String? = null,
+    val parentName: String? = null,
+    val parentPhone: String? = null,
+    val parentEmail: String? = null,
+    val address: String? = null,
+    val city: String? = null,
+    val state: String? = null,
+    val pincode: String? = null,
+    @SerializedName("class") val class_: String? = null,
+    val section: String? = null,
+    @SerializedName("transportMode") val transportMode: String? = null
+)
+
 data class StudentBorrowingResponse(
     val id: String,
     val bookId: String,
@@ -270,4 +306,18 @@ data class StudentBorrowingResponse(
 
 data class StudentRenewRequest(
     val id: String
+)
+
+data class NoticeResponse(
+    val id: String,
+    val title: String,
+    val content: String,
+    val category: String,
+    @SerializedName("isUrgent") val isUrgent: Boolean = false,
+    @SerializedName("senderId") val senderId: String? = null,
+    @SerializedName("targetRole") val targetRole: String? = null,
+    @SerializedName("targetClass") val targetClass: String? = null,
+    @SerializedName("targetSection") val targetSection: String? = null,
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("senderName") val senderName: String? = null
 )

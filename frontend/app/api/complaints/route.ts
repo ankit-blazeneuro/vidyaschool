@@ -1,12 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { complaint, user } from '@/lib/schema'
-import { eq, like } from 'drizzle-orm'
+import { asc, eq, like } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import crypto from 'crypto'
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
+
+async function notifyComplaint(event: string, payload: Record<string, unknown>) {
+  try {
+    await fetch(`${BACKEND_URL}/notify-complaint`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, payload }),
+    })
+  } catch (error) {
+    console.error('Failed to emit complaint socket event:', error)
+  }
+}
 
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -28,6 +42,7 @@ export async function GET(req: NextRequest) {
       fileUrl: complaint.fileUrl,
       fileName: complaint.fileName,
       status: complaint.status,
+      sortOrder: complaint.sortOrder,
       createdAt: complaint.createdAt,
       updatedAt: complaint.updatedAt,
       senderName: user.name,
@@ -36,6 +51,7 @@ export async function GET(req: NextRequest) {
     })
     .from(complaint)
     .leftJoin(user, eq(complaint.userId, user.id))
+    .orderBy(asc(complaint.sortOrder), asc(complaint.createdAt))
 
     let results
     if (role === 'teacher') {
@@ -80,11 +96,9 @@ export async function POST(req: NextRequest) {
       const bytes = await file.arrayBuffer()
       const buffer = Buffer.from(bytes)
 
-      // Ensure directory exists
       const uploadDir = path.join(process.cwd(), 'public', 'uploads')
       await mkdir(uploadDir, { recursive: true })
 
-      // Generate a unique filename to prevent collisions
       const uniqueFilename = `${crypto.randomUUID()}-${file.name}`
       const filePath = path.join(uploadDir, uniqueFilename)
       await writeFile(filePath, buffer)
@@ -94,6 +108,7 @@ export async function POST(req: NextRequest) {
     }
 
     const complaintId = `comp-${crypto.randomUUID()}`
+    const now = new Date()
     await db.insert(complaint).values({
       id: complaintId,
       userId: session.user.id,
@@ -104,8 +119,19 @@ export async function POST(req: NextRequest) {
       fileUrl,
       fileName,
       status: 'pending',
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      sortOrder: 0,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    await notifyComplaint('complaint_created', {
+      id: complaintId,
+      title,
+      recipient,
+      status: 'pending',
+      senderName: session.user.name,
+      senderRole: session.user.role,
+      createdAt: now.toISOString(),
     })
 
     return NextResponse.json({ success: true, id: complaintId })
@@ -122,7 +148,23 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
-    const { id, status } = await req.json()
+    const body = await req.json()
+    const { id, status, orderedIds } = body
+
+    if (orderedIds && Array.isArray(orderedIds)) {
+      await Promise.all(
+        orderedIds.map((complaintId: string, index: number) =>
+          db.update(complaint)
+            .set({ sortOrder: index, updatedAt: new Date() })
+            .where(eq(complaint.id, complaintId))
+        )
+      )
+
+      await notifyComplaint('complaint_reordered', { orderedIds })
+
+      return NextResponse.json({ success: true })
+    }
+
     if (!id || !status) {
       return NextResponse.json({ error: 'ID and status are required' }, { status: 400 })
     }
@@ -130,6 +172,8 @@ export async function PATCH(req: NextRequest) {
     await db.update(complaint)
       .set({ status, updatedAt: new Date() })
       .where(eq(complaint.id, id))
+
+    await notifyComplaint('complaint_updated', { id, status })
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

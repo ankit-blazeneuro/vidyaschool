@@ -61,16 +61,45 @@ fun StudentScreen(
     onShowLibrary: () -> Unit = {},
     onLogout: () -> Unit
 ) {
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val sessionToken = sessionManager.getSessionToken()
+
+    var currentStudentClass by remember { mutableStateOf(studentClass) }
     var sliderImages by remember { mutableStateOf<List<SliderImage>>(emptyList()) }
     var isLoadingSlider by remember { mutableStateOf(true) }
+    var showOnboarding by remember { mutableStateOf(false) }
+    var isCheckingOnboarding by remember { mutableStateOf(true) }
+
+    LaunchedEffect(sessionToken) {
+        isCheckingOnboarding = true
+        if (sessionToken.isNullOrEmpty()) {
+            isCheckingOnboarding = false
+            return@LaunchedEffect
+        }
+        try {
+            val response = RetrofitClient.authApi.getProfile("Bearer $sessionToken")
+            if (response.isSuccessful) {
+                val profile = response.body()?.profile
+                val completed = profile?.onboardingCompleted == true && !profile.username.isNullOrBlank()
+                showOnboarding = !completed
+                profile?.`class`?.takeIf { it.isNotBlank() }?.let { currentStudentClass = it }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("StudentScreen", "Failed to check onboarding: ${e.message}")
+        } finally {
+            isCheckingOnboarding = false
+        }
+    }
     
-    LaunchedEffect(studentClass) {
+    LaunchedEffect(currentStudentClass, showOnboarding) {
+        if (showOnboarding) return@LaunchedEffect
         isLoadingSlider = true
         try {
             delay(2000) // Deliberate delay to show skeleton shimmer
             val response = RetrofitClient.authApi.getSliderImages(
                 role = "student",
-                studentClass = studentClass.takeIf { it.isNotEmpty() }
+                studentClass = currentStudentClass.takeIf { it.isNotEmpty() }
             )
             if (response.isSuccessful) {
                 sliderImages = response.body() ?: emptyList()
@@ -82,6 +111,7 @@ fun StudentScreen(
         }
     }
     
+    Box(modifier = Modifier.fillMaxSize()) {
     DashboardLayout(
         role = "student",
         provider = provider,
@@ -247,6 +277,21 @@ fun StudentScreen(
                 HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                 }
             }
+        }
+    }
+
+        if (!isCheckingOnboarding && showOnboarding && !sessionToken.isNullOrEmpty()) {
+            StudentOnboardingDrawer(
+                email = email,
+                sessionToken = sessionToken,
+                onComplete = { username, newClass ->
+                    sessionManager.updateOnboardingData(username, newClass)
+                    if (!newClass.isNullOrEmpty()) {
+                        currentStudentClass = newClass
+                    }
+                    showOnboarding = false
+                }
+            )
         }
     }
 }
