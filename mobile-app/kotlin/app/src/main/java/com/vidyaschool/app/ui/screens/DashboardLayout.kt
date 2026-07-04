@@ -26,6 +26,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -1740,9 +1743,17 @@ fun CommunityTabContent(
     var inputText by remember { mutableStateOf("") }
     var replyingTo by remember { mutableStateOf<CommunityMsg?>(null) }
     var editingMessage by remember { mutableStateOf<CommunityMsg?>(null) }
+    var onlineCount by remember { mutableStateOf(1) }
     
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
+            lazyListState.scrollToItem(messages.size - 1)
+        }
+    }
+
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+    LaunchedEffect(imeBottom) {
+        if (imeBottom > 0 && messages.isNotEmpty()) {
             lazyListState.scrollToItem(messages.size - 1)
         }
     }
@@ -1796,6 +1807,17 @@ fun CommunityTabContent(
                 android.util.Log.d("CommunityTab", "Socket disconnected!")
                 coroutineScope.launch {
                     isConnected = false
+                }
+            }
+
+            socketInstance.on("online_users") { args ->
+                if (args != null && args.isNotEmpty()) {
+                    val usersArray = args[0] as? org.json.JSONArray
+                    if (usersArray != null) {
+                        coroutineScope.launch {
+                            onlineCount = usersArray.length()
+                        }
+                    }
                 }
             }
 
@@ -1984,7 +2006,7 @@ fun CommunityTabContent(
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "${role.lowercase().replaceFirstChar { it.uppercase() }} Portal",
+                        text = "$onlineCount ${if (onlineCount == 1) "user" else "users"} online",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                     )
@@ -2017,6 +2039,7 @@ fun CommunityTabContent(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                .imePadding()
         ) {
             if (messages.isEmpty() && !isConnected) {
                 Box(
@@ -2092,7 +2115,6 @@ fun CommunityTabContent(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                    .imePadding()
                     .navigationBarsPadding(),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
@@ -2278,7 +2300,7 @@ fun CommunityTabContent(
                                 .clip(CircleShape)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Send,
+                                painter = painterResource(id = R.drawable.ic_arrow_up),
                                 contentDescription = "Send",
                                 modifier = Modifier.size(18.dp),
                                 tint = sendButtonTint
