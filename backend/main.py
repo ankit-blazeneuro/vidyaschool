@@ -605,8 +605,14 @@ from firebase_admin import credentials, messaging
 firebase_app = None
 try:
     cred_path = os.getenv("FIREBASE_CREDENTIALS_JSON")
+    cred_content = os.getenv("FIREBASE_CREDENTIALS_JSON_CONTENT")
     if cred_path and os.path.exists(cred_path):
         cred = credentials.Certificate(cred_path)
+        firebase_app = firebase_admin.initialize_app(cred)
+    elif cred_content:
+        import json
+        cred_info = json.loads(cred_content)
+        cred = credentials.Certificate(cred_info)
         firebase_app = firebase_admin.initialize_app(cred)
     else:
         firebase_app = firebase_admin.initialize_app()

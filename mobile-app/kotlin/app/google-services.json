@@ -1,26 +1,21 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "vidyaschool-fcm",
-    "storage_bucket": "vidyaschool-fcm.appspot.com"
+    "project_number": "959436457918",
+    "project_id": "vidyaschoolapp",
+    "storage_bucket": "vidyaschoolapp.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:abcdef0123456789",
+        "mobilesdk_app_id": "1:959436457918:android:595692707e3d3f66709bef",
         "android_client_info": {
           "package_name": "com.vidyaschool.app"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "841705301007-pv1r9dtukce7jg9ag6aa8ogi4f7aveon.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDummyKeyHere-ForBuildValidationOnly"
+          "current_key": "AIzaSyBdW5HYt-YMPhR6TCGSLQ_1xbySsJjVxGw"
         }
       ],
       "services": {
