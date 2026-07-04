@@ -25,5 +25,6 @@ export async function POST(req: NextRequest) {
   })
 
   const data = await res.json()
+  console.log('[notifications/send] status:', res.status, 'response:', JSON.stringify(data))
   return NextResponse.json(data, { status: res.status })
 }

@@ -140,11 +140,9 @@ export default function TeacherNoticePage() {
           targetSection: pushTargetSection || undefined,
         }),
       })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.detail || "Failed to send notification")
-      }
       const data = await res.json()
+      console.log('[push] status:', res.status, 'data:', data)
+      if (!res.ok) throw new Error(data.detail || data.error || "Failed to send notification")
       toast.success(`Notification sent to ${data.deliveredCount} user(s)`)
       setPushTitle("")
       setPushBody("")
