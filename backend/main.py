@@ -631,6 +631,8 @@ def send_fcm_notification(tokens: list[str], title: str, body: str):
             title=title,
             body=body,
         ),
+        data={"title": title, "body": body},
+        android=messaging.AndroidConfig(priority="high"),
         tokens=tokens,
     )
     try:

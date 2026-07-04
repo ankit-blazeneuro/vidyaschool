@@ -231,9 +231,7 @@ fun DashboardLayout(
                     if (obj != null) {
                         val title = obj.optString("title", "New Notification")
                         val body = obj.optString("body", "")
-                        scope.launch(kotlinx.coroutines.Dispatchers.Main) {
-                            android.widget.Toast.makeText(context, "$title\n$body", android.widget.Toast.LENGTH_LONG).show()
-                        }
+                        com.vidyaschool.app.MyFirebaseMessagingService.showNotification(context, title, body)
                     }
                 }
             }
