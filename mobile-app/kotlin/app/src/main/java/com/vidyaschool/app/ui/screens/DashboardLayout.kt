@@ -1748,16 +1748,18 @@ fun CommunityTabContent(
 
     LaunchedEffect(currentUser) {
         val user = currentUser ?: return@LaunchedEffect
+        var socketInstance: io.socket.client.Socket? = null
         try {
             val opts = IO.Options().apply {
-                transports = arrayOf("websocket", "polling")
+                transports = arrayOf("polling", "websocket")
                 forceNew = true
-                callFactory = com.vidyaschool.app.api.RetrofitClient.okHttpClient
-                webSocketFactory = com.vidyaschool.app.api.RetrofitClient.okHttpClient
+                callFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
+                webSocketFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
             }
-            val socketInstance = IO.socket("https://vidyaschool-backend.onrender.com", opts)
+            socketInstance = IO.socket("https://vidyaschool-backend.onrender.com", opts)
 
             socketInstance.on(Socket.EVENT_CONNECT) {
+                android.util.Log.d("CommunityTab", "Socket connected successfully!")
                 coroutineScope.launch {
                     isConnected = true
                 }
@@ -1775,30 +1777,37 @@ fun CommunityTabContent(
             }
 
             socketInstance.on(Socket.EVENT_DISCONNECT) {
+                android.util.Log.d("CommunityTab", "Socket disconnected!")
                 coroutineScope.launch {
                     isConnected = false
                 }
             }
 
             socketInstance.on("recent_messages") { args ->
-                if (args.isNotEmpty()) {
+                android.util.Log.d("CommunityTab", "recent_messages event received, args size = ${args?.size}")
+                if (args != null && args.isNotEmpty()) {
                     val data = args[0] as? org.json.JSONObject
                     if (data != null) {
                         val messagesArray = data.optJSONArray("messages")
                         if (messagesArray != null) {
                             val list = mutableListOf<CommunityMsg>()
                             val gson = Gson()
-                            for (i in 0 until messagesArray.length()) {
-                                val obj = messagesArray.getJSONObject(i)
-                                val msg = gson.fromJson(obj.toString(), CommunityMsg::class.java)
-                                list.add(msg)
-                            }
-                            coroutineScope.launch {
-                                messages.clear()
-                                messages.addAll(list)
-                                if (messages.isNotEmpty()) {
-                                    lazyListState.animateScrollToItem(messages.size - 1)
+                            try {
+                                for (i in 0 until messagesArray.length()) {
+                                    val obj = messagesArray.getJSONObject(i)
+                                    val msg = gson.fromJson(obj.toString(), CommunityMsg::class.java)
+                                    list.add(msg)
                                 }
+                                android.util.Log.d("CommunityTab", "Successfully parsed ${list.size} recent messages")
+                                coroutineScope.launch {
+                                    messages.clear()
+                                    messages.addAll(list)
+                                    if (messages.isNotEmpty()) {
+                                        lazyListState.animateScrollToItem(messages.size - 1)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("CommunityTab", "Error parsing recent messages: ${e.message}", e)
                             }
                         }
                     }
@@ -1849,15 +1858,15 @@ fun CommunityTabContent(
 
             socketInstance.connect()
             socket = socketInstance
+
+            kotlinx.coroutines.awaitCancellation()
         } catch (e: Exception) {
             android.util.Log.e("CommunityTab", "Socket connection error: ${e.message}")
-        }
-    }
-
-    DisposableEffect(socket) {
-        onDispose {
-            socket?.disconnect()
-            socket?.off()
+        } finally {
+            android.util.Log.d("CommunityTab", "Cleaning up socket...")
+            socketInstance?.disconnect()
+            socketInstance?.off()
+            socket = null
         }
     }
 

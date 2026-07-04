@@ -23,6 +23,20 @@ object RetrofitClient {
         }
         .build()
 
+    private val socketLoggingInterceptor = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.HEADERS
+    }
+
+    val socketOkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(socketLoggingInterceptor)
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .header("User-Agent", "Android App")
+                .build()
+            chain.proceed(request)
+        }
+        .build()
+
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .client(okHttpClient)
