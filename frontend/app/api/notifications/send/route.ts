@@ -12,14 +12,16 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
 
-  // Get the session token from cookie to pass to Python backend
-  const cookieHeader = req.headers.get('cookie') || ''
+  // Extract session token from cookie to pass as Bearer to Python backend
+  const rawToken = req.cookies.get('better-auth.session_token')?.value
+    || req.cookies.get('__Secure-better-auth.session_token')?.value
+    || ''
 
   const res = await fetch(`${BACKEND_URL}/api/notifications/send`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'cookie': cookieHeader,
+      ...(rawToken && { 'Authorization': `Bearer ${rawToken}` }),
     },
     body: JSON.stringify(body),
   })
