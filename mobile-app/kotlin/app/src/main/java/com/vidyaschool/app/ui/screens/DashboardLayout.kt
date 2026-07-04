@@ -57,6 +57,16 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.res.painterResource
 import com.vidyaschool.app.R
 import androidx.compose.ui.graphics.vector.ImageVector
+import io.socket.client.IO
+import io.socket.client.Socket
+import com.google.gson.Gson
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Close
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -306,6 +316,7 @@ fun DashboardLayout(
                 "community" -> {
                     CommunityTabContent(
                         role = currentRole.value,
+                        sessionManager = sessionManager,
                         isRefreshing = isRefreshing,
                         onRefresh = triggerRefresh
                     )
@@ -1650,167 +1661,749 @@ fun NoticeTabContent(
     }
 }
 
+data class CommunityMsg(
+    val id: String,
+    val userId: String,
+    val name: String,
+    val role: String,
+    val content: String,
+    val timestamp: String,
+    val image: String? = null,
+    val replyTo: ReplyToMsg? = null
+)
+
+data class ReplyToMsg(
+    val id: String,
+    val name: String,
+    val content: String
+)
+
+fun formatTimestamp(isoString: String): String {
+    return try {
+        val parts = isoString.split("T")
+        if (parts.size == 2) {
+            val datePart = parts[0]
+            val timePart = parts[1].substring(0, 5) // "12:58"
+            val todayDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+            if (datePart == todayDate) {
+                "Today at $timePart"
+            } else {
+                "$datePart at $timePart"
+            }
+        } else {
+            isoString
+        }
+    } catch (e: Exception) {
+        isoString
+    }
+}
+
+fun parseIsoTimestamp(isoString: String): Long {
+    return try {
+        val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }
+        val cleanIso = isoString.split(".")[0].replace("Z", "")
+        format.parse(cleanIso)?.time ?: 0L
+    } catch (e: Exception) {
+        0L
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityTabContent(
     role: String,
+    sessionManager: SessionManager,
     isRefreshing: Boolean,
     onRefresh: () -> Unit
 ) {
-    val posts = listOf(
-        Triple("Amit Sharma", "Has anyone finished the Math assignment? I'm stuck on question 5.", "2 hours ago"),
-        Triple("Priya Patel", "Congratulations to the basketball team for winning the inter-school championship! 🏆", "5 hours ago"),
-        Triple("Rahul Verma", "Looking for classmates interested in joining the Coding Club. Meet up tomorrow at library.", "1 day ago")
-    )
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     
-    var newPostText by remember { mutableStateOf("") }
+    var currentUser by remember { mutableStateOf<com.vidyaschool.app.api.User?>(null) }
+    var isConnected by remember { mutableStateOf(false) }
+    val messages = remember { mutableStateListOf<CommunityMsg>() }
+    var socket by remember { mutableStateOf<Socket?>(null) }
+    val lazyListState = rememberLazyListState()
     
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = onRefresh,
-        modifier = Modifier.fillMaxSize()
-    ) {
-        if (role.equals("student", ignoreCase = true)) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = "Locked",
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "Only for teachers and admin for now",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
+    var inputText by remember { mutableStateOf("") }
+    var replyingTo by remember { mutableStateOf<CommunityMsg?>(null) }
+    var editingMessage by remember { mutableStateOf<CommunityMsg?>(null) }
+    
+    val token = remember { sessionManager.getSessionToken() ?: "" }
+
+    LaunchedEffect(token) {
+        if (token.isNotEmpty()) {
+            try {
+                val res = RetrofitClient.authApi.getProfile("Bearer $token")
+                if (res.isSuccessful && res.body() != null) {
+                    currentUser = res.body()?.user
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CommunityTab", "Fetch profile failed: ${e.message}")
+            }
+        }
+    }
+
+    LaunchedEffect(currentUser) {
+        val user = currentUser ?: return@LaunchedEffect
+        try {
+            val opts = IO.Options().apply {
+                transports = arrayOf("websocket")
+                forceNew = true
+            }
+            val socketInstance = IO.socket("https://vidyaschool-backend.onrender.com/", opts)
+
+            socketInstance.on(Socket.EVENT_CONNECT) {
+                coroutineScope.launch {
+                    isConnected = true
+                }
+                val joinData = org.json.JSONObject().apply {
+                    put("userId", user.id)
+                    put("name", user.name ?: user.email)
+                    put("role", user.role ?: "student")
+                    put("image", user.image)
+                }
+                socketInstance.emit("join", joinData)
+            }
+
+            socketInstance.on(Socket.EVENT_DISCONNECT) {
+                coroutineScope.launch {
+                    isConnected = false
                 }
             }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
-            ) {
-                Text(
-                    text = "Community",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Post creation bar
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "M",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Box(modifier = Modifier.weight(1f)) {
-                            CustomTextField(
-                                value = newPostText,
-                                onValueChange = { newPostText = it },
-                                placeholder = "e.g. Share an update with the school..."
-                            )
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(posts.size) { index ->
-                        val post = posts[index]
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                            )
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = post.first.first().toString(),
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.secondary
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text(
-                                            text = post.first,
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Text(
-                                            text = post.third,
-                                            fontSize = 12.sp,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                        )
-                                    }
+
+            socketInstance.on("recent_messages") { args ->
+                if (args.isNotEmpty()) {
+                    val data = args[0] as? org.json.JSONObject
+                    if (data != null) {
+                        val messagesArray = data.optJSONArray("messages")
+                        if (messagesArray != null) {
+                            val list = mutableListOf<CommunityMsg>()
+                            val gson = Gson()
+                            for (i in 0 until messagesArray.length()) {
+                                val obj = messagesArray.getJSONObject(i)
+                                val msg = gson.fromJson(obj.toString(), CommunityMsg::class.java)
+                                list.add(msg)
+                            }
+                            coroutineScope.launch {
+                                messages.clear()
+                                messages.addAll(list)
+                                if (messages.isNotEmpty()) {
+                                    lazyListState.animateScrollToItem(messages.size - 1)
                                 }
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    text = post.second,
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    lineHeight = 20.sp
-                                )
                             }
                         }
                     }
+                }
+            }
+
+            socketInstance.on("new_message") { args ->
+                if (args.isNotEmpty()) {
+                    val obj = args[0] as? org.json.JSONObject
+                    if (obj != null) {
+                        val gson = Gson()
+                        val msg = gson.fromJson(obj.toString(), CommunityMsg::class.java)
+                        coroutineScope.launch {
+                            messages.add(msg)
+                            lazyListState.animateScrollToItem(messages.size - 1)
+                        }
+                    }
+                }
+            }
+
+            socketInstance.on("message_edited") { args ->
+                if (args.isNotEmpty()) {
+                    val obj = args[0] as? org.json.JSONObject
+                    if (obj != null) {
+                        val msgId = obj.optString("id")
+                        val content = obj.optString("content")
+                        coroutineScope.launch {
+                            val index = messages.indexOfFirst { it.id == msgId }
+                            if (index != -1) {
+                                messages[index] = messages[index].copy(content = content)
+                            }
+                        }
+                    }
+                }
+            }
+
+            socketInstance.on("message_deleted") { args ->
+                if (args.isNotEmpty()) {
+                    val obj = args[0] as? org.json.JSONObject
+                    if (obj != null) {
+                        val msgId = obj.optString("id")
+                        coroutineScope.launch {
+                            messages.removeAll { it.id == msgId }
+                        }
+                    }
+                }
+            }
+
+            socketInstance.connect()
+            socket = socketInstance
+        } catch (e: Exception) {
+            android.util.Log.e("CommunityTab", "Socket connection error: ${e.message}")
+        }
+    }
+
+    DisposableEffect(socket) {
+        onDispose {
+            socket?.disconnect()
+            socket?.off()
+        }
+    }
+
+    val onSendMessage = {
+        val s = socket
+        if (s != null && isConnected && inputText.trim().isNotEmpty()) {
+            val data = org.json.JSONObject().apply {
+                put("content", inputText)
+                val rep = replyingTo
+                if (rep != null) {
+                    val repObj = org.json.JSONObject().apply {
+                        put("id", rep.id)
+                        put("name", rep.name)
+                        put("content", rep.content)
+                    }
+                    put("replyTo", repObj)
+                }
+            }
+            s.emit("send_message", data)
+            inputText = ""
+            replyingTo = null
+        }
+    }
+
+    val onEditMessage = { msgId: String, content: String ->
+        val s = socket
+        if (s != null && isConnected && content.trim().isNotEmpty()) {
+            val data = org.json.JSONObject().apply {
+                put("messageId", msgId)
+                put("content", content)
+            }
+            s.emit("edit_message", data)
+            editingMessage = null
+            inputText = ""
+        }
+    }
+
+    val onDeleteMessage = { msgId: String ->
+        val s = socket
+        if (s != null && isConnected) {
+            val data = org.json.JSONObject().apply {
+                put("messageId", msgId)
+            }
+            s.emit("delete_message", data)
+        }
+    }
+
+    LaunchedEffect(editingMessage) {
+        val edit = editingMessage
+        if (edit != null) {
+            inputText = edit.content
+        } else {
+            inputText = ""
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                IconButton(
+                    onClick = { /* Open menu */ },
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(
+                            1.dp,
+                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                            shape = CircleShape
+                        )
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_custom_menu),
+                        contentDescription = "Menu",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = "Community Hub",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "${role.lowercase().replaceFirstChar { it.uppercase() }} Portal",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(if (isConnected) Color(0xFF10B981) else Color(0xFFEF4444))
+                )
+                Text(
+                    text = if (isConnected) "Live" else "Offline",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isConnected) Color(0xFF10B981) else Color(0xFFEF4444)
+                )
+            }
+        }
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+
+        // Chat list area
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            if (messages.isEmpty() && !isConnected) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Connecting to #community...",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    state = lazyListState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(messages.size) { index ->
+                        val msg = messages[index]
+                        val isMe = currentUser != null && msg.userId == currentUser?.id
+
+                        val isGrouped = index > 0 &&
+                                messages[index - 1].userId == msg.userId &&
+                                (parseIsoTimestamp(msg.timestamp) - parseIsoTimestamp(messages[index - 1].timestamp)) < 300000 &&
+                                msg.replyTo == null
+
+                        CommunityMessageItem(
+                            msg = msg,
+                            isGrouped = isGrouped,
+                            isMe = isMe,
+                            onReply = { replyingTo = msg },
+                            onEdit = { editingMessage = msg },
+                            onDelete = { onDeleteMessage(msg.id) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Input bar
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            // Reply Preview Banner
+            val rep = replyingTo
+            if (rep != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_custom_community),
+                            contentDescription = "Reply",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Replying to @${rep.name}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "\"${rep.content}\"",
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    IconButton(
+                        onClick = { replyingTo = null },
+                        modifier = Modifier.size(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cancel",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // Edit Preview Banner
+            val edit = editingMessage
+            if (edit != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "Editing message...",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    IconButton(
+                        onClick = { editingMessage = null },
+                        modifier = Modifier.size(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cancel",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            // Input Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
+                        RoundedCornerShape(24.dp)
+                    )
+                    .background(MaterialTheme.colorScheme.background, RoundedCornerShape(24.dp))
+                    .padding(horizontal = 12.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = {
+                        android.widget.Toast.makeText(context, "Coming Soon!", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    )
+                }
+
+                // Text field
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    CustomTextField(
+                        value = inputText,
+                        onValueChange = { inputText = it },
+                        placeholder = "Message #community"
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        android.widget.Toast.makeText(context, "Coming Soon!", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_custom_profile),
+                        contentDescription = "Emoji",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        if (editingMessage != null) {
+                            onEditMessage(editingMessage!!.id, inputText)
+                        } else {
+                            onSendMessage()
+                        }
+                    },
+                    enabled = isConnected && inputText.trim().isNotEmpty(),
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Send,
+                        contentDescription = "Send",
+                        modifier = Modifier.size(20.dp),
+                        tint = if (isConnected && inputText.trim().isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun CommunityMessageItem(
+    msg: CommunityMsg,
+    isGrouped: Boolean,
+    isMe: Boolean,
+    onReply: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+    
+    val roleColor = when (msg.role.lowercase()) {
+        "admin" -> Color(0xFFE11D48)
+        "teacher", "librarian" -> Color(0xFF2563EB)
+        "account" -> Color(0xFF059669)
+        else -> MaterialTheme.colorScheme.onBackground
+    }
+
+    val roleBg = when (msg.role.lowercase()) {
+        "admin" -> Color(0xFFFFE4E6)
+        "teacher", "librarian" -> Color(0xFFDBEAFE)
+        "account" -> Color(0xFFD1FAE5)
+        else -> Color(0xFFF1F5F9)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .combinedClickable(
+                onLongClick = { showMenu = true },
+                onClick = { onReply() }
+            )
+            .padding(horizontal = 8.dp, vertical = if (isGrouped) 2.dp else 6.dp)
+    ) {
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Reply") },
+                onClick = {
+                    onReply()
+                    showMenu = false
+                },
+                leadingIcon = { Icon(Icons.Default.Share, contentDescription = "Reply", modifier = Modifier.size(16.dp)) }
+            )
+            if (isMe) {
+                DropdownMenuItem(
+                    text = { Text("Edit") },
+                    onClick = {
+                        onEdit()
+                        showMenu = false
+                    },
+                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = "Edit", modifier = Modifier.size(16.dp)) }
+                )
+                DropdownMenuItem(
+                    text = { Text("Delete", color = Color.Red) },
+                    onClick = {
+                        onDelete()
+                        showMenu = false
+                    },
+                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp), tint = Color.Red) }
+                )
+            }
+        }
+
+        if (msg.replyTo != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 28.dp, bottom = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_custom_community),
+                    contentDescription = "Reply",
+                    modifier = Modifier.size(10.dp),
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+                )
+                Text(
+                    text = "@${msg.replyTo.name}",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = msg.replyTo.content,
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+                )
+            }
+        }
+
+        if (isGrouped) {
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Spacer(modifier = Modifier.width(44.dp))
+                Text(
+                    text = msg.content,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (!msg.image.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = msg.image,
+                        contentDescription = "Avatar",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(
+                                when (msg.role.lowercase()) {
+                                    "admin" -> Color(0xFFF43F5E)
+                                    "teacher", "librarian" -> Color(0xFF3B82F6)
+                                    "account" -> Color(0xFF10B981)
+                                    else -> Color(0xFF64748B)
+                                }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (msg.name.isNotEmpty()) msg.name.take(1).uppercase() else "?",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = msg.name,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = roleColor
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(roleBg)
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = msg.role.uppercase(),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = roleColor
+                            )
+                        }
+
+                        Text(
+                            text = formatTimestamp(msg.timestamp),
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                        )
+                    }
+
+                    Text(
+                        text = msg.content,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 }
             }
         }

@@ -98,4 +98,9 @@ dependencies {
     implementation("com.razorpay:checkout:1.6.40")
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Socket.IO
+    implementation("io.socket:socket.io-client:2.1.0") {
+        exclude(group = "org.json", module = "json")
+    }
 }

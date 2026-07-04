@@ -38,6 +38,7 @@ export const viewport = {
 
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { RootProvider } from "fumadocs-ui/provider/next"
+import { PWARegister } from "@/components/pwa-register"
 
 export default function RootLayout({
   children,
@@ -65,6 +66,7 @@ export default function RootLayout({
         >
           <TooltipProvider>
             <RootProvider theme={{ enabled: false }}>
+              <PWARegister />
               {children}
             </RootProvider>
           </TooltipProvider>
