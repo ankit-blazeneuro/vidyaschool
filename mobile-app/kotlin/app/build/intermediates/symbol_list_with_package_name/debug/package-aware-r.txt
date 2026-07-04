@@ -759,6 +759,7 @@ drawable compat_splash_screen_no_icon_background
 drawable googleg_disabled_color_18
 drawable googleg_standard_color_18
 drawable ic_alert
+drawable ic_arrow_up
 drawable ic_call_answer
 drawable ic_call_answer_low
 drawable ic_call_answer_video

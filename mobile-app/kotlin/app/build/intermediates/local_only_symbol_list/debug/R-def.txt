@@ -2,6 +2,7 @@ R_DEF: Internal format may change without notice
 local
 color ic_launcher_background
 color splash_background
+drawable ic_arrow_up
 drawable ic_custom_community
 drawable ic_custom_home
 drawable ic_custom_menu
