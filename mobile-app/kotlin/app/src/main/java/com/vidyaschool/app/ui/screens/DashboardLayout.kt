@@ -1750,10 +1750,10 @@ fun CommunityTabContent(
         val user = currentUser ?: return@LaunchedEffect
         try {
             val opts = IO.Options().apply {
-                transports = arrayOf("websocket")
+                transports = arrayOf("websocket", "polling")
                 forceNew = true
             }
-            val socketInstance = IO.socket("https://vidyaschool-backend.onrender.com/", opts)
+            val socketInstance = IO.socket("https://vidyaschool-backend.onrender.com", opts)
 
             socketInstance.on(Socket.EVENT_CONNECT) {
                 coroutineScope.launch {
@@ -1766,6 +1766,10 @@ fun CommunityTabContent(
                     put("image", user.image)
                 }
                 socketInstance.emit("join", joinData)
+            }
+
+            socketInstance.on(Socket.EVENT_CONNECT_ERROR) { args ->
+                android.util.Log.e("CommunityTab", "Socket connection error event: ${args.getOrNull(0)}")
             }
 
             socketInstance.on(Socket.EVENT_DISCONNECT) {
