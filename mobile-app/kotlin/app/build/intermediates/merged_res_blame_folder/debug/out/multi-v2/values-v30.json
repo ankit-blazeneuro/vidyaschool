@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.vidyaschool.app-mergeDebugResources-63:/values-v30/values-v30.xml",
+            "outputFile": "com.vidyaschool.app-mergeDebugResources-66:/values-v30/values-v30.xml",
             "map": [
                 {
-                    "source": "/home/ankit/.gradle/caches/transforms-3/95aed3804301558857c3db38164fe11c/transformed/jetified-material3-release/res/values-v30/values-v30.xml",
+                    "source": "/home/ankit/.gradle/caches/transforms-3/f7293431c86746539225c9e4769feee0/transformed/jetified-material3-release/res/values-v30/values-v30.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

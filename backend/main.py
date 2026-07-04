@@ -230,6 +230,17 @@ async def delete_message(sid, data):
             await sio.emit('message_deleted', {"id": msg_id}, room='community')
 
 @sio.event
+async def typing(sid, data):
+    sender = active_users.get(sid)
+    if not sender:
+        return
+    await sio.emit('user_typing', {
+        "userId": sender["userId"],
+        "name": sender["name"],
+        "isTyping": data.get("isTyping", False)
+    }, room='community')
+
+@sio.event
 async def disconnect(sid):
     if sid in active_users:
         del active_users[sid]
@@ -586,6 +597,115 @@ async def notify_complaint(data: dict):
     await sio.emit(event, payload, room='admin_room')
     await sio.emit(event, payload, broadcast=True)
     return {"success": True}
+
+# Firebase Admin SDK Configuration
+import firebase_admin
+from firebase_admin import credentials, messaging
+
+firebase_app = None
+try:
+    cred_path = os.getenv("FIREBASE_CREDENTIALS_JSON")
+    if cred_path and os.path.exists(cred_path):
+        cred = credentials.Certificate(cred_path)
+        firebase_app = firebase_admin.initialize_app(cred)
+    else:
+        firebase_app = firebase_admin.initialize_app()
+    print("Firebase Admin SDK initialized successfully.")
+except Exception as e:
+    print(f"Firebase Admin SDK not initialized (optional, will fall back to log): {e}")
+
+def send_fcm_notification(tokens: list[str], title: str, body: str):
+    if not firebase_app:
+        print(f"FCM send skipped (Firebase not initialized). Notification details: Title='{title}', Body='{body}'")
+        return
+    if not tokens:
+        return
+    message = messaging.MulticastMessage(
+        notification=messaging.Notification(
+            title=title,
+            body=body,
+        ),
+        tokens=tokens,
+    )
+    try:
+        response = messaging.send_multicast(message)
+        print(f"FCM multicast sent: {response.success_count} success, {response.failure_count} failure")
+    except Exception as e:
+        print(f"Error sending FCM multicast: {e}")
+
+def get_online_sids_for_user(user_id: str) -> list[str]:
+    return [sid for sid, info in active_users.items() if info["userId"] == user_id]
+
+def get_target_users(target_role: str, target_class: str | None, target_section: str | None, db: Session):
+    from models import User, UserProfile
+    query = db.query(User)
+    
+    if target_class or target_section:
+        query = query.join(UserProfile, User.id == UserProfile.user_id)
+        if target_class:
+            query = query.filter(UserProfile.class_ == target_class)
+        if target_section:
+            query = query.filter(UserProfile.section == target_section)
+    elif target_role and target_role != "all":
+        query = query.filter(User.role == target_role)
+        
+    return query.all()
+
+async def send_notification_to_user(user_id: str, title: str, body: str, db: Session):
+    sids = get_online_sids_for_user(user_id)
+    if sids:
+        for sid in sids:
+            try:
+                await sio.emit('notification', {"title": title, "body": body}, room=sid)
+            except Exception as e:
+                print(f"Error emitting socket notification: {e}")
+        print(f"Sent notification to online user {user_id} via socket.")
+    else:
+        from models import FCMToken
+        tokens = db.query(FCMToken).filter(FCMToken.user_id == user_id).all()
+        if tokens:
+            token_list = [t.token for t in tokens]
+            send_fcm_notification(token_list, title, body)
+            print(f"Sent notification to offline user {user_id} via FCM.")
+
+@app.post("/api/notifications/register-token")
+def register_fcm_token(data: dict, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    token = data.get("token")
+    if not token:
+        raise HTTPException(status_code=400, detail="Token is required")
+        
+    from models import FCMToken
+    existing = db.query(FCMToken).filter(FCMToken.user_id == current_user.id, FCMToken.token == token).first()
+    if not existing:
+        new_token = FCMToken(
+            id=f"fcm-{uuid.uuid4()}",
+            user_id=current_user.id,
+            token=token,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(new_token)
+        db.commit()
+    return {"success": True}
+
+@app.post("/api/notifications/send")
+async def send_custom_notification(data: dict, current_user: User = Depends(require_role(["admin"])), db: Session = Depends(get_db)):
+    title = data.get("title")
+    body = data.get("body")
+    target_role = data.get("targetRole", "all")
+    target_class = data.get("targetClass")
+    target_section = data.get("targetSection")
+    
+    if not title or not body:
+        raise HTTPException(status_code=400, detail="Title and body are required")
+        
+    users = get_target_users(target_role, target_class, target_section, db)
+    count = 0
+    for u in users:
+        await send_notification_to_user(u.id, title, body, db)
+        count += 1
+        
+    return {"success": True, "deliveredCount": count}
 
 
 @app.on_event("startup")

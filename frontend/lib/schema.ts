@@ -205,5 +205,13 @@ export const libraryBookIssue = pgTable('library_book_issue', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+export const fcmToken = pgTable('fcm_token', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  token: text('token').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 
 

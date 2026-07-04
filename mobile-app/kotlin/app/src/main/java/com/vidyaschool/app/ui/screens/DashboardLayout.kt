@@ -26,6 +26,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.ui.platform.LocalDensity
@@ -176,6 +181,74 @@ fun DashboardLayout(
         }
     }
     
+    val currentUserId = remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        val sessionToken = sessionManager.getSessionToken()
+        if (!sessionToken.isNullOrEmpty()) {
+            try {
+                val profileResponse = RetrofitClient.authApi.getProfile("Bearer $sessionToken")
+                if (profileResponse.isSuccessful && profileResponse.body() != null) {
+                    val user = profileResponse.body()!!.user
+                    currentUserId.value = user.id
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // Global Socket for receiving push notifications when online
+    LaunchedEffect(currentUserId.value) {
+        val userId = currentUserId.value
+        if (userId.isEmpty()) return@LaunchedEffect
+        
+        val userRole = sessionManager.getRole() ?: "student"
+        
+        var globalSocket: io.socket.client.Socket? = null
+        try {
+            val opts = IO.Options().apply {
+                transports = arrayOf("polling", "websocket")
+                forceNew = true
+                callFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
+                webSocketFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
+            }
+            globalSocket = IO.socket("https://vidyaschool-backend.onrender.com", opts)
+            
+            globalSocket.on(Socket.EVENT_CONNECT) {
+                val joinData = org.json.JSONObject().apply {
+                    put("userId", userId)
+                    put("name", currentName.value)
+                    put("role", userRole)
+                }
+                globalSocket?.emit("join", joinData)
+                android.util.Log.d("NotificationSocket", "Joined with userId: $userId")
+            }
+            
+            globalSocket.on("notification") { args ->
+                if (args.isNotEmpty()) {
+                    val obj = args[0] as? org.json.JSONObject
+                    if (obj != null) {
+                        val title = obj.optString("title", "New Notification")
+                        val body = obj.optString("body", "")
+                        scope.launch(kotlinx.coroutines.Dispatchers.Main) {
+                            android.widget.Toast.makeText(context, "$title\n$body", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+            }
+            
+            globalSocket.connect()
+            kotlinx.coroutines.awaitCancellation()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            globalSocket?.disconnect()
+            globalSocket?.off()
+            globalSocket = null
+        }
+    }
+
     Scaffold(
         bottomBar = {
             Column(
@@ -1690,6 +1763,50 @@ data class ReplyToMsg(
     val content: String
 )
 
+data class CommunityTypingUser(
+    val userId: String,
+    val name: String
+)
+
+@Composable
+fun BouncingDotsAnimation() {
+    val dots = listOf(
+        remember { Animatable(0f) },
+        remember { Animatable(0f) },
+        remember { Animatable(0f) }
+    )
+    
+    dots.forEachIndexed { index, animatable ->
+        LaunchedEffect(animatable) {
+            delay(index * 150L)
+            animatable.animateTo(
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 450, easing = LinearEasing),
+                    repeatMode = RepeatMode.Reverse
+                )
+            )
+        }
+    }
+    
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        dots.forEach { animatable ->
+            val yOffset = -6.dp * animatable.value
+            Box(
+                modifier = Modifier
+                    .size(5.dp)
+                    .graphicsLayer {
+                        translationY = yOffset.toPx()
+                    }
+                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+            )
+        }
+    }
+}
+
 fun formatTimestamp(isoString: String): String {
     return try {
         val parts = isoString.split("T")
@@ -1744,6 +1861,40 @@ fun CommunityTabContent(
     var replyingTo by remember { mutableStateOf<CommunityMsg?>(null) }
     var editingMessage by remember { mutableStateOf<CommunityMsg?>(null) }
     var onlineCount by remember { mutableStateOf(1) }
+    val typingUsers = remember { mutableStateListOf<CommunityTypingUser>() }
+
+    LaunchedEffect(inputText) {
+        if (inputText.trim().isEmpty()) {
+            socket?.let { s ->
+                if (isConnected) {
+                    val data = org.json.JSONObject().apply {
+                        put("isTyping", false)
+                    }
+                    s.emit("typing", data)
+                }
+            }
+            return@LaunchedEffect
+        }
+        
+        socket?.let { s ->
+            if (isConnected) {
+                val data = org.json.JSONObject().apply {
+                    put("isTyping", true)
+                }
+                s.emit("typing", data)
+            }
+        }
+        
+        delay(2500)
+        socket?.let { s ->
+            if (isConnected) {
+                val data = org.json.JSONObject().apply {
+                    put("isTyping", false)
+                }
+                s.emit("typing", data)
+            }
+        }
+    }
     
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
@@ -1807,6 +1958,7 @@ fun CommunityTabContent(
                 android.util.Log.d("CommunityTab", "Socket disconnected!")
                 coroutineScope.launch {
                     isConnected = false
+                    typingUsers.clear()
                 }
             }
 
@@ -1814,8 +1966,40 @@ fun CommunityTabContent(
                 if (args != null && args.isNotEmpty()) {
                     val usersArray = args[0] as? org.json.JSONArray
                     if (usersArray != null) {
+                        val activeUserIds = mutableSetOf<String>()
+                        for (i in 0 until usersArray.length()) {
+                            val userObj = usersArray.optJSONObject(i)
+                            if (userObj != null) {
+                                activeUserIds.add(userObj.optString("userId"))
+                            }
+                        }
                         coroutineScope.launch {
                             onlineCount = usersArray.length()
+                            typingUsers.removeAll { it.userId !in activeUserIds }
+                        }
+                    }
+                }
+            }
+
+            socketInstance.on("user_typing") { args ->
+                if (args != null && args.isNotEmpty()) {
+                    val obj = args[0] as? org.json.JSONObject
+                    if (obj != null) {
+                        val typingUserId = obj.optString("userId")
+                        val typingUserName = obj.optString("name")
+                        val isTyping = obj.optBoolean("isTyping", false)
+                        
+                        coroutineScope.launch {
+                            val user = currentUser
+                            if (user != null && typingUserId != user.id) {
+                                if (isTyping) {
+                                    if (typingUsers.none { it.userId == typingUserId }) {
+                                        typingUsers.add(CommunityTypingUser(typingUserId, typingUserName))
+                                    }
+                                } else {
+                                    typingUsers.removeAll { it.userId == typingUserId }
+                                }
+                            }
                         }
                     }
                 }
@@ -2310,6 +2494,46 @@ fun CommunityTabContent(
                 }
             }
 
+            // Typing Indicator
+            androidx.compose.animation.AnimatedVisibility(
+                visible = typingUsers.isNotEmpty(),
+                enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 24.dp, bottom = 96.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    BouncingDotsAnimation()
+                    
+                    val text = when (typingUsers.size) {
+                        1 -> "${typingUsers[0].name} is typing..."
+                        2 -> "${typingUsers[0].name} and ${typingUsers[1].name} are typing..."
+                        else -> "Several people are typing..."
+                    }
+                    Text(
+                        text = text,
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
             // Scroll to bottom button
             val showScrollToBottomButton by remember {
                 derivedStateOf {
@@ -2318,7 +2542,7 @@ fun CommunityTabContent(
                     if (totalItems == 0) {
                         false
                     } else {
-                        val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
+                        val lastVisibleItem = lazyListState.layoutInfo.visibleItemsInfo.lastOrNull()
                         lastVisibleItem == null || lastVisibleItem.index < totalItems - 3
                     }
                 }
@@ -2335,13 +2559,24 @@ fun CommunityTabContent(
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            lazyListState.animateScrollToItem(messages.size - 1)
+                            if (messages.isNotEmpty()) {
+                                if (lazyListState.firstVisibleItemIndex < messages.size - 15) {
+                                    lazyListState.scrollToItem(messages.size - 10)
+                                }
+                                lazyListState.animateScrollToItem(messages.size - 1)
+                            }
                         }
                     },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    containerColor = if (isSystemInDarkTheme()) Color.White else Color.Black,
+                    contentColor = if (isSystemInDarkTheme()) Color.Black else Color.White,
                     shape = CircleShape,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier
+                        .size(40.dp)
+                        .border(
+                            width = 1.dp,
+                            color = (if (isSystemInDarkTheme()) Color.White else Color.Black).copy(alpha = 0.15f),
+                            shape = CircleShape
+                        )
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,

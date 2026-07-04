@@ -14,468 +14,627 @@
 12    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 12-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:4:5-83
 12-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:4:22-80
-13
-14    <queries>
-14-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:24:5-32:15
-15        <intent>
-15-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:25:9-31:18
-16            <action android:name="android.intent.action.VIEW" />
-16-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:17-69
-16-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:25-66
-17
-18            <category android:name="android.intent.category.BROWSABLE" />
-18-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-78
-18-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-75
-19
-20            <data android:scheme="https" />
-20-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-32:55
-20-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:21-57
-21        </intent>
-22        <intent>
-22-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:16:9-22:18
-23            <action android:name="android.intent.action.VIEW" />
-23-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:17-69
-23-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:25-66
-24
-25            <data
-25-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-32:55
-26                android:mimeType="*/*"
-27                android:scheme="*" />
-27-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:21-57
-28        </intent>
-29        <intent>
-29-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:23:9-32:18
-30            <action android:name="android.intent.action.VIEW" />
-30-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:17-69
-30-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:25-66
-31
-32            <category android:name="android.intent.category.BROWSABLE" />
-32-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-78
-32-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-75
-33
-34            <data
-34-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-32:55
-35                android:host="pay"
-35-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-41
-36                android:mimeType="*/*"
-37                android:scheme="upi" />
-37-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:21-57
-38        </intent>
-39        <intent>
-39-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:33:9-35:18
-40            <action android:name="android.intent.action.MAIN" />
-40-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:20:17-69
-40-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:20:25-66
-41        </intent>
-42        <intent>
-42-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:36:9-40:18
-43            <action android:name="android.intent.action.SEND" />
-43-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:37:13-65
-43-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:37:21-62
-44
-45            <data android:mimeType="*/*" />
-45-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-32:55
-46        </intent>
-47        <intent>
-47-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:41:9-43:18
-48            <action android:name="rzp.device_token.share" />
-48-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:42:13-61
-48-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:42:21-58
-49        </intent>
-50    </queries>
-51
-52    <uses-permission android:name="android.permission.NFC" />
-52-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:9:5-62
-52-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:9:22-59
-53
-54    <uses-feature
-54-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:11:5-13:36
-55        android:name="android.hardware.nfc"
-55-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:12:9-44
-56        android:required="false" /> <!-- Include required permissions for Google Maps API to run. -->
-56-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:13:9-33
-57    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-57-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/d755d926c2c13ae7fc76f796e5b71658/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:23:5-79
-57-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/d755d926c2c13ae7fc76f796e5b71658/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:23:22-76
+13    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+13-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:5:5-77
+13-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:5:22-74
+14
+15    <queries>
+15-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:24:5-32:15
+16        <intent>
+16-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:25:9-31:18
+17            <action android:name="android.intent.action.VIEW" />
+17-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-69
+17-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:25-66
+18
+19            <category android:name="android.intent.category.BROWSABLE" />
+19-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-78
+19-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:27-75
+20
+21            <data android:scheme="https" />
+21-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:17-33:55
+21-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-57
+22        </intent>
+23        <intent>
+23-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:16:9-22:18
+24            <action android:name="android.intent.action.VIEW" />
+24-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-69
+24-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:25-66
+25
+26            <data
+26-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:17-33:55
+27                android:mimeType="*/*"
+28                android:scheme="*" />
+28-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-57
+29        </intent>
+30        <intent>
+30-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:23:9-32:18
+31            <action android:name="android.intent.action.VIEW" />
+31-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-69
+31-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:25-66
+32
+33            <category android:name="android.intent.category.BROWSABLE" />
+33-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-78
+33-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:27-75
+34
+35            <data
+35-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:17-33:55
+36                android:host="pay"
+36-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:32:21-41
+37                android:mimeType="*/*"
+38                android:scheme="upi" />
+38-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-57
+39        </intent>
+40        <intent>
+40-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:33:9-35:18
+41            <action android:name="android.intent.action.MAIN" />
+41-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:21:17-69
+41-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:21:25-66
+42        </intent>
+43        <intent>
+43-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:36:9-40:18
+44            <action android:name="android.intent.action.SEND" />
+44-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:37:13-65
+44-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:37:21-62
+45
+46            <data android:mimeType="*/*" />
+46-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:17-33:55
+47        </intent>
+48        <intent>
+48-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:41:9-43:18
+49            <action android:name="rzp.device_token.share" />
+49-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:42:13-61
+49-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:42:21-58
+50        </intent>
+51    </queries>
+52
+53    <uses-permission android:name="android.permission.NFC" />
+53-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:9:5-62
+53-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:9:22-59
+54
+55    <uses-feature
+55-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:11:5-13:36
+56        android:name="android.hardware.nfc"
+56-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:12:9-44
+57        android:required="false" />
+57-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:13:9-33
 58
-59    <uses-feature
-59-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/d755d926c2c13ae7fc76f796e5b71658/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:26:5-28:35
-60        android:glEsVersion="0x00020000"
-60-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/d755d926c2c13ae7fc76f796e5b71658/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:27:9-41
-61        android:required="true" />
-61-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/d755d926c2c13ae7fc76f796e5b71658/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:28:9-32
+59    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+59-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:22:5-79
+59-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:22:22-76
+60    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- Required by older versions of Google Play services to create IID tokens -->
+60-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:24:5-68
+60-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:24:22-65
+61    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+61-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:26:5-82
+61-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:26:22-79
 62
-63    <permission
-63-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/4ca8b2b2c7f6630b277542ddc5ce7760/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
-64        android:name="com.vidyaschool.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-64-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/4ca8b2b2c7f6630b277542ddc5ce7760/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
-65        android:protectionLevel="signature" />
-65-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/4ca8b2b2c7f6630b277542ddc5ce7760/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+63    <uses-feature
+63-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/ef227a7f77733092f0a6daadf94e58e2/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:26:5-28:35
+64        android:glEsVersion="0x00020000"
+64-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/ef227a7f77733092f0a6daadf94e58e2/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:27:9-41
+65        android:required="true" />
+65-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/ef227a7f77733092f0a6daadf94e58e2/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:28:9-32
 66
-67    <uses-permission android:name="com.vidyaschool.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" /> <!-- Normal permission, automatically granted on API 23+ -->
-67-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/4ca8b2b2c7f6630b277542ddc5ce7760/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
-67-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/4ca8b2b2c7f6630b277542ddc5ce7760/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
-68    <uses-permission android:name="android.permission.READ_BASIC_PHONE_STATE" />
-68-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:10:5-81
-68-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:10:22-78
-69
-70    <application
-70-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:6:5-56:19
-71        android:allowBackup="true"
-71-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:7:9-35
-72        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-72-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/4ca8b2b2c7f6630b277542ddc5ce7760/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
-73        android:debuggable="true"
-74        android:extractNativeLibs="false"
-75        android:icon="@mipmap/ic_launcher"
-75-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:8:9-43
-76        android:label="Vidya School"
-76-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:10:9-37
-77        android:roundIcon="@mipmap/ic_launcher"
-77-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:9:9-48
-78        android:theme="@style/Theme.AppCompat.NoActionBar"
-78-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:11:9-59
-79        android:usesCleartextTraffic="true" >
-79-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:12:9-44
-80        <activity
-80-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:13:9-45:20
-81            android:name="com.vidyaschool.app.MainActivity"
-81-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:14:13-41
-82            android:exported="true"
-82-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:15:13-36
-83            android:launchMode="singleTask"
-83-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:18:13-44
-84            android:theme="@style/Theme.VidyaSchool.Splash"
-84-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:17:13-60
-85            android:windowSoftInputMode="adjustResize" >
-85-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:16:13-55
-86            <intent-filter>
-86-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:19:13-22:29
-87                <action android:name="android.intent.action.MAIN" />
-87-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:20:17-69
-87-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:20:25-66
-88
-89                <category android:name="android.intent.category.LAUNCHER" />
-89-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:21:17-77
-89-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:21:27-74
-90            </intent-filter>
-91
-92            <!-- GitHub OAuth redirect -->
-93            <intent-filter>
-93-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:25:13-33:29
-94                <action android:name="android.intent.action.VIEW" />
-94-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:17-69
-94-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:25-66
+67    <permission
+67-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/9c337924092e5d2163dff8c32f1241d9/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+68        android:name="com.vidyaschool.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+68-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/9c337924092e5d2163dff8c32f1241d9/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+69        android:protectionLevel="signature" />
+69-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/9c337924092e5d2163dff8c32f1241d9/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+70
+71    <uses-permission android:name="com.vidyaschool.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" /> <!-- Normal permission, automatically granted on API 23+ -->
+71-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/9c337924092e5d2163dff8c32f1241d9/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
+71-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/9c337924092e5d2163dff8c32f1241d9/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+72    <uses-permission android:name="android.permission.READ_BASIC_PHONE_STATE" />
+72-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/acdc28e770ff40a448690b35b30f5060/transformed/jetified-core-1.0.16/AndroidManifest.xml:10:5-81
+72-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/acdc28e770ff40a448690b35b30f5060/transformed/jetified-core-1.0.16/AndroidManifest.xml:10:22-78
+73
+74    <application
+74-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:7:5-65:19
+75        android:allowBackup="true"
+75-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:8:9-35
+76        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+76-->[androidx.core:core:1.13.1] /home/ankit/.gradle/caches/transforms-3/9c337924092e5d2163dff8c32f1241d9/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
+77        android:debuggable="true"
+78        android:extractNativeLibs="false"
+79        android:icon="@mipmap/ic_launcher"
+79-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:9:9-43
+80        android:label="Vidya School"
+80-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:11:9-37
+81        android:roundIcon="@mipmap/ic_launcher"
+81-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:10:9-48
+82        android:theme="@style/Theme.AppCompat.NoActionBar"
+82-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:12:9-59
+83        android:usesCleartextTraffic="true" >
+83-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:13:9-44
+84        <activity
+84-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:14:9-46:20
+85            android:name="com.vidyaschool.app.MainActivity"
+85-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:15:13-41
+86            android:exported="true"
+86-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:16:13-36
+87            android:launchMode="singleTask"
+87-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:19:13-44
+88            android:theme="@style/Theme.VidyaSchool.Splash"
+88-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:18:13-60
+89            android:windowSoftInputMode="adjustResize" >
+89-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:17:13-55
+90            <intent-filter>
+90-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:20:13-23:29
+91                <action android:name="android.intent.action.MAIN" />
+91-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:21:17-69
+91-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:21:25-66
+92
+93                <category android:name="android.intent.category.LAUNCHER" />
+93-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:22:17-77
+93-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:22:27-74
+94            </intent-filter>
 95
-96                <category android:name="android.intent.category.DEFAULT" />
-96-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-76
-96-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:27-73
-97                <category android:name="android.intent.category.BROWSABLE" />
-97-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-78
-97-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-75
-98
-99                <data
-99-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-32:55
-100                    android:host="oauth"
-100-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-41
-101                    android:path="/github/callback"
-101-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:32:21-52
-102                    android:scheme="com.vidyaschool.app" />
-102-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:21-57
-103            </intent-filter>
-104
-105            <!-- Fee receipt deep link -->
-106            <intent-filter android:autoVerify="true" >
-106-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:36:13-44:29
-106-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:36:28-53
-107                <action android:name="android.intent.action.VIEW" />
-107-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:17-69
-107-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:25-66
+96            <!-- GitHub OAuth redirect -->
+97            <intent-filter>
+97-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:13-34:29
+98                <action android:name="android.intent.action.VIEW" />
+98-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-69
+98-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:25-66
+99
+100                <category android:name="android.intent.category.DEFAULT" />
+100-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-76
+100-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-73
+101                <category android:name="android.intent.category.BROWSABLE" />
+101-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-78
+101-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:27-75
+102
+103                <data
+103-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:17-33:55
+104                    android:host="oauth"
+104-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:32:21-41
+105                    android:path="/github/callback"
+105-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:33:21-52
+106                    android:scheme="com.vidyaschool.app" />
+106-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-57
+107            </intent-filter>
 108
-109                <category android:name="android.intent.category.DEFAULT" />
-109-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-76
-109-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:27-73
-110                <category android:name="android.intent.category.BROWSABLE" />
-110-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-78
-110-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-75
-111
-112                <data
-112-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-32:55
-113                    android:host="vidyaschool.vercel.app"
-113-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-41
-114                    android:pathPrefix="/fee/payment/"
-114-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:43:21-55
-115                    android:scheme="https" />
-115-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:21-57
-116            </intent-filter>
-117        </activity>
-118
-119        <provider
-119-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:47:9-55:20
-120            android:name="androidx.core.content.FileProvider"
-120-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:48:13-62
-121            android:authorities="com.vidyaschool.app.fileprovider"
-121-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:49:13-67
-122            android:exported="false"
-122-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:50:13-37
-123            android:grantUriPermissions="true" >
-123-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:51:13-47
-124            <meta-data
-124-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:52:13-54:54
-125                android:name="android.support.FILE_PROVIDER_PATHS"
-125-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:53:17-67
-126                android:resource="@xml/file_paths" />
-126-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:54:17-51
-127        </provider>
-128
-129        <activity
-129-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:35:9-40:77
-130            android:name="net.openid.appauth.AuthorizationManagementActivity"
-130-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:36:13-78
-131            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden"
-131-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:37:13-115
-132            android:exported="false"
-132-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:38:13-37
-133            android:launchMode="singleTask"
-133-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:39:13-44
-134            android:theme="@style/Theme.AppCompat.Translucent.NoTitleBar" />
-134-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:40:13-74
-135        <activity
-135-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:41:9-52:20
-136            android:name="net.openid.appauth.RedirectUriReceiverActivity"
-136-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:42:13-74
-137            android:exported="true" >
-137-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:43:13-36
-138            <intent-filter>
-138-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/7ac7b95c8b0f46d4e2ee7d709840236b/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:44:13-51:29
-139                <action android:name="android.intent.action.VIEW" />
-139-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:17-69
-139-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:25-66
+109            <!-- Fee receipt deep link -->
+110            <intent-filter android:autoVerify="true" >
+110-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:37:13-45:29
+110-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:37:28-53
+111                <action android:name="android.intent.action.VIEW" />
+111-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-69
+111-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:25-66
+112
+113                <category android:name="android.intent.category.DEFAULT" />
+113-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-76
+113-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-73
+114                <category android:name="android.intent.category.BROWSABLE" />
+114-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-78
+114-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:27-75
+115
+116                <data
+116-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:17-33:55
+117                    android:host="vidyaschool.vercel.app"
+117-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:32:21-41
+118                    android:pathPrefix="/fee/payment/"
+118-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:44:21-55
+119                    android:scheme="https" />
+119-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-57
+120            </intent-filter>
+121        </activity>
+122
+123        <provider
+123-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:48:9-56:20
+124            android:name="androidx.core.content.FileProvider"
+124-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:49:13-62
+125            android:authorities="com.vidyaschool.app.fileprovider"
+125-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:50:13-67
+126            android:exported="false"
+126-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:51:13-37
+127            android:grantUriPermissions="true" >
+127-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:52:13-47
+128            <meta-data
+128-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:53:13-55:54
+129                android:name="android.support.FILE_PROVIDER_PATHS"
+129-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:54:17-67
+130                android:resource="@xml/file_paths" />
+130-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:55:17-51
+131        </provider>
+132
+133        <service
+133-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:58:9-64:19
+134            android:name="com.vidyaschool.app.MyFirebaseMessagingService"
+134-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:59:13-55
+135            android:exported="false" >
+135-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:60:13-37
+136            <intent-filter>
+136-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:61:13-63:29
+137                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+137-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:62:17-78
+137-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:62:25-75
+138            </intent-filter>
+139        </service>
 140
-141                <category android:name="android.intent.category.DEFAULT" />
-141-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-76
-141-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:27-73
-142                <category android:name="android.intent.category.BROWSABLE" />
-142-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-78
-142-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-75
-143
-144                <data android:scheme="com.vidyaschool.app" />
-144-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-32:55
-144-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:21-57
-145            </intent-filter>
-146        </activity>
-147
-148        <service
-148-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:24:9-32:19
-149            android:name="androidx.credentials.playservices.CredentialProviderMetadataHolder"
-149-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:25:13-94
-150            android:enabled="true"
-150-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:26:13-35
-151            android:exported="false" >
-151-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:27:13-37
-152            <meta-data
-152-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:29:13-31:104
-153                android:name="androidx.credentials.CREDENTIAL_PROVIDER_KEY"
-153-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:30:17-76
-154                android:value="androidx.credentials.playservices.CredentialProviderPlayServicesImpl" />
-154-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:31:17-101
-155        </service>
-156
-157        <activity
-157-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:34:9-41:20
-158            android:name="androidx.credentials.playservices.HiddenActivity"
-158-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:35:13-76
-159            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-159-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:36:13-87
-160            android:enabled="true"
-160-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:37:13-35
-161            android:exported="false"
-161-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:38:13-37
-162            android:fitsSystemWindows="true"
-162-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:39:13-45
-163            android:theme="@style/Theme.Hidden" >
-163-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/3f633e86de920da21dda6d563c00faaa/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:40:13-48
-164        </activity>
-165        <activity
-165-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:47:9-55:20
-166            android:name="com.razorpay.CheckoutActivity"
-166-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:48:13-57
-167            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-167-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:49:13-83
-168            android:exported="false"
-168-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:50:13-37
-169            android:theme="@style/CheckoutTheme" >
-169-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:51:13-49
-170            <intent-filter>
-170-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:52:13-54:29
-171                <action android:name="android.intent.action.MAIN" />
-171-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:20:17-69
-171-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:20:25-66
-172            </intent-filter>
-173        </activity>
-174
-175        <provider
-175-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:57:9-68:20
-176            android:name="androidx.startup.InitializationProvider"
-176-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:58:13-67
-177            android:authorities="com.vidyaschool.app.androidx-startup"
-177-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:59:13-68
-178            android:exported="false" >
-178-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:60:13-37
-179            <meta-data
-179-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:62:13-64:52
-180                android:name="com.razorpay.RazorpayInitializer"
-180-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:63:17-64
-181                android:value="androidx.startup" />
-181-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:64:17-49
-182            <meta-data
-182-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:65:13-67:52
-183                android:name="com.razorpay.CoreInitializer"
-183-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:66:17-60
-184                android:value="androidx.startup" />
-184-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:67:17-49
-185            <meta-data
-185-->[androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/a14dc4444a6b6e71c1628f70a54e6460/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
-186                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-186-->[androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/a14dc4444a6b6e71c1628f70a54e6460/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:30:17-75
-187                android:value="androidx.startup" />
-187-->[androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/a14dc4444a6b6e71c1628f70a54e6460/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:31:17-49
-188            <meta-data
-188-->[androidx.lifecycle:lifecycle-process:2.8.3] /home/ankit/.gradle/caches/transforms-3/96621f7e65139c04de2097797d843ae4/transformed/jetified-lifecycle-process-2.8.3/AndroidManifest.xml:29:13-31:52
-189                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-189-->[androidx.lifecycle:lifecycle-process:2.8.3] /home/ankit/.gradle/caches/transforms-3/96621f7e65139c04de2097797d843ae4/transformed/jetified-lifecycle-process-2.8.3/AndroidManifest.xml:30:17-78
-190                android:value="androidx.startup" />
-190-->[androidx.lifecycle:lifecycle-process:2.8.3] /home/ankit/.gradle/caches/transforms-3/96621f7e65139c04de2097797d843ae4/transformed/jetified-lifecycle-process-2.8.3/AndroidManifest.xml:31:17-49
+141        <activity
+141-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:35:9-40:77
+142            android:name="net.openid.appauth.AuthorizationManagementActivity"
+142-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:36:13-78
+143            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden"
+143-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:37:13-115
+144            android:exported="false"
+144-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:38:13-37
+145            android:launchMode="singleTask"
+145-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:39:13-44
+146            android:theme="@style/Theme.AppCompat.Translucent.NoTitleBar" />
+146-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:40:13-74
+147        <activity
+147-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:41:9-52:20
+148            android:name="net.openid.appauth.RedirectUriReceiverActivity"
+148-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:42:13-74
+149            android:exported="true" >
+149-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:43:13-36
+150            <intent-filter>
+150-->[net.openid:appauth:0.11.1] /home/ankit/.gradle/caches/transforms-3/cebf3cae06724c0b09078dcb40abd837/transformed/jetified-appauth-0.11.1/AndroidManifest.xml:44:13-51:29
+151                <action android:name="android.intent.action.VIEW" />
+151-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-69
+151-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:25-66
+152
+153                <category android:name="android.intent.category.DEFAULT" />
+153-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-76
+153-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-73
+154                <category android:name="android.intent.category.BROWSABLE" />
+154-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-78
+154-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:27-75
+155
+156                <data android:scheme="com.vidyaschool.app" />
+156-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:17-33:55
+156-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-57
+157            </intent-filter>
+158        </activity>
+159
+160        <service
+160-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:24:9-32:19
+161            android:name="androidx.credentials.playservices.CredentialProviderMetadataHolder"
+161-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:25:13-94
+162            android:enabled="true"
+162-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:26:13-35
+163            android:exported="false" >
+163-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:27:13-37
+164            <meta-data
+164-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:29:13-31:104
+165                android:name="androidx.credentials.CREDENTIAL_PROVIDER_KEY"
+165-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:30:17-76
+166                android:value="androidx.credentials.playservices.CredentialProviderPlayServicesImpl" />
+166-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:31:17-101
+167        </service>
+168
+169        <activity
+169-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:34:9-41:20
+170            android:name="androidx.credentials.playservices.HiddenActivity"
+170-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:35:13-76
+171            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+171-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:36:13-87
+172            android:enabled="true"
+172-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:37:13-35
+173            android:exported="false"
+173-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:38:13-37
+174            android:fitsSystemWindows="true"
+174-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:39:13-45
+175            android:theme="@style/Theme.Hidden" >
+175-->[androidx.credentials:credentials-play-services-auth:1.3.0] /home/ankit/.gradle/caches/transforms-3/e62b9bbba52c247c6eb0d7df92e2d47a/transformed/jetified-credentials-play-services-auth-1.3.0/AndroidManifest.xml:40:13-48
+176        </activity>
+177        <activity
+177-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:47:9-55:20
+178            android:name="com.razorpay.CheckoutActivity"
+178-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:48:13-57
+179            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+179-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:49:13-83
+180            android:exported="false"
+180-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:50:13-37
+181            android:theme="@style/CheckoutTheme" >
+181-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:51:13-49
+182            <intent-filter>
+182-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:52:13-54:29
+183                <action android:name="android.intent.action.MAIN" />
+183-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:21:17-69
+183-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:21:25-66
+184            </intent-filter>
+185        </activity>
+186
+187        <provider
+187-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:57:9-68:20
+188            android:name="androidx.startup.InitializationProvider"
+188-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:58:13-67
+189            android:authorities="com.vidyaschool.app.androidx-startup"
+189-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:59:13-68
+190            android:exported="false" >
+190-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:60:13-37
 191            <meta-data
-191-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
-192                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-192-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+191-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:62:13-64:52
+192                android:name="com.razorpay.RazorpayInitializer"
+192-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:63:17-64
 193                android:value="androidx.startup" />
-193-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
-194        </provider>
-195
-196        <activity
-196-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:70:9-73:75
-197            android:name="com.razorpay.MagicXActivity"
-197-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:71:13-55
-198            android:exported="false"
-198-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:72:13-37
-199            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-199-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/537c568b953b52272140cc5d313f85d1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:73:13-72
-200        <activity
-200-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/81f8ed2330235c7f3080d949f329cedc/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:23:9-27:75
-201            android:name="com.google.android.gms.auth.api.signin.internal.SignInHubActivity"
-201-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/81f8ed2330235c7f3080d949f329cedc/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:24:13-93
-202            android:excludeFromRecents="true"
-202-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/81f8ed2330235c7f3080d949f329cedc/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:25:13-46
-203            android:exported="false"
-203-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/81f8ed2330235c7f3080d949f329cedc/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:26:13-37
-204            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-204-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/81f8ed2330235c7f3080d949f329cedc/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:27:13-72
-205        <!--
-206            Service handling Google Sign-In user revocation. For apps that do not integrate with
-207            Google Sign-In, this service will never be started.
-208        -->
-209        <service
-209-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/81f8ed2330235c7f3080d949f329cedc/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:33:9-37:51
-210            android:name="com.google.android.gms.auth.api.signin.RevocationBoundService"
-210-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/81f8ed2330235c7f3080d949f329cedc/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:34:13-89
-211            android:exported="true"
-211-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/81f8ed2330235c7f3080d949f329cedc/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:35:13-36
-212            android:permission="com.google.android.gms.auth.api.signin.permission.REVOCATION_NOTIFICATION"
-212-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/81f8ed2330235c7f3080d949f329cedc/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:36:13-107
-213            android:visibleToInstantApps="true" /> <!-- Needs to be explicitly declared on P+ -->
-213-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/81f8ed2330235c7f3080d949f329cedc/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:37:13-48
-214        <uses-library
-214-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/d755d926c2c13ae7fc76f796e5b71658/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:33:9-35:40
-215            android:name="org.apache.http.legacy"
-215-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/d755d926c2c13ae7fc76f796e5b71658/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:34:13-50
-216            android:required="false" />
-216-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/d755d926c2c13ae7fc76f796e5b71658/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:35:13-37
-217
-218        <activity
-218-->[com.google.android.gms:play-services-base:18.3.0] /home/ankit/.gradle/caches/transforms-3/e62a0849eef3482c6cc40bcf09250feb/transformed/jetified-play-services-base-18.3.0/AndroidManifest.xml:20:9-22:45
-219            android:name="com.google.android.gms.common.api.GoogleApiActivity"
-219-->[com.google.android.gms:play-services-base:18.3.0] /home/ankit/.gradle/caches/transforms-3/e62a0849eef3482c6cc40bcf09250feb/transformed/jetified-play-services-base-18.3.0/AndroidManifest.xml:20:19-85
-220            android:exported="false"
-220-->[com.google.android.gms:play-services-base:18.3.0] /home/ankit/.gradle/caches/transforms-3/e62a0849eef3482c6cc40bcf09250feb/transformed/jetified-play-services-base-18.3.0/AndroidManifest.xml:22:19-43
-221            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-221-->[com.google.android.gms:play-services-base:18.3.0] /home/ankit/.gradle/caches/transforms-3/e62a0849eef3482c6cc40bcf09250feb/transformed/jetified-play-services-base-18.3.0/AndroidManifest.xml:21:19-78
-222
-223        <meta-data
-223-->[com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/e77b6aafb4ad253e036d783ac586f435/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:21:9-23:69
-224            android:name="com.google.android.gms.version"
-224-->[com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/e77b6aafb4ad253e036d783ac586f435/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:22:13-58
-225            android:value="@integer/google_play_services_version" />
-225-->[com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/e77b6aafb4ad253e036d783ac586f435/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:23:13-66
+193-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:64:17-49
+194            <meta-data
+194-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:65:13-67:52
+195                android:name="com.razorpay.CoreInitializer"
+195-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:66:17-60
+196                android:value="androidx.startup" />
+196-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:67:17-49
+197            <meta-data
+197-->[androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/6374cf65ed9699ffa88b8d313371e51c/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+198                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+198-->[androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/6374cf65ed9699ffa88b8d313371e51c/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:30:17-75
+199                android:value="androidx.startup" />
+199-->[androidx.emoji2:emoji2:1.3.0] /home/ankit/.gradle/caches/transforms-3/6374cf65ed9699ffa88b8d313371e51c/transformed/jetified-emoji2-1.3.0/AndroidManifest.xml:31:17-49
+200            <meta-data
+200-->[androidx.lifecycle:lifecycle-process:2.8.3] /home/ankit/.gradle/caches/transforms-3/620877a8e657cd959e655f305a2ca4fa/transformed/jetified-lifecycle-process-2.8.3/AndroidManifest.xml:29:13-31:52
+201                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+201-->[androidx.lifecycle:lifecycle-process:2.8.3] /home/ankit/.gradle/caches/transforms-3/620877a8e657cd959e655f305a2ca4fa/transformed/jetified-lifecycle-process-2.8.3/AndroidManifest.xml:30:17-78
+202                android:value="androidx.startup" />
+202-->[androidx.lifecycle:lifecycle-process:2.8.3] /home/ankit/.gradle/caches/transforms-3/620877a8e657cd959e655f305a2ca4fa/transformed/jetified-lifecycle-process-2.8.3/AndroidManifest.xml:31:17-49
+203            <meta-data
+203-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+204                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+204-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+205                android:value="androidx.startup" />
+205-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+206        </provider>
+207
+208        <activity
+208-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:70:9-73:75
+209            android:name="com.razorpay.MagicXActivity"
+209-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:71:13-55
+210            android:exported="false"
+210-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:72:13-37
+211            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+211-->[com.razorpay:standard-core:1.7.15] /home/ankit/.gradle/caches/transforms-3/93f30638273ed7ac9a28d186856c48e1/transformed/jetified-standard-core-1.7.15/AndroidManifest.xml:73:13-72
+212        <activity
+212-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/1ecc6166dc3b16babe2583aec2241cca/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:23:9-27:75
+213            android:name="com.google.android.gms.auth.api.signin.internal.SignInHubActivity"
+213-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/1ecc6166dc3b16babe2583aec2241cca/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:24:13-93
+214            android:excludeFromRecents="true"
+214-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/1ecc6166dc3b16babe2583aec2241cca/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:25:13-46
+215            android:exported="false"
+215-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/1ecc6166dc3b16babe2583aec2241cca/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:26:13-37
+216            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+216-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/1ecc6166dc3b16babe2583aec2241cca/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:27:13-72
+217        <!--
+218            Service handling Google Sign-In user revocation. For apps that do not integrate with
+219            Google Sign-In, this service will never be started.
+220        -->
+221        <service
+221-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/1ecc6166dc3b16babe2583aec2241cca/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:33:9-37:51
+222            android:name="com.google.android.gms.auth.api.signin.RevocationBoundService"
+222-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/1ecc6166dc3b16babe2583aec2241cca/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:34:13-89
+223            android:exported="true"
+223-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/1ecc6166dc3b16babe2583aec2241cca/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:35:13-36
+224            android:permission="com.google.android.gms.auth.api.signin.permission.REVOCATION_NOTIFICATION"
+224-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/1ecc6166dc3b16babe2583aec2241cca/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:36:13-107
+225            android:visibleToInstantApps="true" />
+225-->[com.google.android.gms:play-services-auth:21.1.1] /home/ankit/.gradle/caches/transforms-3/1ecc6166dc3b16babe2583aec2241cca/transformed/jetified-play-services-auth-21.1.1/AndroidManifest.xml:37:13-48
 226
 227        <receiver
-227-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
-228            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-228-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
-229            android:directBootAware="false"
-229-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
-230            android:enabled="true"
-230-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
-231            android:exported="true"
-231-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
-232            android:permission="android.permission.DUMP" >
-232-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
-233            <intent-filter>
-233-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
-234                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-234-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
-234-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
-235            </intent-filter>
-236            <intent-filter>
-236-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
-237                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-237-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
-237-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
-238            </intent-filter>
-239            <intent-filter>
-239-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
-240                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-240-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
-240-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
-241            </intent-filter>
-242            <intent-filter>
-242-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
-243                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-243-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
-243-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/5075e54ed647344dbc01dc103af60b96/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
-244            </intent-filter>
-245        </receiver>
-246
-247        <activity
-247-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:13:9-27:20
-248            android:name="com.razorpay.DeeplinkActivity"
-248-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:14:13-57
-249            android:exported="true"
-249-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:15:13-36
-250            android:theme="@style/CheckoutTheme" >
-250-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:16:13-49
-251            <intent-filter>
-251-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/d36f31e27af50ad550acee74c9924ce6/transformed/jetified-core-1.0.16/AndroidManifest.xml:17:13-26:29
-252                <action android:name="android.intent.action.VIEW" />
-252-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:17-69
-252-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:26:25-66
-253
-254                <category android:name="android.intent.category.DEFAULT" />
-254-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-76
-254-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:27-73
-255                <category android:name="android.intent.category.BROWSABLE" />
-255-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-78
-255-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-75
-256
-257                <data
-257-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-32:55
-258                    android:host="com.vidyaschool.app"
-258-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-41
-259                    android:scheme="razorpay" />
-259-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:21-57
-260            </intent-filter>
-261        </activity>
-262    </application>
-263
-264</manifest>
+227-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:29:9-40:20
+228            android:name="com.google.firebase.iid.FirebaseInstanceIdReceiver"
+228-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:30:13-78
+229            android:exported="true"
+229-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:31:13-36
+230            android:permission="com.google.android.c2dm.permission.SEND" >
+230-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:32:13-73
+231            <intent-filter>
+231-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:33:13-35:29
+232                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+232-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:34:17-81
+232-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:34:25-78
+233            </intent-filter>
+234
+235            <meta-data
+235-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:37:13-39:40
+236                android:name="com.google.android.gms.cloudmessaging.FINISHED_AFTER_HANDLED"
+236-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:38:17-92
+237                android:value="true" />
+237-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:39:17-37
+238        </receiver>
+239        <!--
+240             FirebaseMessagingService performs security checks at runtime,
+241             but set to not exported to explicitly avoid allowing another app to call it.
+242        -->
+243        <service
+243-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:46:9-53:19
+244            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+244-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:47:13-82
+245            android:directBootAware="true"
+245-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:48:13-43
+246            android:exported="false" >
+246-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:49:13-37
+247            <intent-filter android:priority="-500" >
+247-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:61:13-63:29
+248                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+248-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:62:17-78
+248-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:62:25-75
+249            </intent-filter>
+250        </service>
+251        <service
+251-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:54:9-63:19
+252            android:name="com.google.firebase.components.ComponentDiscoveryService"
+252-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:55:13-84
+253            android:directBootAware="true"
+253-->[com.google.firebase:firebase-common:21.0.0] /home/ankit/.gradle/caches/transforms-3/9488cbe0262de95d82aa3a6ca33ac1d0/transformed/jetified-firebase-common-21.0.0/AndroidManifest.xml:32:13-43
+254            android:exported="false" >
+254-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:56:13-37
+255            <meta-data
+255-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:57:13-59:85
+256                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingKtxRegistrar"
+256-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:58:17-122
+257                android:value="com.google.firebase.components.ComponentRegistrar" />
+257-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:59:17-82
+258            <meta-data
+258-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:60:13-62:85
+259                android:name="com.google.firebase.components:com.google.firebase.messaging.FirebaseMessagingRegistrar"
+259-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:61:17-119
+260                android:value="com.google.firebase.components.ComponentRegistrar" />
+260-->[com.google.firebase:firebase-messaging:24.0.0] /home/ankit/.gradle/caches/transforms-3/086a10bac504a62a2e7f1097983912bd/transformed/jetified-firebase-messaging-24.0.0/AndroidManifest.xml:62:17-82
+261            <meta-data
+261-->[com.google.firebase:firebase-installations:18.0.0] /home/ankit/.gradle/caches/transforms-3/c1eb17ebae1a20a0957f0b97293a0f27/transformed/jetified-firebase-installations-18.0.0/AndroidManifest.xml:15:13-17:85
+262                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsKtxRegistrar"
+262-->[com.google.firebase:firebase-installations:18.0.0] /home/ankit/.gradle/caches/transforms-3/c1eb17ebae1a20a0957f0b97293a0f27/transformed/jetified-firebase-installations-18.0.0/AndroidManifest.xml:16:17-130
+263                android:value="com.google.firebase.components.ComponentRegistrar" />
+263-->[com.google.firebase:firebase-installations:18.0.0] /home/ankit/.gradle/caches/transforms-3/c1eb17ebae1a20a0957f0b97293a0f27/transformed/jetified-firebase-installations-18.0.0/AndroidManifest.xml:17:17-82
+264            <meta-data
+264-->[com.google.firebase:firebase-installations:18.0.0] /home/ankit/.gradle/caches/transforms-3/c1eb17ebae1a20a0957f0b97293a0f27/transformed/jetified-firebase-installations-18.0.0/AndroidManifest.xml:18:13-20:85
+265                android:name="com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsRegistrar"
+265-->[com.google.firebase:firebase-installations:18.0.0] /home/ankit/.gradle/caches/transforms-3/c1eb17ebae1a20a0957f0b97293a0f27/transformed/jetified-firebase-installations-18.0.0/AndroidManifest.xml:19:17-127
+266                android:value="com.google.firebase.components.ComponentRegistrar" />
+266-->[com.google.firebase:firebase-installations:18.0.0] /home/ankit/.gradle/caches/transforms-3/c1eb17ebae1a20a0957f0b97293a0f27/transformed/jetified-firebase-installations-18.0.0/AndroidManifest.xml:20:17-82
+267            <meta-data
+267-->[com.google.firebase:firebase-common-ktx:21.0.0] /home/ankit/.gradle/caches/transforms-3/53ca8029a3fb7f2bbc8640bbd86b1f6d/transformed/jetified-firebase-common-ktx-21.0.0/AndroidManifest.xml:12:13-14:85
+268                android:name="com.google.firebase.components:com.google.firebase.ktx.FirebaseCommonLegacyRegistrar"
+268-->[com.google.firebase:firebase-common-ktx:21.0.0] /home/ankit/.gradle/caches/transforms-3/53ca8029a3fb7f2bbc8640bbd86b1f6d/transformed/jetified-firebase-common-ktx-21.0.0/AndroidManifest.xml:13:17-116
+269                android:value="com.google.firebase.components.ComponentRegistrar" />
+269-->[com.google.firebase:firebase-common-ktx:21.0.0] /home/ankit/.gradle/caches/transforms-3/53ca8029a3fb7f2bbc8640bbd86b1f6d/transformed/jetified-firebase-common-ktx-21.0.0/AndroidManifest.xml:14:17-82
+270            <meta-data
+270-->[com.google.firebase:firebase-common:21.0.0] /home/ankit/.gradle/caches/transforms-3/9488cbe0262de95d82aa3a6ca33ac1d0/transformed/jetified-firebase-common-21.0.0/AndroidManifest.xml:35:13-37:85
+271                android:name="com.google.firebase.components:com.google.firebase.FirebaseCommonKtxRegistrar"
+271-->[com.google.firebase:firebase-common:21.0.0] /home/ankit/.gradle/caches/transforms-3/9488cbe0262de95d82aa3a6ca33ac1d0/transformed/jetified-firebase-common-21.0.0/AndroidManifest.xml:36:17-109
+272                android:value="com.google.firebase.components.ComponentRegistrar" />
+272-->[com.google.firebase:firebase-common:21.0.0] /home/ankit/.gradle/caches/transforms-3/9488cbe0262de95d82aa3a6ca33ac1d0/transformed/jetified-firebase-common-21.0.0/AndroidManifest.xml:37:17-82
+273            <meta-data
+273-->[com.google.firebase:firebase-datatransport:18.2.0] /home/ankit/.gradle/caches/transforms-3/ab32df772792b82834a3e1680fc26f93/transformed/jetified-firebase-datatransport-18.2.0/AndroidManifest.xml:25:13-27:85
+274                android:name="com.google.firebase.components:com.google.firebase.datatransport.TransportRegistrar"
+274-->[com.google.firebase:firebase-datatransport:18.2.0] /home/ankit/.gradle/caches/transforms-3/ab32df772792b82834a3e1680fc26f93/transformed/jetified-firebase-datatransport-18.2.0/AndroidManifest.xml:26:17-115
+275                android:value="com.google.firebase.components.ComponentRegistrar" />
+275-->[com.google.firebase:firebase-datatransport:18.2.0] /home/ankit/.gradle/caches/transforms-3/ab32df772792b82834a3e1680fc26f93/transformed/jetified-firebase-datatransport-18.2.0/AndroidManifest.xml:27:17-82
+276        </service> <!-- Needs to be explicitly declared on P+ -->
+277        <uses-library
+277-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/ef227a7f77733092f0a6daadf94e58e2/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:33:9-35:40
+278            android:name="org.apache.http.legacy"
+278-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/ef227a7f77733092f0a6daadf94e58e2/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:34:13-50
+279            android:required="false" />
+279-->[com.google.android.gms:play-services-maps:17.0.0] /home/ankit/.gradle/caches/transforms-3/ef227a7f77733092f0a6daadf94e58e2/transformed/jetified-play-services-maps-17.0.0/AndroidManifest.xml:35:13-37
+280
+281        <activity
+281-->[com.google.android.gms:play-services-base:18.3.0] /home/ankit/.gradle/caches/transforms-3/f1096975c2ffbb4377d4b92e8c4f0bd3/transformed/jetified-play-services-base-18.3.0/AndroidManifest.xml:20:9-22:45
+282            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+282-->[com.google.android.gms:play-services-base:18.3.0] /home/ankit/.gradle/caches/transforms-3/f1096975c2ffbb4377d4b92e8c4f0bd3/transformed/jetified-play-services-base-18.3.0/AndroidManifest.xml:20:19-85
+283            android:exported="false"
+283-->[com.google.android.gms:play-services-base:18.3.0] /home/ankit/.gradle/caches/transforms-3/f1096975c2ffbb4377d4b92e8c4f0bd3/transformed/jetified-play-services-base-18.3.0/AndroidManifest.xml:22:19-43
+284            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+284-->[com.google.android.gms:play-services-base:18.3.0] /home/ankit/.gradle/caches/transforms-3/f1096975c2ffbb4377d4b92e8c4f0bd3/transformed/jetified-play-services-base-18.3.0/AndroidManifest.xml:21:19-78
+285
+286        <provider
+286-->[com.google.firebase:firebase-common:21.0.0] /home/ankit/.gradle/caches/transforms-3/9488cbe0262de95d82aa3a6ca33ac1d0/transformed/jetified-firebase-common-21.0.0/AndroidManifest.xml:23:9-28:39
+287            android:name="com.google.firebase.provider.FirebaseInitProvider"
+287-->[com.google.firebase:firebase-common:21.0.0] /home/ankit/.gradle/caches/transforms-3/9488cbe0262de95d82aa3a6ca33ac1d0/transformed/jetified-firebase-common-21.0.0/AndroidManifest.xml:24:13-77
+288            android:authorities="com.vidyaschool.app.firebaseinitprovider"
+288-->[com.google.firebase:firebase-common:21.0.0] /home/ankit/.gradle/caches/transforms-3/9488cbe0262de95d82aa3a6ca33ac1d0/transformed/jetified-firebase-common-21.0.0/AndroidManifest.xml:25:13-72
+289            android:directBootAware="true"
+289-->[com.google.firebase:firebase-common:21.0.0] /home/ankit/.gradle/caches/transforms-3/9488cbe0262de95d82aa3a6ca33ac1d0/transformed/jetified-firebase-common-21.0.0/AndroidManifest.xml:26:13-43
+290            android:exported="false"
+290-->[com.google.firebase:firebase-common:21.0.0] /home/ankit/.gradle/caches/transforms-3/9488cbe0262de95d82aa3a6ca33ac1d0/transformed/jetified-firebase-common-21.0.0/AndroidManifest.xml:27:13-37
+291            android:initOrder="100" />
+291-->[com.google.firebase:firebase-common:21.0.0] /home/ankit/.gradle/caches/transforms-3/9488cbe0262de95d82aa3a6ca33ac1d0/transformed/jetified-firebase-common-21.0.0/AndroidManifest.xml:28:13-36
+292
+293        <meta-data
+293-->[com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/a7c588644321958318eb656e1e98551a/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:21:9-23:69
+294            android:name="com.google.android.gms.version"
+294-->[com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/a7c588644321958318eb656e1e98551a/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:22:13-58
+295            android:value="@integer/google_play_services_version" />
+295-->[com.google.android.gms:play-services-basement:18.3.0] /home/ankit/.gradle/caches/transforms-3/a7c588644321958318eb656e1e98551a/transformed/jetified-play-services-basement-18.3.0/AndroidManifest.xml:23:13-66
+296
+297        <service
+297-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/ankit/.gradle/caches/transforms-3/32780cc7f4bc822bd89a4f19eeccc1e1/transformed/jetified-transport-backend-cct-3.1.9/AndroidManifest.xml:28:9-34:19
+298            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+298-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/ankit/.gradle/caches/transforms-3/32780cc7f4bc822bd89a4f19eeccc1e1/transformed/jetified-transport-backend-cct-3.1.9/AndroidManifest.xml:29:13-103
+299            android:exported="false" >
+299-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/ankit/.gradle/caches/transforms-3/32780cc7f4bc822bd89a4f19eeccc1e1/transformed/jetified-transport-backend-cct-3.1.9/AndroidManifest.xml:30:13-37
+300            <meta-data
+300-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/ankit/.gradle/caches/transforms-3/32780cc7f4bc822bd89a4f19eeccc1e1/transformed/jetified-transport-backend-cct-3.1.9/AndroidManifest.xml:31:13-33:39
+301                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+301-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/ankit/.gradle/caches/transforms-3/32780cc7f4bc822bd89a4f19eeccc1e1/transformed/jetified-transport-backend-cct-3.1.9/AndroidManifest.xml:32:17-94
+302                android:value="cct" />
+302-->[com.google.android.datatransport:transport-backend-cct:3.1.9] /home/ankit/.gradle/caches/transforms-3/32780cc7f4bc822bd89a4f19eeccc1e1/transformed/jetified-transport-backend-cct-3.1.9/AndroidManifest.xml:33:17-36
+303        </service>
+304        <service
+304-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/ankit/.gradle/caches/transforms-3/0355145ab71e3e7905895ab6a5be8da2/transformed/jetified-transport-runtime-3.1.9/AndroidManifest.xml:26:9-30:19
+305            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+305-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/ankit/.gradle/caches/transforms-3/0355145ab71e3e7905895ab6a5be8da2/transformed/jetified-transport-runtime-3.1.9/AndroidManifest.xml:27:13-117
+306            android:exported="false"
+306-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/ankit/.gradle/caches/transforms-3/0355145ab71e3e7905895ab6a5be8da2/transformed/jetified-transport-runtime-3.1.9/AndroidManifest.xml:28:13-37
+307            android:permission="android.permission.BIND_JOB_SERVICE" >
+307-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/ankit/.gradle/caches/transforms-3/0355145ab71e3e7905895ab6a5be8da2/transformed/jetified-transport-runtime-3.1.9/AndroidManifest.xml:29:13-69
+308        </service>
+309
+310        <receiver
+310-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/ankit/.gradle/caches/transforms-3/0355145ab71e3e7905895ab6a5be8da2/transformed/jetified-transport-runtime-3.1.9/AndroidManifest.xml:32:9-34:40
+311            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+311-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/ankit/.gradle/caches/transforms-3/0355145ab71e3e7905895ab6a5be8da2/transformed/jetified-transport-runtime-3.1.9/AndroidManifest.xml:33:13-132
+312            android:exported="false" />
+312-->[com.google.android.datatransport:transport-runtime:3.1.9] /home/ankit/.gradle/caches/transforms-3/0355145ab71e3e7905895ab6a5be8da2/transformed/jetified-transport-runtime-3.1.9/AndroidManifest.xml:34:13-37
+313        <receiver
+313-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+314            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+314-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+315            android:directBootAware="false"
+315-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+316            android:enabled="true"
+316-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+317            android:exported="true"
+317-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+318            android:permission="android.permission.DUMP" >
+318-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+319            <intent-filter>
+319-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+320                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+320-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+320-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+321            </intent-filter>
+322            <intent-filter>
+322-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+323                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+323-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+323-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+324            </intent-filter>
+325            <intent-filter>
+325-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+326                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+326-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+326-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+327            </intent-filter>
+328            <intent-filter>
+328-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+329                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+329-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+329-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/ankit/.gradle/caches/transforms-3/e5c26767d175b03d9ad5dcb966499f4d/transformed/jetified-profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+330            </intent-filter>
+331        </receiver>
+332
+333        <activity
+333-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/acdc28e770ff40a448690b35b30f5060/transformed/jetified-core-1.0.16/AndroidManifest.xml:13:9-27:20
+334            android:name="com.razorpay.DeeplinkActivity"
+334-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/acdc28e770ff40a448690b35b30f5060/transformed/jetified-core-1.0.16/AndroidManifest.xml:14:13-57
+335            android:exported="true"
+335-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/acdc28e770ff40a448690b35b30f5060/transformed/jetified-core-1.0.16/AndroidManifest.xml:15:13-36
+336            android:theme="@style/CheckoutTheme" >
+336-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/acdc28e770ff40a448690b35b30f5060/transformed/jetified-core-1.0.16/AndroidManifest.xml:16:13-49
+337            <intent-filter>
+337-->[com.razorpay:core:1.0.16] /home/ankit/.gradle/caches/transforms-3/acdc28e770ff40a448690b35b30f5060/transformed/jetified-core-1.0.16/AndroidManifest.xml:17:13-26:29
+338                <action android:name="android.intent.action.VIEW" />
+338-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:17-69
+338-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:27:25-66
+339
+340                <category android:name="android.intent.category.DEFAULT" />
+340-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:17-76
+340-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:28:27-73
+341                <category android:name="android.intent.category.BROWSABLE" />
+341-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:17-78
+341-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:29:27-75
+342
+343                <data
+343-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:30:17-33:55
+344                    android:host="com.vidyaschool.app"
+344-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:32:21-41
+345                    android:scheme="razorpay" />
+345-->/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/AndroidManifest.xml:31:21-57
+346            </intent-filter>
+347        </activity>
+348    </application>
+349
+350</manifest>

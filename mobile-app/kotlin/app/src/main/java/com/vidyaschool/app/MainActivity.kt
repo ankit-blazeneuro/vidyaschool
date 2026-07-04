@@ -86,6 +86,17 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
         intent?.let { handleIntent(it) }
         com.razorpay.Checkout.preload(applicationContext)
 
+        // Request POST_NOTIFICATIONS permission for Android 13+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
+
+        if (sessionManager.isLoggedIn()) {
+            retrieveAndRegisterFcmToken()
+        }
+
         val themeMode = sessionManager.getThemeMode()
         val isDarkTheme = when (themeMode) {
             "light" -> false
@@ -139,6 +150,38 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
             @Suppress("UNUSED_VARIABLE")
             val finished = isSplashFinished.value
             VidyaSchoolApp(viewModel, sessionManager)
+        }
+    }
+
+    fun retrieveAndRegisterFcmToken() {
+        val sessionToken = sessionManager.getSessionToken()
+        if (sessionToken.isNullOrEmpty()) return
+
+        try {
+            com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                if (!task.isSuccessful) {
+                    android.util.Log.w("FCM", "Fetching FCM registration token failed", task.exception)
+                    return@addOnCompleteListener
+                }
+                val token = task.result ?: return@addOnCompleteListener
+                android.util.Log.d("FCM", "Current FCM token: $token")
+                
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        val response = RetrofitClient.authApi.registerFcmToken(
+                            authHeader = "Bearer $sessionToken",
+                            request = mapOf("token" to token)
+                        )
+                        if (response.isSuccessful) {
+                            android.util.Log.d("FCM", "FCM token registered successfully on server.")
+                        }
+                    } catch (e: java.lang.Exception) {
+                        android.util.Log.e("FCM", "Error sending FCM token to server: ${e.message}")
+                    }
+                }
+            }
+        } catch (e: java.lang.Exception) {
+            android.util.Log.e("FCM", "Firebase messaging not available or initialized: ${e.message}")
         }
     }
 
@@ -266,6 +309,7 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                     onBackClick = { navController.popBackStack() },
                     onLoginSuccess = { provider, email, name, role, avatarUrl, sessionToken, studentClass ->
                         sessionManager.saveSession(provider, email, name, role, avatarUrl, sessionToken, studentClass)
+                        (context as? MainActivity)?.retrieveAndRegisterFcmToken()
                         val destination = when (role.lowercase()) {
                             "admin" -> "admin"
                             "teacher" -> "teacher"

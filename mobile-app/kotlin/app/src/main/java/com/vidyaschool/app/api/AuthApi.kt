@@ -222,6 +222,12 @@ interface AuthApi {
     suspend fun getNotices(
         @Header("Authorization") authHeader: String
     ): Response<List<NoticeResponse>>
+
+    @POST("api/notifications/register-token")
+    suspend fun registerFcmToken(
+        @Header("Authorization") authHeader: String,
+        @Body request: Map<String, String>
+    ): Response<Map<String, Any>>
 }
 
 data class SearchUserResponse(

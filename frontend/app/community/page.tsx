@@ -126,6 +126,9 @@ export default function CommunityChatPage() {
   const [messages, setMessages] = React.useState<Message[]>([])
   const [onlineUsers, setOnlineUsers] = React.useState<OnlineUser[]>([])
   const [inputText, setInputText] = React.useState("")
+  const [typingUsers, setTypingUsers] = React.useState<{ userId: string; name: string }[]>([])
+  const typingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
+  const isTypingRef = React.useRef(false)
   const [socket, setSocket] = React.useState<Socket | null>(null)
   const [connected, setConnected] = React.useState(false)
   const [loading, setLoading] = React.useState(true)
@@ -206,6 +209,19 @@ export default function CommunityChatPage() {
 
     socketInstance.on("online_users", (users: OnlineUser[]) => {
       setOnlineUsers(users)
+      setTypingUsers((prev) => prev.filter((tu) => users.some((u) => u.userId === tu.userId)))
+    })
+
+    socketInstance.on("user_typing", (data: { userId: string; name: string; isTyping: boolean }) => {
+      if (!currentUser || data.userId === currentUser.id) return
+      setTypingUsers((prev) => {
+        if (data.isTyping) {
+          if (prev.some((u) => u.userId === data.userId)) return prev
+          return [...prev, { userId: data.userId, name: data.name }]
+        } else {
+          return prev.filter((u) => u.userId !== data.userId)
+        }
+      })
     })
 
     socketInstance.on("recent_messages", (data: { messages: Message[]; hasMore: boolean }) => {
@@ -280,6 +296,43 @@ export default function CommunityChatPage() {
     socket.emit("send_message", payload)
     setInputText("")
     setReplyingTo(null)
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+    isTypingRef.current = false
+    socket.emit("typing", { isTyping: false })
+  }
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value
+    setInputText(val)
+
+    if (!socket || !connected) return
+
+    if (val.trim() === "") {
+      if (isTypingRef.current) {
+        isTypingRef.current = false
+        socket.emit("typing", { isTyping: false })
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      return
+    }
+
+    if (!isTypingRef.current) {
+      isTypingRef.current = true
+      socket.emit("typing", { isTyping: true })
+    }
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      isTypingRef.current = false
+      socket.emit("typing", { isTyping: false })
+    }, 2500)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -591,6 +644,24 @@ export default function CommunityChatPage() {
 
         {/* Chat Input Bar with Docked Reply Banner */}
         <footer className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 bg-gradient-to-t from-background via-gradient/90 to-transparent pointer-events-none z-10 shrink-0">
+            {typingUsers.length > 0 && (
+              <div className="pointer-events-auto flex items-center gap-2 mb-2 px-1 text-xs text-muted-foreground select-none animate-fade-in">
+                <div className="flex gap-1.5 items-center bg-background/90 dark:bg-zinc-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-border/80 shadow-md">
+                  <div className="flex gap-0.5 items-center justify-center mr-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce"></span>
+                  </div>
+                  <span className="font-medium text-[11px] tracking-wide text-foreground/80">
+                    {typingUsers.length === 1 
+                      ? `${typingUsers[0].name} is typing...` 
+                      : typingUsers.length === 2 
+                        ? `${typingUsers[0].name} and ${typingUsers[1].name} are typing...` 
+                        : "Several people are typing..."}
+                  </span>
+                </div>
+              </div>
+            )}
             <div className="pointer-events-auto flex flex-col w-full bg-background/80 backdrop-blur-md border border-border rounded-2xl shadow-lg focus-within:border-primary/40 focus-within:shadow-primary/5 transition-all">
               
               {/* Replying To Preview Banner */}
@@ -630,7 +701,7 @@ export default function CommunityChatPage() {
                   ref={textareaRef}
                   placeholder="Message #community"
                   value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
+                  onChange={handleTextareaChange}
                   onKeyDown={handleKeyDown}
                   disabled={!connected}
                   rows={1}

@@ -191,5 +191,14 @@ class LibraryBookIssue(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+class FCMToken(SQLModel, table=True):
+    __tablename__ = "fcm_token"
+    id: str = Field(primary_key=True)
+    user_id: str = Field(alias="user_id", foreign_key="user.id")
+    token: str
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias="created_at")
+    updated_at: datetime = Field(default_factory=datetime.utcnow, alias="updated_at")
+
+
 
 

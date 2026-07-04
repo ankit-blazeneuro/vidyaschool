@@ -1,8 +1,25 @@
 {
     "logs": [
         {
-            "outputFile": "com.vidyaschool.app-mergeDebugResources-63:/values-night-v8/values-night-v8.xml",
+            "outputFile": "com.vidyaschool.app-mergeDebugResources-66:/values-night-v8/values-night-v8.xml",
             "map": [
+                {
+                    "source": "/home/ankit/.gradle/caches/transforms-3/1180f40cc047b1457bb12d24e49ed726/transformed/appcompat-1.6.1/res/values-night-v8/values-night-v8.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,125,209,293,389,491,593,687",
+                        "endColumns": "69,83,83,95,101,101,93,88",
+                        "endOffsets": "120,204,288,384,486,588,682,771"
+                    },
+                    "to": {
+                        "startLines": "4,5,6,7,8,9,10,27",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "193,263,347,431,527,629,731,1637",
+                        "endColumns": "69,83,83,95,101,101,93,88",
+                        "endOffsets": "258,342,426,522,624,726,820,1721"
+                    }
+                },
                 {
                     "source": "/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/res/values-night/themes.xml",
                     "from": {
@@ -23,24 +40,7 @@
                     }
                 },
                 {
-                    "source": "/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/res/values-night/colors.xml",
-                    "from": {
-                        "startLines": "3",
-                        "startColumns": "4",
-                        "startOffsets": "105",
-                        "endColumns": "51",
-                        "endOffsets": "152"
-                    },
-                    "to": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "55",
-                        "endColumns": "51",
-                        "endOffsets": "102"
-                    }
-                },
-                {
-                    "source": "/home/ankit/.gradle/caches/transforms-3/bd0ee3d05057df3c55dcc86f0beed8b2/transformed/jetified-core-splashscreen-1.0.1/res/values-night-v8/values-night-v8.xml",
+                    "source": "/home/ankit/.gradle/caches/transforms-3/57ac417751b0e566c0b99a9fe9230a58/transformed/jetified-core-splashscreen-1.0.1/res/values-night-v8/values-night-v8.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -57,20 +57,20 @@
                     }
                 },
                 {
-                    "source": "/home/ankit/.gradle/caches/transforms-3/af226701e07b6e5753175ffad1df9a85/transformed/appcompat-1.6.1/res/values-night-v8/values-night-v8.xml",
+                    "source": "/home/ankit/Documents/Code/vs/mobile-app/kotlin/app/src/main/res/values-night/colors.xml",
                     "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,125,209,293,389,491,593,687",
-                        "endColumns": "69,83,83,95,101,101,93,88",
-                        "endOffsets": "120,204,288,384,486,588,682,771"
+                        "startLines": "3",
+                        "startColumns": "4",
+                        "startOffsets": "105",
+                        "endColumns": "51",
+                        "endOffsets": "152"
                     },
                     "to": {
-                        "startLines": "4,5,6,7,8,9,10,27",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "193,263,347,431,527,629,731,1637",
-                        "endColumns": "69,83,83,95,101,101,93,88",
-                        "endOffsets": "258,342,426,522,624,726,820,1721"
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "51",
+                        "endOffsets": "102"
                     }
                 }
             ]
