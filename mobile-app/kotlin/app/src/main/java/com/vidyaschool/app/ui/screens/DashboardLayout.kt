@@ -2064,6 +2064,7 @@ fun CommunityTabContent(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                    .imePadding()
                     .navigationBarsPadding(),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
@@ -2175,17 +2176,11 @@ fun CommunityTabContent(
                         }
                     }
 
-                    // Input Row
+                    // Input Row (ChatGPT style: borderless, padded, filled circular send button)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f),
-                                RoundedCornerShape(24.dp)
-                            )
-                            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(24.dp))
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                            .padding(start = 6.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(
@@ -2197,37 +2192,43 @@ fun CommunityTabContent(
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = "Add",
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                                modifier = Modifier.size(22.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
                         }
 
-                        // Text field
+                        // Text field Box
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(horizontal = 8.dp)
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
-                            CustomTextField(
+                            if (inputText.isEmpty()) {
+                                Text(
+                                    text = "Message #community",
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                    fontSize = 15.sp
+                                )
+                            }
+                            androidx.compose.foundation.text.BasicTextField(
                                 value = inputText,
                                 onValueChange = { inputText = it },
-                                placeholder = "Message #community"
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = androidx.compose.ui.text.TextStyle(
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 15.sp
+                                ),
+                                maxLines = 5,
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                    capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Sentences,
+                                    autoCorrect = true
+                                )
                             )
                         }
 
-                        IconButton(
-                            onClick = {
-                                android.widget.Toast.makeText(context, "Coming Soon!", android.widget.Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_custom_profile),
-                                contentDescription = "Emoji",
-                                modifier = Modifier.size(20.dp),
-                                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                            )
-                        }
+                        val isSendEnabled = isConnected && inputText.trim().isNotEmpty()
+                        val sendButtonBg = if (isSendEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+                        val sendButtonTint = if (isSendEnabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
 
                         IconButton(
                             onClick = {
@@ -2237,14 +2238,17 @@ fun CommunityTabContent(
                                     onSendMessage()
                                 }
                             },
-                            enabled = isConnected && inputText.trim().isNotEmpty(),
-                            modifier = Modifier.size(36.dp)
+                            enabled = isSendEnabled,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(sendButtonBg, CircleShape)
+                                .clip(CircleShape)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Send,
                                 contentDescription = "Send",
-                                modifier = Modifier.size(20.dp),
-                                tint = if (isConnected && inputText.trim().isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
+                                modifier = Modifier.size(18.dp),
+                                tint = sendButtonTint
                             )
                         }
                     }
@@ -2415,19 +2419,7 @@ fun CommunityMessageItem(
                             color = roleColor
                         )
 
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(roleBg)
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = msg.role.uppercase(),
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = roleColor
-                            )
-                        }
+
 
                         Text(
                             text = formatTimestamp(msg.timestamp),
