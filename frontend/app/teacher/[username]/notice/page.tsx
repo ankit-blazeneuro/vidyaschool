@@ -129,7 +129,7 @@ export default function TeacherNoticePage() {
     if (!pushTitle.trim() || !pushBody.trim()) return
     setPushSending(true)
     try {
-      const res = await fetch("/api/backend/api/notifications/send", {
+      const res = await fetch("/api/notifications/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
