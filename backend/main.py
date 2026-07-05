@@ -631,15 +631,10 @@ def send_fcm_notification(tokens: list[str], title: str, body: str):
     if not tokens:
         return
     message = messaging.MulticastMessage(
-        notification=messaging.Notification(title=title, body=body),
         data={"title": title, "body": body},
         android=messaging.AndroidConfig(
             priority="high",
             ttl=86400,
-            notification=messaging.AndroidNotification(
-                channel_id="school_notifications",
-                priority="high",
-            ),
         ),
         tokens=tokens,
     )
