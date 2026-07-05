@@ -147,13 +147,13 @@ export function Header() {
         <div className="hidden md:flex items-center gap-3">
           <ThemeToggle />
           <Button variant="ghost" asChild>
-            <Link id="header-student-portal-btn" href="/student">
-              Student Portal
+            <Link id="header-student-portal-btn" href="/login">
+              Login
             </Link>
           </Button>
           <Button variant="default" asChild>
-            <Link id="header-teacher-portal-btn" href="/teacher">
-              Teacher Portal
+            <Link id="header-teacher-portal-btn" href="/signup">
+              Signup
             </Link>
           </Button>
         </div>
