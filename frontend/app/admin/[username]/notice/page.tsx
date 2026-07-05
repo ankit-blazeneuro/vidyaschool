@@ -59,7 +59,7 @@ export default function AdminNoticePage() {
 
     setSendingPush(true)
     try {
-      const res = await fetch("/api/backend/api/notifications/send", {
+      const res = await fetch("/api/notifications/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

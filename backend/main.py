@@ -606,6 +606,7 @@ firebase_app = None
 try:
     cred_path = os.getenv("FIREBASE_CREDENTIALS_JSON")
     cred_content = os.getenv("FIREBASE_CREDENTIALS_JSON_CONTENT")
+    default_path = os.path.join(os.path.dirname(__file__), "firebase-credentials.json")
     if cred_path and os.path.exists(cred_path):
         cred = credentials.Certificate(cred_path)
         firebase_app = firebase_admin.initialize_app(cred)
@@ -613,6 +614,9 @@ try:
         import json
         cred_info = json.loads(cred_content)
         cred = credentials.Certificate(cred_info)
+        firebase_app = firebase_admin.initialize_app(cred)
+    elif os.path.exists(default_path):
+        cred = credentials.Certificate(default_path)
         firebase_app = firebase_admin.initialize_app(cred)
     else:
         firebase_app = firebase_admin.initialize_app()
@@ -627,16 +631,25 @@ def send_fcm_notification(tokens: list[str], title: str, body: str):
     if not tokens:
         return
     message = messaging.MulticastMessage(
+        notification=messaging.Notification(title=title, body=body),
         data={"title": title, "body": body},
         android=messaging.AndroidConfig(
             priority="high",
             ttl=86400,
+            notification=messaging.AndroidNotification(
+                channel_id="school_notifications",
+                priority="high",
+            ),
         ),
         tokens=tokens,
     )
     try:
         response = messaging.send_each_for_multicast(message)
         print(f"FCM multicast sent: {response.success_count} success, {response.failure_count} failure")
+        if response.failure_count:
+            for idx, send_response in enumerate(response.responses):
+                if not send_response.success:
+                    print(f"FCM token failure [{idx}]: {send_response.exception}")
     except Exception as e:
         print(f"Error sending FCM multicast: {e}")
 
@@ -659,6 +672,8 @@ def get_target_users(target_role: str, target_class: str | None, target_section:
     return query.all()
 
 async def send_notification_to_user(user_id: str, title: str, body: str, db: Session):
+    from models import FCMToken
+
     sids = get_online_sids_for_user(user_id)
     if sids:
         for sid in sids:
@@ -667,13 +682,12 @@ async def send_notification_to_user(user_id: str, title: str, body: str, db: Ses
             except Exception as e:
                 print(f"Error emitting socket notification: {e}")
         print(f"Sent notification to online user {user_id} via socket.")
-    else:
-        from models import FCMToken
-        tokens = db.query(FCMToken).filter(FCMToken.user_id == user_id).all()
-        if tokens:
-            token_list = [t.token for t in tokens]
-            send_fcm_notification(token_list, title, body)
-            print(f"Sent notification to offline user {user_id} via FCM.")
+
+    tokens = db.query(FCMToken).filter(FCMToken.user_id == user_id).all()
+    if tokens:
+        token_list = [t.token for t in tokens]
+        send_fcm_notification(token_list, title, body)
+        print(f"Sent notification to user {user_id} via FCM ({len(token_list)} token(s)).")
 
 @app.post("/api/notifications/register-token")
 def register_fcm_token(data: dict, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

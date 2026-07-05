@@ -47,7 +47,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        // Handle notification payload (foreground) or data payload (background/killed)
+        // Background/killed apps receive notification payload via the system tray automatically.
+        // onMessageReceived runs here only while the app is in the foreground.
         val title = remoteMessage.notification?.title
             ?: remoteMessage.data["title"]
             ?: "New Notification"
@@ -60,8 +61,17 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     companion object {
         private const val CHANNEL_ID = "school_notifications"
+        private var lastNotificationKey: String? = null
+        private var lastNotificationTime: Long = 0
 
         fun showNotification(context: Context, title: String, body: String) {
+            val key = "$title|$body"
+            val now = System.currentTimeMillis()
+            if (key == lastNotificationKey && now - lastNotificationTime < 5000) {
+                return
+            }
+            lastNotificationKey = key
+            lastNotificationTime = now
             val intent = Intent(context, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
