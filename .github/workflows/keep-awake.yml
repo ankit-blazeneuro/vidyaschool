@@ -13,4 +13,4 @@ jobs:
     steps:
       - name: Send GET Request to Render Backend
         run: |
-          curl -s -I https://vidyaschool-backend.onrender.com/
+          curl -s -I https://api.blazeneuro.com/

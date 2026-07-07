@@ -29,4 +29,4 @@ jobs:
         if: steps.india_time.outputs.skip != 'true'
         run: |
           curl --fail --silent --show-error --max-time 30 \
-            https://vidyaschool-backend.onrender.com
+            https://api.blazeneuro.com

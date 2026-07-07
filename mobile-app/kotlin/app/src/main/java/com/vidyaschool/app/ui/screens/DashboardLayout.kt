@@ -213,7 +213,7 @@ fun DashboardLayout(
                 callFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
                 webSocketFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
             }
-            globalSocket = IO.socket("https://vidyaschool-backend.onrender.com", opts)
+            globalSocket = IO.socket("https://api.blazeneuro.com", opts)
             
             globalSocket.on(Socket.EVENT_CONNECT) {
                 val joinData = org.json.JSONObject().apply {
@@ -1932,7 +1932,7 @@ fun CommunityTabContent(
                 callFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
                 webSocketFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
             }
-            socketInstance = IO.socket("https://vidyaschool-backend.onrender.com", opts)
+            socketInstance = IO.socket("https://api.blazeneuro.com", opts)
 
             socketInstance.on(Socket.EVENT_CONNECT) {
                 android.util.Log.d("CommunityTab", "Socket connected successfully!")
