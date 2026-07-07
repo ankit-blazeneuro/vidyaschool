@@ -25,6 +25,7 @@ import com.vidyaschool.app.auth.provider.GitHubAuthProvider
 import com.vidyaschool.app.auth.repository.AuthRepositoryImpl
 import com.vidyaschool.app.auth.viewmodel.AuthViewModel
 import com.vidyaschool.app.ui.screens.LoginScreen
+import com.vidyaschool.app.ui.screens.SignupScreen
 import com.vidyaschool.app.ui.screens.StudentScreen
 import com.vidyaschool.app.ui.screens.WelcomeScreen
 import com.vidyaschool.app.ui.screens.TeacherScreen
@@ -300,13 +301,24 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
             composable("welcome") {
                 WelcomeScreen(
                     onLoginClick = { navController.navigate("login") },
-                    onCreateAccountClick = { /* TODO */ }
+                    onCreateAccountClick = { navController.navigate("signup") }
+                )
+            }
+            composable("signup") {
+                SignupScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onSignupSuccess = {
+                        navController.navigate("login") {
+                            popUpTo("signup") { inclusive = true }
+                        }
+                    }
                 )
             }
             composable("login") {
                 LoginScreen(
                     viewModel = viewModel,
                     onBackClick = { navController.popBackStack() },
+                    onSignupClick = { navController.navigate("signup") },
                     onLoginSuccess = { provider, email, name, role, avatarUrl, sessionToken, studentClass ->
                         sessionManager.saveSession(provider, email, name, role, avatarUrl, sessionToken, studentClass)
                         (context as? MainActivity)?.retrieveAndRegisterFcmToken()

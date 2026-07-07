@@ -15,6 +15,19 @@ data class LoginRequest(
     val password: String
 )
 
+data class SignupRequest(
+    val email: String,
+    val password: String,
+    val name: String,
+    val role: String = "student"
+)
+
+data class SignupResponse(
+    val user: User?,
+    val token: String?,
+    val message: String?
+)
+
 data class LoginResponse(
     val user: User?,
     val token: String?,
@@ -132,6 +145,9 @@ data class VerifyPaymentRequest(
 interface AuthApi {
     @POST("api/auth/sign-in/email")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
+
+    @POST("api/auth/sign-up/email")
+    suspend fun signup(@Body request: SignupRequest): Response<SignupResponse>
 
     @GET("api/public/user-role/{email}")
     suspend fun getUserRole(@Path("email") email: String): Response<UserRoleResponse>

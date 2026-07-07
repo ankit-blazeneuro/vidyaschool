@@ -45,7 +45,8 @@ import com.vidyaschool.app.api.CreateSessionRequest
 fun LoginScreen(
     viewModel: AuthViewModel,
     onBackClick: () -> Unit,
-    onLoginSuccess: (String, String, String?, String, String?, String?, String?) -> Unit
+    onLoginSuccess: (String, String, String?, String, String?, String?, String?) -> Unit,
+    onSignupClick: () -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -343,12 +344,18 @@ fun LoginScreen(
                     pop()
                 }
 
-                Text(
+                androidx.compose.foundation.text.ClickableText(
                     text = annotatedString,
-                    fontSize = 12.sp,
-                    color = Color(0xFF71717A),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 12.sp,
+                        color = Color(0xFF71717A),
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { offset ->
+                        annotatedString.getStringAnnotations("signup", offset, offset)
+                            .firstOrNull()?.let { onSignupClick() }
+                    }
                 )
             }
         }
