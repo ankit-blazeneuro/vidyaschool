@@ -312,7 +312,7 @@ fun DashboardLayout(
                 }
                 if (selectedTab != "community") {
                     NavigationBar(
-                        modifier = Modifier.height(70.dp),
+                        modifier = Modifier.navigationBarsPadding(),
                         containerColor = MaterialTheme.colorScheme.background,
                         tonalElevation = 0.dp
                     ) {
