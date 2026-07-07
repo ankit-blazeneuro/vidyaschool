@@ -29,6 +29,7 @@ fun Input(
     label: String? = null,
     isPassword: Boolean = false,
     readOnly: Boolean = false,
+    leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
@@ -76,6 +77,10 @@ fun Input(
                         .padding(horizontal = 12.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    if (leadingIcon != null) {
+                        leadingIcon()
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
                     Box(modifier = Modifier.weight(1f)) {
                         if (value.isEmpty()) {
                             Text(

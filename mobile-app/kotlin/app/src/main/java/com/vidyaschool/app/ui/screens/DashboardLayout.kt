@@ -3330,6 +3330,7 @@ fun NotificationDrawer(
 
 @Composable
 fun UpdateBanner(
+    updateInfo: UpdateInfo,
     isDownloading: Boolean,
     downloadProgress: Float,
     isDownloaded: Boolean,
