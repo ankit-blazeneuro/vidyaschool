@@ -62,6 +62,7 @@ import com.vidyaschool.app.ui.shadcn.SelectOption
 import coil.compose.AsyncImage
 import com.vidyaschool.app.api.FeeInstallment
 import com.vidyaschool.app.api.NoticeResponse
+import com.vidyaschool.app.api.NotificationHistoryItem
 import com.vidyaschool.app.api.PayFeesRequest
 import com.vidyaschool.app.api.PayFeesResponse
 import com.vidyaschool.app.api.SearchUserResponse
@@ -3128,9 +3129,207 @@ fun FeesTabContent(
   } // end PullToRefreshBox
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NotificationDrawer(
+    sessionManager: SessionManager,
+    onDismiss: () -> Unit
+) {
+    var notifications by remember { mutableStateOf<List<NotificationHistoryItem>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        try {
+            val token = sessionManager.getSessionToken()
+            if (!token.isNullOrEmpty()) {
+                val res = RetrofitClient.authApi.getNotificationHistory("Bearer $token", 30)
+                if (res.isSuccessful) {
+                    notifications = res.body() ?: emptyList()
+                } else {
+                    errorMsg = "Failed to load notifications"
+                }
+            }
+        } catch (e: Exception) {
+            errorMsg = "Could not load notifications"
+        } finally {
+            isLoading = false
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 4.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
+            )
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Notifications",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Last 30 days",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+                    }
+                }
+                errorMsg != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(errorMsg!!, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    }
+                }
+                notifications.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_custom_notification),
+                                contentDescription = null,
+                                modifier = Modifier.size(32.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                            )
+                            Text(
+                                text = "No notifications in the last 30 days",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                            )
+                        }
+                    }
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp),
+                        verticalArrangement = Arrangement.spacedBy(0.dp)
+                    ) {
+                        items(notifications.size) { idx ->
+                            val notif = notifications[idx]
+                            val dateLabel = try {
+                                val parts = notif.createdAt.split("T")[0].split("-")
+                                val months = listOf("","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
+                                "${months[parts[1].toInt()]} ${parts[2].toInt()}, ${parts[0]}"
+                            } catch (e: Exception) { notif.createdAt.take(10) }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_custom_notification),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = notif.title,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    if (notif.body.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = notif.body,
+                                            fontSize = 13.sp,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                                            lineHeight = 18.sp
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = dateLabel,
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                    )
+                                }
+                            }
+                            if (idx < notifications.lastIndex) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f))
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
 @Composable
 fun UpdateBanner(
-    updateInfo: UpdateInfo,
     isDownloading: Boolean,
     downloadProgress: Float,
     isDownloaded: Boolean,

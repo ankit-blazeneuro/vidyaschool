@@ -70,6 +70,7 @@ fun StudentScreen(
     var isLoadingSlider by remember { mutableStateOf(true) }
     var showOnboarding by remember { mutableStateOf(false) }
     var isCheckingOnboarding by remember { mutableStateOf(true) }
+    var showNotifications by remember { mutableStateOf(false) }
 
     LaunchedEffect(sessionToken) {
         isCheckingOnboarding = true
@@ -189,7 +190,7 @@ fun StudentScreen(
                     }
                     
                     IconButton(
-                        onClick = { /* Notifications */ },
+                        onClick = { showNotifications = true },
                         modifier = Modifier
                             .size(36.dp)
                             .border(
@@ -265,7 +266,7 @@ fun StudentScreen(
                     }
                     Text("Dashboard", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                     IconButton(
-                        onClick = { /* Notifications */ },
+                        onClick = { showNotifications = true },
                         modifier = Modifier
                             .size(36.dp)
                             .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
@@ -291,6 +292,13 @@ fun StudentScreen(
                     }
                     showOnboarding = false
                 }
+            )
+        }
+
+        if (showNotifications) {
+            NotificationDrawer(
+                sessionManager = sessionManager,
+                onDismiss = { showNotifications = false }
             )
         }
     }

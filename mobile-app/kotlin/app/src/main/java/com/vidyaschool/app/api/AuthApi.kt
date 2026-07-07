@@ -244,7 +244,20 @@ interface AuthApi {
         @Header("Authorization") authHeader: String,
         @Body request: Map<String, String>
     ): Response<Map<String, Any>>
+
+    @GET("api/notifications/history")
+    suspend fun getNotificationHistory(
+        @Header("Authorization") authHeader: String,
+        @Query("days") days: Int = 30
+    ): Response<List<NotificationHistoryItem>>
 }
+
+data class NotificationHistoryItem(
+    val id: String,
+    val title: String,
+    val body: String,
+    @SerializedName("created_at") val createdAt: String
+)
 
 data class SearchUserResponse(
     val name: String,
