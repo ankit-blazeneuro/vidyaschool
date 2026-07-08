@@ -4,6 +4,7 @@ import * as React from "react"
 import { useDocsSearch } from "fumadocs-core/search/client"
 import {
   SearchDialog,
+  SearchDialogOverlay,
   SearchDialogContent,
   SearchDialogList,
   SearchDialogListItem,
@@ -59,6 +60,7 @@ export function CustomSearchDialog(props: SharedProps) {
 
   return (
     <SearchDialog search={search} onSearchChange={setSearch} {...props}>
+      <SearchDialogOverlay className="backdrop-blur-md bg-black/40" />
       <SearchDialogContent className="max-h-[85vh] overflow-hidden flex flex-col *:border-b-0">
         <SearchDialogHeader className="flex items-center gap-3 border-b border-fd-border/30 px-4 py-4 shrink-0 h-14">
           <Search className="size-4 shrink-0 text-fd-muted-foreground ml-1" />
