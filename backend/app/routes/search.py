@@ -534,3 +534,275 @@ def search(
         "content": r["content"],
         "url": r["url"]
     } for r in results[:15]]
+
+DOC_MARKDOWNS = {
+    "/docs/auth/signup": """# Account Registration (Signup)
+Learn how to register your profile credentials on the VidyaSchool portal and choose your preferred platform roles.
+
+## Step-by-Step Guide
+
+### 01. Select preferred Role
+Choose between 'Student' or 'Teacher' when creating your profile. Students are registered directly on submission, whereas Teachers are queued for manual administrative verification before portal activation.
+
+### 02. Email & Credentials
+Provide your full name, institutional email address, and select a secure password. Ensure institutional emails are typed correctly to receive verification links.
+
+### 03. Social Logins (Alternative)
+Alternatively, click Google or GitHub icons to link and sign in directly using OAuth social login channels. This automatically verifies your email profile.
+""",
+    "/docs/auth/login": """# Portal Login Streams
+Walkthrough on signing into the dashboard and accessing your designated workspace controls.
+
+## Details
+
+### 1. Credential Login
+Input your registered email address and password on the login screen. Click Sign In to verify credentials.
+
+### 2. Automatic Dashboard Redirects
+Upon successful authentication, the gateway redirects you to your corresponding dashboard layout:
+- **Students**: Redirected to `/student/[username]` dashboard.
+- **Teachers**: Redirected to `/teacher/[username]` workspace.
+- **Accounts Clerks**: Redirected to `/accounts/[username]` control panels.
+- **Administrators**: Redirected to `/admin/[username]` command center.
+""",
+    "/docs/auth/approval": """# Verification & Educator Approvals
+Understand the email verification cycle and administrative approval flows for teachers.
+
+## Details
+
+### 1. Email Verification links
+Upon creating an account, an automated email verification link is transmitted. Clicking this link verifies your profile status, enabling dashboard onboarding.
+
+### 2. Educator/Teacher Approval Waiting Room
+For security, new teacher registrations are placed in a 'pending' state. Teachers will be redirected to the Waiting Room page and cannot access classroom tools. Once an Administrator audits and approves the teacher request, access is instantly granted.
+""",
+    "/docs/student/onboarding": """# Student Profile Onboarding
+Complete guide on setting up your account profile, emergency coordinates, class allocations, and commuter choices to activate your portal workspace.
+
+## Step-by-Step Guide
+
+### 01. Admission Number & Phone Registration
+Input your official school-assigned admission key (e.g. 2024/STU/102). This matches your registration with the central registrar database. Submit your primary mobile number to register for automated text alert streams.
+
+### 02. Assigned Class Bracket & Section Setup
+Select your active grade level and sections. This configures your dashboard feeds, class homework journals, and examination calendars. Double-check this selection as class assignments can only be changed by administrators.
+
+### 03. Mode of Commute selection
+Choose between 'Walking' and 'School Transport'. Selecting School Transport links your profile to transit logs and school bus schedules. Walkers are tracked for perimeter checkouts only.
+
+### 04. Parent / Guardian Contact Information
+Submit parent names, emergency phone numbers, and optional email IDs. This is required for fee-due notices, progress report card sign-offs, and critical school announcements.
+
+### 05. Mailing Address Verification
+Provide street address, state, city, and a valid 6-digit postal pincode. This is verified against municipal zones for school transport routing setups.
+
+## Additional Details
+
+### Why is onboarding mandatory?
+Without completed onboarding records, the database locks student dashboard access. Complete profile registration resolves database tags, allowing instant ledger views, report card releases, and message boards logs.
+
+### Troubleshooting common errors
+If the screen reports 'Admission number already exists', it means another profile is registered with those details. Contact the administration helpdesk to reset credentials. Ensure your pincode contains exactly 6 digits.
+""",
+    "/docs/student/fees": """# Fees Ledger & Online Payments
+Verify outstanding balances, tuition fees, transport fees, and co-curricular concessions, and pay online securely.
+
+## Details
+
+### 1. Auditing the Fees Ledger
+Navigate to the Fees section of your sidebar. The ledger details all generated monthly fee installments, itemized by basic tuition, transport surcharge, and activity fees. Outstanding items are categorized as 'Pending' or 'Overdue' (past payment deadline), while settled items are marked as 'Paid'.
+
+### 2. Executing Online Payments
+Click the Pay Now button next to any unpaid installment. This launches the secure Razorpay Checkout overlay. You can process transactions using credit/debit cards, NetBanking, mobile wallets, or instant UPI (Google Pay, PhonePe, Paytm). Confirmations are processed in real-time, instantly marking installments as Paid.
+
+### 3. Downloading Official Receipts
+Once paid, click the 'PDF Receipt' action next to the installment. This generates a digitally signed PDF invoice showing receipt numbers, transaction reference IDs, and payment stamps. Keep these for tax clearance audits.
+
+### 4. Scholarship Concessions & Waivers
+If you are on EWS, Merit-based, or Sports scholarships, concessions are applied directly to the installment amount. Check the 'Applied Waiver' lines on the card detail drawers. Contact the accountant's desk if waivers are missing.
+""",
+    "/docs/student/marks": """# Academic Marks & Performance Sheets
+Detailed view of your test results, subject aggregates, term percentages, and grade cards.
+
+## Details
+
+### 1. Navigating Grades
+The Marks portal compiles all test sheets published by teachers. Select terms (Term 1, Mid-Term, Term 2) or filter by specific subjects (Mathematics, Physics, English) using the filter dropdown cards.
+
+### 2. Weighted Grading System
+Your final subject percentages are calculated using weighted grades: Assignments contribute 20% to the subject grade, Mid-Terms contribute 30%, and Term Finals contribute 50%. The cumulative GPA is auto-generated upon term final score submissions.
+
+### 3. Accessing Remarks & Sign-offs
+Check teacher comments on assignment lines. Report cards require parent sign-off parameters, which are tracked on the profile dashboard sheets.
+""",
+    "/docs/student/library": """# Library Catalog & Borrowing Tracker
+Manage issued books, verify return deadlines, avoid late fines, and search library collections.
+
+## Details
+
+### 1. Borrowed Books Ledger
+The library card lists all active books issued to your student card. Each item lists the library barcode, book title, checkout date, and return deadline. Items past deadlines are flagged with high-visibility overdue warnings.
+
+### 2. Fine Calculation Surcharges
+Overdue books accumulate library fines at a rate of ₹10 per day. Accumulated fines are added to the next student fees ledger installment automatically. Prompt returns avoid these charges.
+
+### 3. Catalog Search
+Search the digital catalog by title, author, or genre to check current shelf availability before visiting the library desk.
+""",
+    "/docs/student/complaints": """# Filing a Complaint & Support Tickets
+Report technical glitches, infrastructural issues, or classroom concerns directly to authorities.
+
+## Details
+
+### 1. Launching a Ticket
+Click the File a Complaint button in the sidebar. This opens the complaint submission modal, which bypasses general inbox channels to route issues directly to designated staff.
+
+### 2. Recipient Routing Options
+Select the appropriate destination for your issue:
+- **Teacher**: For classroom, syllabus, or peer concerns.
+- **Tech Support (Admin)**: For portal issues, password resets, or device bugs.
+- **Principal / Vice-Principal (Admin)**: For serious escalations or infrastructural reports.
+
+### 3. Tagging Users
+Use the 'Tag People' field to reference specific users. Start typing '@' to search and tag students or teachers. Tagged users will receive a copy of the ticket in their portal notifications.
+
+### 4. Tracking Resolutions
+Upon submission, the portal outputs a success toast with a unique reference number (e.g., CMP-77169). Use this ID to track updates with support clerks.
+""",
+    "/docs/teacher/roster": """# Class Roster & Student Profiles
+Detailed instructions for teachers to manage student lists, emergency phone numbers, and transit modes.
+
+## Details
+
+### 1. Roster Auditing
+Access the Class section of your dashboard. The roster grid lists all assigned class students, including admission codes, registered emails, and onboarding statuses (Completed vs Pending).
+
+### 2. Filtering & Contact Cards
+Use search bars to filter by student name. Clicking a student row opens their contact card, listing parent names, emergency phone numbers, and commute modes (Walking vs Transport). This is critical for organizing school bus routes or coordinating parent updates.
+""",
+    "/docs/teacher/grading": """# Marks Submission & Grading Management
+Learn how to record student test scores, batch-submit term exams, and publish grades.
+
+## Details
+
+### 1. Entering Grades
+Navigate to your assigned subjects page. Select the target class and exam type (Assignment, Midterm, or Final Exam). The grid updates to show input fields for each student.
+
+### 2. Score Ranges & Validation
+Input numeric scores within the designated max limits (e.g. 0-100). The form checks inputs in real-time, preventing input of values exceeding max limits or negative scores.
+
+### 3. Grade Publishing
+Review the filled grades and click Submit. Published scores update student report cards instantly and trigger GPA/average percentage recalculations.
+""",
+    "/docs/teacher/notices": """# Publishing Notices & Announcements
+Broadcast class updates, homework tasks, or exam announcements directly to student portals.
+
+## Details
+
+### 1. Creating an Announcement
+Open the Notices tab and click New Announcement. Draft your notice, add titles, select target classes (e.g. Class 10-A, Class 9-B), and attach optional files.
+
+### 2. Broadcast Delivery
+Clicking Publish instantly pushes the notice to the target student notice board streams. Important notices can be flagged as urgent to display warning flags on student log screens.
+""",
+    "/docs/teacher/escalations": """# Leave Requests & Supplies Procurements
+How to submit official leaves or supply orders directly to administration.
+
+## Details
+
+### 1. Supply Orders
+Request classroom materials (supplies, books, lab assets) through the requests panel. Input item names, quantities, and justification reasons. Admin reviews requests in real-time.
+
+### 2. Submitting Leave Requests
+Select the leave option, choose date ranges, input reason descriptions, and submit. Status fields update to Approved or Rejected as admin reviews the request.
+""",
+    "/docs/teacher/complaints": """# Educator Support & Complaint Tickets
+Log infrastructural issues or coordinate reports directly with coordinators or IT support.
+
+## Details
+
+### 1. Submitting Support Requests
+Use the File a Complaint button in the sidebar. Select Academic Coordinator, Principal, or IT Support, fill in titles, tag users, and describe your request. CMP reference numbers are issued for all submissions.
+""",
+    "/docs/privacy-policy": """# Privacy Policy
+This Privacy Policy details how VidyaSchool collects, utilizes, protects, and governs personal information for students, educators, and guardians.
+
+## 1. Introduction
+Welcome to VidyaSchool ("we", "us", "our"). We are committed to safeguarding the privacy and security of our portal users. This policy governs data collected through the portal, mobile apps, and school databases.
+
+## 2. Data We Collect
+To provide efficient academic workflows, we gather the following personal identifiers:
+- **Profiles**: Full names, profile pictures, institutional emails, secure credentials, and preferred platform roles.
+- **Academics**: Grade level, section allocations, exam marks, classes rosters, and report card remarks.
+- **Emergency Contacts**: Parent or guardian names, verified phone numbers, and physical residential addresses.
+- **Commute Coordinates**: Selected transit modes (Walking vs Transport) and transport route zones.
+
+## 3. How We Use Data
+Collected data is restricted solely to institutional academic administration:
+- Managing classroom registers and verifying student onboarding.
+- Generating tuition fee ledgers and issuing transaction receipts.
+- Routing transportation school buses based on pincodes.
+- Delivering real-time complaint updates and notices notifications.
+
+## 4. Data Security
+VidyaSchool employs industry-standard encryption protocols (SSL/TLS) for data transmission. Access to database ledgers is governed strictly by Role-Based Access Control (RBAC), restricting student profile visibility only to verified educators and administrators.
+
+## 5. Your Rights
+Students and guardians retain the right to audit profile records, request correction of grades (via class teacher tickets), or modify commuter preferences. Administrative access is required to purge student account profiles permanently.
+
+## 6. Contact Us
+For privacy inquiries or data auditing concerns, please file a support ticket directly through the portal helpdesk or contact the registrar office at: `privacy@vidyaschool.edu`.
+""",
+    "/docs/terms-of-service": """# Terms of Service
+These Terms of Service regulate access and use of the VidyaSchool digital portal, mobile applications, and student information systems.
+
+## 1. Acceptance of Terms
+By registering an account, completing onboarding profiles, or using any portal services, you agree to be bound by these Terms of Service. If you disagree with any segment of these clauses, portal access must be discontinued.
+
+## 2. User Portal Conduct
+Users must provide accurate, truthful details during onboarding (such as legitimate admission keys and phone numbers). Sharing login sessions or social credentials is prohibited. Harassment or inappropriate language on community chat boards will trigger immediate disciplinary reviews.
+
+## 3. Educator Responsibilities
+Teachers and librarians must maintain academic integrity when publishing marks and entering classroom registers. All Educator accounts require administrative screening and approval. Unauthorized modifications of grading schemas will lead to account suspension.
+
+## 4. Financial Transactions
+Tuition fee processing utilizes third-party gateways (Razorpay). Users must ensure UPI credentials or bank credit details are secure. VidyaSchool is not liable for transactions failed at banking networks. Official digital receipts generated by the accountant module are final evidence of settlement.
+
+## 5. Account Termination
+We reserve the right to suspend or terminate accounts that breach portal rules, violate academic guidelines, or post false information. Suspended users will be redirected to the unauthorized error dashboard.
+
+## 6. Limitation of Liability
+The VidyaSchool portal is provided on an "as-is" and "as-available" baseline. We do not guarantee uninterrupted system connection during maintenance cycles. We are not liable for transport delays or technical outages impacting online class submissions.
+"""
+}
+
+@router.get("/markdown")
+def get_doc_markdown(path: str = Query(...)):
+    # Standardize path by removing domain prefix if any
+    cleaned_path = path
+    if "vercel.app" in path:
+        cleaned_path = "/" + path.split("vercel.app/")[-1]
+    
+    # Strip any trailing/leading slashes
+    cleaned_path = "/" + cleaned_path.strip("/")
+    
+    # Look up in our rich repository
+    md_content = DOC_MARKDOWNS.get(cleaned_path)
+    
+    if not md_content:
+        # Generate a generic fallback markdown if path is not mapped
+        title = cleaned_path.split("/")[-1].replace("-", " ").title()
+        md_content = f"# {title}\nDocumentation details for `{cleaned_path}` are under review. Contact support if you need immediate guidance."
+        return {
+            "title": title,
+            "markdown": md_content
+        }
+        
+    # Extract title from the first header line
+    title_line = md_content.split("\n")[0]
+    title = title_line.replace("#", "").strip() if title_line.startswith("#") else "Help Article"
+    
+    return {
+        "title": title,
+        "markdown": md_content
+    }

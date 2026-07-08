@@ -112,6 +112,7 @@ fun DashboardLayout(
     val currentUsername = remember { mutableStateOf(sessionManager.getUsername() ?: "") }
     
     var selectedTab by remember { mutableStateOf("home") }
+    var activeDocPath by remember { mutableStateOf<String?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
     
     val triggerRefresh: () -> Unit = {
@@ -380,48 +381,55 @@ fun DashboardLayout(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
-            when (selectedTab) {
-                "home" -> {
-                    PullToRefreshBox(
-                        isRefreshing = isRefreshing,
-                        onRefresh = triggerRefresh,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        homeContent()
+            if (activeDocPath != null) {
+                DocViewerScreen(
+                    path = activeDocPath!!,
+                    onBack = { activeDocPath = null }
+                )
+            } else {
+                when (selectedTab) {
+                    "home" -> {
+                        PullToRefreshBox(
+                            isRefreshing = isRefreshing,
+                            onRefresh = triggerRefresh,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            homeContent()
+                        }
                     }
-                }
-                "notice" -> {
-                    NoticeTabContent(
-                        sessionManager = sessionManager,
-                        isRefreshing = isRefreshing,
-                        onRefresh = triggerRefresh
-                    )
-                }
-                "community" -> {
-                    CommunityTabContent(
-                        role = currentRole.value,
-                        sessionManager = sessionManager,
-                        isRefreshing = isRefreshing,
-                        onRefresh = triggerRefresh,
-                        onBackClick = { selectedTab = "home" }
-                    )
-                }
-                "fees" -> {
-                    FeesTabContent(
-                        sessionManager = sessionManager,
-                        isRefreshing = isRefreshing,
-                        onRefresh = triggerRefresh
-                    )
-                }
-                "search" -> {
-                    SearchTabContent(
-                        sessionManager = sessionManager,
-                        onTabSelect = { tab -> selectedTab = tab },
-                        onShowLibrary = onShowLibrary,
-                        isRefreshing = isRefreshing,
-                        onRefresh = triggerRefresh
-                    )
-                }
+                    "notice" -> {
+                        NoticeTabContent(
+                            sessionManager = sessionManager,
+                            isRefreshing = isRefreshing,
+                            onRefresh = triggerRefresh
+                        )
+                    }
+                    "community" -> {
+                        CommunityTabContent(
+                            role = currentRole.value,
+                            sessionManager = sessionManager,
+                            isRefreshing = isRefreshing,
+                            onRefresh = triggerRefresh,
+                            onBackClick = { selectedTab = "home" }
+                        )
+                    }
+                    "fees" -> {
+                        FeesTabContent(
+                            sessionManager = sessionManager,
+                            isRefreshing = isRefreshing,
+                            onRefresh = triggerRefresh
+                        )
+                    }
+                    "search" -> {
+                        SearchTabContent(
+                            sessionManager = sessionManager,
+                            onTabSelect = { tab -> selectedTab = tab },
+                            onDocSelect = { path -> activeDocPath = path },
+                            onShowLibrary = onShowLibrary,
+                            isRefreshing = isRefreshing,
+                            onRefresh = triggerRefresh
+                        )
+                    }
                 "profile" -> {
                     ProfileTabContent(
                         sessionManager = sessionManager,
@@ -448,6 +456,7 @@ fun DashboardLayout(
                 }
             }
         }
+        }
     }
 }
 
@@ -456,6 +465,7 @@ fun DashboardLayout(
 fun SearchTabContent(
     sessionManager: SessionManager,
     onTabSelect: (String) -> Unit,
+    onDocSelect: (String) -> Unit,
     onShowLibrary: (() -> Unit)?,
     isRefreshing: Boolean,
     onRefresh: () -> Unit
@@ -718,7 +728,13 @@ fun SearchTabContent(
                                     subtitle = doc.content,
                                     icon = Icons.Default.Info,
                                     category = doc.category,
-                                    onClick = { selectedDoc = doc }
+                                    onClick = {
+                                        if (doc.url != null) {
+                                            onDocSelect(doc.url)
+                                        } else {
+                                            selectedDoc = doc
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -1578,7 +1594,8 @@ data class SearchPageItem(
 data class HelpDoc(
     val title: String,
     val category: String,
-    val content: String
+    val content: String,
+    val url: String? = null
 )
 
 val helpDocs = listOf(
@@ -3486,6 +3503,187 @@ fun UpdateBanner(
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DocViewerScreen(
+    path: String,
+    onBack: () -> Unit
+) {
+    var title by remember { mutableStateOf("Loading...") }
+    var markdown by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
+    
+    LaunchedEffect(path) {
+        isLoading = true
+        errorMsg = null
+        try {
+            val response = RetrofitClient.authApi.getDocMarkdown(path)
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                title = body.title
+                markdown = body.markdown
+            } else {
+                errorMsg = "Failed to load document content: ${response.code()}"
+            }
+        } catch (e: Exception) {
+            errorMsg = "Connection failed: ${e.localizedMessage}"
+        } finally {
+            isLoading = false
+        }
+    }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        title, 
+                        fontSize = 18.sp, 
+                        fontWeight = FontWeight.Bold, 
+                        maxLines = 1, 
+                        overflow = TextOverflow.Ellipsis
+                    ) 
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(strokeWidth = 2.5.dp, modifier = Modifier.size(36.dp))
+                }
+            } else if (errorMsg != null) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(errorMsg!!, color = MaterialTheme.colorScheme.error, fontSize = 14.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = onBack) {
+                        Text("Go Back")
+                    }
+                }
+            } else {
+                val scrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    val lines = markdown.split("\n")
+                    lines.forEach { line ->
+                        val trimmed = line.trim()
+                        when {
+                            trimmed.startsWith("# ") -> {
+                                Text(
+                                    text = trimmed.substring(2),
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                                )
+                            }
+                            trimmed.startsWith("## ") -> {
+                                Text(
+                                    text = trimmed.substring(3),
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+                                )
+                            }
+                            trimmed.startsWith("### ") -> {
+                                Text(
+                                    text = trimmed.substring(4),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f),
+                                    modifier = Modifier.padding(top = 4.dp, bottom = 1.dp)
+                                )
+                            }
+                            trimmed.startsWith("- ") || trimmed.startsWith("* ") -> {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(start = 8.dp).padding(vertical = 2.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = "•",
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = trimmed.substring(2),
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
+                                        lineHeight = 18.sp
+                                    )
+                                }
+                            }
+                            trimmed.startsWith("1. ") || trimmed.startsWith("2. ") || trimmed.startsWith("3. ") || trimmed.startsWith("4. ") || trimmed.startsWith("5. ") || trimmed.startsWith("6. ") -> {
+                                val dotIndex = trimmed.indexOf(". ")
+                                val num = trimmed.substring(0, dotIndex + 1)
+                                val text = trimmed.substring(dotIndex + 2)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(start = 8.dp).padding(vertical = 2.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = num,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = text,
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
+                                        lineHeight = 18.sp
+                                    )
+                                }
+                            }
+                            trimmed.isEmpty() -> {
+                                Spacer(modifier = Modifier.height(6.dp))
+                            }
+                            else -> {
+                                var textToRender = trimmed
+                                textToRender = textToRender.replace("**", "")
+                                Text(
+                                    text = textToRender,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

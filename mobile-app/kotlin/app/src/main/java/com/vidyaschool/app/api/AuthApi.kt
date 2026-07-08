@@ -208,6 +208,11 @@ interface AuthApi {
         @Query("username") username: String?
     ): Response<List<SearchBackendResponse>>
 
+    @GET("api/search/markdown")
+    suspend fun getDocMarkdown(
+        @Query("path") path: String
+    ): Response<DocMarkdownResponse>
+
     @PATCH("api/profile")
     suspend fun updateProfile(
         @Header("Authorization") authHeader: String,
@@ -369,4 +374,9 @@ data class SearchBackendResponse(
     val title: String,
     val content: String,
     val url: String
+)
+
+data class DocMarkdownResponse(
+    val title: String,
+    val markdown: String
 )
