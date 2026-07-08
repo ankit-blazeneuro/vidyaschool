@@ -16,6 +16,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarGroup,
+  SidebarGroupContent,
 } from "@/components/ui/sidebar"
 import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle } from "lucide-react"
 import { useSession } from "@/lib/auth-client"
@@ -738,16 +740,35 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         {isLoading ? (
-          <div className="space-y-4 px-4 py-2 flex-1">
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-3 py-2 px-2">
-                  <Skeleton className="h-5 w-5 rounded-md shrink-0 bg-muted-foreground/20" />
-                  <Skeleton className="h-4 w-28 bg-muted-foreground/20" />
-                </div>
-              ))}
-            </div>
-          </div>
+          <SidebarGroup>
+            <SidebarGroupContent className="flex flex-col gap-2">
+              <SidebarMenu>
+                {/* File a Complaint button skeleton */}
+                <SidebarMenuItem className="flex items-center gap-2 pointer-events-none">
+                  <SidebarMenuButton className="min-w-8 bg-sidebar-foreground/5">
+                    <Skeleton className="size-4 shrink-0 rounded bg-muted-foreground/20" />
+                    <Skeleton className="h-4 w-28 rounded bg-muted-foreground/20" />
+                  </SidebarMenuButton>
+                  <div className="size-8 rounded-md bg-sidebar-foreground/5 flex items-center justify-center shrink-0">
+                    <Skeleton className="size-4 rounded bg-muted-foreground/20" />
+                  </div>
+                </SidebarMenuItem>
+              </SidebarMenu>
+              <SidebarMenu className="space-y-1">
+                {/* Menu items skeletons */}
+                {[...Array(5)].map((_, i) => (
+                  <SidebarMenuItem key={i} className="pointer-events-none">
+                    <SidebarMenuButton>
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="size-4 shrink-0 rounded bg-muted-foreground/20" />
+                        <Skeleton className={`h-4 rounded bg-muted-foreground/20 ${i % 2 === 0 ? 'w-24' : i % 3 === 0 ? 'w-20' : 'w-28'}`} />
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         ) : (
           <>
             <NavMain items={navMain} />
