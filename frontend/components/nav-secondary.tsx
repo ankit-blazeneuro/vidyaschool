@@ -2,6 +2,8 @@
 
 import * as React from "react"
 
+import Link from "next/link"
+
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -18,6 +20,7 @@ export function NavSecondary({
     title: string
     url: string
     icon: React.ReactNode
+    onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void
   }[]
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
@@ -27,10 +30,10 @@ export function NavSecondary({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <a href={item.url}>
+                <Link href={item.url} onClick={item.onClick}>
                   {item.icon}
                   <span>{item.title}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

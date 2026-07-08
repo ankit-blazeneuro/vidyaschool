@@ -38,6 +38,14 @@ import {
 import { formatDate } from "@/lib/date-formatter"
 import { useParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
 interface StudentRow {
   id: string
@@ -61,6 +69,8 @@ export function StudentList({ initialStudents }: { initialStudents: StudentRow[]
   const [classFilter, setClassFilter] = React.useState("all")
   const [statusFilter, setStatusFilter] = React.useState("all")
   const [updatingUserId, setUpdatingUserId] = React.useState<string | null>(null)
+  const [currentPage, setCurrentPage] = React.useState(1)
+  const itemsPerPage = 10
   const params = useParams()
   const router = useRouter()
   const username = params.username as string
@@ -88,6 +98,16 @@ export function StudentList({ initialStudents }: { initialStudents: StudentRow[]
 
     return matchesSearch && matchesClass && matchesStatus
   })
+
+  // Reset pagination to first page if search/filters change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [search, classFilter, statusFilter])
+
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentStudents = filteredStudents.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage)
 
   // Summary Metrics
   const totalStudents = initialStudents.length
@@ -237,8 +257,8 @@ export function StudentList({ initialStudents }: { initialStudents: StudentRow[]
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredStudents.length > 0 ? (
-              filteredStudents.map((student) => (
+            {currentStudents.length > 0 ? (
+              currentStudents.map((student) => (
                 <TableRow key={student.id} className="hover:bg-muted/5 transition-colors">
                   <TableCell className="font-mono text-xs font-semibold text-muted-foreground">
                     {student.admissionNumber || "Not Set"}
@@ -363,6 +383,41 @@ export function StudentList({ initialStudents }: { initialStudents: StudentRow[]
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-2 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground select-none">
+          <div>
+            Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredStudents.length)} of {filteredStudents.length} students
+          </div>
+          <Pagination className="w-auto mx-0">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    isActive={page === currentPage}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
     </div>
   )

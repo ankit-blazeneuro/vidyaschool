@@ -37,6 +37,14 @@ import {
 import { formatDate } from "@/lib/date-formatter"
 import { useParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
 interface TeacherRow {
   id: string
@@ -57,6 +65,8 @@ export function TeacherList({ initialTeachers }: { initialTeachers: TeacherRow[]
   const [search, setSearch] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState("all")
   const [updatingUserId, setUpdatingUserId] = React.useState<string | null>(null)
+  const [currentPage, setCurrentPage] = React.useState(1)
+  const itemsPerPage = 10
   const params = useParams()
   const router = useRouter()
   const username = params.username as string
@@ -80,6 +90,16 @@ export function TeacherList({ initialTeachers }: { initialTeachers: TeacherRow[]
 
     return matchesSearch && matchesStatus
   })
+
+  // Reset pagination to first page if search/filters change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [search, statusFilter])
+
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentTeachers = filteredTeachers.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredTeachers.length / itemsPerPage)
 
   // Summary Metrics
   const totalTeachers = initialTeachers.length
@@ -203,8 +223,8 @@ export function TeacherList({ initialTeachers }: { initialTeachers: TeacherRow[]
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredTeachers.length > 0 ? (
-              filteredTeachers.map((teacher) => (
+            {currentTeachers.length > 0 ? (
+              currentTeachers.map((teacher) => (
                 <TableRow key={teacher.id} className="hover:bg-muted/5 transition-colors">
                   <TableCell className="font-mono text-xs font-semibold text-muted-foreground">
                     {teacher.admissionNumber || "Not Set"}
@@ -317,6 +337,41 @@ export function TeacherList({ initialTeachers }: { initialTeachers: TeacherRow[]
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-2 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground select-none">
+          <div>
+            Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredTeachers.length)} of {filteredTeachers.length} teachers
+          </div>
+          <Pagination className="w-auto mx-0">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    isActive={page === currentPage}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
     </div>
   )

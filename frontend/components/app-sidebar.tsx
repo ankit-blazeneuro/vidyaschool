@@ -20,6 +20,16 @@ import {
 import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle } from "lucide-react"
 import { useSession } from "@/lib/auth-client"
 import { io } from "socket.io-client"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Smartphone, Download } from "lucide-react"
 
 // Hook to get username-based URLs
 function useStudentUrls() {
@@ -273,7 +283,7 @@ const data = {
     },
     {
       title: "Get Help",
-      url: "#",
+      url: "/docs",
       icon: (
         <CircleHelpIcon
         />
@@ -286,6 +296,20 @@ const data = {
         <SearchIcon
         />
       ),
+      onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault()
+        if (typeof window !== "undefined") {
+          const event = new KeyboardEvent("keydown", {
+            key: "k",
+            code: "KeyK",
+            ctrlKey: true,
+            metaKey: true,
+            bubbles: true,
+            cancelable: true,
+          })
+          window.dispatchEvent(event)
+        }
+      },
     },
   ],
   documents: [
@@ -318,7 +342,17 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
-  const { data: session } = useSession()
+  const { data: session, isPending } = useSession()
+  const [profileLoading, setProfileLoading] = React.useState(true)
+  const [isQrOpen, setIsQrOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    fetch('/api/profile/username')
+      .then(() => setProfileLoading(false))
+      .catch(() => setProfileLoading(false))
+  }, [])
+
+  const isLoading = isPending || profileLoading
   const userRole = session?.user?.role
   
   const isLibrarian = userRole === "librarian" || (userRole === undefined && pathname?.startsWith("/librarian"))
@@ -681,17 +715,86 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} />
-        {!isAdmin && (
-          <div className="px-3 py-2">
-            <OnboardingAlert isTeacher={isTeacher} />
+        {isLoading ? (
+          <div className="space-y-4 px-4 py-2 flex-1">
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 py-2 px-2">
+                  <Skeleton className="h-5 w-5 rounded-md shrink-0 bg-muted-foreground/20" />
+                  <Skeleton className="h-4 w-28 bg-muted-foreground/20" />
+                </div>
+              ))}
+            </div>
           </div>
+        ) : (
+          <>
+            <NavMain items={navMain} />
+            {!isAdmin && (
+              <div className="px-3 py-2">
+                <OnboardingAlert isTeacher={isTeacher} />
+              </div>
+            )}
+            {/* Mobile App Download Card */}
+            <div className="px-3 py-2">
+              <div 
+                onClick={() => setIsQrOpen(true)}
+                className="group relative cursor-pointer overflow-hidden rounded-lg border border-primary/20 bg-linear-to-br from-primary/5 to-primary/10 p-3 transition-all duration-300 hover:border-primary/40 hover:shadow-sm dark:from-primary/10 dark:to-primary/5"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
+                    <Smartphone className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-foreground truncate">Download Android App</p>
+                    <p className="text-[10px] text-muted-foreground truncate">Get the latest v1.0.51 build</p>
+                  </div>
+                  <Download className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-primary" />
+                </div>
+              </div>
+            </div>
+          </>
         )}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
       </SidebarFooter>
+      {/* Dialog: Android App QR Code */}
+      <Dialog open={isQrOpen} onOpenChange={setIsQrOpen}>
+        <DialogContent className="sm:max-w-md text-center flex flex-col items-center p-6">
+          <DialogHeader className="items-center">
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+              <Smartphone className="size-5 text-primary animate-bounce" />
+              Download VidyaSchool App
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Scan the QR code below on your Android device to download and install the latest version (v1.0.51).
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="my-6 p-4 bg-white rounded-xl shadow-inner border border-muted/55">
+            <img 
+              src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https%3A%2F%2Fgithub.com%2Fankit-blazeneuro%2Fvidyaschool%2Freleases%2Fdownload%2Fv1.0.51%2Fapp-debug.apk" 
+              alt="Download QR Code" 
+              width={200}
+              height={200}
+              className="rounded-lg object-contain mx-auto"
+            />
+          </div>
+          
+          <div className="flex flex-col gap-2 w-full">
+            <Button asChild variant="default" className="w-full gap-2">
+              <a href="https://github.com/ankit-blazeneuro/vidyaschool/releases/download/v1.0.51/app-debug.apk" download>
+                <Download className="size-4" />
+                Direct Download (APK)
+              </a>
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => setIsQrOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Sidebar>
   )
 }
