@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+    const backendUrl = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000").replace(/\/+$/, '')
     const backendSearchUrl = `${backendUrl}/api/search?q=${encodeURIComponent(query)}&role=${role}&username=${username}`
 
     const res = await fetch(backendSearchUrl)
