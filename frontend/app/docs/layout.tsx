@@ -38,6 +38,14 @@ const tree: PageTree.Root = {
         { type: "page", name: "5. Educator Complaints", url: "/docs/teacher/complaints" },
       ],
     },
+    {
+      type: "folder",
+      name: "Legal Policies",
+      children: [
+        { type: "page", name: "Privacy Policy", url: "/docs/privacy-policy" },
+        { type: "page", name: "Terms of Service", url: "/docs/terms-of-service" },
+      ],
+    },
   ],
 }
 
