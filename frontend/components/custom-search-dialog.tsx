@@ -12,6 +12,8 @@ import {
   SearchDialogClose,
   type SharedProps,
 } from "fumadocs-ui/components/dialog/search"
+import { Search } from "lucide-react"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export function CustomSearchDialog(props: SharedProps) {
   const { search, setSearch, query } = useDocsSearch({ type: "fetch" })
@@ -36,18 +38,18 @@ export function CustomSearchDialog(props: SharedProps) {
         key={item.id}
         item={item}
         onClick={onClick}
-        className="relative flex flex-col items-start gap-1 py-3 px-4 rounded-lg hover:bg-fd-accent hover:text-fd-accent-foreground text-left w-full transition-colors group cursor-pointer border-b border-fd-border/30 last:border-b-0"
+        className="relative flex flex-col items-start gap-0.5 py-1.5 px-3 rounded-lg hover:bg-fd-accent hover:text-fd-accent-foreground text-left w-full transition-colors group cursor-pointer border-b border-fd-border/30 last:border-b-0"
       >
-        <div className="flex items-center justify-between w-full">
-          <span className="text-[10px] font-bold tracking-wider text-fd-muted-foreground bg-fd-muted/30 px-1.5 py-0.5 rounded uppercase">
+        <div className="flex items-center gap-2 w-full">
+          <span className="text-[8px] font-extrabold tracking-wider text-fd-muted-foreground bg-fd-muted/30 px-1 py-0.2 rounded uppercase shrink-0">
             {typeLabel}
           </span>
-        </div>
-        <div className="font-semibold text-sm text-fd-foreground group-hover:text-fd-accent-foreground mt-1">
-          {item.title}
+          <div className="font-semibold text-xs text-fd-foreground group-hover:text-fd-accent-foreground truncate flex-1">
+            {item.title}
+          </div>
         </div>
         {item.content && (
-          <p className="text-xs text-fd-muted-foreground line-clamp-2 mt-0.5 leading-normal">
+          <p className="text-[11px] text-fd-muted-foreground line-clamp-1 leading-normal w-full pl-[46px]">
             {item.content}
           </p>
         )}
@@ -58,15 +60,18 @@ export function CustomSearchDialog(props: SharedProps) {
   return (
     <SearchDialog search={search} onSearchChange={setSearch} {...props}>
       <SearchDialogContent className="max-h-[85vh] overflow-hidden flex flex-col *:border-b-0">
-        <SearchDialogHeader className="flex items-center gap-2 border-b border-fd-border/30 px-4 py-3 shrink-0">
-          <SearchDialogInput className="flex-1 bg-transparent text-sm placeholder:text-fd-muted-foreground focus-visible:outline-none" />
+        <SearchDialogHeader className="flex items-center gap-3 border-b border-fd-border/30 px-4 py-4 shrink-0 h-14">
+          <Search className="size-4 shrink-0 text-fd-muted-foreground ml-1" />
+          <SearchDialogInput className="flex-1 bg-transparent text-sm placeholder:text-fd-muted-foreground focus-visible:outline-none h-full" />
           <SearchDialogClose />
         </SearchDialogHeader>
-        <SearchDialogList
-          items={query.data !== "empty" ? query.data : null}
-          Item={renderItem}
-          className="p-2 space-y-1 overflow-y-auto"
-        />
+        <ScrollArea className="flex-1 max-h-[380px]">
+          <SearchDialogList
+            items={query.data !== "empty" ? query.data : null}
+            Item={renderItem}
+            className="p-2 space-y-0.5"
+          />
+        </ScrollArea>
       </SearchDialogContent>
     </SearchDialog>
   )
