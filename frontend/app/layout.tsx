@@ -39,6 +39,7 @@ export const viewport = {
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { RootProvider } from "fumadocs-ui/provider/next"
 import { PWARegister } from "@/components/pwa-register"
+import { CustomSearchDialog } from "@/components/custom-search-dialog"
 
 export default function RootLayout({
   children,
@@ -65,7 +66,10 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TooltipProvider>
-            <RootProvider theme={{ enabled: false }}>
+            <RootProvider 
+              theme={{ enabled: false }}
+              search={{ SearchDialog: CustomSearchDialog }}
+            >
               <PWARegister />
               {children}
             </RootProvider>
