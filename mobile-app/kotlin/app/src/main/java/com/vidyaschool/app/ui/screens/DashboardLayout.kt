@@ -113,6 +113,7 @@ fun DashboardLayout(
     
     var selectedTab by remember { mutableStateOf("home") }
     var activeDocPath by remember { mutableStateOf<String?>(null) }
+    var activeDocFallback by remember { mutableStateOf<String?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
     
     val triggerRefresh: () -> Unit = {
@@ -312,7 +313,7 @@ fun DashboardLayout(
                         }
                     )
                 }
-                if (selectedTab != "community") {
+                if (selectedTab != "community" && activeDocPath == null) {
                     NavigationBar(
                         modifier = Modifier.navigationBarsPadding(),
                         containerColor = MaterialTheme.colorScheme.background,
@@ -384,6 +385,7 @@ fun DashboardLayout(
             if (activeDocPath != null) {
                 DocViewerScreen(
                     path = activeDocPath!!,
+                    fallbackContent = activeDocFallback,
                     onBack = { activeDocPath = null }
                 )
             } else {
@@ -424,18 +426,18 @@ fun DashboardLayout(
                         SearchTabContent(
                             sessionManager = sessionManager,
                             onTabSelect = { tab -> selectedTab = tab },
-                            onDocSelect = { path -> activeDocPath = path },
+                            onDocSelect = { path, fallback -> activeDocPath = path; activeDocFallback = fallback },
                             onShowLibrary = onShowLibrary,
                             isRefreshing = isRefreshing,
                             onRefresh = triggerRefresh
                         )
                     }
-                "profile" -> {
-                    ProfileTabContent(
-                        sessionManager = sessionManager,
-                        role = currentRole.value,
-                        provider = provider,
-                        email = email,
+                    "profile" -> {
+                        ProfileTabContent(
+                            sessionManager = sessionManager,
+                            role = currentRole.value,
+                            provider = provider,
+                            email = email,
                         name = currentName.value,
                         avatarUrl = currentAvatarUrl.value,
                         username = currentUsername.value,
@@ -465,7 +467,7 @@ fun DashboardLayout(
 fun SearchTabContent(
     sessionManager: SessionManager,
     onTabSelect: (String) -> Unit,
-    onDocSelect: (String) -> Unit,
+    onDocSelect: (String, String) -> Unit,
     onShowLibrary: (() -> Unit)?,
     isRefreshing: Boolean,
     onRefresh: () -> Unit
@@ -574,7 +576,8 @@ fun SearchTabContent(
                     HelpDoc(
                         title = item.title,
                         category = if (item.url.contains("privacy-policy") || item.url.contains("terms-of-service")) "Legal" else "Docs",
-                        content = item.content
+                        content = item.content,
+                        url = item.url
                     )
                 }
         }
@@ -729,11 +732,15 @@ fun SearchTabContent(
                                     icon = Icons.Default.Info,
                                     category = doc.category,
                                     onClick = {
-                                        if (doc.url != null) {
-                                            onDocSelect(doc.url)
-                                        } else {
-                                            selectedDoc = doc
+                                        val targetUrl = doc.url ?: when (doc.title) {
+                                            "Library Policies & Fines" -> "/docs/student/library"
+                                            "Late Fee Structure & Penalty" -> "/docs/student/fees"
+                                            "How to Post in Community" -> "/docs/student/complaints"
+                                            "Contacting Accounts Office" -> "/docs/student/fees"
+                                            "Student ID Card Reissue Policy" -> "/docs/student/onboarding"
+                                            else -> "/docs/student/onboarding"
                                         }
+                                        onDocSelect(targetUrl, doc.content)
                                     }
                                 )
                             }
@@ -1602,27 +1609,32 @@ val helpDocs = listOf(
     HelpDoc(
         title = "Library Policies & Fines",
         category = "Library",
-        content = "1. Books can be issued for a maximum of 14 days.\n2. A fine of $0.50 per day will be charged for late returns.\n3. Damaged or lost books must be replaced or paid for at double the cost.\n4. Silent study rules must be maintained in the library at all times."
+        content = "1. Books can be issued for a maximum of 14 days.\n2. A fine of $0.50 per day will be charged for late returns.\n3. Damaged or lost books must be replaced or paid for at double the cost.\n4. Silent study rules must be maintained in the library at all times.",
+        url = "/docs/student/library"
     ),
     HelpDoc(
         title = "Late Fee Structure & Penalty",
         category = "Finance",
-        content = "1. Monthly school fees must be paid by the 5th of each month.\n2. A grace period is extended until the 10th of the month.\n3. Payments made after the 10th will incur a late fee penalty of 5% of the pending amount.\n4. Continuous non-payment for 2 months may lead to suspension of access."
+        content = "1. Monthly school fees must be paid by the 5th of each month.\n2. A grace period is extended until the 10th of the month.\n3. Payments made after the 10th will incur a late fee penalty of 5% of the pending amount.\n4. Continuous non-payment for 2 months may lead to suspension of access.",
+        url = "/docs/student/fees"
     ),
     HelpDoc(
         title = "How to Post in Community",
         category = "Social",
-        content = "1. Only authorized users and teachers can create posts.\n2. Posts must comply with the school code of conduct.\n3. Spamming or abusive content is strictly prohibited and will result in disciplinary action.\n4. Keep posts relevant to academic discussions, announcements, and events."
+        content = "1. Only authorized users and teachers can create posts.\n2. Posts must comply with the school code of conduct.\n3. Spamming or abusive content is strictly prohibited and will result in disciplinary action.\n4. Keep posts relevant to academic discussions, announcements, and events.",
+        url = "/docs/student/complaints"
     ),
     HelpDoc(
         title = "Contacting Accounts Office",
         category = "Finance",
-        content = "1. Operating hours: Monday to Friday, 9:00 AM to 3:00 PM.\n2. Email inquiries can be sent to billing@vidyaschool.edu.\n3. Phone support is available at extension 104 during school hours.\n4. In-person meetings require prior scheduling via the portal."
+        content = "1. Operating hours: Monday to Friday, 9:00 AM to 3:00 PM.\n2. Email inquiries can be sent to billing@vidyaschool.edu.\n3. Phone support is available at extension 104 during school hours.\n4. In-person meetings require prior scheduling via the portal.",
+        url = "/docs/student/fees"
     ),
     HelpDoc(
         title = "Student ID Card Reissue Policy",
         category = "General",
-        content = "1. Lost ID cards must be reported immediately to the administration office.\n2. A replacement ID card can be issued upon paying a fee of $10.\n3. Processing time for a new card is 2 business days.\n4. Students must carry their ID card at all times while on school premises."
+        content = "1. Lost ID cards must be reported immediately to the administration office.\n2. A replacement ID card can be issued upon paying a fee of $10.\n3. Processing time for a new card is 2 business days.\n4. Students must carry their ID card at all times while on school premises.",
+        url = "/docs/student/onboarding"
     )
 )
 
@@ -3513,10 +3525,11 @@ fun UpdateBanner(
 @Composable
 fun DocViewerScreen(
     path: String,
+    fallbackContent: String? = null,
     onBack: () -> Unit
 ) {
-    var title by remember { mutableStateOf("Loading...") }
-    var markdown by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf("Documentation") }
+    var markdown by remember { mutableStateOf(fallbackContent ?: "") }
     var isLoading by remember { mutableStateOf(true) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
     
@@ -3530,10 +3543,18 @@ fun DocViewerScreen(
                 title = body.title
                 markdown = body.markdown
             } else {
-                errorMsg = "Failed to load document content: ${response.code()}"
+                if (fallbackContent.isNullOrBlank()) {
+                    errorMsg = "Failed to load document content: ${response.code()}"
+                } else {
+                    markdown = fallbackContent
+                }
             }
         } catch (e: Exception) {
-            errorMsg = "Connection failed: ${e.localizedMessage}"
+            if (fallbackContent.isNullOrBlank()) {
+                errorMsg = "Connection failed: ${e.localizedMessage}"
+            } else {
+                markdown = fallbackContent
+            }
         } finally {
             isLoading = false
         }
