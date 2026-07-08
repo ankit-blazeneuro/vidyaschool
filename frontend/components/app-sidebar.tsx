@@ -345,11 +345,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session, isPending } = useSession()
   const [profileLoading, setProfileLoading] = React.useState(true)
   const [isQrOpen, setIsQrOpen] = React.useState(false)
+  const [appVersion, setAppVersion] = React.useState<string>("v1.0.52")
+  const [downloadUrl, setDownloadUrl] = React.useState<string>(
+    "https://github.com/ankit-blazeneuro/vidyaschool/releases/download/v1.0.52/app-debug.apk"
+  )
 
   React.useEffect(() => {
     fetch('/api/profile/username')
       .then(() => setProfileLoading(false))
       .catch(() => setProfileLoading(false))
+
+    fetch('https://api.github.com/repos/ankit-blazeneuro/vidyaschool/releases/latest')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch latest release')
+        return res.json()
+      })
+      .then(data => {
+        if (data.tag_name) {
+          setAppVersion(data.tag_name)
+          const apkAsset = data.assets?.find((asset: any) => asset.name?.endsWith('.apk'))
+          if (apkAsset?.browser_download_url) {
+            setDownloadUrl(apkAsset.browser_download_url)
+          } else {
+            setDownloadUrl(`https://github.com/ankit-blazeneuro/vidyaschool/releases/download/${data.tag_name}/app-debug.apk`)
+          }
+        }
+      })
+      .catch(() => {})
   }, [])
 
   const isLoading = isPending || profileLoading
@@ -746,7 +768,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold text-foreground truncate">Download Android App</p>
-                    <p className="text-[10px] text-muted-foreground truncate">Get the latest v1.0.51 build</p>
+                    <p className="text-[10px] text-muted-foreground truncate">Get the latest {appVersion} build</p>
                   </div>
                   <Download className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-primary" />
                 </div>
@@ -768,13 +790,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               Download VidyaSchool App
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
-              Scan the QR code below on your Android device to download and install the latest version (v1.0.51).
+              Scan the QR code below on your Android device to download and install the latest version ({appVersion}).
             </DialogDescription>
           </DialogHeader>
           
           <div className="my-6 p-4 bg-white rounded-xl shadow-inner border border-muted/55">
             <img 
-              src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https%3A%2F%2Fgithub.com%2Fankit-blazeneuro%2Fvidyaschool%2Freleases%2Fdownload%2Fv1.0.51%2Fapp-debug.apk" 
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(downloadUrl)}`} 
               alt="Download QR Code" 
               width={200}
               height={200}
@@ -784,7 +806,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           
           <div className="flex flex-col gap-2 w-full">
             <Button asChild variant="default" className="w-full gap-2">
-              <a href="https://github.com/ankit-blazeneuro/vidyaschool/releases/download/v1.0.51/app-debug.apk" download>
+              <a href={downloadUrl} download>
                 <Download className="size-4" />
                 Direct Download (APK)
               </a>
