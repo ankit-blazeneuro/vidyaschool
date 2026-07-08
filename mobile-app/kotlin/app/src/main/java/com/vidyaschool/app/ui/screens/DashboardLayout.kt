@@ -66,6 +66,7 @@ import com.vidyaschool.app.api.NotificationHistoryItem
 import com.vidyaschool.app.api.PayFeesRequest
 import com.vidyaschool.app.api.PayFeesResponse
 import com.vidyaschool.app.api.SearchUserResponse
+import com.vidyaschool.app.api.SearchBackendResponse
 import com.vidyaschool.app.api.UserProfileData
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -461,6 +462,7 @@ fun SearchTabContent(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var searchResults by remember { mutableStateOf<List<SearchUserResponse>>(emptyList()) }
+    var backendSearchResults by remember { mutableStateOf<List<SearchBackendResponse>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var activeFilter by remember { mutableStateOf("All") }
     var selectedDoc by remember { mutableStateOf<HelpDoc?>(null) }
@@ -489,6 +491,7 @@ fun SearchTabContent(
     LaunchedEffect(searchQuery) {
         if (searchQuery.isBlank()) {
             searchResults = emptyList()
+            backendSearchResults = emptyList()
             return@LaunchedEffect
         }
         delay(300)
@@ -496,9 +499,16 @@ fun SearchTabContent(
         try {
             val token = sessionManager.getSessionToken() ?: ""
             val authHeader = "Bearer $token"
+            val username = sessionManager.getUsername() ?: ""
+
             val response = RetrofitClient.authApi.searchUsers(authHeader, searchQuery)
             if (response.isSuccessful) {
                 searchResults = response.body() ?: emptyList()
+            }
+
+            val backendResponse = RetrofitClient.authApi.searchBackend(searchQuery, role, username)
+            if (backendResponse.isSuccessful) {
+                backendSearchResults = backendResponse.body() ?: emptyList()
             }
         } catch (e: Exception) {
             android.util.Log.e("SearchTab", "Backend search error: ${e.message}")
@@ -507,15 +517,56 @@ fun SearchTabContent(
         }
     }
 
-    val filteredPages = remember(searchQuery, pages) {
-        if (searchQuery.isBlank()) pages else pages.filter {
-            it.name.contains(searchQuery, ignoreCase = true) || it.description.contains(searchQuery, ignoreCase = true)
+    val filteredPages = remember(searchQuery, backendSearchResults, pages) {
+        if (searchQuery.isBlank()) {
+            pages
+        } else {
+            backendSearchResults
+                .filter { !it.url.contains("/docs/") && !it.url.contains("privacy-policy") && !it.url.contains("terms-of-service") }
+                .map { item ->
+                    val tabKey = when {
+                        item.url.contains("/student/fees", ignoreCase = true) || item.url.endsWith("/fees", ignoreCase = true) -> "fees"
+                        item.url.contains("/student/notice", ignoreCase = true) || item.url.endsWith("/notice", ignoreCase = true) -> "notice"
+                        item.url.contains("/community", ignoreCase = true) -> "community"
+                        item.url.contains("/student/library", ignoreCase = true) || item.url.endsWith("/library", ignoreCase = true) -> "library"
+                        item.url.contains("/student/profile", ignoreCase = true) || item.url.endsWith("/profile", ignoreCase = true) -> "profile"
+                        item.url.contains("/student/", ignoreCase = true) || item.url.endsWith("/student", ignoreCase = true) -> "home"
+                        else -> "home"
+                    }
+                    val icon = when {
+                        item.url.contains("/fees", ignoreCase = true) -> Icons.Default.Info
+                        item.url.contains("/library", ignoreCase = true) -> Icons.Default.Info
+                        item.url.contains("/community", ignoreCase = true) -> Icons.Default.Share
+                        item.url.contains("/notice", ignoreCase = true) -> Icons.Default.Info
+                        item.url.contains("/profile", ignoreCase = true) -> Icons.Default.Person
+                        else -> Icons.Default.Home
+                    }
+                    val isExternal = tabKey == "library"
+                    SearchPageItem(
+                        name = item.title,
+                        tabKey = tabKey,
+                        description = item.content,
+                        icon = icon,
+                        isExternal = isExternal,
+                        externalAction = if (isExternal) onShowLibrary else null
+                    )
+                }
         }
     }
 
-    val filteredDocs = remember(searchQuery) {
-        if (searchQuery.isBlank()) helpDocs else helpDocs.filter {
-            it.title.contains(searchQuery, ignoreCase = true) || it.content.contains(searchQuery, ignoreCase = true)
+    val filteredDocs = remember(searchQuery, backendSearchResults) {
+        if (searchQuery.isBlank()) {
+            helpDocs
+        } else {
+            backendSearchResults
+                .filter { it.url.contains("/docs/") || it.url.contains("privacy-policy") || it.url.contains("terms-of-service") }
+                .map { item ->
+                    HelpDoc(
+                        title = item.title,
+                        category = if (item.url.contains("privacy-policy") || item.url.contains("terms-of-service")) "Legal" else "Docs",
+                        content = item.content
+                    )
+                }
         }
     }
 

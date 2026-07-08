@@ -201,6 +201,13 @@ interface AuthApi {
         @Query("q") query: String?
     ): Response<List<SearchUserResponse>>
 
+    @GET("api/search")
+    suspend fun searchBackend(
+        @Query("q") query: String?,
+        @Query("role") role: String?,
+        @Query("username") username: String?
+    ): Response<List<SearchBackendResponse>>
+
     @PATCH("api/profile")
     suspend fun updateProfile(
         @Header("Authorization") authHeader: String,
@@ -355,4 +362,11 @@ data class NoticeResponse(
     @SerializedName("targetSection") val targetSection: String? = null,
     @SerializedName("createdAt") val createdAt: String,
     @SerializedName("senderName") val senderName: String? = null
+)
+
+data class SearchBackendResponse(
+    val id: String,
+    val title: String,
+    val content: String,
+    val url: String
 )
