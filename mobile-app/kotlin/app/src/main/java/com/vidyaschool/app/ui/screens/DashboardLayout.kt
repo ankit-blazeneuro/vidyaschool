@@ -313,7 +313,8 @@ fun DashboardLayout(
                         }
                     )
                 }
-                if (selectedTab != "community" && activeDocPath == null) {
+                val isKeyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+                if (selectedTab != "community" && activeDocPath == null && !isKeyboardVisible) {
                     NavigationBar(
                         containerColor = MaterialTheme.colorScheme.background,
                         tonalElevation = 0.dp
@@ -591,6 +592,7 @@ fun SearchTabContent(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
+                .imePadding()
                 .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp)
         ) {
             // Search Input styled like shadcn
@@ -3535,6 +3537,95 @@ fun UpdateBanner(
     }
 }
 
+fun parseMarkdownToAnnotatedString(
+    text: String,
+    primaryColor: androidx.compose.ui.graphics.Color
+): androidx.compose.ui.text.AnnotatedString {
+    return androidx.compose.ui.text.buildAnnotatedString {
+        var i = 0
+        while (i < text.length) {
+            when {
+                text.startsWith("**", i) -> {
+                    val end = text.indexOf("**", i + 2)
+                    if (end != -1) {
+                        pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold))
+                        append(text.substring(i + 2, end))
+                        pop()
+                        i = end + 2
+                    } else {
+                        append("**")
+                        i += 2
+                    }
+                }
+                text.startsWith("*", i) -> {
+                    val end = text.indexOf("*", i + 1)
+                    if (end != -1 && end > i + 1) {
+                        pushStyle(androidx.compose.ui.text.SpanStyle(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic))
+                        append(text.substring(i + 1, end))
+                        pop()
+                        i = end + 1
+                    } else {
+                        append("*")
+                        i += 1
+                    }
+                }
+                text.startsWith("`", i) -> {
+                    val end = text.indexOf("`", i + 1)
+                    if (end != -1) {
+                        pushStyle(
+                            androidx.compose.ui.text.SpanStyle(
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                background = primaryColor.copy(alpha = 0.1f),
+                                color = primaryColor
+                            )
+                        )
+                        append(text.substring(i + 1, end))
+                        pop()
+                        i = end + 1
+                    } else {
+                        append("`")
+                        i += 1
+                    }
+                }
+                text.startsWith("[", i) -> {
+                    val closeBracket = text.indexOf("]", i + 1)
+                    if (closeBracket != -1) {
+                        val openParen = closeBracket + 1
+                        if (openParen < text.length && text[openParen] == '(') {
+                            val closeParen = text.indexOf(")", openParen + 1)
+                            if (closeParen != -1) {
+                                val linkText = text.substring(i + 1, closeBracket)
+                                pushStyle(
+                                    androidx.compose.ui.text.SpanStyle(
+                                        color = primaryColor,
+                                        textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                                    )
+                                )
+                                append(linkText)
+                                pop()
+                                i = closeParen + 1
+                            } else {
+                                append("[")
+                                i += 1
+                            }
+                        } else {
+                            append("[")
+                            i += 1
+                        }
+                    } else {
+                        append("[")
+                        i += 1
+                    }
+                }
+                else -> {
+                    append(text[i])
+                    i++
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DocViewerScreen(
@@ -3650,19 +3741,20 @@ fun DocViewerScreen(
                     val lines = markdown.split("\n")
                     lines.forEach { line ->
                         val trimmed = line.trim()
+                        val primaryColor = MaterialTheme.colorScheme.primary
                         when {
                             trimmed.startsWith("# ") -> {
                                 Text(
-                                    text = trimmed.substring(2),
+                                    text = parseMarkdownToAnnotatedString(trimmed.substring(2), primaryColor),
                                     fontSize = 22.sp,
                                     fontWeight = FontWeight.ExtraBold,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = primaryColor,
                                     modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
                                 )
                             }
                             trimmed.startsWith("## ") -> {
                                 Text(
-                                    text = trimmed.substring(3),
+                                    text = parseMarkdownToAnnotatedString(trimmed.substring(3), primaryColor),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground,
@@ -3671,12 +3763,36 @@ fun DocViewerScreen(
                             }
                             trimmed.startsWith("### ") -> {
                                 Text(
-                                    text = trimmed.substring(4),
+                                    text = parseMarkdownToAnnotatedString(trimmed.substring(4), primaryColor),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f),
                                     modifier = Modifier.padding(top = 4.dp, bottom = 1.dp)
                                 )
+                            }
+                            trimmed.startsWith("> ") -> {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f), RoundedCornerShape(4.dp))
+                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .width(3.dp)
+                                            .height(16.dp)
+                                            .background(primaryColor, RoundedCornerShape(1.5.dp))
+                                            .align(Alignment.CenterVertically)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = parseMarkdownToAnnotatedString(trimmed.substring(2), primaryColor),
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
+                                        lineHeight = 18.sp,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
                             trimmed.startsWith("- ") || trimmed.startsWith("* ") -> {
                                 Row(
@@ -3687,10 +3803,10 @@ fun DocViewerScreen(
                                         text = "•",
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = primaryColor
                                     )
                                     Text(
-                                        text = trimmed.substring(2),
+                                        text = parseMarkdownToAnnotatedString(trimmed.substring(2), primaryColor),
                                         fontSize = 13.sp,
                                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
                                         lineHeight = 18.sp
@@ -3709,10 +3825,10 @@ fun DocViewerScreen(
                                         text = num,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = primaryColor
                                     )
                                     Text(
-                                        text = text,
+                                        text = parseMarkdownToAnnotatedString(text, primaryColor),
                                         fontSize = 13.sp,
                                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
                                         lineHeight = 18.sp
@@ -3723,10 +3839,8 @@ fun DocViewerScreen(
                                 Spacer(modifier = Modifier.height(6.dp))
                             }
                             else -> {
-                                var textToRender = trimmed
-                                textToRender = textToRender.replace("**", "")
                                 Text(
-                                    text = textToRender,
+                                    text = parseMarkdownToAnnotatedString(trimmed, primaryColor),
                                     fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
                                     lineHeight = 18.sp
