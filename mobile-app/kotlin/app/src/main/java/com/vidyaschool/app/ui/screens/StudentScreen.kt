@@ -70,7 +70,6 @@ fun StudentScreen(
     var isLoadingSlider by remember { mutableStateOf(true) }
     var showOnboarding by remember { mutableStateOf(false) }
     var isCheckingOnboarding by remember { mutableStateOf(true) }
-    var showNotifications by remember { mutableStateOf(false) }
 
     LaunchedEffect(sessionToken) {
         isCheckingOnboarding = true
@@ -123,7 +122,7 @@ fun StudentScreen(
         onThemeChange = onThemeChange,
         onLogout = onLogout,
         onShowLibrary = onShowLibrary
-    ) {
+    ) { onNotificationClick ->
         val scrollState = rememberScrollState()
         val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
         val headerAlpha by animateFloatAsState(
@@ -148,7 +147,7 @@ fun StudentScreen(
                 DashboardHeader(
                     title = "Dashboard",
                     subtitle = "Welcome, ${name.ifEmpty { "Student" }}",
-                    onNotificationClick = { showNotifications = true }
+                    onNotificationClick = onNotificationClick
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -192,7 +191,7 @@ fun StudentScreen(
                     title = "Dashboard",
                     headerAlpha = headerAlpha,
                     headerSlide = headerSlide,
-                    onNotificationClick = { showNotifications = true }
+                    onNotificationClick = onNotificationClick
                 )
             }
         }
@@ -209,13 +208,6 @@ fun StudentScreen(
                     }
                     showOnboarding = false
                 }
-            )
-        }
-
-        if (showNotifications) {
-            NotificationDrawer(
-                sessionManager = sessionManager,
-                onDismiss = { showNotifications = false }
             )
         }
     }

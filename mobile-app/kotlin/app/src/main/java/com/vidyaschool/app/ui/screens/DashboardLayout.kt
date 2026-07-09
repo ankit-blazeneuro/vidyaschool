@@ -215,7 +215,7 @@ fun DashboardLayout(
     onThemeChange: (String) -> Unit,
     onLogout: () -> Unit,
     onShowLibrary: (() -> Unit)? = null,
-    homeContent: @Composable () -> Unit
+    homeContent: @Composable (onNotificationClick: () -> Unit) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -556,7 +556,7 @@ fun DashboardLayout(
                             onRefresh = triggerRefresh,
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            homeContent()
+                            homeContent { showNotifications = true }
                         }
                     }
                     "notice" -> {
@@ -1300,17 +1300,23 @@ fun ProfileTabContent(
                     .fillMaxSize()
                     .verticalScroll(scrollState)
                     .statusBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                    .padding(bottom = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-            DashboardHeader(
-                title = "My Profile",
-                subtitle = "${role.lowercase().replaceFirstChar { it.uppercase() }} Account Settings",
-                onNotificationClick = onNotificationClick
-            )
+                DashboardHeader(
+                    title = "My Profile",
+                    subtitle = "${role.lowercase().replaceFirstChar { it.uppercase() }} Account Settings",
+                    onNotificationClick = onNotificationClick
+                )
 
-            // Profile Card (Shadcn style with thin border)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    // Profile Card (Shadcn style with thin border)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1724,6 +1730,7 @@ fun ProfileTabContent(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
+                }
             }
         }
 
@@ -1877,8 +1884,7 @@ fun NoticeTabContent(
             LazyColumn(
                 state = lazyListState,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp),
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
             ) {
@@ -1897,7 +1903,7 @@ fun NoticeTabContent(
                             text = error,
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(bottom = 12.dp)
+                            modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 12.dp)
                         )
                     }
                 }
@@ -1908,7 +1914,8 @@ fun NoticeTabContent(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(200.dp),
+                                .height(200.dp)
+                                .padding(horizontal = 24.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -1934,7 +1941,9 @@ fun NoticeTabContent(
                         val formattedDate = notice.createdAt.take(10)
 
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)

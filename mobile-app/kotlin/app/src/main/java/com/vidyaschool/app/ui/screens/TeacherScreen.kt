@@ -60,7 +60,7 @@ fun TeacherScreen(
         themeMode = themeMode,
         onThemeChange = onThemeChange,
         onLogout = onLogout
-    ) {
+    ) { onNotificationClick ->
         val scrollState = rememberScrollState()
         val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
         val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
@@ -85,7 +85,7 @@ fun TeacherScreen(
                 DashboardHeader(
                     title = "Dashboard",
                     subtitle = "Welcome, ${name.ifEmpty { "Teacher" }}",
-                    onNotificationClick = { }
+                    onNotificationClick = onNotificationClick
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -147,7 +147,7 @@ fun TeacherScreen(
                     title = "Dashboard",
                     headerAlpha = headerAlpha,
                     headerSlide = headerSlide,
-                    onNotificationClick = { }
+                    onNotificationClick = onNotificationClick
                 )
             }
         }
