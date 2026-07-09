@@ -125,159 +125,38 @@ fun StudentScreen(
         onShowLibrary = onShowLibrary
     ) {
         val scrollState = rememberScrollState()
-        // ~60dp threshold: when welcome text has scrolled out of view
-        val headerCollapsed by remember { derivedStateOf { scrollState.value > 160 } }
-        val headerAlpha by animateFloatAsState(
-            targetValue = if (headerCollapsed) 1f else 0f,
-            animationSpec = androidx.compose.animation.core.tween(220),
-            label = "headerAlpha"
-        )
-        val headerSlide by animateFloatAsState(
-            targetValue = if (headerCollapsed) 0f else -24f,
-            animationSpec = androidx.compose.animation.core.tween(220),
-            label = "headerSlide"
-        )
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .statusBarsPadding()
-                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        IconButton(
-                            onClick = { /* Open menu */ },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .border(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                                    shape = CircleShape
-                                )
-                                .clip(CircleShape)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_custom_menu),
-                                contentDescription = "Menu",
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
-                        
-                        Column {
-                            Text(
-                                text = "Welcome, ${name.ifEmpty { "Student" }}",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Text(
-                                text = "Student Portal",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                            )
-                        }
-                    }
-                    
-                    IconButton(
-                        onClick = { showNotifications = true },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                                shape = CircleShape
-                            )
-                            .clip(CircleShape)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_custom_notification),
-                            contentDescription = "Notifications",
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                }
-                
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 24.dp, vertical = 24.dp)
+        ) {
+            // Auto-playing Image Slider at the top
+            if (isLoadingSlider) {
+                SliderSkeleton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                )
                 Spacer(modifier = Modifier.height(24.dp))
-                
-                // Auto-playing Image Slider at the top
-                if (isLoadingSlider) {
-                    SliderSkeleton(
+            } else {
+                val enabledImages = sliderImages.filter { it.enabled }
+                if (enabledImages.isNotEmpty()) {
+                    ImageSlider(
+                        images = enabledImages,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(180.dp)
                     )
                     Spacer(modifier = Modifier.height(24.dp))
-                } else {
-                    val enabledImages = sliderImages.filter { it.enabled }
-                    if (enabledImages.isNotEmpty()) {
-                        ImageSlider(
-                            images = enabledImages,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp)
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
-                }
-                
-                AcademicPerformanceCard()
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                LibraryBooksSection(onShowMore = onShowLibrary)
-            }
-
-            // Sticky collapsed header
-            if (headerAlpha > 0f) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer { alpha = headerAlpha; translationY = headerSlide }
-                        .background(MaterialTheme.colorScheme.background)
-                ) {
-                    Spacer(modifier = Modifier.windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                    IconButton(
-                        onClick = { /* Open menu */ },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
-                            .clip(CircleShape)
-                    ) {
-                        Icon(painter = painterResource(id = R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
-                    }
-                    Text("Dashboard", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                    IconButton(
-                        onClick = { showNotifications = true },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
-                            .clip(CircleShape)
-                    ) {
-                        Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
-                    }
-                }
-                HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                 }
             }
+            
+            AcademicPerformanceCard()
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            LibraryBooksSection(onShowMore = onShowLibrary)
         }
     }
 

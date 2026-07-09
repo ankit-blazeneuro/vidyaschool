@@ -61,125 +61,54 @@ fun TeacherScreen(
         onThemeChange = onThemeChange,
         onLogout = onLogout
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 24.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .statusBarsPadding()
-                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        IconButton(
-                            onClick = { /* Open menu */ },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .border(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                                    shape = CircleShape
-                                )
-                                .clip(CircleShape)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_custom_menu),
-                                contentDescription = "Menu",
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
-                        
-                        Column {
-                            Text(
-                                text = "Welcome, ${name.ifEmpty { "Teacher" }}",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Text(
-                                text = "Teacher Portal",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                            )
-                        }
-                    }
-                    
-                    IconButton(
-                        onClick = { /* Notifications */ },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                                shape = CircleShape
-                            )
-                            .clip(CircleShape)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_custom_notification),
-                            contentDescription = "Notifications",
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-                }
-                
+            // Image Slider for Teachers at the top
+            if (isLoadingSlider) {
+                SliderSkeleton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                )
                 Spacer(modifier = Modifier.height(24.dp))
-                
-                // Image Slider for Teachers at the top
-                if (isLoadingSlider) {
-                    SliderSkeleton(
+            } else {
+                val enabledImages = sliderImages.filter { it.enabled }
+                if (enabledImages.isNotEmpty()) {
+                    ImageSlider(
+                        images = enabledImages,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(180.dp)
                     )
                     Spacer(modifier = Modifier.height(24.dp))
-                } else {
-                    val enabledImages = sliderImages.filter { it.enabled }
-                    if (enabledImages.isNotEmpty()) {
-                        ImageSlider(
-                            images = enabledImages,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp)
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
                 }
-                
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            }
+            
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "Today's Schedule",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "Today's Schedule",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "• Grade 10 Math - 09:00 AM\n• Grade 12 Calculus - 11:00 AM\n• Staff Meeting - 02:00 PM",
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                            lineHeight = 20.sp
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "• Grade 10 Math - 09:00 AM\n• Grade 12 Calculus - 11:00 AM\n• Staff Meeting - 02:00 PM",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        lineHeight = 20.sp
+                    )
                 }
             }
         }

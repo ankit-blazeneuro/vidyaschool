@@ -253,6 +253,117 @@ fun DashboardLayout(
     }
 
     Scaffold(
+        topBar = {
+            if (activeDocPath != null) {
+                Column(
+                    modifier = Modifier.background(MaterialTheme.colorScheme.background)
+                ) {
+                    Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { activeDocPath = null }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Documentation",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
+                }
+            } else if (selectedTab != "search") {
+                val title = when (selectedTab) {
+                    "home" -> "Dashboard"
+                    "notice" -> "Notice Board"
+                    "profile" -> "My Profile"
+                    "community" -> "Community Hub"
+                    else -> "VidyaSchool"
+                }
+                val subtitle = when (selectedTab) {
+                    "home" -> "Welcome, ${currentName.value.ifEmpty { role.replaceFirstChar { it.uppercase() } }}"
+                    "notice" -> "${role.lowercase().replaceFirstChar { it.uppercase() }} Notice Board"
+                    "profile" -> "${role.lowercase().replaceFirstChar { it.uppercase() }} Account Settings"
+                    "community" -> "Academic Discussions"
+                    else -> ""
+                }
+                Column(
+                    modifier = Modifier.background(MaterialTheme.colorScheme.background)
+                ) {
+                    Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            IconButton(
+                                onClick = { /* Open menu */ },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                                    .clip(CircleShape)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_custom_menu),
+                                    contentDescription = "Menu",
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = title,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                if (subtitle.isNotEmpty()) {
+                                    Text(
+                                        text = subtitle,
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                                    )
+                                }
+                            }
+                        }
+                        IconButton(
+                            onClick = { showNotifications = true },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                                .clip(CircleShape)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_custom_notification),
+                                contentDescription = "Notifications",
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
+                }
+            }
+        },
         bottomBar = {
             Column(
                 modifier = Modifier.background(MaterialTheme.colorScheme.background)
@@ -320,7 +431,7 @@ fun DashboardLayout(
                 } else {
                     NavigationBarDefaults.windowInsets
                 }
-                if (selectedTab != "community" && activeDocPath == null) {
+                if (selectedTab != "community" && selectedTab != "search" && activeDocPath == null) {
                     NavigationBar(
                         containerColor = MaterialTheme.colorScheme.background,
                         tonalElevation = 0.dp,
@@ -1796,98 +1907,13 @@ fun NoticeTabContent(
         onRefresh = { onRefresh(); fetchNotices() },
         modifier = Modifier.fillMaxSize()
     ) {
-        val lazyListState = rememberLazyListState()
-        val headerCollapsed by remember { derivedStateOf { lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 100 } }
-        val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
-            targetValue = if (headerCollapsed) 1f else 0f,
-            animationSpec = androidx.compose.animation.core.tween(220),
-            label = "headerAlpha"
-        )
-        val headerSlide by androidx.compose.animation.core.animateFloatAsState(
-            targetValue = if (headerCollapsed) 0f else -24f,
-            animationSpec = androidx.compose.animation.core.tween(220),
-            label = "headerSlide"
-        )
-
-        Box(modifier = Modifier.fillMaxSize()) {
-            LazyColumn(
-                state = lazyListState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .padding(horizontal = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
-            ) {
-                // 1. Welcome Header item
-                item {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                IconButton(
-                                    onClick = { /* Open menu */ },
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .border(
-                                            1.dp,
-                                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                                            shape = CircleShape
-                                        )
-                                        .clip(CircleShape)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_custom_menu),
-                                        contentDescription = "Menu",
-                                        modifier = Modifier.size(18.dp),
-                                        tint = MaterialTheme.colorScheme.onBackground
-                                    )
-                                }
-
-                                Column {
-                                    Text(
-                                        text = "Notice Board",
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onBackground
-                                    )
-                                    Text(
-                                        text = "${role.lowercase().replaceFirstChar { it.uppercase() }} Notice Board",
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                                    )
-                                }
-                            }
-
-                            IconButton(
-                                onClick = onNotificationClick,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .border(
-                                        1.dp,
-                                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                                        shape = CircleShape
-                                    )
-                                    .clip(CircleShape)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_custom_notification),
-                                    contentDescription = "Notifications",
-                                    modifier = Modifier.size(18.dp),
-                                    tint = MaterialTheme.colorScheme.onBackground
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
-                }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
+        ) {
 
                 // 2. Load Error item
                 loadError?.let { error ->
@@ -1996,46 +2022,6 @@ fun NoticeTabContent(
                 }
             }
 
-            // Sticky collapsed header
-            if (headerAlpha > 0f) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer { alpha = headerAlpha; translationY = headerSlide }
-                        .background(MaterialTheme.colorScheme.background)
-                ) {
-                    Spacer(modifier = Modifier.windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        IconButton(
-                            onClick = { /* Open menu */ },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
-                                .clip(CircleShape)
-                        ) {
-                            Icon(painter = painterResource(id = R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
-                        }
-                        Text("Notice Board", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                        IconButton(
-                            onClick = onNotificationClick,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
-                                .clip(CircleShape)
-                        ) {
-                            Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
-                        }
-                    }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
-                }
-            }
-        }
     }
 }
 

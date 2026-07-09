@@ -36,53 +36,33 @@ fun AccountsScreen(
         onThemeChange = onThemeChange,
         onLogout = onLogout
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 24.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .statusBarsPadding()
-                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                )
             ) {
-                Text(
-                    text = "Welcome, ${name.ifEmpty { "Accounts officer" }}",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Accounts Portal",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = "Pending Invoices",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "Pending Invoices",
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "• Invoice #1024 - PENDING ($450)\n• Invoice #1025 - PAID ($1,200)\n• Invoice #1026 - OVERDUE ($300)",
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                            lineHeight = 20.sp
-                        )
-                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "• Invoice #1024 - PENDING ($450)\n• Invoice #1025 - PAID ($1,200)\n• Invoice #1026 - OVERDUE ($300)",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        lineHeight = 20.sp
+                    )
                 }
             }
         }

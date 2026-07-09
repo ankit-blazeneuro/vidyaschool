@@ -60,32 +60,13 @@ fun AdminScreen(
         onThemeChange = onThemeChange,
         onLogout = onLogout
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 24.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .statusBarsPadding()
-                    .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
-            ) {
-                Text(
-                    text = "Welcome, ${name.ifEmpty { "Admin" }}",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Administration Console",
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                Card(
+            Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
@@ -344,7 +325,6 @@ fun AdminScreen(
                         )
                     }
                 }
-            }
         }
     }
 }
