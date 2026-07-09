@@ -199,6 +199,14 @@ class FCMToken(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow, alias="created_at")
     updated_at: datetime = Field(default_factory=datetime.utcnow, alias="updated_at")
 
+class NotificationHistory(SQLModel, table=True):
+    __tablename__ = "notification_history"
+    id: str = Field(primary_key=True)
+    user_id: str = Field(alias="user_id", foreign_key="user.id")
+    title: str
+    body: str
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias="created_at")
+
 
 
 

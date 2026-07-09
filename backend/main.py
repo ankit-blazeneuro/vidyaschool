@@ -676,7 +676,22 @@ def get_target_users(target_role: str, target_class: str | None, target_section:
     return query.all()
 
 async def send_notification_to_user(user_id: str, title: str, body: str, db: Session):
-    from models import FCMToken
+    from models import FCMToken, NotificationHistory
+
+    # Log to notification history
+    try:
+        new_history = NotificationHistory(
+            id=f"notif-{uuid.uuid4()}",
+            user_id=user_id,
+            title=title,
+            body=body,
+            created_at=datetime.utcnow()
+        )
+        db.add(new_history)
+        db.commit()
+    except Exception as e:
+        print(f"Failed to log notification history for user {user_id}: {e}")
+        db.rollback()
 
     sids = get_online_sids_for_user(user_id)
     if sids:
@@ -712,6 +727,21 @@ def register_fcm_token(data: dict, current_user: User = Depends(get_current_user
         db.add(new_token)
         db.commit()
     return {"success": True}
+
+@app.get("/api/notifications/history")
+def get_notification_history(days: int = 30, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from models import NotificationHistory
+    notifications = db.query(NotificationHistory).filter(NotificationHistory.user_id == current_user.id).order_by(NotificationHistory.created_at.desc()).limit(days).all()
+    
+    result = []
+    for n in notifications:
+        result.append({
+            "id": n.id,
+            "title": n.title,
+            "body": n.body,
+            "createdAt": n.created_at.isoformat() + "Z"
+        })
+    return result
 
 @app.post("/api/notifications/send")
 async def send_custom_notification(data: dict, current_user: User = Depends(require_role(["admin", "teacher", "librarian"])), db: Session = Depends(get_db)):
