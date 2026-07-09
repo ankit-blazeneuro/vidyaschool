@@ -786,8 +786,31 @@ def get_doc_markdown(path: str = Query(...)):
     # Strip any trailing/leading slashes
     cleaned_path = "/" + cleaned_path.strip("/")
     
-    # Look up in our rich repository
-    md_content = DOC_MARKDOWNS.get(cleaned_path)
+    # Try to load from local .md file in backend/docs/
+    import os
+    base_docs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "docs")
+    
+    # Strip leading "/docs" or "/docs/" to find relative path inside docs/
+    rel_path_part = cleaned_path
+    if rel_path_part.startswith("/docs/"):
+        rel_path_part = rel_path_part[6:]
+    elif rel_path_part.startswith("/docs"):
+        rel_path_part = rel_path_part[5:]
+    rel_path_part = rel_path_part.lstrip("/")
+    
+    file_path = os.path.join(base_docs_dir, rel_path_part + ".md")
+    
+    md_content = None
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                md_content = f.read()
+        except Exception:
+            pass
+            
+    # Fallback to hardcoded dictionary if file reading failed/not found
+    if not md_content:
+        md_content = DOC_MARKDOWNS.get(cleaned_path)
     
     if not md_content:
         # Generate a generic fallback markdown if path is not mapped

@@ -315,7 +315,6 @@ fun DashboardLayout(
                 }
                 if (selectedTab != "community" && activeDocPath == null) {
                     NavigationBar(
-                        modifier = Modifier.navigationBarsPadding(),
                         containerColor = MaterialTheme.colorScheme.background,
                         tonalElevation = 0.dp
                     ) {
@@ -3567,7 +3566,7 @@ fun DocViewerScreen(
         }
         
         try {
-            val response = RetrofitClient.authApi.getDocMarkdown(path)
+            val response = RetrofitClient.authApi.getDocMarkdown(cleanPath)
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 title = body.title
