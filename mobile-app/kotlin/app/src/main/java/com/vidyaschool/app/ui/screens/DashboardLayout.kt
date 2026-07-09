@@ -115,6 +115,7 @@ fun DashboardLayout(
     var activeDocPath by remember { mutableStateOf<String?>(null) }
     var activeDocFallback by remember { mutableStateOf<String?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
+    var showNotifications by remember { mutableStateOf(false) }
     
     val triggerRefresh: () -> Unit = {
         isRefreshing = true
@@ -403,7 +404,8 @@ fun DashboardLayout(
                         NoticeTabContent(
                             sessionManager = sessionManager,
                             isRefreshing = isRefreshing,
-                            onRefresh = triggerRefresh
+                            onRefresh = triggerRefresh,
+                            onNotificationClick = { showNotifications = true }
                         )
                     }
                     "community" -> {
@@ -438,28 +440,36 @@ fun DashboardLayout(
                             role = currentRole.value,
                             provider = provider,
                             email = email,
-                        name = currentName.value,
-                        avatarUrl = currentAvatarUrl.value,
-                        username = currentUsername.value,
-                        onUpdateUsername = { newUsername ->
-                            currentUsername.value = newUsername
-                            val token = sessionManager.getSessionToken()
-                            val studentClass = sessionManager.getStudentClass()
-                            sessionManager.saveSession(
-                                provider, email, currentName.value, currentRole.value, currentAvatarUrl.value, token, studentClass, newUsername
-                            )
-                        },
-                        themeMode = themeMode,
-                        onThemeChange = onThemeChange,
-                        isRefreshing = isRefreshing,
-                        onRefresh = triggerRefresh,
-                        onLogout = onLogout
-                    )
-                }
+                            name = currentName.value,
+                            avatarUrl = currentAvatarUrl.value,
+                            username = currentUsername.value,
+                            onUpdateUsername = { newUsername ->
+                                currentUsername.value = newUsername
+                                val token = sessionManager.getSessionToken()
+                                val studentClass = sessionManager.getStudentClass()
+                                sessionManager.saveSession(
+                                    provider, email, currentName.value, currentRole.value, currentAvatarUrl.value, token, studentClass, newUsername
+                                )
+                            },
+                            themeMode = themeMode,
+                            onThemeChange = onThemeChange,
+                            isRefreshing = isRefreshing,
+                            onRefresh = triggerRefresh,
+                            onLogout = onLogout,
+                            onNotificationClick = { showNotifications = true }
+                        )
+                    }
             }
         }
-        }
     }
+
+    if (showNotifications) {
+        NotificationDrawer(
+            sessionManager = sessionManager,
+            onDismiss = { showNotifications = false }
+        )
+    }
+}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -982,7 +992,8 @@ fun ProfileTabContent(
     onThemeChange: (String) -> Unit,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNotificationClick: () -> Unit
 ) {
     var isEditing by remember { mutableStateOf(false) }
     var tempUsername by remember { mutableStateOf(username) }
@@ -1165,7 +1176,7 @@ fun ProfileTabContent(
                 }
 
                 IconButton(
-                    onClick = { /* Notifications */ },
+                    onClick = onNotificationClick,
                     modifier = Modifier
                         .size(36.dp)
                         .border(
@@ -1681,12 +1692,16 @@ fun ProfileDetailRow(label: String, value: String) {
 fun NoticeTabContent(
     sessionManager: SessionManager,
     isRefreshing: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onNotificationClick: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     var notices by remember { mutableStateOf<List<NoticeResponse>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var loadError by remember { mutableStateOf<String?>(null) }
+
+    val role = remember { sessionManager.getRole() ?: "student" }
+    val name = remember { sessionManager.getName() ?: "" }
 
     val fetchNotices: () -> Unit = {
         isLoading = true
@@ -1727,13 +1742,70 @@ fun NoticeTabContent(
                 .statusBarsPadding()
                 .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
         ) {
-            Text(
-                text = "Notice Board",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    IconButton(
+                        onClick = { /* Open menu */ },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                                shape = CircleShape
+                            )
+                            .clip(CircleShape)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_custom_menu),
+                            contentDescription = "Menu",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "Welcome, ${name.ifEmpty { role.replaceFirstChar { it.uppercase() } }}",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Text(
+                            text = "${role.lowercase().replaceFirstChar { it.uppercase() }} Notice Board",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = onNotificationClick,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .border(
+                            1.dp,
+                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                            shape = CircleShape
+                        )
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_custom_notification),
+                        contentDescription = "Notifications",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             loadError?.let { error ->
                 Text(
