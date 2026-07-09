@@ -436,44 +436,6 @@ fun DashboardLayout(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     NavigationDrawerItem(
-                        label = { Text("Home Dashboard") },
-                        selected = selectedTab == "home",
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            selectedTab = "home"
-                        },
-                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                        modifier = Modifier.padding(horizontal = 12.dp)
-                    )
-
-                    NavigationDrawerItem(
-                        label = { Text("Notice Board") },
-                        selected = selectedTab == "notice",
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            selectedTab = "notice"
-                        },
-                        icon = { Icon(Icons.Default.Info, contentDescription = null) },
-                        modifier = Modifier.padding(horizontal = 12.dp)
-                    )
-
-                    NavigationDrawerItem(
-                        label = { Text("Search Tab") },
-                        selected = selectedTab == "search",
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            selectedTab = "search"
-                        },
-                        icon = { Icon(Icons.Default.Search, contentDescription = null) },
-                        modifier = Modifier.padding(horizontal = 12.dp)
-                    )
-
-                    HorizontalDivider(
-                        modifier = Modifier.padding(vertical = 16.dp, horizontal = 20.dp),
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
-                    )
-
-                    NavigationDrawerItem(
                         label = { Text("File a Complaint") },
                         selected = false,
                         onClick = {
@@ -481,7 +443,8 @@ fun DashboardLayout(
                             showComplaintDialog = true
                         },
                         icon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                        modifier = Modifier.padding(horizontal = 12.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                     )
 
                     NavigationDrawerItem(
@@ -492,7 +455,8 @@ fun DashboardLayout(
                             showSessionsDialog = true
                         },
                         icon = { Icon(Icons.Default.Person, contentDescription = null) },
-                        modifier = Modifier.padding(horizontal = 12.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -505,6 +469,7 @@ fun DashboardLayout(
                             onLogout()
                         },
                         icon = { Icon(Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 20.dp)
                     )
                 }
