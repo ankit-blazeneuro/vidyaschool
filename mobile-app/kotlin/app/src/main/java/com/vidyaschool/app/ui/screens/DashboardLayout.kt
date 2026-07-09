@@ -845,7 +845,7 @@ fun SearchTabContent(
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(horizontal = 20.dp, bottom = 20.dp)
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 20.dp)
                 ) {
                     // 1. Pages Section
                     if (activeFilter == "All" || activeFilter == "Pages") {
