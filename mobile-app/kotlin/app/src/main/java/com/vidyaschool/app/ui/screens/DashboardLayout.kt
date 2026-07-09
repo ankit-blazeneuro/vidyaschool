@@ -764,6 +764,7 @@ fun DashboardLayout(
             }
         }
     }
+    }
 
     if (showNotifications) {
         NotificationDrawer(
