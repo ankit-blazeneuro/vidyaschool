@@ -61,55 +61,94 @@ fun TeacherScreen(
         onThemeChange = onThemeChange,
         onLogout = onLogout
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 24.dp)
-        ) {
-            // Image Slider for Teachers at the top
-            if (isLoadingSlider) {
-                SliderSkeleton(
+        val scrollState = rememberScrollState()
+        val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
+        val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (headerCollapsed) 1f else 0f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerAlpha"
+        )
+        val headerSlide by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (headerCollapsed) 0f else -24f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerSlide"
+        )
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .statusBarsPadding()
+                    .padding(bottom = 24.dp)
+            ) {
+                DashboardHeader(
+                    title = "Dashboard",
+                    subtitle = "Welcome, ${name.ifEmpty { "Teacher" }}",
+                    onNotificationClick = { }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(180.dp)
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-            } else {
-                val enabledImages = sliderImages.filter { it.enabled }
-                if (enabledImages.isNotEmpty()) {
-                    ImageSlider(
-                        images = enabledImages,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
+                        .padding(horizontal = 24.dp)
+                ) {
+                    // Image Slider for Teachers at the top
+                    if (isLoadingSlider) {
+                        SliderSkeleton(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    } else {
+                        val enabledImages = sliderImages.filter { it.enabled }
+                        if (enabledImages.isNotEmpty()) {
+                            ImageSlider(
+                                images = enabledImages,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp)
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+                    }
+                    
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "Today's Schedule",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "• Grade 10 Math - 09:00 AM\n• Grade 12 Calculus - 11:00 AM\n• Staff Meeting - 02:00 PM",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
                 }
             }
-            
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+
+            if (headerAlpha > 0f) {
+                DashboardStickyHeader(
+                    title = "Dashboard",
+                    headerAlpha = headerAlpha,
+                    headerSlide = headerSlide,
+                    onNotificationClick = { }
                 )
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "Today's Schedule",
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "• Grade 10 Math - 09:00 AM\n• Grade 12 Calculus - 11:00 AM\n• Staff Meeting - 02:00 PM",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                        lineHeight = 20.sp
-                    )
-                }
             }
         }
     }

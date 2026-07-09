@@ -84,6 +84,125 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Close
 
+@Composable
+fun DashboardHeader(
+    title: String,
+    subtitle: String,
+    onNotificationClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            IconButton(
+                onClick = { /* Open menu */ },
+                modifier = Modifier
+                    .size(36.dp)
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                        shape = CircleShape
+                    )
+                    .clip(CircleShape)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_custom_menu),
+                    contentDescription = "Menu",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+            }
+
+            Column {
+                Text(
+                    text = title,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = subtitle,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
+        }
+
+        IconButton(
+            onClick = onNotificationClick,
+            modifier = Modifier
+                .size(36.dp)
+                .border(
+                    1.dp,
+                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                    shape = CircleShape
+                )
+                .clip(CircleShape)
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_custom_notification),
+                contentDescription = "Notifications",
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onBackground
+            )
+        }
+    }
+}
+
+@Composable
+fun DashboardStickyHeader(
+    title: String,
+    headerAlpha: Float,
+    headerSlide: Float,
+    onNotificationClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer { alpha = headerAlpha; translationY = headerSlide }
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Spacer(modifier = Modifier.windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            IconButton(
+                onClick = { /* Open menu */ },
+                modifier = Modifier
+                    .size(36.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                    .clip(CircleShape)
+            ) {
+                Icon(painter = painterResource(id = R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+            }
+            Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            IconButton(
+                onClick = onNotificationClick,
+                modifier = Modifier
+                    .size(36.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                    .clip(CircleShape)
+            ) {
+                Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+            }
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardLayout(
@@ -282,83 +401,6 @@ fun DashboardLayout(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
                         )
-                    }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
-                }
-            } else if (selectedTab != "search") {
-                val title = when (selectedTab) {
-                    "home" -> "Dashboard"
-                    "notice" -> "Notice Board"
-                    "profile" -> "My Profile"
-                    "community" -> "Community Hub"
-                    else -> "VidyaSchool"
-                }
-                val subtitle = when (selectedTab) {
-                    "home" -> "Welcome, ${currentName.value.ifEmpty { role.replaceFirstChar { it.uppercase() } }}"
-                    "notice" -> "${role.lowercase().replaceFirstChar { it.uppercase() }} Notice Board"
-                    "profile" -> "${role.lowercase().replaceFirstChar { it.uppercase() }} Account Settings"
-                    "community" -> "Academic Discussions"
-                    else -> ""
-                }
-                Column(
-                    modifier = Modifier.background(MaterialTheme.colorScheme.background)
-                ) {
-                    Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            IconButton(
-                                onClick = { /* Open menu */ },
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
-                                    .clip(CircleShape)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_custom_menu),
-                                    contentDescription = "Menu",
-                                    modifier = Modifier.size(18.dp),
-                                    tint = MaterialTheme.colorScheme.onBackground
-                                )
-                            }
-                            Column {
-                                Text(
-                                    text = title,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                                if (subtitle.isNotEmpty()) {
-                                    Text(
-                                        text = subtitle,
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                                    )
-                                }
-                            }
-                        }
-                        IconButton(
-                            onClick = { showNotifications = true },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
-                                .clip(CircleShape)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_custom_notification),
-                                contentDescription = "Notifications",
-                                modifier = Modifier.size(18.dp),
-                                tint = MaterialTheme.colorScheme.onBackground
-                            )
-                        }
                     }
                     HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                 }
@@ -1262,69 +1304,11 @@ fun ProfileTabContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-            // Header same design as home screen
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    IconButton(
-                        onClick = { /* Open menu */ },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                                shape = CircleShape
-                            )
-                            .clip(CircleShape)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_custom_menu),
-                            contentDescription = "Menu",
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-
-                    Column {
-                        Text(
-                            text = "My Profile",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = "${role.lowercase().replaceFirstChar { it.uppercase() }} Account Settings",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                        )
-                    }
-                }
-
-                IconButton(
-                    onClick = onNotificationClick,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .border(
-                            1.dp,
-                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                            shape = CircleShape
-                        )
-                        .clip(CircleShape)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_custom_notification),
-                        contentDescription = "Notifications",
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            }
+            DashboardHeader(
+                title = "My Profile",
+                subtitle = "${role.lowercase().replaceFirstChar { it.uppercase() }} Account Settings",
+                onNotificationClick = onNotificationClick
+            )
 
             // Profile Card (Shadcn style with thin border)
             Card(
@@ -1743,44 +1727,13 @@ fun ProfileTabContent(
             }
         }
 
-        // Sticky collapsed header
         if (headerAlpha > 0f) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .graphicsLayer { alpha = headerAlpha; translationY = headerSlide }
-                    .background(MaterialTheme.colorScheme.background)
-            ) {
-                Spacer(modifier = Modifier.windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    IconButton(
-                        onClick = { /* Open menu */ },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
-                            .clip(CircleShape)
-                    ) {
-                        Icon(painter = painterResource(id = R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
-                    }
-                    Text("My Profile", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                    IconButton(
-                        onClick = onNotificationClick,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
-                            .clip(CircleShape)
-                    ) {
-                        Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
-                    }
-                }
-                HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
-            }
+            DashboardStickyHeader(
+                title = "My Profile",
+                headerAlpha = headerAlpha,
+                headerSlide = headerSlide,
+                onNotificationClick = onNotificationClick
+            )
         }
     }
 }
@@ -1907,13 +1860,35 @@ fun NoticeTabContent(
         onRefresh = { onRefresh(); fetchNotices() },
         modifier = Modifier.fillMaxSize()
     ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
-        ) {
+        val lazyListState = rememberLazyListState()
+        val headerCollapsed by remember { derivedStateOf { lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 100 } }
+        val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (headerCollapsed) 1f else 0f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerAlpha"
+        )
+        val headerSlide by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (headerCollapsed) 0f else -24f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerSlide"
+        )
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
+            ) {
+                item {
+                    DashboardHeader(
+                        title = "Notice Board",
+                        subtitle = "${role.lowercase().replaceFirstChar { it.uppercase() }} Notice Board",
+                        onNotificationClick = onNotificationClick
+                    )
+                }
 
                 // 2. Load Error item
                 loadError?.let { error ->
@@ -2022,6 +1997,15 @@ fun NoticeTabContent(
                 }
             }
 
+            if (headerAlpha > 0f) {
+                DashboardStickyHeader(
+                    title = "Notice Board",
+                    headerAlpha = headerAlpha,
+                    headerSlide = headerSlide,
+                    onNotificationClick = onNotificationClick
+                )
+            }
+        }
     }
 }
 

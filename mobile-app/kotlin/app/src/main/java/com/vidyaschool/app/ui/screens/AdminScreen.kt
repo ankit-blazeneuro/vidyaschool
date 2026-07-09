@@ -60,13 +60,41 @@ fun AdminScreen(
         onThemeChange = onThemeChange,
         onLogout = onLogout
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 24.dp)
-        ) {
-            Card(
+        val scrollState = rememberScrollState()
+        val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
+        val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (headerCollapsed) 1f else 0f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerAlpha"
+        )
+        val headerSlide by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (headerCollapsed) 0f else -24f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerSlide"
+        )
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .statusBarsPadding()
+                    .padding(bottom = 24.dp)
+            ) {
+                DashboardHeader(
+                    title = "Dashboard",
+                    subtitle = "Welcome, ${name.ifEmpty { "Admin" }}",
+                    onNotificationClick = { }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                ) {
+                    Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
@@ -325,6 +353,17 @@ fun AdminScreen(
                         )
                     }
                 }
+            }
+        }
+
+        if (headerAlpha > 0f) {
+                DashboardStickyHeader(
+                    title = "Dashboard",
+                    headerAlpha = headerAlpha,
+                    headerSlide = headerSlide,
+                    onNotificationClick = { }
+                )
+            }
         }
     }
 }

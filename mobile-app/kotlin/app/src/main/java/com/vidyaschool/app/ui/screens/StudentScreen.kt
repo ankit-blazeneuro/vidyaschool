@@ -125,38 +125,76 @@ fun StudentScreen(
         onShowLibrary = onShowLibrary
     ) {
         val scrollState = rememberScrollState()
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 24.dp, vertical = 24.dp)
-        ) {
-            // Auto-playing Image Slider at the top
-            if (isLoadingSlider) {
-                SliderSkeleton(
+        val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
+        val headerAlpha by animateFloatAsState(
+            targetValue = if (headerCollapsed) 1f else 0f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerAlpha"
+        )
+        val headerSlide by animateFloatAsState(
+            targetValue = if (headerCollapsed) 0f else -24f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerSlide"
+        )
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .statusBarsPadding()
+                    .padding(bottom = 24.dp)
+            ) {
+                DashboardHeader(
+                    title = "Dashboard",
+                    subtitle = "Welcome, ${name.ifEmpty { "Student" }}",
+                    onNotificationClick = { showNotifications = true }
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(180.dp)
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-            } else {
-                val enabledImages = sliderImages.filter { it.enabled }
-                if (enabledImages.isNotEmpty()) {
-                    ImageSlider(
-                        images = enabledImages,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
+                        .padding(horizontal = 24.dp)
+                ) {
+                    // Auto-playing Image Slider at the top
+                    if (isLoadingSlider) {
+                        SliderSkeleton(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    } else {
+                        val enabledImages = sliderImages.filter { it.enabled }
+                        if (enabledImages.isNotEmpty()) {
+                            ImageSlider(
+                                images = enabledImages,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp)
+                            )
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
+                    }
+                    
+                    AcademicPerformanceCard()
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    LibraryBooksSection(onShowMore = onShowLibrary)
                 }
             }
-            
-            AcademicPerformanceCard()
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            LibraryBooksSection(onShowMore = onShowLibrary)
+
+            if (headerAlpha > 0f) {
+                DashboardStickyHeader(
+                    title = "Dashboard",
+                    headerAlpha = headerAlpha,
+                    headerSlide = headerSlide,
+                    onNotificationClick = { showNotifications = true }
+                )
+            }
         }
     }
 
