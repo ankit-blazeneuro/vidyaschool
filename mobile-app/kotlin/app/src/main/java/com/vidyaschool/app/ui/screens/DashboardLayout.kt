@@ -240,7 +240,6 @@ fun DashboardLayout(
     var isRefreshing by remember { mutableStateOf(false) }
     var showNotifications by remember { mutableStateOf(false) }
     var showComplaintDialog by remember { mutableStateOf(false) }
-    var showSessionsDialog by remember { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     
     val triggerRefresh: () -> Unit = {
@@ -449,10 +448,10 @@ fun DashboardLayout(
 
                     NavigationDrawerItem(
                         label = { Text("Manage Sessions") },
-                        selected = false,
+                        selected = selectedTab == "sessions",
                         onClick = {
                             scope.launch { drawerState.close() }
-                            showSessionsDialog = true
+                            selectedTab = "sessions"
                         },
                         icon = { Icon(Icons.Default.Person, contentDescription = null) },
                         shape = RoundedCornerShape(8.dp),
@@ -725,6 +724,12 @@ fun DashboardLayout(
                             onNotificationClick = { showNotifications = true }
                         )
                     }
+                    "sessions" -> {
+                        SessionsTabContent(
+                            sessionManager = sessionManager,
+                            onNotificationClick = { showNotifications = true }
+                        )
+                    }
                 }
             }
         }
@@ -823,140 +828,176 @@ fun DashboardLayout(
         )
     }
 
-    if (showSessionsDialog) {
-        val currentProvider = sessionManager.getProvider() ?: "Email Login"
-        val currentEmail = sessionManager.getEmail() ?: "unknown"
-        val currentUsername = sessionManager.getUsername() ?: "unknown"
+}
+}
 
-        AlertDialog(
-            onDismissRequest = { showSessionsDialog = false },
-            title = {
+@Composable
+fun SessionsTabContent(
+    sessionManager: SessionManager,
+    onNotificationClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
+    val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (headerCollapsed) 1f else 0f,
+        animationSpec = androidx.compose.animation.core.tween(220),
+        label = "headerAlpha"
+    )
+    val headerSlide by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (headerCollapsed) 0f else -24f,
+        animationSpec = androidx.compose.animation.core.tween(220),
+        label = "headerSlide"
+    )
+
+    val currentProvider = remember { sessionManager.getProvider() ?: "Email Login" }
+    val currentEmail = remember { sessionManager.getEmail() ?: "unknown" }
+    val currentUsername = remember { sessionManager.getUsername() ?: "unknown" }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .statusBarsPadding()
+                .padding(bottom = 24.dp)
+        ) {
+            DashboardHeader(
+                title = "Manage Sessions",
+                subtitle = "Active account session instances",
+                onNotificationClick = onNotificationClick
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 Text(
-                    text = "Manage Sessions",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
+                    text = "Active session instances connected to your school account.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
-            },
-            text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxWidth()
+
+                // Current active device card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
                 ) {
-                    Text(
-                        text = "Active session instances connected to your school account.",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                        ),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .background(Color(0xFF22C55E), CircleShape)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "Current Device (Android App)",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Provider: $currentProvider",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(Color(0xFF22C55E), CircleShape)
                             )
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "User: $currentEmail (@$currentUsername)",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                            )
-                        }
-                    }
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                        )
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(
-                                text = "Chrome / Windows 11",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp,
+                                text = "Current Device (Android App)",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Location: New Delhi, India",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                            Text(
-                                text = "Last active: 2 hours ago",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
                         }
-                    }
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Provider: $currentProvider",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                         )
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(
-                                text = "Safari / iPhone 15",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Location: Mumbai, India",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                            Text(
-                                text = "Last active: 1 day ago",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                        }
+                        Text(
+                            text = "User: $currentEmail (@$currentUsername)",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                        )
                     }
                 }
-            },
-            confirmButton = {
+
+                // Mock web session 1
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Chrome / Windows 11",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Location: New Delhi, India",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = "Last active: 2 hours ago",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+
+                // Mock mobile session 2
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Safari / iPhone 15",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Location: Mumbai, India",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = "Last active: 1 day ago",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Button(
                     onClick = {
                         android.widget.Toast.makeText(context, "All other sessions revoked successfully!", android.widget.Toast.LENGTH_SHORT).show()
-                        showSessionsDialog = false
-                    }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Revoke Others")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSessionsDialog = false }) {
-                    Text("Close")
+                    Text("Revoke All Other Sessions", fontWeight = FontWeight.Bold)
                 }
             }
-        )
+        }
+
+        if (headerAlpha > 0f) {
+            DashboardStickyHeader(
+                title = "Manage Sessions",
+                headerAlpha = headerAlpha,
+                headerSlide = headerSlide,
+                onNotificationClick = onNotificationClick
+            )
+        }
     }
-}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
