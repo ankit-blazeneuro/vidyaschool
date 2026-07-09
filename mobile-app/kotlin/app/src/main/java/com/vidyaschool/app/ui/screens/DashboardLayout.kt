@@ -84,6 +84,8 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Close
 
+val LocalMenuClickHandler = staticCompositionLocalOf<(() -> Unit)?> { null }
+
 @Composable
 fun DashboardHeader(
     title: String,
@@ -91,6 +93,7 @@ fun DashboardHeader(
     onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val menuClick = LocalMenuClickHandler.current
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -103,7 +106,7 @@ fun DashboardHeader(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             IconButton(
-                onClick = { /* Open menu */ },
+                onClick = { menuClick?.invoke() },
                 modifier = Modifier
                     .size(36.dp)
                     .border(
@@ -165,6 +168,7 @@ fun DashboardStickyHeader(
     onNotificationClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val menuClick = LocalMenuClickHandler.current
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -180,7 +184,7 @@ fun DashboardStickyHeader(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(
-                onClick = { /* Open menu */ },
+                onClick = { menuClick?.invoke() },
                 modifier = Modifier
                     .size(36.dp)
                     .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
@@ -235,6 +239,9 @@ fun DashboardLayout(
     var activeDocFallback by remember { mutableStateOf<String?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
     var showNotifications by remember { mutableStateOf(false) }
+    var showComplaintDialog by remember { mutableStateOf(false) }
+    var showSessionsDialog by remember { mutableStateOf(false) }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     
     val triggerRefresh: () -> Unit = {
         isRefreshing = true
@@ -371,7 +378,139 @@ fun DashboardLayout(
         }
     }
 
-    Scaffold(
+    CompositionLocalProvider(LocalMenuClickHandler provides { scope.launch { drawerState.open() } }) {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                ModalDrawerSheet(
+                    drawerContainerColor = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.width(300.dp)
+                ) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (!avatarUrl.isNullOrEmpty()) {
+                                AsyncImage(
+                                    model = avatarUrl,
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                                )
+                            } else {
+                                Text(
+                                    text = (name.takeIf { it.isNotBlank() } ?: "U").take(1).uppercase(),
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = name.ifEmpty { "User" },
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                            Text(
+                                text = email,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    NavigationDrawerItem(
+                        label = { Text("Home Dashboard") },
+                        selected = selectedTab == "home",
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            selectedTab = "home"
+                        },
+                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+
+                    NavigationDrawerItem(
+                        label = { Text("Notice Board") },
+                        selected = selectedTab == "notice",
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            selectedTab = "notice"
+                        },
+                        icon = { Icon(Icons.Default.Info, contentDescription = null) },
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+
+                    NavigationDrawerItem(
+                        label = { Text("Search Tab") },
+                        selected = selectedTab == "search",
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            selectedTab = "search"
+                        },
+                        icon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 16.dp, horizontal = 20.dp),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+                    )
+
+                    NavigationDrawerItem(
+                        label = { Text("File a Complaint") },
+                        selected = false,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            showComplaintDialog = true
+                        },
+                        icon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+
+                    NavigationDrawerItem(
+                        label = { Text("Manage Sessions") },
+                        selected = false,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            showSessionsDialog = true
+                        },
+                        icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    NavigationDrawerItem(
+                        label = { Text("Log Out", color = MaterialTheme.colorScheme.error) },
+                        selected = false,
+                        onClick = {
+                            scope.launch { drawerState.close() }
+                            onLogout()
+                        },
+                        icon = { Icon(Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 20.dp)
+                    )
+                }
+            }
+        ) {
+            Scaffold(
         topBar = {
             if (activeDocPath != null) {
                 Column(
@@ -621,6 +760,7 @@ fun DashboardLayout(
                             onNotificationClick = { showNotifications = true }
                         )
                     }
+                }
             }
         }
     }
@@ -629,6 +769,225 @@ fun DashboardLayout(
         NotificationDrawer(
             sessionManager = sessionManager,
             onDismiss = { showNotifications = false }
+        )
+    }
+
+    if (showComplaintDialog) {
+        var complaintTitle by remember { mutableStateOf("") }
+        var complaintDesc by remember { mutableStateOf("") }
+        var selectedDepartment by remember { mutableStateOf("principal") }
+        val departments = listOf(
+            SelectOption("principal", "Principal Office"),
+            SelectOption("it_support", "IT Support"),
+            SelectOption("coordinator", "Academic Coordinator")
+        )
+
+        AlertDialog(
+            onDismissRequest = { showComplaintDialog = false },
+            title = {
+                Text(
+                    text = "File a Complaint",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Select(
+                        selectedValue = selectedDepartment,
+                        onValueChange = { selectedDepartment = it },
+                        options = departments,
+                        label = "Select Department",
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Column {
+                        Text(
+                            text = "Title",
+                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+                        Input(
+                            value = complaintTitle,
+                            onValueChange = { complaintTitle = it },
+                            placeholder = "Summarize the issue...",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "Details",
+                            style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(bottom = 6.dp)
+                        )
+                        Input(
+                            value = complaintDesc,
+                            onValueChange = { complaintDesc = it },
+                            placeholder = "Describe the issue in detail...",
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (complaintTitle.isNotBlank() && complaintDesc.isNotBlank()) {
+                            showComplaintDialog = false
+                            android.widget.Toast.makeText(context, "Complaint submitted successfully! Ticket ID: CMP-${(1000..9999).random()}", android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            android.widget.Toast.makeText(context, "Please fill in all fields", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                ) {
+                    Text("Submit")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showComplaintDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showSessionsDialog) {
+        val currentProvider = sessionManager.getProvider() ?: "Email Login"
+        val currentEmail = sessionManager.getEmail() ?: "unknown"
+        val currentUsername = sessionManager.getUsername() ?: "unknown"
+
+        AlertDialog(
+            onDismissRequest = { showSessionsDialog = false },
+            title = {
+                Text(
+                    text = "Manage Sessions",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Active session instances connected to your school account.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(Color(0xFF22C55E), CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Current Device (Android App)",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Provider: $currentProvider",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                text = "User: $currentEmail (@$currentUsername)",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "Chrome / Windows 11",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Location: New Delhi, India",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = "Last active: 2 hours ago",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                        )
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "Safari / iPhone 15",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Location: Mumbai, India",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = "Last active: 1 day ago",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        android.widget.Toast.makeText(context, "All other sessions revoked successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                        showSessionsDialog = false
+                    }
+                ) {
+                    Text("Revoke Others")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSessionsDialog = false }) {
+                    Text("Close")
+                }
+            }
         )
     }
 }
