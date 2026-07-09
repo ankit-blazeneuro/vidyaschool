@@ -1123,20 +1123,34 @@ fun ProfileTabContent(
         }
     }
 
+    val scrollState = rememberScrollState()
+    val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
+    val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (headerCollapsed) 1f else 0f,
+        animationSpec = androidx.compose.animation.core.tween(220),
+        label = "headerAlpha"
+    )
+    val headerSlide by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (headerCollapsed) 0f else -24f,
+        animationSpec = androidx.compose.animation.core.tween(220),
+        label = "headerSlide"
+    )
+
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .statusBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .statusBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
             // Header same design as home screen
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1617,7 +1631,48 @@ fun ProfileTabContent(
                 )
             }
         }
+
+        // Sticky collapsed header
+        if (headerAlpha > 0f) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer { alpha = headerAlpha; translationY = headerSlide }
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                Spacer(modifier = Modifier.windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(
+                        onClick = { /* Open menu */ },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                            .clip(CircleShape)
+                    ) {
+                        Icon(painter = painterResource(id = R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                    }
+                    Text("My Profile", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    IconButton(
+                        onClick = onNotificationClick,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                            .clip(CircleShape)
+                    ) {
+                        Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                    }
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
+            }
+        }
     }
+}
 }
 
 // Search local page item model
@@ -1707,7 +1762,6 @@ fun NoticeTabContent(
     var loadError by remember { mutableStateOf<String?>(null) }
 
     val role = remember { sessionManager.getRole() ?: "student" }
-    val name = remember { sessionManager.getName() ?: "" }
 
     val fetchNotices: () -> Unit = {
         isLoading = true
@@ -1742,102 +1796,128 @@ fun NoticeTabContent(
         onRefresh = { onRefresh(); fetchNotices() },
         modifier = Modifier.fillMaxSize()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .padding(start = 24.dp, end = 24.dp, top = 12.dp, bottom = 24.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+        val lazyListState = rememberLazyListState()
+        val headerCollapsed by remember { derivedStateOf { lazyListState.firstVisibleItemIndex > 0 || lazyListState.firstVisibleItemScrollOffset > 100 } }
+        val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (headerCollapsed) 1f else 0f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerAlpha"
+        )
+        val headerSlide by androidx.compose.animation.core.animateFloatAsState(
+            targetValue = if (headerCollapsed) 0f else -24f,
+            animationSpec = androidx.compose.animation.core.tween(220),
+            label = "headerSlide"
+        )
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = lazyListState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    IconButton(
-                        onClick = { /* Open menu */ },
-                        modifier = Modifier
-                            .size(36.dp)
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                                shape = CircleShape
-                            )
-                            .clip(CircleShape)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_custom_menu),
-                            contentDescription = "Menu",
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
-
+                // 1. Welcome Header item
+                item {
                     Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                IconButton(
+                                    onClick = { /* Open menu */ },
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                                            shape = CircleShape
+                                        )
+                                        .clip(CircleShape)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_custom_menu),
+                                        contentDescription = "Menu",
+                                        modifier = Modifier.size(18.dp),
+                                        tint = MaterialTheme.colorScheme.onBackground
+                                    )
+                                }
+
+                                Column {
+                                    Text(
+                                        text = "Notice Board",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onBackground
+                                    )
+                                    Text(
+                                        text = "${role.lowercase().replaceFirstChar { it.uppercase() }} Notice Board",
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                                    )
+                                }
+                            }
+
+                            IconButton(
+                                onClick = onNotificationClick,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .border(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                                        shape = CircleShape
+                                    )
+                                    .clip(CircleShape)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_custom_notification),
+                                    contentDescription = "Notifications",
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                }
+
+                // 2. Load Error item
+                loadError?.let { error ->
+                    item {
                         Text(
-                            text = "Notice Board",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                        Text(
-                            text = "${role.lowercase().replaceFirstChar { it.uppercase() }} Notice Board",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                            text = error,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = 12.dp)
                         )
                     }
                 }
 
-                IconButton(
-                    onClick = onNotificationClick,
-                    modifier = Modifier
-                        .size(36.dp)
-                        .border(
-                            1.dp,
-                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                            shape = CircleShape
-                        )
-                        .clip(CircleShape)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_custom_notification),
-                        contentDescription = "Notifications",
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            loadError?.let { error ->
-                Text(
-                    text = error,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-            }
-
-            if (notices.isEmpty() && !isLoading && loadError == null) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No notices yet",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+                // 3. Notices content
+                if (notices.isEmpty() && !isLoading && loadError == null) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No notices yet",
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                } else {
                     items(notices.size) { index ->
                         val notice = notices[index]
                         val badgeLabel = when {
@@ -1913,6 +1993,46 @@ fun NoticeTabContent(
                             }
                         }
                     }
+                }
+            }
+
+            // Sticky collapsed header
+            if (headerAlpha > 0f) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { alpha = headerAlpha; translationY = headerSlide }
+                        .background(MaterialTheme.colorScheme.background)
+                ) {
+                    Spacer(modifier = Modifier.windowInsetsTopHeight(androidx.compose.foundation.layout.WindowInsets.statusBars))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        IconButton(
+                            onClick = { /* Open menu */ },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                                .clip(CircleShape)
+                        ) {
+                            Icon(painter = painterResource(id = R.drawable.ic_custom_menu), contentDescription = "Menu", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                        }
+                        Text("Notice Board", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                        IconButton(
+                            onClick = onNotificationClick,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                                .clip(CircleShape)
+                        ) {
+                            Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                        }
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
                 }
             }
         }
