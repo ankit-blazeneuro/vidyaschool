@@ -407,8 +407,16 @@ fun DashboardLayout(
             }
         },
         bottomBar = {
+            val isKeyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+            val navBarInsets = if (isKeyboardVisible) {
+                WindowInsets(0.dp)
+            } else {
+                NavigationBarDefaults.windowInsets
+            }
             Column(
-                modifier = Modifier.background(MaterialTheme.colorScheme.background)
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .windowInsetsPadding(navBarInsets)
             ) {
                 updateInfo?.let { info ->
                     val updateApk = remember(info) { java.io.File(context.cacheDir, "update.apk") }
@@ -467,18 +475,12 @@ fun DashboardLayout(
                         }
                     )
                 }
-                val isKeyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-                val navBarInsets = if (isKeyboardVisible) {
-                    WindowInsets(0.dp)
-                } else {
-                    NavigationBarDefaults.windowInsets
-                }
                 if (selectedTab != "community" && activeDocPath == null) {
                     NavigationBar(
                         containerColor = MaterialTheme.colorScheme.background,
                         tonalElevation = 0.dp,
-                        windowInsets = navBarInsets,
-                        modifier = Modifier.height(53.dp)
+                        windowInsets = WindowInsets(0.dp),
+                        modifier = Modifier.height(62.dp)
                     ) {
                         val navItemColors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -771,7 +773,7 @@ fun SearchTabContent(
                 placeholder = "Search pages, users, docs...",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 4.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 4.dp),
                 leadingIcon = {
                     Icon(
                         Icons.Default.Search,
@@ -1311,6 +1313,8 @@ fun ProfileTabContent(
                     subtitle = "${role.lowercase().replaceFirstChar { it.uppercase() }} Account Settings",
                     onNotificationClick = onNotificationClick
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Column(
                     modifier = Modifier
@@ -1890,7 +1894,7 @@ fun NoticeTabContent(
                     .fillMaxSize()
                     .statusBarsPadding(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
+                contentPadding = PaddingValues(top = 0.dp, bottom = 24.dp)
             ) {
                 item {
                     DashboardHeader(
