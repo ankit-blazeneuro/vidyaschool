@@ -473,11 +473,12 @@ fun DashboardLayout(
                 } else {
                     NavigationBarDefaults.windowInsets
                 }
-                if (selectedTab != "community" && selectedTab != "search" && activeDocPath == null) {
+                if (selectedTab != "community" && activeDocPath == null) {
                     NavigationBar(
                         containerColor = MaterialTheme.colorScheme.background,
                         tonalElevation = 0.dp,
-                        windowInsets = navBarInsets
+                        windowInsets = navBarInsets,
+                        modifier = Modifier.height(53.dp)
                     ) {
                         val navItemColors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -762,7 +763,6 @@ fun SearchTabContent(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .imePadding()
-                .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 20.dp)
         ) {
             // Search Input styled like shadcn
             Input(
@@ -771,7 +771,7 @@ fun SearchTabContent(
                 placeholder = "Search pages, users, docs...",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(horizontal = 20.dp, vertical = 4.dp),
                 leadingIcon = {
                     Icon(
                         Icons.Default.Search,
@@ -805,7 +805,9 @@ fun SearchTabContent(
             val unselectedText = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f)
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 listOf("All", "Pages", "Users", "Docs").forEach { filter ->
@@ -842,7 +844,8 @@ fun SearchTabContent(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp, bottom = 20.dp)
                 ) {
                     // 1. Pages Section
                     if (activeFilter == "All" || activeFilter == "Pages") {
@@ -1884,7 +1887,8 @@ fun NoticeTabContent(
             LazyColumn(
                 state = lazyListState,
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .statusBarsPadding(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(top = 12.dp, bottom = 24.dp)
             ) {
