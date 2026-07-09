@@ -315,10 +315,16 @@ fun DashboardLayout(
                     )
                 }
                 val isKeyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-                if (selectedTab != "community" && activeDocPath == null && !isKeyboardVisible) {
+                val navBarInsets = if (isKeyboardVisible) {
+                    WindowInsets(0.dp)
+                } else {
+                    NavigationBarDefaults.windowInsets
+                }
+                if (selectedTab != "community" && activeDocPath == null) {
                     NavigationBar(
                         containerColor = MaterialTheme.colorScheme.background,
-                        tonalElevation = 0.dp
+                        tonalElevation = 0.dp,
+                        windowInsets = navBarInsets
                     ) {
                         val navItemColors = NavigationBarItemDefaults.colors(
                             selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -1162,13 +1168,13 @@ fun ProfileTabContent(
 
                     Column {
                         Text(
-                            text = "Welcome, ${name.ifEmpty { role.replaceFirstChar { it.uppercase() } }}",
+                            text = "My Profile",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = "${role.lowercase().replaceFirstChar { it.uppercase() }} Portal",
+                            text = "${role.lowercase().replaceFirstChar { it.uppercase() }} Account Settings",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                         )
@@ -1772,7 +1778,7 @@ fun NoticeTabContent(
 
                     Column {
                         Text(
-                            text = "Welcome, ${name.ifEmpty { role.replaceFirstChar { it.uppercase() } }}",
+                            text = "Notice Board",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
