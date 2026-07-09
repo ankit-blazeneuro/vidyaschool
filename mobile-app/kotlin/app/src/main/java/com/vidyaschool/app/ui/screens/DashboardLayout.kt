@@ -531,46 +531,66 @@ fun DashboardLayout(
                         downloadProgress = downloadProgress,
                         isDownloaded = isApkDownloaded,
                         onUpdateClick = {
-                            val canInstall = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                                context.packageManager.canRequestPackageInstalls()
-                            } else {
-                                true
-                            }
-                            if (!canInstall) {
-                                try {
-                                    val intent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-                                        data = Uri.parse("package:${context.packageName}")
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                    context.startActivity(intent)
-                                    android.widget.Toast.makeText(context, "Please enable 'Install unknown apps' to update.", android.widget.Toast.LENGTH_LONG).show()
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                }
-                            } else {
-                                if (isApkDownloaded) {
-                                    val apkUri = androidx.core.content.FileProvider.getUriForFile(
-                                        context,
-                                        "${context.packageName}.fileprovider",
-                                        updateApk
-                                    )
-                                    UpdateChecker.installApk(context, apkUri)
-                                    UpdateChecker.updateInfoState.value = null
+                            try {
+                                val canInstall = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                                    context.packageManager.canRequestPackageInstalls()
                                 } else {
-                                    isDownloading = true
-                                    downloadProgress = 0f
-                                    scope.launch {
-                                        val apkUri = UpdateChecker.downloadApk(context, info.downloadUrl) { progress ->
-                                            downloadProgress = progress
+                                    true
+                                }
+                                if (!canInstall) {
+                                    try {
+                                        val intent = Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                                            data = Uri.parse("package:${context.packageName}")
+                                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                                         }
-                                        isDownloading = false
-                                        if (apkUri != null) {
-                                            isApkDownloaded = true
+                                        context.startActivity(intent)
+                                        android.widget.Toast.makeText(context, "Please enable 'Install unknown apps' to update.", android.widget.Toast.LENGTH_LONG).show()
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        android.widget.Toast.makeText(context, "Error opening settings: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                } else {
+                                    if (isApkDownloaded && updateApk.exists()) {
+                                        try {
+                                            val apkUri = androidx.core.content.FileProvider.getUriForFile(
+                                                context,
+                                                "${context.packageName}.fileprovider",
+                                                updateApk
+                                            )
                                             UpdateChecker.installApk(context, apkUri)
+                                            UpdateChecker.updateInfoState.value = null
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                            android.widget.Toast.makeText(context, "Failed to launch installer: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                                         }
-                                        UpdateChecker.updateInfoState.value = null
+                                    } else {
+                                        isDownloading = true
+                                        downloadProgress = 0f
+                                        scope.launch {
+                                            try {
+                                                val apkUri = UpdateChecker.downloadApk(context, info.downloadUrl) { progress ->
+                                                    downloadProgress = progress
+                                                }
+                                                isDownloading = false
+                                                if (apkUri != null) {
+                                                    isApkDownloaded = true
+                                                    UpdateChecker.installApk(context, apkUri)
+                                                } else {
+                                                    android.widget.Toast.makeText(context, "Failed to download update.", android.widget.Toast.LENGTH_SHORT).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                isDownloading = false
+                                                e.printStackTrace()
+                                                android.widget.Toast.makeText(context, "Download error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                                            } finally {
+                                                UpdateChecker.updateInfoState.value = null
+                                            }
+                                        }
                                     }
                                 }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                android.widget.Toast.makeText(context, "An error occurred: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         },
                         onDismissClick = {
