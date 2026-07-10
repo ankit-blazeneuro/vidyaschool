@@ -3933,9 +3933,20 @@ fun NotificationDrawer(
                         items(notifications.size) { idx ->
                             val notif = notifications[idx]
                             val dateLabel = try {
-                                val parts = notif.createdAt.split("T")[0].split("-")
-                                val months = listOf("","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
-                                "${months[parts[1].toInt()]} ${parts[2].toInt()}, ${parts[0]}"
+                                // Safely parse ISO date strings like "2024-01-15T10:30:00Z" or "2024-01-15"
+                                val datePart = notif.createdAt.split("T").firstOrNull() ?: notif.createdAt
+                                val parts = datePart.split("-")
+                                if (parts.size >= 3) {
+                                    val monthNum = parts[1].toIntOrNull() ?: 0
+                                    val day = parts[2].toIntOrNull() ?: 0
+                                    val monthStr = when (monthNum) {
+                                        1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
+                                        5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
+                                        9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
+                                        else -> ""
+                                    }
+                                    if (monthStr.isNotEmpty()) "$monthStr $day, ${parts[0]}" else datePart
+                                } else datePart
                             } catch (e: Exception) { notif.createdAt.take(10) }
 
                             Row(
