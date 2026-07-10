@@ -3826,7 +3826,7 @@ fun NotificationDrawer(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
         dragHandle = {
@@ -3840,168 +3840,150 @@ fun NotificationDrawer(
             )
         }
     ) {
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp)
+                .fillMaxHeight(0.6f)
+                .navigationBarsPadding(),
+            contentPadding = PaddingValues(horizontal = 24.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Notifications",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "Last 30 days",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    )
-                }
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
-                        .clip(CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
+            stickyHeader {
+                Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Notifications",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "Last 30 days",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        }
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .size(32.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
+                                .clip(CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-            Spacer(modifier = Modifier.height(8.dp))
-
             when {
                 isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+                        }
                     }
                 }
                 errorMsg != null -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(errorMsg!!, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                            Text(errorMsg!!, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                        }
                     }
                 }
                 notifications.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_custom_notification),
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-                            )
-                            Text(
-                                text = "No notifications in the last 30 days",
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                            )
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = null, modifier = Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
+                                Text("No notifications in the last 30 days", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                            }
                         }
                     }
                 }
                 else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp),
-                        verticalArrangement = Arrangement.spacedBy(0.dp)
-                    ) {
-                        items(notifications.size) { idx ->
-                            val notif = notifications[idx]
-                            val dateLabel = try {
-                                // Safely parse ISO date strings like "2024-01-15T10:30:00Z" or "2024-01-15"
-                                val datePart = notif.createdAt.split("T").firstOrNull() ?: notif.createdAt
-                                val parts = datePart.split("-")
-                                if (parts.size >= 3) {
-                                    val monthNum = parts[1].toIntOrNull() ?: 0
-                                    val day = parts[2].toIntOrNull() ?: 0
-                                    val monthStr = when (monthNum) {
-                                        1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
-                                        5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
-                                        9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
-                                        else -> ""
-                                    }
-                                    if (monthStr.isNotEmpty()) "$monthStr $day, ${parts[0]}" else datePart
-                                } else datePart
-                            } catch (e: Exception) { notif.createdAt.take(10) }
+                    items(notifications.size) { idx ->
+                        val notif = notifications[idx]
+                        val dateLabel = try {
+                            val datePart = notif.createdAt.split("T").firstOrNull() ?: notif.createdAt
+                            val parts = datePart.split("-")
+                            if (parts.size >= 3) {
+                                val monthNum = parts[1].toIntOrNull() ?: 0
+                                val day = parts[2].toIntOrNull() ?: 0
+                                val monthStr = when (monthNum) {
+                                    1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
+                                    5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
+                                    9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
+                                    else -> ""
+                                }
+                                if (monthStr.isNotEmpty()) "$monthStr $day, ${parts[0]}" else datePart
+                            } else datePart
+                        } catch (e: Exception) { notif.createdAt.take(10) }
 
-                            Row(
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.Top
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_custom_notification),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp),
-                                        tint = MaterialTheme.colorScheme.primary
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_custom_notification),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = notif.title.orEmpty(),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                val bodyText = notif.body.orEmpty()
+                                if (bodyText.isNotBlank()) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = bodyText,
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                                        lineHeight = 18.sp
                                     )
                                 }
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = notif.title,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    if (notif.body.isNotBlank()) {
-                                        Spacer(modifier = Modifier.height(2.dp))
-                                        Text(
-                                            text = notif.body,
-                                            fontSize = 13.sp,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
-                                            lineHeight = 18.sp
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = dateLabel,
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-                                    )
-                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = dateLabel,
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                )
                             }
-                            if (idx < notifications.lastIndex) {
-                                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f))
-                            }
+                        }
+                        if (idx < notifications.lastIndex) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f))
                         }
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }
