@@ -1,6 +1,7 @@
 import os
 import uuid
 from datetime import datetime
+from contextlib import asynccontextmanager
 
 import sentry_sdk
 
@@ -766,6 +767,24 @@ async def send_custom_notification(data: dict, current_user: User = Depends(requ
 @app.on_event("startup")
 def on_startup():
     init_db()
+    # Init and start the automated notification scheduler
+    try:
+        from scheduler import init_scheduler, create_scheduler
+        init_scheduler(engine, send_notification_to_user)
+        scheduler = create_scheduler()
+        scheduler.start()
+        app.state.scheduler = scheduler
+        print("[Scheduler] Automated notification scheduler started.")
+    except Exception as e:
+        print(f"[Scheduler] Could not start scheduler: {e}")
+
+
+@app.on_event("shutdown")
+def on_shutdown():
+    scheduler = getattr(app.state, "scheduler", None)
+    if scheduler and scheduler.running:
+        scheduler.shutdown(wait=False)
+        print("[Scheduler] Scheduler stopped.")
 
 
 # Wrap FastAPI application with Socket.IO ASGIApp

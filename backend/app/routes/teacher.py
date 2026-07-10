@@ -618,4 +618,38 @@ def save_marks(
             db.add(new_record)
             
     db.commit()
+
+    # ── Instant notification: tell each student their marks were uploaded ──
+    try:
+        import asyncio
+        from main import send_notification_to_user
+
+        # Group scores by student for a meaningful message
+        student_ids = list(payload.scores.keys())
+        exam_name = exam_obj.name
+
+        async def _notify():
+            notif_db = next(get_db())
+            try:
+                for sid in student_ids:
+                    score = payload.scores[sid]
+                    await send_notification_to_user(
+                        sid,
+                        "📝 Marks Published",
+                        f"Your {payload.subject} marks for {exam_name} are out! "
+                        f"You scored {int(score) if score == int(score) else score}/100. "
+                        f"Check your profile to view details.",
+                        notif_db
+                    )
+            finally:
+                notif_db.close()
+
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.ensure_future(_notify())
+        else:
+            loop.run_until_complete(_notify())
+    except Exception as _e:
+        print(f"[Marks] Notification error (non-fatal): {_e}")
+
     return {"status": "success"}
