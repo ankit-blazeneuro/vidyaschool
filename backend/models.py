@@ -208,5 +208,12 @@ class NotificationHistory(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow, alias="created_at")
 
 
-
-
+class FeeStructure(SQLModel, table=True):
+    """Stores the per-class fee configuration (components JSON) for each class 1-12."""
+    __tablename__ = "fee_structure"
+    id: str = Field(primary_key=True)
+    class_num: int = Field(alias="class_num")          # 1..12
+    components: str = Field(default="[]")               # JSON array of {name, amount, billingPeriod}
+    transport_fee: int = Field(default=0, alias="transport_fee")   # extra fee for transport users
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)

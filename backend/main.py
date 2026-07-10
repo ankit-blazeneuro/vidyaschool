@@ -381,6 +381,99 @@ def health():
     return {"ok": True}
 
 
+@app.get("/api/admin/stats")
+async def get_admin_stats(
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Return aggregated fee and account statistics for the admin dashboard."""
+    from models import FeeInstallment, User as UserModel, Complaint
+
+    # Total fees received (sum of all paid installments)
+    paid_installments = db.query(FeeInstallment).filter(
+        FeeInstallment.status == "paid"
+    ).all()
+    total_fee_received = sum(inst.amount for inst in paid_installments)
+
+    # Expected fees to collect (sum of pending + overdue installments)
+    outstanding_installments = db.query(FeeInstallment).filter(
+        FeeInstallment.status.in_(["pending", "overdue"])
+    ).all()
+    expected_fee_to_collect = sum(inst.amount for inst in outstanding_installments)
+
+    # Active accounts (all users in the system)
+    active_accounts = db.query(UserModel).count()
+
+    # Pending complaints count
+    pending_complaints = db.query(Complaint).filter(
+        Complaint.status == "pending"
+    ).count()
+
+    return {
+        "total_fee_received": total_fee_received,
+        "expected_fee_to_collect": expected_fee_to_collect,
+        "active_accounts": active_accounts,
+        "pending_complaints": pending_complaints,
+    }
+
+
+@app.get("/api/admin/performance")
+async def get_admin_performance(
+    current_user: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Return per-class average performance for the admin dashboard chart."""
+    from models import Exam, StudentSubjectMarks, UserProfile
+
+    # Join marks → exams → user_profile to get class info
+    results = (
+        db.query(
+            UserProfile.class_,
+            StudentSubjectMarks.score,
+            StudentSubjectMarks.max_score,
+        )
+        .join(StudentSubjectMarks, StudentSubjectMarks.student_id == UserProfile.user_id)
+        .join(Exam, StudentSubjectMarks.exam_id == Exam.id)
+        .filter(UserProfile.class_.isnot(None))
+        .all()
+    )
+
+    if not results:
+        return {"performance": [], "school_average": 0}
+
+    # Aggregate by class
+    class_scores: dict[str, list[float]] = {}
+    all_percentages: list[float] = []
+
+    for class_, score, max_score in results:
+        pct = (score / max_score * 100) if max_score and max_score > 0 else 0
+        all_percentages.append(pct)
+        if class_ not in class_scores:
+            class_scores[class_] = []
+        class_scores[class_].append(pct)
+
+    school_average = round(sum(all_percentages) / len(all_percentages), 1) if all_percentages else 0
+
+    # Sort classes numerically (1,2,…,12) if possible, else alphabetically
+    def class_sort_key(c: str):
+        try:
+            return int(c)
+        except (ValueError, TypeError):
+            return 999
+
+    performance = []
+    for class_ in sorted(class_scores.keys(), key=class_sort_key):
+        scores = class_scores[class_]
+        class_avg = round(sum(scores) / len(scores), 1)
+        performance.append({
+            "class": f"Class {class_}",
+            "classAverage": class_avg,
+            "schoolAverage": school_average,
+        })
+
+    return {"performance": performance, "school_average": school_average}
+
+
 @app.get("/api/admin/requests")
 async def get_admin_subject_requests(
     current_user: User = Depends(require_role(["admin"])),

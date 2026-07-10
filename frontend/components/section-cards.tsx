@@ -11,34 +11,73 @@ import {
 } from "@/components/ui/card"
 import { TrendingUpIcon, TrendingDownIcon } from "lucide-react"
 
-interface SectionCardsProps {
-  card1?: {
-    title?: string;
-    value?: string;
-    trend?: string;
-    trendUp?: boolean;
-    footer1?: string;
-    footer2?: string;
-  };
-  card2?: {
-    title?: string;
-    value?: string;
-    trend?: string;
-    trendUp?: boolean;
-    footer1?: string;
-    footer2?: string;
-  };
-  card3?: {
-    title?: string;
-    value?: string;
-    trend?: string;
-    trendUp?: boolean;
-    footer1?: string;
-    footer2?: string;
-  };
+interface CardData {
+  title?: string;
+  value?: string;
+  trend?: string;
+  trendUp?: boolean;
+  footer1?: string;
+  footer2?: string;
 }
 
-export function SectionCards({ card1, card2, card3 }: SectionCardsProps = {}) {
+interface SectionCardsProps {
+  card1?: CardData;
+  card2?: CardData;
+  card3?: CardData;
+  card4?: CardData;
+}
+
+function StatCard({
+  title,
+  value,
+  trend,
+  trendUp,
+  footer1,
+  footer2,
+}: {
+  title: string;
+  value: string;
+  trend?: string;
+  trendUp?: boolean;
+  footer1?: string;
+  footer2?: string;
+}) {
+  return (
+    <Card className="@container/card">
+      <CardHeader>
+        <CardDescription>{title}</CardDescription>
+        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+          {value}
+        </CardTitle>
+        {trend && (
+          <CardAction>
+            <Badge variant="outline">
+              {trendUp ? <TrendingUpIcon /> : <TrendingDownIcon />}
+              {trend}
+            </Badge>
+          </CardAction>
+        )}
+      </CardHeader>
+      {(footer1 || footer2) && (
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          {footer1 && (
+            <div className="line-clamp-1 flex gap-2 font-medium">
+              {footer1}{" "}
+              {trendUp ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />}
+            </div>
+          )}
+          {footer2 && (
+            <div className="text-muted-foreground">
+              {footer2}
+            </div>
+          )}
+        </CardFooter>
+      )}
+    </Card>
+  )
+}
+
+export function SectionCards({ card1, card2, card3, card4 }: SectionCardsProps = {}) {
   // Card 1 values
   const c1Title = card1?.title ?? "Total Revenue"
   const c1Value = card1?.value ?? "$1,250.00"
@@ -63,127 +102,48 @@ export function SectionCards({ card1, card2, card3 }: SectionCardsProps = {}) {
   const c3Footer1 = card3 ? card3.footer1 : "Strong user retention"
   const c3Footer2 = card3 ? card3.footer2 : "Engagement exceed targets"
 
+  // Card 4 values
+  const c4Title = card4?.title ?? "Growth Rate"
+  const c4Value = card4?.value ?? "4.5%"
+  const c4Trend = card4 ? card4.trend : "+4.5%"
+  const c4TrendUp = card4 ? (card4.trendUp ?? true) : true
+  const c4Footer1 = card4 ? card4.footer1 : "Steady performance increase"
+  const c4Footer2 = card4 ? card4.footer2 : "Meets growth projections"
+
   return (
     <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>{c1Title}</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {c1Value}
-          </CardTitle>
-          {c1Trend && (
-            <CardAction>
-              <Badge variant="outline">
-                {c1TrendUp ? <TrendingUpIcon /> : <TrendingDownIcon />}
-                {c1Trend}
-              </Badge>
-            </CardAction>
-          )}
-        </CardHeader>
-        {(c1Footer1 || c1Footer2) && (
-          <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            {c1Footer1 && (
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                {c1Footer1}{" "}
-                {c1TrendUp ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />}
-              </div>
-            )}
-            {c1Footer2 && (
-              <div className="text-muted-foreground">
-                {c1Footer2}
-              </div>
-            )}
-          </CardFooter>
-        )}
-      </Card>
-      
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>{c2Title}</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {c2Value}
-          </CardTitle>
-          {c2Trend && (
-            <CardAction>
-              <Badge variant="outline">
-                {c2TrendUp ? <TrendingUpIcon /> : <TrendingDownIcon />}
-                {c2Trend}
-              </Badge>
-            </CardAction>
-          )}
-        </CardHeader>
-        {(c2Footer1 || c2Footer2) && (
-          <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            {c2Footer1 && (
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                {c2Footer1}{" "}
-                {c2TrendUp ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />}
-              </div>
-            )}
-            {c2Footer2 && (
-              <div className="text-muted-foreground">
-                {c2Footer2}
-              </div>
-            )}
-          </CardFooter>
-        )}
-      </Card>
-
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>{c3Title}</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {c3Value}
-          </CardTitle>
-          {c3Trend && (
-            <CardAction>
-              <Badge variant="outline">
-                {c3TrendUp ? <TrendingUpIcon /> : <TrendingDownIcon />}
-                {c3Trend}
-              </Badge>
-            </CardAction>
-          )}
-        </CardHeader>
-        {(c3Footer1 || c3Footer2) && (
-          <CardFooter className="flex-col items-start gap-1.5 text-sm">
-            {c3Footer1 && (
-              <div className="line-clamp-1 flex gap-2 font-medium">
-                {c3Footer1}{" "}
-                {c3TrendUp ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />}
-              </div>
-            )}
-            {c3Footer2 && (
-              <div className="text-muted-foreground">
-                {c3Footer2}
-              </div>
-            )}
-          </CardFooter>
-        )}
-      </Card>
-      
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Growth Rate</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            4.5%
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <TrendingUpIcon
-              />
-              +4.5%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Steady performance increase{" "}
-            <TrendingUpIcon className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Meets growth projections</div>
-        </CardFooter>
-      </Card>
+      <StatCard
+        title={c1Title}
+        value={c1Value}
+        trend={c1Trend}
+        trendUp={c1TrendUp}
+        footer1={c1Footer1}
+        footer2={c1Footer2}
+      />
+      <StatCard
+        title={c2Title}
+        value={c2Value}
+        trend={c2Trend}
+        trendUp={c2TrendUp}
+        footer1={c2Footer1}
+        footer2={c2Footer2}
+      />
+      <StatCard
+        title={c3Title}
+        value={c3Value}
+        trend={c3Trend}
+        trendUp={c3TrendUp}
+        footer1={c3Footer1}
+        footer2={c3Footer2}
+      />
+      <StatCard
+        title={c4Title}
+        value={c4Value}
+        trend={c4Trend}
+        trendUp={c4TrendUp}
+        footer1={c4Footer1}
+        footer2={c4Footer2}
+      />
     </div>
   )
 }
-

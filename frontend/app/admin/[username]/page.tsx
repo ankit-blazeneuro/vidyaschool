@@ -27,9 +27,10 @@ export default async function AdminDashboardPage({ params }: PageProps) {
   let totalFeesPaid = 0
   let expectedFeesToCollect = 0
   let activeAccounts = 0
+  let pendingComplaints = 0
 
   let performanceData = []
-  let schoolAverage = 78.5
+  let schoolAverage = 0
 
   const cookieHeader = (await headers()).get("cookie") || ""
 
@@ -61,12 +62,13 @@ export default async function AdminDashboardPage({ params }: PageProps) {
       totalFeesPaid = stats.total_fee_received || 0
       expectedFeesToCollect = stats.expected_fee_to_collect || 0
       activeAccounts = stats.active_accounts || 0
+      pendingComplaints = stats.pending_complaints || 0
     }
 
     if (perfRes && perfRes.ok) {
       const perf = await perfRes.json()
       performanceData = perf.performance || []
-      schoolAverage = perf.school_average || 78.5
+      schoolAverage = perf.school_average || 0
     }
   } catch (err) {
     console.error("Failed to fetch admin stats in parallel:", err)
@@ -100,12 +102,19 @@ export default async function AdminDashboardPage({ params }: PageProps) {
           footer1: undefined,
           footer2: "Total registered users in system"
         }}
+        card4={{
+          title: "Pending Complaints",
+          value: pendingComplaints.toLocaleString(),
+          trend: undefined,
+          footer1: undefined,
+          footer2: "Complaints awaiting resolution"
+        }}
       />
       <div className="px-4 lg:px-6">
         <ChartAreaInteractive 
           title="School Academic Performance"
           descriptionLine1="Class averages compared to overall school average"
-          descriptionLine2={`Overall School Average: ${schoolAverage}%`}
+          descriptionLine2={schoolAverage > 0 ? `Overall School Average: ${schoolAverage}%` : "No exam data available yet"}
           data={performanceData}
           config={performanceChartConfig}
           xAxisKey="class"
