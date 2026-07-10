@@ -3796,7 +3796,7 @@ fun FeesTabContent(
   } // end PullToRefreshBox
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun NotificationDrawer(
     sessionManager: SessionManager,
