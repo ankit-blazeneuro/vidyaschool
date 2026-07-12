@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "VidyaSchool"
 include(":app")
+include(":shared")

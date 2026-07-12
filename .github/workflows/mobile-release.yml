@@ -1,0 +1,254 @@
+name: Mobile Apps Build & Release
+
+on:
+  push:
+    branches: [ main ]
+
+# Only one release pipeline runs at a time; cancel older runs
+concurrency:
+  group: mobile-release
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # JOB 1 — Android APK  (ubuntu — fast, cheap)
+  # ─────────────────────────────────────────────────────────────
+  build-android:
+    name: 🤖 Build Android APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag_name: ${{ steps.version.outputs.TAG_NAME }}
+      version_name: ${{ steps.version.outputs.VERSION_NAME }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+          cache: gradle
+
+      - name: Grant gradlew permission
+        run: chmod +x mobile-app/kotlin/gradlew
+
+      - name: Extract & inject version
+        id: version
+        run: |
+          RAW=$(grep 'versionName\s*=' mobile-app/kotlin/app/build.gradle.kts | head -1 | awk -F'"' '{print $2}')
+          VERSION_NAME="${RAW}.${{ github.run_number }}"
+          TAG_NAME="v${VERSION_NAME}"
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME"         >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=$TAG_NAME"         >> $GITHUB_OUTPUT
+          # Patch build.gradle.kts with auto-incremented version
+          sed -i "s/versionName = \"$RAW\"/versionName = \"$VERSION_NAME\"/" mobile-app/kotlin/app/build.gradle.kts
+          sed -i "s/versionCode = [0-9]*/versionCode = ${{ github.run_number }}/" mobile-app/kotlin/app/build.gradle.kts
+
+      - name: Build debug APK
+        working-directory: mobile-app/kotlin
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Rename APK
+        run: |
+          mkdir -p artifacts
+          cp mobile-app/kotlin/app/build/outputs/apk/debug/app-debug.apk \
+             artifacts/VidyaSchool-${{ env.TAG_NAME }}.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: artifacts/VidyaSchool-${{ env.TAG_NAME }}.apk
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 2 — iOS IPA  (macos — slower, 10× minutes)
+  # ─────────────────────────────────────────────────────────────
+  build-ios:
+    name: 🍎 Build iOS IPA
+    runs-on: macos-14          # Apple Silicon runner (M1) — fastest macOS option
+    permissions:
+      contents: write
+    needs: build-android       # reuse the version computed in Job 1
+    env:
+      TAG_NAME: ${{ needs.build-android.outputs.tag_name }}
+      VERSION_NAME: ${{ needs.build-android.outputs.version_name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17  (for KMP Gradle tasks)
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+          cache: gradle
+
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Grant gradlew permission
+        run: chmod +x mobile-app/kotlin/gradlew
+
+      - name: Build KMP iOS framework
+        working-directory: mobile-app/kotlin
+        run: |
+          ./gradlew :shared:linkReleaseFrameworkIosArm64 \
+                    :shared:linkReleaseFrameworkIosSimulatorArm64 \
+                    --no-daemon --stacktrace || true
+          # "|| true" — if shared module is not yet fully configured, don't break the pipeline
+
+      - name: Resolve Swift dependencies
+        working-directory: mobile-app/kotlin/iosApp
+        run: |
+          if [ -f "iosApp.xcodeproj/project.pbxproj" ]; then
+            xcodebuild -resolvePackageDependencies \
+              -project iosApp.xcodeproj \
+              -scheme iosApp \
+              -destination "generic/platform=iOS" || true
+          else
+            echo "⚠️  Xcode project not found yet — skipping iOS build"
+            exit 0
+          fi
+
+      - name: Set version in Info.plist
+        run: |
+          PLIST="mobile-app/kotlin/iosApp/iosApp/Info.plist"
+          if [ -f "$PLIST" ]; then
+            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION_NAME" "$PLIST" || true
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" "$PLIST" || true
+          fi
+
+      - name: Build iOS app (unsigned — ad hoc)
+        working-directory: mobile-app/kotlin/iosApp
+        run: |
+          if [ ! -f "iosApp.xcodeproj/project.pbxproj" ]; then
+            echo "⚠️  Xcode project not found — skipping iOS build"
+            exit 0
+          fi
+          xcodebuild archive \
+            -project iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/VidyaSchool.xcarchive" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -allowProvisioningUpdates || true
+
+      - name: Export IPA
+        run: |
+          if [ ! -d "$RUNNER_TEMP/VidyaSchool.xcarchive" ]; then
+            echo "⚠️  Archive not found — creating placeholder"
+            mkdir -p artifacts
+            echo "iOS build not yet configured" > artifacts/ios-build-note.txt
+            exit 0
+          fi
+          cat > /tmp/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>ad-hoc</string>
+            <key>compileBitcode</key>
+            <false/>
+            <key>stripSwiftSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/VidyaSchool.xcarchive" \
+            -exportPath "$RUNNER_TEMP/IPA" \
+            -exportOptionsPlist /tmp/ExportOptions.plist || true
+          mkdir -p artifacts
+          if [ -f "$RUNNER_TEMP/IPA/iosApp.ipa" ]; then
+            cp "$RUNNER_TEMP/IPA/iosApp.ipa" "artifacts/VidyaSchool-$TAG_NAME.ipa"
+          else
+            echo "IPA export failed — check signing config" > artifacts/ios-build-note.txt
+          fi
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: artifacts/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 3 — GitHub Release  (attach both APK + IPA)
+  # ─────────────────────────────────────────────────────────────
+  create-release:
+    name: 🚀 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [ build-android, build-ios ]
+    permissions:
+      contents: write
+    env:
+      TAG_NAME: ${{ needs.build-android.outputs.tag_name }}
+      VERSION_NAME: ${{ needs.build-android.outputs.version_name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: release-assets/
+
+      - name: Download iOS IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-ipa
+          path: release-assets/
+
+      - name: List release assets
+        run: ls -lh release-assets/
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Build release notes
+          NOTES="## VidyaSchool $TAG_NAME
+
+          > Built automatically from commit \`${{ github.sha }}\`
+
+          ### 📦 Downloads
+
+          | Platform | File | How to install |
+          |----------|------|----------------|
+          | 🤖 Android | \`VidyaSchool-$TAG_NAME.apk\` | Download & install directly |
+          | 🍎 iOS | \`VidyaSchool-$TAG_NAME.ipa\` | Install via AltStore / TestFlight |
+
+          ### Android Install
+          1. Download the APK below
+          2. Enable \"Install from unknown sources\" in Settings
+          3. Tap the APK to install
+
+          ### iOS Install
+          - **TestFlight**: Join the beta program (link in README)
+          - **AltStore**: Sideload the IPA using AltStore on your Mac/PC
+
+          ---
+          *The app will automatically detect this release and prompt users to update.*"
+
+          # Create the release with all assets
+          gh release create "$TAG_NAME" \
+            release-assets/VidyaSchool-$TAG_NAME.apk \
+            $(ls release-assets/*.ipa 2>/dev/null || true) \
+            $(ls release-assets/*.txt 2>/dev/null || true) \
+            --title "VidyaSchool $TAG_NAME" \
+            --notes "$NOTES" \
+            --target main
