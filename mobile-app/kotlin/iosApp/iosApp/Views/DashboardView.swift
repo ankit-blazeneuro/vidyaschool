@@ -12,7 +12,7 @@ struct DashboardView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeTabView(user: user)
+            HomeTabView(user: user, selectedTab: $selectedTab)
                 .tabItem {
                     Label("Home", systemImage: "house")
                 }
@@ -53,7 +53,14 @@ struct DashboardView: View {
 
 struct HomeTabView: View {
     let user: AppUser
+    @Binding var selectedTab: Int
     @EnvironmentObject var authViewModel: AuthViewModel
+
+    @State private var showingFeesSheet = false
+    @State private var showingSliderSheet = false
+    @State private var showingCreateNoticeSheet = false
+    @State private var showingStudentSearchSheet = false
+    @State private var showingReceiptVerificationSheet = false
 
     var body: some View {
         NavigationStack {
@@ -68,13 +75,26 @@ struct HomeTabView: View {
                         // Role-specific quick actions
                         switch (user.role ?? "student").lowercased() {
                         case "admin":
-                            AdminHomeSection()
+                            AdminHomeSection(
+                                onShowSlider: { showingSliderSheet = true },
+                                onShowCreateNotice: { showingCreateNoticeSheet = true }
+                            )
                         case "teacher":
-                            TeacherHomeSection()
+                            TeacherHomeSection(
+                                selectedTab: $selectedTab,
+                                onShowStudentSearch: { showingStudentSearchSheet = true },
+                                onShowCreateNotice: { showingCreateNoticeSheet = true }
+                            )
                         case "accounts":
-                            AccountsHomeSection()
+                            AccountsHomeSection(
+                                onShowVerifyReceipt: { showingReceiptVerificationSheet = true }
+                            )
                         default:
-                            StudentHomeSection(user: user)
+                            StudentHomeSection(
+                                user: user,
+                                selectedTab: $selectedTab,
+                                onShowFees: { showingFeesSheet = true }
+                            )
                         }
                     }
                     .padding(AppTheme.Spacing.md)
@@ -93,6 +113,21 @@ struct HomeTabView: View {
                             .foregroundColor(AppTheme.Color.darkSecondary)
                     }
                 }
+            }
+            .sheet(isPresented: $showingFeesSheet) {
+                FeesView()
+            }
+            .sheet(isPresented: $showingSliderSheet) {
+                SliderManagementView()
+            }
+            .sheet(isPresented: $showingCreateNoticeSheet) {
+                CreateNoticeView()
+            }
+            .sheet(isPresented: $showingStudentSearchSheet) {
+                StudentSearchView()
+            }
+            .sheet(isPresented: $showingReceiptVerificationSheet) {
+                ReceiptVerificationView()
             }
         }
     }
@@ -195,6 +230,8 @@ private struct QuickActionCard: View {
 
 private struct StudentHomeSection: View {
     let user: AppUser
+    @Binding var selectedTab: Int
+    let onShowFees: () -> Void
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.md) {
@@ -206,25 +243,29 @@ private struct StudentHomeSection: View {
                     icon: "indianrupeesign.circle.fill",
                     title: "My Fees",
                     subtitle: "View & pay fees",
-                    color: AppTheme.Color.warning
+                    color: AppTheme.Color.warning,
+                    action: onShowFees
                 )
                 QuickActionCard(
                     icon: "books.vertical.fill",
                     title: "Library",
                     subtitle: "Books & borrowings",
-                    color: AppTheme.Color.accent
+                    color: AppTheme.Color.accent,
+                    action: { selectedTab = 1 }
                 )
                 QuickActionCard(
                     icon: "bell.fill",
                     title: "Notices",
                     subtitle: "School announcements",
-                    color: AppTheme.Color.success
+                    color: AppTheme.Color.success,
+                    action: { selectedTab = 2 }
                 )
                 QuickActionCard(
                     icon: "person.fill",
                     title: "Profile",
                     subtitle: "Your information",
-                    color: AppTheme.Color.darkSecondary
+                    color: AppTheme.Color.darkSecondary,
+                    action: { selectedTab = 3 }
                 )
             }
 
@@ -245,6 +286,10 @@ private struct StudentHomeSection: View {
 }
 
 private struct TeacherHomeSection: View {
+    @Binding var selectedTab: Int
+    let onShowStudentSearch: () -> Void
+    let onShowCreateNotice: () -> Void
+
     var body: some View {
         VStack(spacing: AppTheme.Spacing.md) {
             SectionHeader(title: "Teacher Dashboard")
@@ -254,25 +299,29 @@ private struct TeacherHomeSection: View {
                     icon: "person.3.fill",
                     title: "Students",
                     subtitle: "Search & view students",
-                    color: AppTheme.Color.accent
+                    color: AppTheme.Color.accent,
+                    action: onShowStudentSearch
                 )
                 QuickActionCard(
                     icon: "bell.fill",
                     title: "Notices",
                     subtitle: "Create & send notices",
-                    color: AppTheme.Color.success
+                    color: AppTheme.Color.success,
+                    action: onShowCreateNotice
                 )
                 QuickActionCard(
                     icon: "books.vertical.fill",
                     title: "Library",
                     subtitle: "Manage borrowings",
-                    color: AppTheme.Color.warning
+                    color: AppTheme.Color.warning,
+                    action: { selectedTab = 1 }
                 )
                 QuickActionCard(
                     icon: "chart.bar.fill",
                     title: "Reports",
                     subtitle: "View school stats",
-                    color: AppTheme.Color.darkSecondary
+                    color: AppTheme.Color.darkSecondary,
+                    action: {}
                 )
             }
         }
@@ -280,6 +329,9 @@ private struct TeacherHomeSection: View {
 }
 
 private struct AdminHomeSection: View {
+    let onShowSlider: () -> Void
+    let onShowCreateNotice: () -> Void
+
     var body: some View {
         VStack(spacing: AppTheme.Spacing.md) {
             SectionHeader(title: "Admin Dashboard")
@@ -289,25 +341,29 @@ private struct AdminHomeSection: View {
                     icon: "person.3.fill",
                     title: "Users",
                     subtitle: "Manage all users",
-                    color: AppTheme.Color.accent
+                    color: AppTheme.Color.accent,
+                    action: {}
                 )
                 QuickActionCard(
                     icon: "photo.on.rectangle",
                     title: "Slider",
                     subtitle: "Manage image slider",
-                    color: AppTheme.Color.success
+                    color: AppTheme.Color.success,
+                    action: onShowSlider
                 )
                 QuickActionCard(
                     icon: "bell.badge.fill",
                     title: "Notices",
                     subtitle: "Send to all roles",
-                    color: AppTheme.Color.destructive
+                    color: AppTheme.Color.destructive,
+                    action: onShowCreateNotice
                 )
                 QuickActionCard(
                     icon: "gearshape.fill",
                     title: "Settings",
                     subtitle: "App configuration",
-                    color: AppTheme.Color.warning
+                    color: AppTheme.Color.warning,
+                    action: {}
                 )
             }
         }
@@ -315,6 +371,8 @@ private struct AdminHomeSection: View {
 }
 
 private struct AccountsHomeSection: View {
+    let onShowVerifyReceipt: () -> Void
+
     var body: some View {
         VStack(spacing: AppTheme.Spacing.md) {
             SectionHeader(title: "Accounts Dashboard")
@@ -324,88 +382,31 @@ private struct AccountsHomeSection: View {
                     icon: "indianrupeesign.circle.fill",
                     title: "Fee Records",
                     subtitle: "View all fees",
-                    color: AppTheme.Color.warning
+                    color: AppTheme.Color.warning,
+                    action: {}
                 )
                 QuickActionCard(
                     icon: "doc.text.fill",
                     title: "Receipts",
                     subtitle: "Verify receipts",
-                    color: AppTheme.Color.success
+                    color: AppTheme.Color.success,
+                    action: onShowVerifyReceipt
                 )
                 QuickActionCard(
                     icon: "person.fill.checkmark",
                     title: "Payments",
                     subtitle: "Mark fees paid",
-                    color: AppTheme.Color.accent
+                    color: AppTheme.Color.accent,
+                    action: {}
                 )
                 QuickActionCard(
                     icon: "chart.pie.fill",
                     title: "Reports",
                     subtitle: "Financial summary",
-                    color: AppTheme.Color.darkSecondary
+                    color: AppTheme.Color.darkSecondary,
+                    action: {}
                 )
             }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Library Tab (shared between roles)
-// ---------------------------------------------------------------------------
-
-struct LibraryTabView: View {
-    let user: AppUser
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
-
-                VStack(spacing: AppTheme.Spacing.xl) {
-                    Image(systemName: "books.vertical")
-                        .font(.system(size: 64))
-                        .foregroundColor(AppTheme.Color.darkOutline)
-                    Text("Library Hub")
-                        .font(AppTheme.Font.title2)
-                        .foregroundColor(.white)
-                    Text("Browse books, manage borrowings,\nand explore the catalog.")
-                        .font(AppTheme.Font.subheadline)
-                        .foregroundColor(AppTheme.Color.darkSecondary)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .navigationTitle("Library")
-            .navigationBarTitleDisplayMode(.large)
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Notices Tab
-// ---------------------------------------------------------------------------
-
-struct NoticesTabView: View {
-    let user: AppUser
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
-                VStack(spacing: AppTheme.Spacing.xl) {
-                    Image(systemName: "bell.badge")
-                        .font(.system(size: 64))
-                        .foregroundColor(AppTheme.Color.darkOutline)
-                    Text("Notices")
-                        .font(AppTheme.Font.title2)
-                        .foregroundColor(.white)
-                    Text("School announcements and\nimportant updates.")
-                        .font(AppTheme.Font.subheadline)
-                        .foregroundColor(AppTheme.Color.darkSecondary)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .navigationTitle("Notices")
-            .navigationBarTitleDisplayMode(.large)
         }
     }
 }

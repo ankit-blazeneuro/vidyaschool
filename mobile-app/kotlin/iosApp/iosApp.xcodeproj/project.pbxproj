@@ -7,119 +7,155 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E3CB11B01F5448F2AC72EEF4 /* VidyaSchoolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8158CAA0D2CB45CEB2FB9D9D /* VidyaSchoolApp.swift */; };
-		3906AD899BCA47CB85AFC72A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F15F9A0A38441CCA49D0E16 /* ContentView.swift */; };
-		80FE98942B204D37B1675AC9 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEBA1AD0AA0B47CD80B3EDF4 /* AppTheme.swift */; };
-		F51F412E3BD74EE4AFC2B02D /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CDF65591AD442B68BE63F5E /* WelcomeView.swift */; };
-		BBFFE0F2CBCC4A17B157CBBF /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E44AD95756401B88B0C207 /* LoginView.swift */; };
-		F52F5EFEACB9449987C9F87B /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2B4AA3B9D74F48B2F3F602 /* DashboardView.swift */; };
-		BC36610C4E904BF59A030F5B /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57A5001E89884B60B35DE9AC /* AuthViewModel.swift */; };
-		69B095343A164B12B509281A /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE43A5C7A54401FAF5238FA /* UpdateChecker.swift */; };
-		35D6F2F23C054889A8A8BD61 /* UpdateBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C0ED18365B482493F9B531 /* UpdateBannerView.swift */; };
-		659691D8D622455DB413E9EA /* Shared.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBF7A6400E9044A288246E52 /* Shared.xcframework */; };
+		073C9D1A4D624A3C8CE7DFA6 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FE38BEF2F1C401CB19FEDF6 /* AppTheme.swift */; };
+		3180C2F56E1B445CBBB34C82 /* TeacherViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6885D4452E40490D97E432A1 /* TeacherViews.swift */; };
+		4810B7626B5349C6BC28D7ED /* LibraryTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E860715535E945A88FBD1D1A /* LibraryTabView.swift */; };
+		F461207414374D09B17818FF /* AdminViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B61F59D34F64AF595A582BB /* AdminViews.swift */; };
+		1057F4F8978B4DD7AA27F66A /* AccountsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3DC0AFFED7424893CD08C3 /* AccountsViews.swift */; };
+		7C1C6F39661C49EBAF106EBC /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5714B588ED3045F5A00A147D /* LoginView.swift */; };
+		8F3A83A016594CEDA2666877 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE2B817872984BD0A29FABF0 /* WelcomeView.swift */; };
+		C9F62F2B4ED24FEFAB75ADBA /* FeesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9050636A85549D38562FF59 /* FeesView.swift */; };
+		40FEF95233F0421BA4E41904 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B5FB022005498E81F77681 /* DashboardView.swift */; };
+		6F286906D8C644188E4ED15E /* NoticesTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A483DF480BEF4019A5B93D81 /* NoticesTabView.swift */; };
+		77B7A2B5FB4E456094B42CD8 /* UpdateBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDF917BBC99045979E40D80C /* UpdateBannerView.swift */; };
+		E3A319E95F244FE5B3987DD3 /* LibraryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C69445B2A5194C418DEB6963 /* LibraryViewModel.swift */; };
+		8D41ED649DA34BEB9847F97F /* NoticesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B476B46D18864C54995D31FE /* NoticesViewModel.swift */; };
+		11247C7A65C1445FAB2870F5 /* FeesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF90782ED40C4C71A7EF9915 /* FeesViewModel.swift */; };
+		115D0157039D443ABE695F72 /* AdminViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADEF97361B2E4F9DA4C1CC5C /* AdminViewModel.swift */; };
+		679F989C19F34A8A98D4A50B /* TeacherViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DAAE513B5E94A01BF107000 /* TeacherViewModel.swift */; };
+		83944AD767954011833A3A9B /* AccountsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0738B105B148BC90144E63 /* AccountsViewModel.swift */; };
+		06FE5149584F4D48B4BA5F75 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11AC2F4922804B0CA00B2FFC /* AuthViewModel.swift */; };
+		47D85F9EA71B449E9F054EF3 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2FE88F61384427FA84BBE89 /* UpdateChecker.swift */; };
+		ECEB93A6EF8B405BBB6DB67E /* VidyaSchoolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65B00467B1B41FEAA51EEA6 /* VidyaSchoolApp.swift */; };
+		86FFB2AE37304D8395D21073 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C499D2C3DB449B5A98272A5 /* ContentView.swift */; };
+		7DF1374328544B2EB64826FF /* Shared.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 58823B1AA2304241A2689286 /* Shared.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		8158CAA0D2CB45CEB2FB9D9D /* VidyaSchoolApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VidyaSchoolApp.swift; path = iosApp/VidyaSchoolApp.swift; sourceTree = "<group>"; };
-		1F15F9A0A38441CCA49D0E16 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = iosApp/ContentView.swift; sourceTree = "<group>"; };
-		AEBA1AD0AA0B47CD80B3EDF4 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppTheme.swift; path = iosApp/Theme/AppTheme.swift; sourceTree = "<group>"; };
-		3CDF65591AD442B68BE63F5E /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WelcomeView.swift; path = iosApp/Views/WelcomeView.swift; sourceTree = "<group>"; };
-		66E44AD95756401B88B0C207 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoginView.swift; path = iosApp/Views/LoginView.swift; sourceTree = "<group>"; };
-		BD2B4AA3B9D74F48B2F3F602 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DashboardView.swift; path = iosApp/Views/DashboardView.swift; sourceTree = "<group>"; };
-		57A5001E89884B60B35DE9AC /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthViewModel.swift; path = iosApp/ViewModels/AuthViewModel.swift; sourceTree = "<group>"; };
-		2AE43A5C7A54401FAF5238FA /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UpdateChecker.swift; path = iosApp/Services/UpdateChecker.swift; sourceTree = "<group>"; };
-		B3C0ED18365B482493F9B531 /* UpdateBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UpdateBannerView.swift; path = iosApp/Views/UpdateBannerView.swift; sourceTree = "<group>"; };
-		E3CBBF60D1C14B44BC458071 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		FBF7A6400E9044A288246E52 /* Shared.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Shared.xcframework; path = "../shared/build/XCFrameworks/release/Shared.xcframework"; sourceTree = "<group>"; };
+		2FE38BEF2F1C401CB19FEDF6 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "AppTheme.swift"; path = "iosApp/Theme/AppTheme.swift"; sourceTree = "<group>"; };
+		6885D4452E40490D97E432A1 /* TeacherViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "TeacherViews.swift"; path = "iosApp/Views/TeacherViews.swift"; sourceTree = "<group>"; };
+		E860715535E945A88FBD1D1A /* LibraryTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "LibraryTabView.swift"; path = "iosApp/Views/LibraryTabView.swift"; sourceTree = "<group>"; };
+		7B61F59D34F64AF595A582BB /* AdminViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "AdminViews.swift"; path = "iosApp/Views/AdminViews.swift"; sourceTree = "<group>"; };
+		0F3DC0AFFED7424893CD08C3 /* AccountsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "AccountsViews.swift"; path = "iosApp/Views/AccountsViews.swift"; sourceTree = "<group>"; };
+		5714B588ED3045F5A00A147D /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "LoginView.swift"; path = "iosApp/Views/LoginView.swift"; sourceTree = "<group>"; };
+		AE2B817872984BD0A29FABF0 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "WelcomeView.swift"; path = "iosApp/Views/WelcomeView.swift"; sourceTree = "<group>"; };
+		C9050636A85549D38562FF59 /* FeesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FeesView.swift"; path = "iosApp/Views/FeesView.swift"; sourceTree = "<group>"; };
+		E7B5FB022005498E81F77681 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "DashboardView.swift"; path = "iosApp/Views/DashboardView.swift"; sourceTree = "<group>"; };
+		A483DF480BEF4019A5B93D81 /* NoticesTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "NoticesTabView.swift"; path = "iosApp/Views/NoticesTabView.swift"; sourceTree = "<group>"; };
+		EDF917BBC99045979E40D80C /* UpdateBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UpdateBannerView.swift"; path = "iosApp/Views/UpdateBannerView.swift"; sourceTree = "<group>"; };
+		C69445B2A5194C418DEB6963 /* LibraryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "LibraryViewModel.swift"; path = "iosApp/ViewModels/LibraryViewModel.swift"; sourceTree = "<group>"; };
+		B476B46D18864C54995D31FE /* NoticesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "NoticesViewModel.swift"; path = "iosApp/ViewModels/NoticesViewModel.swift"; sourceTree = "<group>"; };
+		DF90782ED40C4C71A7EF9915 /* FeesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FeesViewModel.swift"; path = "iosApp/ViewModels/FeesViewModel.swift"; sourceTree = "<group>"; };
+		ADEF97361B2E4F9DA4C1CC5C /* AdminViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "AdminViewModel.swift"; path = "iosApp/ViewModels/AdminViewModel.swift"; sourceTree = "<group>"; };
+		1DAAE513B5E94A01BF107000 /* TeacherViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "TeacherViewModel.swift"; path = "iosApp/ViewModels/TeacherViewModel.swift"; sourceTree = "<group>"; };
+		0F0738B105B148BC90144E63 /* AccountsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "AccountsViewModel.swift"; path = "iosApp/ViewModels/AccountsViewModel.swift"; sourceTree = "<group>"; };
+		11AC2F4922804B0CA00B2FFC /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "AuthViewModel.swift"; path = "iosApp/ViewModels/AuthViewModel.swift"; sourceTree = "<group>"; };
+		D2FE88F61384427FA84BBE89 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UpdateChecker.swift"; path = "iosApp/Services/UpdateChecker.swift"; sourceTree = "<group>"; };
+		E65B00467B1B41FEAA51EEA6 /* VidyaSchoolApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "VidyaSchoolApp.swift"; path = "iosApp/VidyaSchoolApp.swift"; sourceTree = "<group>"; };
+		1C499D2C3DB449B5A98272A5 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ContentView.swift"; path = "iosApp/ContentView.swift"; sourceTree = "<group>"; };
+		59F6A43A9E7E450F907911E9 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		58823B1AA2304241A2689286 /* Shared.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Shared.xcframework; path = "../shared/build/XCFrameworks/release/Shared.xcframework"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-	D77A9C7F41A74854A66D4E53 /* Frameworks */ = {
+	0BAEEC0BDE9E46139F6F6BC5 /* Frameworks */ = {
 		isa = PBXFrameworksBuildPhase;
 		buildActionMask = 2147483647;
 		files = (
-			659691D8D622455DB413E9EA /* Shared.xcframework in Frameworks */,
+			7DF1374328544B2EB64826FF /* Shared.xcframework in Frameworks */,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 	};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-	F64C08A581A347ACBCC7C12F = {
+	0804034D24744423A52B45F2 = {
 		isa = PBXGroup;
 		children = (
-			C341802BDC66456EA57BE0E2 /* Products */,
-			C5F3E20C07BE4A6B8F330AF0 /* Frameworks */,
-			8158CAA0D2CB45CEB2FB9D9D /* VidyaSchoolApp.swift */,
-			1F15F9A0A38441CCA49D0E16 /* ContentView.swift */,
-			B92A3DE16B234075AE0C4C7F /* Theme */,
-			B55361918212489BA7AE0CB3 /* Views */,
-			FB348A3BAB6A41F7AD1E9600 /* ViewModels */,
-			C0F8500A210148159A071C21 /* Services */,
+			FA94EB11CB6949B6877FFF5C /* Products */,
+			59B0EE2FAFFB400B8407C6F8 /* Frameworks */,
+			E65B00467B1B41FEAA51EEA6 /* VidyaSchoolApp.swift */,
+			1C499D2C3DB449B5A98272A5 /* ContentView.swift */,
+			401C93AA9A6448CEB1985391 /* Theme */,
+			3C9DC89808204581A26DF6EA /* Views */,
+			6F6540294A52460EACF6FD0B /* ViewModels */,
+			DEDDDFE862C94D33958E35BA /* Services */,
 		);
 		sourceTree = "<group>";
 	};
-	B92A3DE16B234075AE0C4C7F /* Theme */ = {
+	401C93AA9A6448CEB1985391 /* Theme */ = {
 		isa = PBXGroup;
 		children = (
-			AEBA1AD0AA0B47CD80B3EDF4 /* AppTheme.swift */,
+			2FE38BEF2F1C401CB19FEDF6 /* AppTheme.swift */,
 		);
 		name = Theme;
 		sourceTree = "<group>";
-	};
-	B55361918212489BA7AE0CB3 /* Views */ = {
+	}};
+	{views_group_id} /* Views */ = {{
 		isa = PBXGroup;
 		children = (
-			3CDF65591AD442B68BE63F5E /* WelcomeView.swift */,
-			66E44AD95756401B88B0C207 /* LoginView.swift */,
-			BD2B4AA3B9D74F48B2F3F602 /* DashboardView.swift */,
-			B3C0ED18365B482493F9B531 /* UpdateBannerView.swift */,
+			6885D4452E40490D97E432A1 /* TeacherViews.swift */,
+			E860715535E945A88FBD1D1A /* LibraryTabView.swift */,
+			7B61F59D34F64AF595A582BB /* AdminViews.swift */,
+			0F3DC0AFFED7424893CD08C3 /* AccountsViews.swift */,
+			5714B588ED3045F5A00A147D /* LoginView.swift */,
+			AE2B817872984BD0A29FABF0 /* WelcomeView.swift */,
+			C9050636A85549D38562FF59 /* FeesView.swift */,
+			E7B5FB022005498E81F77681 /* DashboardView.swift */,
+			A483DF480BEF4019A5B93D81 /* NoticesTabView.swift */,
+			EDF917BBC99045979E40D80C /* UpdateBannerView.swift */,
 		);
 		name = Views;
 		sourceTree = "<group>";
-	};
-	FB348A3BAB6A41F7AD1E9600 /* ViewModels */ = {
+	}};
+	{viewmodels_group_id} /* ViewModels */ = {{
 		isa = PBXGroup;
 		children = (
-			57A5001E89884B60B35DE9AC /* AuthViewModel.swift */,
+			C69445B2A5194C418DEB6963 /* LibraryViewModel.swift */,
+			B476B46D18864C54995D31FE /* NoticesViewModel.swift */,
+			DF90782ED40C4C71A7EF9915 /* FeesViewModel.swift */,
+			ADEF97361B2E4F9DA4C1CC5C /* AdminViewModel.swift */,
+			1DAAE513B5E94A01BF107000 /* TeacherViewModel.swift */,
+			0F0738B105B148BC90144E63 /* AccountsViewModel.swift */,
+			11AC2F4922804B0CA00B2FFC /* AuthViewModel.swift */,
 		);
 		name = ViewModels;
 		sourceTree = "<group>";
-	};
-	C0F8500A210148159A071C21 /* Services */ = {
+	}};
+	{services_group_id} /* Services */ = {{
 		isa = PBXGroup;
 		children = (
-			2AE43A5C7A54401FAF5238FA /* UpdateChecker.swift */,
+			D2FE88F61384427FA84BBE89 /* UpdateChecker.swift */,
 		);
 		name = Services;
 		sourceTree = "<group>";
-	};
-	C341802BDC66456EA57BE0E2 /* Products */ = {
+	}};
+	{products_group_id} /* Products */ = {{
 		isa = PBXGroup;
 		children = (
-			E3CBBF60D1C14B44BC458071 /* iosApp.app */,
+			{product_ref_id} /* iosApp.app */,
 		);
 		name = Products;
 		sourceTree = "<group>";
-	};
-	C5F3E20C07BE4A6B8F330AF0 /* Frameworks */ = {
+	}};
+	{frameworks_group_id} /* Frameworks */ = {{
 		isa = PBXGroup;
 		children = (
-			FBF7A6400E9044A288246E52 /* Shared.xcframework */,
+			{shared_framework_ref_id} /* Shared.xcframework */,
 		);
 		name = Frameworks;
 		sourceTree = "<group>";
-	};
+	}};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-	177FF53130B746E2B2B5A4C2 /* iosApp */ = {
+	{target_id} /* iosApp */ = {{
 		isa = PBXNativeTarget;
-		buildConfigurationList = 4243C4E8FF754559934A351B /* Build configuration list for PBXNativeTarget "iosApp" */;
+		buildConfigurationList = {target_config_list_id} /* Build configuration list for PBXNativeTarget "iosApp" */;
 		buildPhases = (
-			A362A2CFB98C4D74880E63A6 /* Sources */,
-			D77A9C7F41A74854A66D4E53 /* Frameworks */,
-			DC711D0DE10849758A9399F8 /* Resources */,
+			{sources_build_phase_id} /* Sources */,
+			{frameworks_build_phase_id} /* Frameworks */,
+			{resources_build_phase_id} /* Resources */,
 		);
 		buildRules = (
 		);
@@ -127,26 +163,26 @@
 		);
 		name = iosApp;
 		productName = iosApp;
-		productReference = E3CBBF60D1C14B44BC458071 /* iosApp.app */;
+		productReference = {product_ref_id} /* iosApp.app */;
 		productType = "com.apple.product-type.application";
-	};
+	}};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-	2EDD9CDDC6684104865C4FC3 /* Project object */ = {
+	{project_id} /* Project object */ = {{
 		isa = PBXProject;
-		attributes = {
+		attributes = {{
 			BuildIndependentTargetsInParallel = 1;
 			LastSwiftUpdateCheck = 1540;
 			LastUpgradeCheck = 1540;
-			TargetAttributes = {
-				177FF53130B746E2B2B5A4C2 = {
+			TargetAttributes = {{
+				{target_id} = {{
 					CreatedOnToolsVersion = 15.4;
 					LastSwiftMigration = 1540;
-				};
-			};
-		};
-		buildConfigurationList = 797D7684544B40CA8BC03763 /* Build configuration list for PBXProject "iosApp" */;
+				}};
+			}};
+		}};
+		buildConfigurationList = {proj_config_list_id} /* Build configuration list for PBXProject "iosApp" */;
 		compatibilityVersion = "Xcode 14.0";
 		developmentRegion = en;
 		hasScannedForEncodings = 0;
@@ -154,47 +190,59 @@
 			en,
 			Base,
 		);
-		mainGroup = F64C08A581A347ACBCC7C12F;
-		productRefGroup = C341802BDC66456EA57BE0E2 /* Products */;
+		mainGroup = {main_group_id};
+		productRefGroup = {products_group_id} /* Products */;
 		projectDirPath = "";
 		projectRoot = "";
 		targets = (
-			177FF53130B746E2B2B5A4C2 /* iosApp */,
+			{target_id} /* iosApp */,
 		);
-	};
+	}};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-	DC711D0DE10849758A9399F8 /* Resources */ = {
+	{resources_build_phase_id} /* Resources */ = {{
 		isa = PBXResourcesBuildPhase;
 		buildActionMask = 2147483647;
 		files = (
 		);
 		runOnlyForDeploymentPostprocessing = 0;
-	};
+	}};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-	A362A2CFB98C4D74880E63A6 /* Sources */ = {
+	{sources_build_phase_id} /* Sources */ = {{
 		isa = PBXSourcesBuildPhase;
 		buildActionMask = 2147483647;
 		files = (
-			E3CB11B01F5448F2AC72EEF4 /* VidyaSchoolApp.swift in Sources */,
-			3906AD899BCA47CB85AFC72A /* ContentView.swift in Sources */,
-			80FE98942B204D37B1675AC9 /* AppTheme.swift in Sources */,
-			F51F412E3BD74EE4AFC2B02D /* WelcomeView.swift in Sources */,
-			BBFFE0F2CBCC4A17B157CBBF /* LoginView.swift in Sources */,
-			F52F5EFEACB9449987C9F87B /* DashboardView.swift in Sources */,
-			BC36610C4E904BF59A030F5B /* AuthViewModel.swift in Sources */,
-			69B095343A164B12B509281A /* UpdateChecker.swift in Sources */,
-			35D6F2F23C054889A8A8BD61 /* UpdateBannerView.swift in Sources */,
+			073C9D1A4D624A3C8CE7DFA6 /* AppTheme.swift in Sources */,
+			3180C2F56E1B445CBBB34C82 /* TeacherViews.swift in Sources */,
+			4810B7626B5349C6BC28D7ED /* LibraryTabView.swift in Sources */,
+			F461207414374D09B17818FF /* AdminViews.swift in Sources */,
+			1057F4F8978B4DD7AA27F66A /* AccountsViews.swift in Sources */,
+			7C1C6F39661C49EBAF106EBC /* LoginView.swift in Sources */,
+			8F3A83A016594CEDA2666877 /* WelcomeView.swift in Sources */,
+			C9F62F2B4ED24FEFAB75ADBA /* FeesView.swift in Sources */,
+			40FEF95233F0421BA4E41904 /* DashboardView.swift in Sources */,
+			6F286906D8C644188E4ED15E /* NoticesTabView.swift in Sources */,
+			77B7A2B5FB4E456094B42CD8 /* UpdateBannerView.swift in Sources */,
+			E3A319E95F244FE5B3987DD3 /* LibraryViewModel.swift in Sources */,
+			8D41ED649DA34BEB9847F97F /* NoticesViewModel.swift in Sources */,
+			11247C7A65C1445FAB2870F5 /* FeesViewModel.swift in Sources */,
+			115D0157039D443ABE695F72 /* AdminViewModel.swift in Sources */,
+			679F989C19F34A8A98D4A50B /* TeacherViewModel.swift in Sources */,
+			83944AD767954011833A3A9B /* AccountsViewModel.swift in Sources */,
+			06FE5149584F4D48B4BA5F75 /* AuthViewModel.swift in Sources */,
+			47D85F9EA71B449E9F054EF3 /* UpdateChecker.swift in Sources */,
+			ECEB93A6EF8B405BBB6DB67E /* VidyaSchoolApp.swift in Sources */,
+			86FFB2AE37304D8395D21073 /* ContentView.swift in Sources */,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 	};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-	CCE97FC0C9FD456D88DC0359 /* Debug */ = {
+	E24C22F269974C118B3EC63F /* Debug */ = {
 		isa = XCBuildConfiguration;
 		buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
@@ -256,7 +304,7 @@
 		};
 		name = Debug;
 	};
-	6C49088CD5A6433A9934AD6F /* Release */ = {
+	195E4972683745F0997416E2 /* Release */ = {
 		isa = XCBuildConfiguration;
 		buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
@@ -312,7 +360,7 @@
 		};
 		name = Release;
 	};
-	725F5B1E888F4BD2A5A2D440 /* Debug */ = {
+	0F85AB85507242C4A4758323 /* Debug */ = {
 		isa = XCBuildConfiguration;
 		buildSettings = {
 			ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -323,8 +371,8 @@
 			ENABLE_PREVIEWS = YES;
 			FRAMEWORK_SEARCH_PATHS = (
 				"$(inherited)",
-				"$(SRCROOT)/../shared/build/XCFrameworks/release",
-				"$(SRCROOT)/../shared/build/XCFrameworks/debug",
+				"\"$(SRCROOT)/../shared/build/XCFrameworks/release\"",
+				"\"$(SRCROOT)/../shared/build/XCFrameworks/debug\"",
 			);
 			INFOPLIST_FILE = iosApp/Info.plist;
 			LD_RUNPATH_SEARCH_PATHS = (
@@ -340,7 +388,7 @@
 		};
 		name = Debug;
 	};
-	7B34394AC93249D485B8A049 /* Release */ = {
+	AFE737F0A38043D7BE9090D2 /* Release */ = {
 		isa = XCBuildConfiguration;
 		buildSettings = {
 			ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -351,8 +399,8 @@
 			ENABLE_PREVIEWS = YES;
 			FRAMEWORK_SEARCH_PATHS = (
 				"$(inherited)",
-				"$(SRCROOT)/../shared/build/XCFrameworks/release",
-				"$(SRCROOT)/../shared/build/XCFrameworks/debug",
+				"\"$(SRCROOT)/../shared/build/XCFrameworks/release\"",
+				"\"$(SRCROOT)/../shared/build/XCFrameworks/debug\"",
 			);
 			INFOPLIST_FILE = iosApp/Info.plist;
 			LD_RUNPATH_SEARCH_PATHS = (
@@ -371,25 +419,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-	797D7684544B40CA8BC03763 /* Build configuration list for PBXProject "iosApp" */ = {
+	36877CF2FAA74B9CA4612A49 /* Build configuration list for PBXProject "iosApp" */ = {
 		isa = XCConfigurationList;
 		buildConfigurations = (
-			CCE97FC0C9FD456D88DC0359 /* Debug */,
-			6C49088CD5A6433A9934AD6F /* Release */,
+			E24C22F269974C118B3EC63F /* Debug */,
+			195E4972683745F0997416E2 /* Release */,
 		);
 		defaultConfigurationIsVisible = 0;
 		defaultConfigurationName = Release;
 	};
-	4243C4E8FF754559934A351B /* Build configuration list for PBXNativeTarget "iosApp" */ = {
+	2D2E904F02064D0D8D7F8182 /* Build configuration list for PBXNativeTarget "iosApp" */ = {
 		isa = XCConfigurationList;
 		buildConfigurations = (
-			725F5B1E888F4BD2A5A2D440 /* Debug */,
-			7B34394AC93249D485B8A049 /* Release */,
+			0F85AB85507242C4A4758323 /* Debug */,
+			AFE737F0A38043D7BE9090D2 /* Release */,
 		);
 		defaultConfigurationIsVisible = 0;
 		defaultConfigurationName = Release;
 	};
 /* End XCConfigurationList section */
 	};
-	rootObject = 2EDD9CDDC6684104865C4FC3 /* Project object */;
+	rootObject = 837E47FD6CB340F5A61474D9 /* Project object */;
 }
