@@ -220,6 +220,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Delete pre-existing release and tag if they exist to prevent build collision errors
+          gh release delete "$TAG_NAME" -y --cleanup-tag || true
+
           # Build release notes
           NOTES="## VidyaSchool $TAG_NAME
 
