@@ -30,6 +30,14 @@ kotlin {
         }
     }
 
+    jvm("desktop") {
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "17"
+            }
+        }
+    }
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -72,6 +80,12 @@ kotlin {
         val iosX64Main by getting { dependsOn(iosMain) }
         val iosArm64Main by getting { dependsOn(iosMain) }
         val iosSimulatorArm64Main by getting { dependsOn(iosMain) }
+
+        val desktopMain by getting {
+            dependencies {
+                implementation("io.ktor:ktor-client-cio:2.3.7")
+            }
+        }
     }
 }
 
