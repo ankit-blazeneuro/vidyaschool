@@ -100,7 +100,7 @@ jobs:
       - name: Build KMP iOS XCFramework
         working-directory: mobile-app/kotlin
         run: |
-          ./gradlew :shared:assembleReleaseXCFramework --no-daemon --stacktrace
+          ./gradlew :shared:assembleSharedReleaseXCFramework --no-daemon --stacktrace
 
       - name: Resolve Swift dependencies
         working-directory: mobile-app/kotlin/iosApp
