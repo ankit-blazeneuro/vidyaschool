@@ -137,19 +137,19 @@ final class AuthViewModel: ObservableObject {
     private func syncStateFromShared() {
         let state = sharedViewModel.authState.value
         switch state {
-        case is SharedAuthStateLoggedIn:
-            if let loggedIn = state as? SharedAuthStateLoggedIn {
+        case is SharedAuthState.LoggedIn:
+            if let loggedIn = state as? SharedAuthState.LoggedIn {
                 currentUser = loggedIn.user
                 sessionState = .loggedIn(loggedIn.user)
             }
-        case is SharedAuthStateLoggedOut:
+        case is SharedAuthState.LoggedOut:
             sessionState = .loggedOut
-        case is SharedAuthStateError:
-            if let err = state as? SharedAuthStateError {
+        case is SharedAuthState.Error:
+            if let err = state as? SharedAuthState.Error {
                 errorMessage = err.message
                 sessionState = .error(err.message)
             }
-        case is SharedAuthStateLoading:
+        case is SharedAuthState.Loading:
             sessionState = .loading
         default:
             sessionState = .idle
