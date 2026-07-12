@@ -9,6 +9,7 @@ dependencies {
     implementation(compose.material3)
     implementation(compose.ui)
     implementation(compose.runtime)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.7.3")
 }
 
 compose.desktop {
