@@ -85,13 +85,13 @@ class ApiClient {
     // -----------------------------------------------------------------------
 
     suspend fun login(request: LoginRequest): LoginResponse =
-        httpClient.post("$BACKEND_URL/api/auth/sign-in/email") {
+        httpClient.post("$FRONTEND_URL/api/auth/sign-in/email") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
 
     suspend fun signup(request: SignupRequest): SignupResponse =
-        httpClient.post("$BACKEND_URL/api/auth/sign-up/email") {
+        httpClient.post("$FRONTEND_URL/api/auth/sign-up/email") {
             contentType(ContentType.Application.Json)
             setBody(request)
         }.body()
