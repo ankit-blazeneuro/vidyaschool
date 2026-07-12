@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
+
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
@@ -6,7 +8,7 @@ plugins {
 }
 
 kotlin {
-    val xcf = org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework("Shared")
+    val xcf = XCFramework("Shared")
 
     androidTarget {
         compilations.all {
