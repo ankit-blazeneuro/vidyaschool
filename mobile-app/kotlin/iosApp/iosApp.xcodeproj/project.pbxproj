@@ -7,105 +7,105 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		745A57DFF7EB41818EEFE8D1 /* VidyaSchoolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AED93735BB24520894C618A /* VidyaSchoolApp.swift */; };
-		EB4877A83C514B64B7473468 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC61259DE5D949F7B2126E85 /* ContentView.swift */; };
-		C4398D71AF5B455DB9712C9F /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE164A7EDC054141A85D78E0 /* AppTheme.swift */; };
-		F83A2EB0F69D4551924D1C73 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A9392891F884ACEB0B24CC6 /* WelcomeView.swift */; };
-		269827E2A9B7457F9C9A5B5D /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F17147D9AF5247CDB5A70F71 /* LoginView.swift */; };
-		86B655F79D08411CAA5963F0 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C3A9AB92024EA386D439AC /* DashboardView.swift */; };
-		980E3C93A7D445BC95F6185F /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25E64626AE7448491299E41 /* AuthViewModel.swift */; };
-		54A59E304F344D9F99CA0466 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF26E6A085146EBA3ADABE6 /* UpdateChecker.swift */; };
-		07D37FAC9EAD480EA36F7BCA /* UpdateBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C63FF6FBDC4233BF8CF6C3 /* UpdateBannerView.swift */; };
-		86BDB910A93B406583EC06E3 /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85683F9C1C5948F985A47837 /* Shared.framework */; };
+		E3CB11B01F5448F2AC72EEF4 /* VidyaSchoolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8158CAA0D2CB45CEB2FB9D9D /* VidyaSchoolApp.swift */; };
+		3906AD899BCA47CB85AFC72A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F15F9A0A38441CCA49D0E16 /* ContentView.swift */; };
+		80FE98942B204D37B1675AC9 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEBA1AD0AA0B47CD80B3EDF4 /* AppTheme.swift */; };
+		F51F412E3BD74EE4AFC2B02D /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CDF65591AD442B68BE63F5E /* WelcomeView.swift */; };
+		BBFFE0F2CBCC4A17B157CBBF /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66E44AD95756401B88B0C207 /* LoginView.swift */; };
+		F52F5EFEACB9449987C9F87B /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD2B4AA3B9D74F48B2F3F602 /* DashboardView.swift */; };
+		BC36610C4E904BF59A030F5B /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57A5001E89884B60B35DE9AC /* AuthViewModel.swift */; };
+		69B095343A164B12B509281A /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AE43A5C7A54401FAF5238FA /* UpdateChecker.swift */; };
+		35D6F2F23C054889A8A8BD61 /* UpdateBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C0ED18365B482493F9B531 /* UpdateBannerView.swift */; };
+		659691D8D622455DB413E9EA /* Shared.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBF7A6400E9044A288246E52 /* Shared.xcframework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		6AED93735BB24520894C618A /* VidyaSchoolApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VidyaSchoolApp.swift; path = iosApp/VidyaSchoolApp.swift; sourceTree = "<group>"; };
-		FC61259DE5D949F7B2126E85 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = iosApp/ContentView.swift; sourceTree = "<group>"; };
-		AE164A7EDC054141A85D78E0 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppTheme.swift; path = iosApp/Theme/AppTheme.swift; sourceTree = "<group>"; };
-		6A9392891F884ACEB0B24CC6 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WelcomeView.swift; path = iosApp/Views/WelcomeView.swift; sourceTree = "<group>"; };
-		F17147D9AF5247CDB5A70F71 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoginView.swift; path = iosApp/Views/LoginView.swift; sourceTree = "<group>"; };
-		C5C3A9AB92024EA386D439AC /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DashboardView.swift; path = iosApp/Views/DashboardView.swift; sourceTree = "<group>"; };
-		B25E64626AE7448491299E41 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthViewModel.swift; path = iosApp/ViewModels/AuthViewModel.swift; sourceTree = "<group>"; };
-		7FF26E6A085146EBA3ADABE6 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UpdateChecker.swift; path = iosApp/Services/UpdateChecker.swift; sourceTree = "<group>"; };
-		A5C63FF6FBDC4233BF8CF6C3 /* UpdateBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UpdateBannerView.swift; path = iosApp/Views/UpdateBannerView.swift; sourceTree = "<group>"; };
-		EDD00FDAC61B4CC78F1BD955 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		85683F9C1C5948F985A47837 /* Shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Shared.framework; path = "../shared/build/xcode-frameworks/inheriting/release/Shared.framework"; sourceTree = "<group>"; };
+		8158CAA0D2CB45CEB2FB9D9D /* VidyaSchoolApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = VidyaSchoolApp.swift; path = iosApp/VidyaSchoolApp.swift; sourceTree = "<group>"; };
+		1F15F9A0A38441CCA49D0E16 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = iosApp/ContentView.swift; sourceTree = "<group>"; };
+		AEBA1AD0AA0B47CD80B3EDF4 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppTheme.swift; path = iosApp/Theme/AppTheme.swift; sourceTree = "<group>"; };
+		3CDF65591AD442B68BE63F5E /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WelcomeView.swift; path = iosApp/Views/WelcomeView.swift; sourceTree = "<group>"; };
+		66E44AD95756401B88B0C207 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoginView.swift; path = iosApp/Views/LoginView.swift; sourceTree = "<group>"; };
+		BD2B4AA3B9D74F48B2F3F602 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DashboardView.swift; path = iosApp/Views/DashboardView.swift; sourceTree = "<group>"; };
+		57A5001E89884B60B35DE9AC /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthViewModel.swift; path = iosApp/ViewModels/AuthViewModel.swift; sourceTree = "<group>"; };
+		2AE43A5C7A54401FAF5238FA /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UpdateChecker.swift; path = iosApp/Services/UpdateChecker.swift; sourceTree = "<group>"; };
+		B3C0ED18365B482493F9B531 /* UpdateBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UpdateBannerView.swift; path = iosApp/Views/UpdateBannerView.swift; sourceTree = "<group>"; };
+		E3CBBF60D1C14B44BC458071 /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FBF7A6400E9044A288246E52 /* Shared.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Shared.xcframework; path = "../shared/build/XCFrameworks/release/Shared.xcframework"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-	3364A712E0E54A88A7CFF487 /* Frameworks */ = {
+	D77A9C7F41A74854A66D4E53 /* Frameworks */ = {
 		isa = PBXFrameworksBuildPhase;
 		buildActionMask = 2147483647;
 		files = (
-			86BDB910A93B406583EC06E3 /* Shared.framework in Frameworks */,
+			659691D8D622455DB413E9EA /* Shared.xcframework in Frameworks */,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 	};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-	6BA5F4D0505F4DF68EBCE445 = {
+	F64C08A581A347ACBCC7C12F = {
 		isa = PBXGroup;
 		children = (
-			AF3112D9FE96488BA626B24D /* Products */,
-			E61DA9FE10A94989AE78343D /* Frameworks */,
-			6AED93735BB24520894C618A /* VidyaSchoolApp.swift */,
-			FC61259DE5D949F7B2126E85 /* ContentView.swift */,
-			CED318679F8A481EB71DE902 /* Theme */,
-			1919EC71FEBF407A8BD4C5C9 /* Views */,
-			E8817ED5AE814A8FB8853F11 /* ViewModels */,
-			AA31130AFF0244D79B4C03F4 /* Services */,
+			C341802BDC66456EA57BE0E2 /* Products */,
+			C5F3E20C07BE4A6B8F330AF0 /* Frameworks */,
+			8158CAA0D2CB45CEB2FB9D9D /* VidyaSchoolApp.swift */,
+			1F15F9A0A38441CCA49D0E16 /* ContentView.swift */,
+			B92A3DE16B234075AE0C4C7F /* Theme */,
+			B55361918212489BA7AE0CB3 /* Views */,
+			FB348A3BAB6A41F7AD1E9600 /* ViewModels */,
+			C0F8500A210148159A071C21 /* Services */,
 		);
 		sourceTree = "<group>";
 	};
-	CED318679F8A481EB71DE902 /* Theme */ = {
+	B92A3DE16B234075AE0C4C7F /* Theme */ = {
 		isa = PBXGroup;
 		children = (
-			AE164A7EDC054141A85D78E0 /* AppTheme.swift */,
+			AEBA1AD0AA0B47CD80B3EDF4 /* AppTheme.swift */,
 		);
 		name = Theme;
 		sourceTree = "<group>";
 	};
-	1919EC71FEBF407A8BD4C5C9 /* Views */ = {
+	B55361918212489BA7AE0CB3 /* Views */ = {
 		isa = PBXGroup;
 		children = (
-			6A9392891F884ACEB0B24CC6 /* WelcomeView.swift */,
-			F17147D9AF5247CDB5A70F71 /* LoginView.swift */,
-			C5C3A9AB92024EA386D439AC /* DashboardView.swift */,
-			A5C63FF6FBDC4233BF8CF6C3 /* UpdateBannerView.swift */,
+			3CDF65591AD442B68BE63F5E /* WelcomeView.swift */,
+			66E44AD95756401B88B0C207 /* LoginView.swift */,
+			BD2B4AA3B9D74F48B2F3F602 /* DashboardView.swift */,
+			B3C0ED18365B482493F9B531 /* UpdateBannerView.swift */,
 		);
 		name = Views;
 		sourceTree = "<group>";
 	};
-	E8817ED5AE814A8FB8853F11 /* ViewModels */ = {
+	FB348A3BAB6A41F7AD1E9600 /* ViewModels */ = {
 		isa = PBXGroup;
 		children = (
-			B25E64626AE7448491299E41 /* AuthViewModel.swift */,
+			57A5001E89884B60B35DE9AC /* AuthViewModel.swift */,
 		);
 		name = ViewModels;
 		sourceTree = "<group>";
 	};
-	AA31130AFF0244D79B4C03F4 /* Services */ = {
+	C0F8500A210148159A071C21 /* Services */ = {
 		isa = PBXGroup;
 		children = (
-			7FF26E6A085146EBA3ADABE6 /* UpdateChecker.swift */,
+			2AE43A5C7A54401FAF5238FA /* UpdateChecker.swift */,
 		);
 		name = Services;
 		sourceTree = "<group>";
 	};
-	AF3112D9FE96488BA626B24D /* Products */ = {
+	C341802BDC66456EA57BE0E2 /* Products */ = {
 		isa = PBXGroup;
 		children = (
-			EDD00FDAC61B4CC78F1BD955 /* iosApp.app */,
+			E3CBBF60D1C14B44BC458071 /* iosApp.app */,
 		);
 		name = Products;
 		sourceTree = "<group>";
 	};
-	E61DA9FE10A94989AE78343D /* Frameworks */ = {
+	C5F3E20C07BE4A6B8F330AF0 /* Frameworks */ = {
 		isa = PBXGroup;
 		children = (
-			85683F9C1C5948F985A47837 /* Shared.framework */,
+			FBF7A6400E9044A288246E52 /* Shared.xcframework */,
 		);
 		name = Frameworks;
 		sourceTree = "<group>";
@@ -113,14 +113,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-	8F1F47FE19F84F82A38B978B /* iosApp */ = {
+	177FF53130B746E2B2B5A4C2 /* iosApp */ = {
 		isa = PBXNativeTarget;
-		buildConfigurationList = 4D705A04CC8A41E3B8C8BD2A /* Build configuration list for PBXNativeTarget "iosApp" */;
+		buildConfigurationList = 4243C4E8FF754559934A351B /* Build configuration list for PBXNativeTarget "iosApp" */;
 		buildPhases = (
-			E4ADA98AA35D474EB5EEB2EC /* Run Script */,
-			D033D8963EFF4BEBBF8BC1F9 /* Sources */,
-			3364A712E0E54A88A7CFF487 /* Frameworks */,
-			19AD9894ABD24CD6BDDABB3F /* Resources */,
+			A362A2CFB98C4D74880E63A6 /* Sources */,
+			D77A9C7F41A74854A66D4E53 /* Frameworks */,
+			DC711D0DE10849758A9399F8 /* Resources */,
 		);
 		buildRules = (
 		);
@@ -128,26 +127,26 @@
 		);
 		name = iosApp;
 		productName = iosApp;
-		productReference = EDD00FDAC61B4CC78F1BD955 /* iosApp.app */;
+		productReference = E3CBBF60D1C14B44BC458071 /* iosApp.app */;
 		productType = "com.apple.product-type.application";
 	};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-	144FB4548C38429A9EB9F0AF /* Project object */ = {
+	2EDD9CDDC6684104865C4FC3 /* Project object */ = {
 		isa = PBXProject;
 		attributes = {
 			BuildIndependentTargetsInParallel = 1;
 			LastSwiftUpdateCheck = 1540;
 			LastUpgradeCheck = 1540;
 			TargetAttributes = {
-				8F1F47FE19F84F82A38B978B = {
+				177FF53130B746E2B2B5A4C2 = {
 					CreatedOnToolsVersion = 15.4;
 					LastSwiftMigration = 1540;
 				};
 			};
 		};
-		buildConfigurationList = 629C6CA04E824DA192DEBBD6 /* Build configuration list for PBXProject "iosApp" */;
+		buildConfigurationList = 797D7684544B40CA8BC03763 /* Build configuration list for PBXProject "iosApp" */;
 		compatibilityVersion = "Xcode 14.0";
 		developmentRegion = en;
 		hasScannedForEncodings = 0;
@@ -155,18 +154,18 @@
 			en,
 			Base,
 		);
-		mainGroup = 6BA5F4D0505F4DF68EBCE445;
-		productRefGroup = AF3112D9FE96488BA626B24D /* Products */;
+		mainGroup = F64C08A581A347ACBCC7C12F;
+		productRefGroup = C341802BDC66456EA57BE0E2 /* Products */;
 		projectDirPath = "";
 		projectRoot = "";
 		targets = (
-			8F1F47FE19F84F82A38B978B /* iosApp */,
+			177FF53130B746E2B2B5A4C2 /* iosApp */,
 		);
 	};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-	19AD9894ABD24CD6BDDABB3F /* Resources */ = {
+	DC711D0DE10849758A9399F8 /* Resources */ = {
 		isa = PBXResourcesBuildPhase;
 		buildActionMask = 2147483647;
 		files = (
@@ -175,50 +174,27 @@
 	};
 /* End PBXResourcesBuildPhase section */
 
-/* Begin PBXShellScriptBuildPhase section */
-	E4ADA98AA35D474EB5EEB2EC /* Run Script */ = {
-		isa = PBXShellScriptBuildPhase;
-		buildActionMask = 2147483647;
-		files = (
-		);
-		inputFileListPaths = (
-		);
-		inputPaths = (
-		);
-		name = "Compile Shared KMP Framework";
-		outputFileListPaths = (
-		);
-		outputPaths = (
-		);
-		runOnlyForDeploymentPostprocessing = 0;
-		shellPath = /bin/sh;
-		shellScript = "cd \"$SRCROOT/..\"
-./gradlew :shared:embedAndSignAppleFrameworkForXcode
-";
-	};
-/* End PBXShellScriptBuildPhase section */
-
 /* Begin PBXSourcesBuildPhase section */
-	D033D8963EFF4BEBBF8BC1F9 /* Sources */ = {
+	A362A2CFB98C4D74880E63A6 /* Sources */ = {
 		isa = PBXSourcesBuildPhase;
 		buildActionMask = 2147483647;
 		files = (
-			745A57DFF7EB41818EEFE8D1 /* VidyaSchoolApp.swift in Sources */,
-			EB4877A83C514B64B7473468 /* ContentView.swift in Sources */,
-			C4398D71AF5B455DB9712C9F /* AppTheme.swift in Sources */,
-			F83A2EB0F69D4551924D1C73 /* WelcomeView.swift in Sources */,
-			269827E2A9B7457F9C9A5B5D /* LoginView.swift in Sources */,
-			86B655F79D08411CAA5963F0 /* DashboardView.swift in Sources */,
-			980E3C93A7D445BC95F6185F /* AuthViewModel.swift in Sources */,
-			54A59E304F344D9F99CA0466 /* UpdateChecker.swift in Sources */,
-			07D37FAC9EAD480EA36F7BCA /* UpdateBannerView.swift in Sources */,
+			E3CB11B01F5448F2AC72EEF4 /* VidyaSchoolApp.swift in Sources */,
+			3906AD899BCA47CB85AFC72A /* ContentView.swift in Sources */,
+			80FE98942B204D37B1675AC9 /* AppTheme.swift in Sources */,
+			F51F412E3BD74EE4AFC2B02D /* WelcomeView.swift in Sources */,
+			BBFFE0F2CBCC4A17B157CBBF /* LoginView.swift in Sources */,
+			F52F5EFEACB9449987C9F87B /* DashboardView.swift in Sources */,
+			BC36610C4E904BF59A030F5B /* AuthViewModel.swift in Sources */,
+			69B095343A164B12B509281A /* UpdateChecker.swift in Sources */,
+			35D6F2F23C054889A8A8BD61 /* UpdateBannerView.swift in Sources */,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 	};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-	B8D1E818D9B84F73AA7B194A /* Debug */ = {
+	CCE97FC0C9FD456D88DC0359 /* Debug */ = {
 		isa = XCBuildConfiguration;
 		buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
@@ -280,7 +256,7 @@
 		};
 		name = Debug;
 	};
-	4F30ECE3879548B0993243D6 /* Release */ = {
+	6C49088CD5A6433A9934AD6F /* Release */ = {
 		isa = XCBuildConfiguration;
 		buildSettings = {
 			ALWAYS_SEARCH_USER_PATHS = NO;
@@ -336,7 +312,7 @@
 		};
 		name = Release;
 	};
-	B3FEC48CDF0B4939A6DEE593 /* Debug */ = {
+	725F5B1E888F4BD2A5A2D440 /* Debug */ = {
 		isa = XCBuildConfiguration;
 		buildSettings = {
 			ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -347,8 +323,8 @@
 			ENABLE_PREVIEWS = YES;
 			FRAMEWORK_SEARCH_PATHS = (
 				"$(inherited)",
-				"$(SRCROOT)/../shared/build/xcode-frameworks/inheriting/release",
-				"$(SRCROOT)/../shared/build/xcode-frameworks/inheriting/debug",
+				"$(SRCROOT)/../shared/build/XCFrameworks/release",
+				"$(SRCROOT)/../shared/build/XCFrameworks/debug",
 			);
 			INFOPLIST_FILE = iosApp/Info.plist;
 			LD_RUNPATH_SEARCH_PATHS = (
@@ -364,7 +340,7 @@
 		};
 		name = Debug;
 	};
-	DD572C89C605469DAD1ACA70 /* Release */ = {
+	7B34394AC93249D485B8A049 /* Release */ = {
 		isa = XCBuildConfiguration;
 		buildSettings = {
 			ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -375,8 +351,8 @@
 			ENABLE_PREVIEWS = YES;
 			FRAMEWORK_SEARCH_PATHS = (
 				"$(inherited)",
-				"$(SRCROOT)/../shared/build/xcode-frameworks/inheriting/release",
-				"$(SRCROOT)/../shared/build/xcode-frameworks/inheriting/debug",
+				"$(SRCROOT)/../shared/build/XCFrameworks/release",
+				"$(SRCROOT)/../shared/build/XCFrameworks/debug",
 			);
 			INFOPLIST_FILE = iosApp/Info.plist;
 			LD_RUNPATH_SEARCH_PATHS = (
@@ -395,25 +371,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-	629C6CA04E824DA192DEBBD6 /* Build configuration list for PBXProject "iosApp" */ = {
+	797D7684544B40CA8BC03763 /* Build configuration list for PBXProject "iosApp" */ = {
 		isa = XCConfigurationList;
 		buildConfigurations = (
-			B8D1E818D9B84F73AA7B194A /* Debug */,
-			4F30ECE3879548B0993243D6 /* Release */,
+			CCE97FC0C9FD456D88DC0359 /* Debug */,
+			6C49088CD5A6433A9934AD6F /* Release */,
 		);
 		defaultConfigurationIsVisible = 0;
 		defaultConfigurationName = Release;
 	};
-	4D705A04CC8A41E3B8C8BD2A /* Build configuration list for PBXNativeTarget "iosApp" */ = {
+	4243C4E8FF754559934A351B /* Build configuration list for PBXNativeTarget "iosApp" */ = {
 		isa = XCConfigurationList;
 		buildConfigurations = (
-			B3FEC48CDF0B4939A6DEE593 /* Debug */,
-			DD572C89C605469DAD1ACA70 /* Release */,
+			725F5B1E888F4BD2A5A2D440 /* Debug */,
+			7B34394AC93249D485B8A049 /* Release */,
 		);
 		defaultConfigurationIsVisible = 0;
 		defaultConfigurationName = Release;
 	};
 /* End XCConfigurationList section */
 	};
-	rootObject = 144FB4548C38429A9EB9F0AF /* Project object */;
+	rootObject = 2EDD9CDDC6684104865C4FC3 /* Project object */;
 }

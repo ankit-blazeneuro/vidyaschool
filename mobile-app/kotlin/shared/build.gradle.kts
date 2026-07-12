@@ -6,6 +6,8 @@ plugins {
 }
 
 kotlin {
+    val xcf = org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework("Shared")
+
     androidTarget {
         compilations.all {
             kotlinOptions {
@@ -22,6 +24,7 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = "Shared"
             isStatic = true
+            xcf.add(this)
         }
     }
 

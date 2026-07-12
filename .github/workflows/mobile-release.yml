@@ -97,13 +97,10 @@ jobs:
       - name: Grant gradlew permission
         run: chmod +x mobile-app/kotlin/gradlew
 
-      - name: Build KMP iOS framework
+      - name: Build KMP iOS XCFramework
         working-directory: mobile-app/kotlin
         run: |
-          ./gradlew :shared:linkReleaseFrameworkIosArm64 \
-                    :shared:linkReleaseFrameworkIosSimulatorArm64 \
-                    --no-daemon --stacktrace || true
-          # "|| true" — if shared module is not yet fully configured, don't break the pipeline
+          ./gradlew :shared:assembleReleaseXCFramework --no-daemon --stacktrace
 
       - name: Resolve Swift dependencies
         working-directory: mobile-app/kotlin/iosApp
@@ -112,10 +109,10 @@ jobs:
             xcodebuild -resolvePackageDependencies \
               -project iosApp.xcodeproj \
               -scheme iosApp \
-              -destination "generic/platform=iOS" || true
+              -destination "generic/platform=iOS"
           else
             echo "⚠️  Xcode project not found yet — skipping iOS build"
-            exit 0
+            exit 1
           fi
 
       - name: Set version in Info.plist
@@ -131,7 +128,7 @@ jobs:
         run: |
           if [ ! -f "iosApp.xcodeproj/project.pbxproj" ]; then
             echo "⚠️  Xcode project not found — skipping iOS build"
-            exit 0
+            exit 1
           fi
           xcodebuild archive \
             -project iosApp.xcodeproj \
@@ -142,40 +139,24 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            -allowProvisioningUpdates || true
+            -allowProvisioningUpdates
 
-      - name: Export IPA
+      - name: Package Unsigned IPA
         run: |
           if [ ! -d "$RUNNER_TEMP/VidyaSchool.xcarchive" ]; then
-            echo "⚠️  Archive not found — creating placeholder"
-            mkdir -p artifacts
-            echo "iOS build not yet configured" > artifacts/ios-build-note.txt
-            exit 0
+            echo "❌ Archive not found — failing build"
+            exit 1
           fi
-          cat > /tmp/ExportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>ad-hoc</string>
-            <key>compileBitcode</key>
-            <false/>
-            <key>stripSwiftSymbols</key>
-            <true/>
-          </dict>
-          </plist>
-          EOF
-          xcodebuild -exportArchive \
-            -archivePath "$RUNNER_TEMP/VidyaSchool.xcarchive" \
-            -exportPath "$RUNNER_TEMP/IPA" \
-            -exportOptionsPlist /tmp/ExportOptions.plist || true
+          
+          # Create unsigned IPA by zipping Payload containing the .app bundle
+          mkdir -p $RUNNER_TEMP/Payload
+          cp -R "$RUNNER_TEMP/VidyaSchool.xcarchive/Products/Applications/iosApp.app" $RUNNER_TEMP/Payload/
+          
           mkdir -p artifacts
-          if [ -f "$RUNNER_TEMP/IPA/iosApp.ipa" ]; then
-            cp "$RUNNER_TEMP/IPA/iosApp.ipa" "artifacts/VidyaSchool-$TAG_NAME.ipa"
-          else
-            echo "IPA export failed — check signing config" > artifacts/ios-build-note.txt
-          fi
+          cd $RUNNER_TEMP
+          zip -r "$GITHUB_WORKSPACE/artifacts/VidyaSchool-$TAG_NAME.ipa" Payload
+          
+          echo "Successfully packaged unsigned IPA"
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
