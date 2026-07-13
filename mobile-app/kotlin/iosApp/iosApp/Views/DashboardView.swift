@@ -73,7 +73,7 @@ struct HomeTabView: View {
                         GreetingCard(user: user)
 
                         // Role-specific quick actions
-                        switch (user.role ?? "student").lowercased() {
+                        switch user.role.lowercased() {
                         case "admin":
                             AdminHomeSection(
                                 onShowSlider: { showingSliderSheet = true },
@@ -170,7 +170,7 @@ private struct GreetingCard: View {
                         .font(AppTheme.Font.headline)
                         .foregroundColor(.white)
                         .lineLimit(1)
-                    RoleBadge(role: user.role ?? "student")
+                    RoleBadge(role: user.role)
                 }
                 Spacer()
             }
@@ -444,7 +444,7 @@ struct ProfileTabView: View {
                                 Text(user.email)
                                     .font(AppTheme.Font.footnote)
                                     .foregroundColor(AppTheme.Color.darkSecondary)
-                                RoleBadge(role: user.role ?? "student")
+                                RoleBadge(role: user.role)
                             }
                         }
                         .padding(.top, AppTheme.Spacing.lg)

@@ -161,13 +161,13 @@ struct WelcomeView: View {
             LoginView()
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
-                .presentationBackground(AppTheme.Color.darkBackground)
+                .sheetBackground(AppTheme.Color.darkBackground)
         }
         .sheet(isPresented: $showSignupSheet) {
             SignupView()
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
-                .presentationBackground(AppTheme.Color.darkBackground)
+                .sheetBackground(AppTheme.Color.darkBackground)
         }
     }
 }

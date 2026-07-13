@@ -26,6 +26,12 @@ final class AuthViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var currentUser: AppUser? = nil
 
+    /// Equatable-safe derived property for use with `.onChange(of:)`.
+    var isLoggedIn: Bool {
+        if case .loggedIn = sessionState { return true }
+        return false
+    }
+
     // KMP shared layer
     private let sessionStorage = SessionStorage()
     private let apiClient = ApiClient()

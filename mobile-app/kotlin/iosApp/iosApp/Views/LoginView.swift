@@ -141,8 +141,8 @@ struct LoginView: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { shakeError = false }
             }
         }
-        .onChange(of: authViewModel.sessionState) { _, state in
-            if case .loggedIn = state { dismiss() }
+        .onChange(of: authViewModel.isLoggedIn) { _, loggedIn in
+            if loggedIn { dismiss() }
         }
     }
 
@@ -261,8 +261,8 @@ struct SignupView: View {
                 }
             }
         }
-        .onChange(of: authViewModel.sessionState) { _, state in
-            if case .loggedIn = state { dismiss() }
+        .onChange(of: authViewModel.isLoggedIn) { _, loggedIn in
+            if loggedIn { dismiss() }
         }
     }
 

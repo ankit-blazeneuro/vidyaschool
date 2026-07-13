@@ -56,7 +56,7 @@ private struct NoticeCard: View {
     private var categoryText: String {
         if notice.isUrgent {
             return "Urgent"
-        } else if !(notice.category ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        } else if !notice.category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return notice.category
         } else {
             return "Notice"

@@ -373,3 +373,21 @@ extension View {
         modifier(ShakeModifier(animatableData: trigger ? 1 : 0))
     }
 }
+
+// ---------------------------------------------------------------------------
+// presentationBackground compatibility (requires iOS 16.4+)
+// Falls back to a .background modifier on iOS 16.0–16.3.
+// ---------------------------------------------------------------------------
+
+extension View {
+    /// Applies `.presentationBackground` on iOS 16.4+ and a plain
+    /// `.background` on earlier iOS 16.x deployments.
+    @ViewBuilder
+    func sheetBackground(_ color: SwiftUI.Color) -> some View {
+        if #available(iOS 16.4, *) {
+            self.presentationBackground(color)
+        } else {
+            self.background(color.ignoresSafeArea())
+        }
+    }
+}
