@@ -10,44 +10,35 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useThemeColors } from "../../theme/ThemeContext";
 import { SessionManager } from "../../services/session";
-import { DashboardHeader } from "../DashboardHeader";
-import { Feather } from "@expo/vector-icons";
+import { ApiService } from "../../services/api";
+import { Feather, AntDesign, MaterialIcons } from "@expo/vector-icons";
 import { FONT_FAMILY } from "../../theme/colors";
+import io, { Socket } from "socket.io-client";
 
-interface Message {
+interface CommunityMsg {
   id: string;
-  senderName: string;
-  senderRole: string;
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+  image: string | null;
   content: string;
   timestamp: string;
+  replyTo?: {
+    id: string;
+    name: string;
+    content: string;
+  } | null;
 }
 
-const MOCK_MESSAGES: Message[] = [
-  {
-    id: "1",
-    senderName: "Principal Sharma",
-    senderRole: "admin",
-    content: "Welcome to the Vidya School general community hub.",
-    timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
-  },
-  {
-    id: "2",
-    senderName: "HOD Mathematics",
-    senderRole: "teacher",
-    content: "The syllabus details for Class 10 board exams have been updated in the files section.",
-    timestamp: new Date(Date.now() - 3600000 * 1).toISOString(),
-  },
-  {
-    id: "3",
-    senderName: "Accounts Dept",
-    senderRole: "accounts",
-    content: "Quarter 2 fee installments are now active. Receipts will be auto-generated upon Razorpay authorization.",
-    timestamp: new Date(Date.now() - 1800000).toISOString(),
-  },
-];
+interface CommunityTypingUser {
+  userId: string;
+  name: string;
+}
 
 interface CommunityTabContentProps {
   onMenuPress: () => void;
@@ -59,73 +50,207 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
   onNotificationPress,
 }) => {
   const colors = useThemeColors();
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
-  const [inputText, setInputText] = useState("");
-  const [userName, setUserName] = useState("");
-  const [userRole, setUserRole] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  
+  const [messages, setMessages] = useState<CommunityMsg[]>([]);
+  const [inputText, setInputText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<CommunityMsg | null>(null);
+  const [editingMessage, setEditingMessage] = useState<CommunityMsg | null>(null);
+  const [onlineCount, setOnlineCount] = useState(1);
+  const [typingUsers, setTypingUsers] = useState<CommunityTypingUser[]>([]);
+  
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
 
+  const socketRef = useRef<Socket | null>(null);
+
+  // 1. Fetch profile and connect socket
   useEffect(() => {
-    SessionManager.getName().then((val) => setUserName(val || "Faculty"));
-    SessionManager.getRole().then((val) => setUserRole(val || "teacher"));
+    let active = true;
 
-    // Simulate community activity
-    const typingTimer = setTimeout(() => {
-      setIsTyping(true);
-      const msgTimer = setTimeout(() => {
-        setIsTyping(false);
-        const reply: Message = {
-          id: String(Date.now() + 1),
-          senderName: "Admin Assistant",
-          senderRole: "admin",
-          content: "Hello everyone! Just a reminder that parent-teacher meetings start tomorrow at 9 AM.",
-          timestamp: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, reply]);
-      }, 3000);
-      return () => clearTimeout(msgTimer);
-    }, 8000);
-
-    return () => clearTimeout(typingTimer);
-  }, []);
-
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-
-    const newMsg: Message = {
-      id: String(Date.now()),
-      senderName: userName,
-      senderRole: userRole,
-      content: inputText.trim(),
-      timestamp: new Date().toISOString(),
+    const initConnection = async () => {
+      try {
+        const res = await ApiService.getProfile();
+        if (res.ok && active) {
+          const profileData = await res.json();
+          setCurrentUser(profileData.user);
+        }
+      } catch (err) {
+        console.error("Fetch profile failed in CommunityTab:", err);
+      }
     };
 
-    setMessages((prev) => [...prev, newMsg]);
+    initConnection();
+
+    return () => {
+      active = false;
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, []);
+
+  // 2. Manage Socket.io connections and events
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const socket = io("https://api.blazeneuro.com", {
+      transports: ["polling", "websocket"],
+      forceNew: true,
+    });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      setIsConnected(true);
+      socket.emit("join", {
+        userId: currentUser.id,
+        name: currentUser.name || currentUser.email,
+        role: currentUser.role || "student",
+        image: currentUser.image,
+      });
+    });
+
+    socket.on("disconnect", () => {
+      setIsConnected(false);
+      setTypingUsers([]);
+    });
+
+    socket.on("online_users", (usersArray: any) => {
+      if (Array.isArray(usersArray)) {
+        setOnlineCount(usersArray.length);
+        const activeUserIds = new Set(usersArray.map((u: any) => u.userId));
+        setTypingUsers((prev) => prev.filter((u) => activeUserIds.has(u.userId)));
+      }
+    });
+
+    socket.on("user_typing", (data: any) => {
+      if (data && data.userId && data.userId !== currentUser.id) {
+        if (data.isTyping) {
+          setTypingUsers((prev) => {
+            if (prev.some((u) => u.userId === data.userId)) return prev;
+            return [...prev, { userId: data.userId, name: data.name }];
+          });
+        } else {
+          setTypingUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+        }
+      }
+    });
+
+    socket.on("recent_messages", (data: any) => {
+      if (data && Array.isArray(data.messages)) {
+        setMessages(data.messages);
+      }
+    });
+
+    socket.on("new_message", (msg: CommunityMsg) => {
+      setMessages((prev) => [...prev, msg]);
+    });
+
+    socket.on("message_edited", (data: any) => {
+      if (data && data.id) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === data.id ? { ...m, content: data.content } : m))
+        );
+      }
+    });
+
+    socket.on("message_deleted", (data: any) => {
+      if (data && data.id) {
+        setMessages((prev) => prev.filter((m) => m.id !== data.id));
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [currentUser]);
+
+  // 3. Emit typing status on inputText updates
+  useEffect(() => {
+    if (!socketRef.current || !isConnected) return;
+
+    if (!inputText.trim()) {
+      socketRef.current.emit("typing", { isTyping: false });
+      return;
+    }
+
+    socketRef.current.emit("typing", { isTyping: true });
+
+    const timeout = setTimeout(() => {
+      if (socketRef.current) {
+        socketRef.current.emit("typing", { isTyping: false });
+      }
+    }, 2500);
+
+    return () => clearTimeout(timeout);
+  }, [inputText, isConnected]);
+
+  // 4. Update input when editing message
+  useEffect(() => {
+    if (editingMessage) {
+      setInputText(editingMessage.content);
+    } else {
+      setInputText("");
+    }
+  }, [editingMessage]);
+
+  const handleSend = () => {
+    if (!inputText.trim() || !socketRef.current || !isConnected) return;
+
+    if (editingMessage) {
+      socketRef.current.emit("edit_message", {
+        messageId: editingMessage.id,
+        content: inputText.trim(),
+      });
+      setEditingMessage(null);
+    } else {
+      const payload: any = { content: inputText.trim() };
+      if (replyingTo) {
+        payload.replyTo = {
+          id: replyingTo.id,
+          name: replyingTo.name,
+          content: replyingTo.content,
+        };
+      }
+      socketRef.current.emit("send_message", payload);
+      setReplyingTo(null);
+    }
     setInputText("");
-
-    // Auto scroll to bottom
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
   };
 
-  const handleLongPress = (msg: Message) => {
-    if (msg.senderName !== userName) return;
-
-    Alert.alert("Manage Message", "Do you want to delete this message?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => {
-          setMessages((prev) => prev.filter((m) => m.id !== msg.id));
-        },
-      },
-    ]);
+  const handleDelete = (msgId: string) => {
+    if (!socketRef.current || !isConnected) return;
+    socketRef.current.emit("delete_message", { messageId: msgId });
   };
 
-  const formatTime = (isoStr: string) => {
+  const handleLongPress = (msg: CommunityMsg) => {
+    const isMe = currentUser && msg.userId === currentUser.id;
+    const options = [
+      { text: "Reply", onPress: () => setReplyingTo(msg) },
+      { text: "Cancel", style: "cancel" as const },
+    ];
+    if (isMe) {
+      options.unshift(
+        { text: "Edit", onPress: () => setEditingMessage(msg) },
+        {
+          text: "Delete",
+          style: "destructive" as const,
+          onPress: () => {
+            Alert.alert("Confirm Delete", "Are you sure you want to delete this message?", [
+              { text: "Cancel", style: "cancel" },
+              { text: "Delete", style: "destructive", onPress: () => handleDelete(msg.id) },
+            ]);
+          },
+        }
+      );
+    }
+    Alert.alert("Message Options", "Choose an action", options);
+  };
+
+  const formatTimestamp = (isoStr: string) => {
     try {
       const date = new Date(isoStr);
       return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -134,122 +259,285 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
     }
   };
 
-  const renderMessageItem = ({ item }: { item: Message }) => {
-    const isMe = item.senderName === userName;
+  const getRoleColors = (role: string) => {
+    const r = role.toLowerCase();
+    if (r === "admin") return { text: "#E11D48", bg: "#FFE4E6", circle: "#F43F5E" };
+    if (r === "teacher" || r === "librarian") return { text: "#2563EB", bg: "#DBEAFE", circle: "#3B82F6" };
+    if (r === "account" || r === "accounts") return { text: "#059669", bg: "#D1FAE5", circle: "#10B981" };
+    return { text: colors.onSurface, bg: colors.outline, circle: "#64748B" };
+  };
+
+  const renderMessageItem = ({ item, index }: { item: CommunityMsg; index: number }) => {
+    const isMe = currentUser && item.userId === currentUser.id;
+    const roleConfig = getRoleColors(item.role);
+
+    // Grouping: consecutive messages from the same sender within 5 mins, excluding replies
+    const prevMsg = index > 0 ? messages[index - 1] : null;
+    const isGrouped = !!(
+      prevMsg &&
+      prevMsg.userId === item.userId &&
+      new Date(item.timestamp).getTime() - new Date(prevMsg.timestamp).getTime() < 300000 &&
+      !item.replyTo
+    );
+
     return (
       <TouchableOpacity
-        activeOpacity={0.9}
+        activeOpacity={0.8}
         onLongPress={() => handleLongPress(item)}
-        style={[
-          styles.msgContainer,
-          isMe ? styles.myMsgContainer : styles.otherMsgContainer,
-        ]}
+        onPress={() => setReplyingTo(item)}
+        style={styles.msgRow}
       >
-        {!isMe && (
-          <View style={styles.senderHeader}>
-            <Text style={[styles.senderName, { color: colors.onSurface }]}>
-              {item.senderName}
+        {/* Reply Header */}
+        {item.replyTo && (
+          <View style={styles.replyHeader}>
+            <Feather name="corner-down-right" size={10} color={colors.secondary} />
+            <Text style={[styles.replyUserText, { color: colors.secondary }]}>
+              @{item.replyTo.name}
             </Text>
-            <View
-              style={[
-                styles.roleBadge,
-                {
-                  borderColor: colors.outline,
-                  backgroundColor: colors.outline,
-                },
-              ]}
-            >
-              <Text style={[styles.roleBadgeText, { color: colors.onSurface }]}>
-                {item.senderRole.toUpperCase()}
+            <Text style={[styles.replyContentText, { color: colors.secondary }]} numberOfLines={1}>
+              {item.replyTo.content}
+            </Text>
+          </View>
+        )}
+
+        {isGrouped ? (
+          <View style={styles.groupedContentWrap}>
+            <Text style={[styles.messageText, { color: colors.onSurface }]}>
+              {item.content}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.mainMsgLayout}>
+            {/* Avatar block */}
+            {item.image ? (
+              <Image source={{ uri: item.image }} style={styles.avatar} />
+            ) : (
+              <View style={[styles.avatarPlaceholder, { backgroundColor: roleConfig.circle }]}>
+                <Text style={styles.avatarInitial}>
+                  {item.name ? item.name.charAt(0).toUpperCase() : "?"}
+                </Text>
+              </View>
+            )}
+
+            {/* Content block */}
+            <View style={styles.msgBody}>
+              <View style={styles.senderHeader}>
+                <Text style={[styles.senderName, { color: roleConfig.text }]}>
+                  {item.name}
+                </Text>
+                <View style={[styles.roleBadge, { backgroundColor: roleConfig.bg }]}>
+                  <Text style={[styles.roleBadgeText, { color: roleConfig.text }]}>
+                    {item.role.toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={[styles.timeText, { color: colors.secondary }]}>
+                  {formatTimestamp(item.timestamp)}
+                </Text>
+              </View>
+
+              <Text style={[styles.messageText, { color: colors.onSurface }]}>
+                {item.content}
               </Text>
             </View>
           </View>
         )}
-        <View
-          style={[
-            styles.bubble,
-            {
-              backgroundColor: isMe ? colors.primary : colors.surface,
-              borderColor: colors.outline,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.messageText,
-              { color: isMe ? colors.onPrimary : colors.onSurface },
-            ]}
-          >
-            {item.content}
-          </Text>
-          <Text
-            style={[
-              styles.timeText,
-              { color: isMe ? colors.onPrimary + "CC" : colors.secondary },
-            ]}
-          >
-            {formatTime(item.timestamp)}
-          </Text>
-        </View>
       </TouchableOpacity>
     );
+  };
+
+  const handleScroll = (event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const contentHeight = event.nativeEvent.contentSize.height;
+    const layoutHeight = event.nativeEvent.layoutMeasurement.height;
+    // Show "scroll to bottom" FAB if we are scrolled up more than 150px
+    setShowScrollBottom(contentHeight - layoutHeight - offsetY > 150);
+  };
+
+  const scrollToBottom = () => {
+    flatListRef.current?.scrollToEnd({ animated: true });
   };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMessageItem}
-        contentContainerStyle={styles.list}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        ListHeaderComponent={
-          <DashboardHeader
-            title="Community"
-            subtitle="General school announcements"
-            onMenuPress={onMenuPress}
-            onNotificationPress={onNotificationPress}
-            style={{ paddingHorizontal: 0, marginBottom: 16 }}
-          />
-        }
-      />
+      {/* Custom Hub Header */}
+      <View style={[styles.header, { borderBottomColor: colors.outline }]}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={onMenuPress}
+            style={[styles.backBtn, { borderColor: colors.outline }]}
+          >
+            <AntDesign name="arrowleft" size={18} color={colors.onSurface} />
+          </TouchableOpacity>
+          <View style={styles.headerInfo}>
+            <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Community Hub</Text>
+            <Text style={[styles.headerSubtitle, { color: colors.secondary }]}>
+              {onlineCount} {onlineCount === 1 ? "user" : "users"} online
+            </Text>
+          </View>
+        </View>
 
-      {isTyping && (
-        <View style={styles.typingContainer}>
-          <ActivityIndicator size="small" color={colors.secondary} style={styles.spinner} />
-          <Text style={[styles.typingText, { color: colors.secondary }]}>
-            Someone is typing...
+        <View style={styles.statusWrap}>
+          <View
+            style={[
+              styles.statusDot,
+              { backgroundColor: isConnected ? "#10B981" : "#EF4444" },
+            ]}
+          />
+          <Text
+            style={[
+              styles.statusText,
+              { color: isConnected ? "#10B981" : "#EF4444" },
+            ]}
+          >
+            {isConnected ? "Live" : "Offline"}
+          </Text>
+        </View>
+      </View>
+
+      {/* Loading Overlay */}
+      {messages.length === 0 && !isConnected ? (
+        <View style={styles.loaderWrap}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loaderText, { color: colors.secondary }]}>
+            Connecting to #community...
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessageItem}
+          contentContainerStyle={styles.list}
+          onScroll={handleScroll}
+          onContentSizeChange={scrollToBottom}
+          onLayout={scrollToBottom}
+        />
+      )}
+
+      {/* Floating Typing Indicator */}
+      {typingUsers.length > 0 && (
+        <View style={[styles.typingFloatingCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
+          <ActivityIndicator size="small" color={colors.secondary} style={styles.typingSpinner} />
+          <Text style={[styles.typingText, { color: colors.onSurface }]} numberOfLines={1}>
+            {typingUsers.length === 1
+              ? `${typingUsers[0].name} is typing...`
+              : typingUsers.length === 2
+              ? `${typingUsers[0].name} and ${typingUsers[1].name} are typing...`
+              : "Several people are typing..."}
           </Text>
         </View>
       )}
 
-      <View style={[styles.inputRow, { borderTopColor: colors.outline, backgroundColor: colors.background }]}>
-        <TextInput
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="Send a message..."
-          placeholderTextColor={colors.secondary}
+      {/* Floating Scroll to Bottom FAB */}
+      {showScrollBottom && (
+        <TouchableOpacity
+          onPress={scrollToBottom}
+          activeOpacity={0.8}
           style={[
-            styles.input,
+            styles.scrollFAB,
             {
-              color: colors.onSurface,
+              backgroundColor: colors.onSurface,
               borderColor: colors.outline,
-              backgroundColor: colors.surface,
             },
           ]}
-        />
-        <TouchableOpacity
-          onPress={handleSend}
-          style={[styles.sendBtn, { backgroundColor: colors.primary }]}
         >
-          <Feather name="send" size={16} color={colors.onPrimary} />
+          <AntDesign name="arrowdown" size={18} color={colors.surface} />
         </TouchableOpacity>
+      )}
+
+      {/* Bottom Floating Input Card */}
+      <View style={[styles.inputCardWrap, { backgroundColor: colors.background }]}>
+        <View
+          style={[
+            styles.inputCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.outline,
+            },
+          ]}
+        >
+          {/* Replying Banner */}
+          {replyingTo && (
+            <View style={[styles.bannerRow, { backgroundColor: colors.outline }]}>
+              <View style={styles.bannerLeft}>
+                <Feather name="corner-down-right" size={12} color={colors.primary} />
+                <Text style={[styles.bannerTitleText, { color: colors.onSurface }]}>
+                  Replying to @{replyingTo.name}
+                </Text>
+                <Text style={[styles.bannerExcerptText, { color: colors.secondary }]} numberOfLines={1}>
+                  "{replyingTo.content}"
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setReplyingTo(null)} style={styles.bannerCloseBtn}>
+                <AntDesign name="close" size={14} color={colors.onSurface} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Editing Banner */}
+          {editingMessage && (
+            <View style={[styles.bannerRow, { backgroundColor: colors.outline }]}>
+              <View style={styles.bannerLeft}>
+                <MaterialIcons name="edit" size={12} color={colors.primary} />
+                <Text style={[styles.bannerTitleText, { color: colors.primary }]}>
+                  Editing message...
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setEditingMessage(null)} style={styles.bannerCloseBtn}>
+                <AntDesign name="close" size={14} color={colors.onSurface} />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* ChatGPT Style Input row */}
+          <View style={styles.inputRow}>
+            <TouchableOpacity
+              onPress={() => Alert.alert("Coming Soon!", "Attachments features are coming soon.")}
+              style={styles.attachBtn}
+            >
+              <AntDesign name="plus" size={20} color={colors.secondary} />
+            </TouchableOpacity>
+
+            <TextInput
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Message #community"
+              placeholderTextColor={colors.secondary + "99"}
+              multiline
+              maxLength={500}
+              style={[styles.inputField, { color: colors.onSurface }]}
+            />
+
+            <TouchableOpacity
+              onPress={handleSend}
+              disabled={!isConnected || !inputText.trim()}
+              style={[
+                styles.sendButton,
+                {
+                  backgroundColor:
+                    isConnected && inputText.trim()
+                      ? colors.primary
+                      : colors.outline,
+                },
+              ]}
+            >
+              <Feather
+                name="arrow-up"
+                size={16}
+                color={
+                  isConnected && inputText.trim()
+                    ? colors.onPrimary
+                    : colors.secondary
+                }
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -259,109 +547,279 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  list: {
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 24,
-    paddingTop: 0,
-    paddingBottom: 84,
+    paddingTop: Platform.OS === "ios" ? 54 : 36,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  msgContainer: {
-    marginBottom: 16,
-    maxWidth: "80%",
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  myMsgContainer: {
-    alignSelf: "flex-end",
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
   },
-  otherMsgContainer: {
-    alignSelf: "flex-start",
+  headerInfo: {
+    justifyContent: "center",
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    fontFamily: FONT_FAMILY,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    fontFamily: FONT_FAMILY,
+    marginTop: 1,
+  },
+  statusWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: "500",
+    fontFamily: FONT_FAMILY,
+  },
+  loaderWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  loaderText: {
+    fontSize: 14,
+    fontFamily: FONT_FAMILY,
+    marginTop: 12,
+  },
+  list: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 110,
+  },
+  msgRow: {
+    width: "100%",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  replyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingLeft: 44,
+    marginBottom: 4,
+  },
+  replyUserText: {
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: FONT_FAMILY,
+    marginLeft: 6,
+    marginRight: 6,
+  },
+  replyContentText: {
+    fontSize: 11,
+    fontFamily: FONT_FAMILY,
+    flex: 1,
+  },
+  groupedContentWrap: {
+    paddingLeft: 44,
+  },
+  mainMsgLayout: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 12,
+  },
+  avatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  avatarInitial: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+    fontFamily: FONT_FAMILY,
+  },
+  msgBody: {
+    flex: 1,
   },
   senderHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 4,
-    paddingHorizontal: 4,
+    marginBottom: 2,
   },
   senderName: {
-    fontSize: 11,
-    fontWeight: "600",
-
-      fontFamily: FONT_FAMILY,
-
-    },
+    fontSize: 14,
+    fontWeight: "700",
+    fontFamily: FONT_FAMILY,
+  },
   roleBadge: {
-    borderWidth: 1,
     borderRadius: 4,
-    paddingHorizontal: 4,
+    paddingHorizontal: 5,
     paddingVertical: 1,
     marginLeft: 6,
   },
   roleBadgeText: {
     fontSize: 7.5,
     fontWeight: "700",
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  bubble: {
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    fontFamily: FONT_FAMILY,
+  },
+  timeText: {
+    fontSize: 11,
+    marginLeft: 8,
+    fontFamily: FONT_FAMILY,
   },
   messageText: {
-    fontSize: 13.5,
-    lineHeight: 18,
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  timeText: {
-    fontSize: 9,
-    alignSelf: "flex-end",
-    marginTop: 4,
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  typingContainer: {
+    fontSize: 14.5,
+    lineHeight: 20,
+    fontFamily: FONT_FAMILY,
+  },
+  typingFloatingCard: {
+    position: "absolute",
+    left: 16,
+    bottom: 96,
+    right: 76,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
   },
-  spinner: {
+  typingSpinner: {
     marginRight: 6,
   },
   typingText: {
     fontSize: 11.5,
-
-      fontFamily: FONT_FAMILY,
-
-    },
+    fontFamily: FONT_FAMILY,
+    fontWeight: "500",
+    flex: 1,
+  },
+  scrollFAB: {
+    position: "absolute",
+    right: 16,
+    bottom: 96,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  inputCardWrap: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingBottom: Platform.OS === "ios" ? 32 : 16,
+    paddingTop: 8,
+  },
+  inputCard: {
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  bannerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(0,0,0,0.06)",
+  },
+  bannerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  bannerTitleText: {
+    fontSize: 12,
+    fontWeight: "700",
+    fontFamily: FONT_FAMILY,
+    marginLeft: 6,
+    marginRight: 8,
+  },
+  bannerExcerptText: {
+    fontSize: 12,
+    fontFamily: FONT_FAMILY,
+    flex: 1,
+  },
+  bannerCloseBtn: {
+    padding: 4,
+  },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
-    borderTopWidth: 1,
-    marginBottom: 60,
+    paddingHorizontal: 6,
+    paddingVertical: 6,
   },
-  input: {
-    flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    fontSize: 14,
-    marginRight: 8,
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
+  attachBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  inputField: {
+    flex: 1,
+    fontSize: 14.5,
+    maxHeight: 100,
+    minHeight: 36,
+    paddingHorizontal: 10,
+    paddingTop: Platform.OS === "ios" ? 8 : 4,
+    paddingBottom: Platform.OS === "ios" ? 8 : 4,
+    fontFamily: FONT_FAMILY,
+  },
+  sendButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 4,
   },
 });
+
 export default CommunityTabContent;
