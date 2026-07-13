@@ -1,6 +1,5 @@
-const CACHE_NAME = "vidyaschool-cache-v1"
+const CACHE_NAME = "vidyaschool-cache-v2"
 const ASSETS_TO_CACHE = [
-  "/",
   "/favicon.ico",
   "/assets/vidyaschool/Logo/no_title.svg",
   "/assets/vidyaschool/Logo/Full_circle_logo.webp",
@@ -34,11 +33,18 @@ self.addEventListener("fetch", (event) => {
   // Only cache GET requests
   if (event.request.method !== "GET") return
 
+  // Never cache HTML navigations — stale pages break Next.js routing and HMR
+  if (event.request.mode === "navigate") return
+
   // Avoid caching browser extensions or non-HTTP protocols (e.g. chrome-extension://)
   if (!event.request.url.startsWith(self.location.origin)) return
 
-  // Bypass API and WebSockets to prevent breaking real-time functions
-  if (event.request.url.includes("/api/") || event.request.url.includes("/socket.io")) {
+  // Bypass API, Next.js dev/build assets, and WebSockets
+  if (
+    event.request.url.includes("/api/") ||
+    event.request.url.includes("/socket.io") ||
+    event.request.url.includes("/_next/")
+  ) {
     return
   }
 
@@ -77,13 +83,7 @@ self.addEventListener("fetch", (event) => {
           }
           return networkResponse
         })
-        .catch(() => {
-          // Fallback to home page if offline and loading page document
-          if (event.request.mode === "navigate") {
-            return caches.match("/") || new Response("Offline", { status: 503 })
-          }
-          return new Response("Offline", { status: 503 })
-        })
+        .catch(() => new Response("Offline", { status: 503 }))
     })
   )
 })

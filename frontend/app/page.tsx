@@ -1,9 +1,6 @@
-import Link from "next/link"
-import Image from "next/image"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
-import { Globe, ArrowRight, Sparkles } from "lucide-react"
+import { HeroSection } from "@/components/hero-section"
 import dynamic from "next/dynamic"
 import type { Metadata } from 'next'
 
@@ -12,9 +9,6 @@ export const metadata: Metadata = {
   description: 'Welcome to VidyaSchool - academic excellence meets holistic development with modern labs, arts programs, and vibrant student community.',
 }
 
-const LiquidMetalHero = dynamic(() => import("@/components/liquid-metal-hero"), { 
-  loading: () => <div className="w-full aspect-[4/3] rounded-xl bg-muted/20 animate-pulse" />
-})
 const VideoModal = dynamic(() => import("@/components/video-modal"), {
   loading: () => <div className="w-full aspect-video rounded-2xl bg-muted/20 animate-pulse" />
 })
@@ -41,50 +35,11 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background">
       <Header />
       
-      <main className="flex-1 flex flex-col justify-center py-4 sm:py-6 md:py-8">
-        <div className="w-full px-4 sm:px-8 md:px-12 lg:px-24 max-w-none">
-          
-          {/* Hero */}
-          <div className="relative rounded-xl border border-border bg-transparent px-4 py-6 sm:px-8 sm:py-9 md:px-12 md:py-12 lg:px-14 lg:py-14">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 sm:gap-10 lg:gap-16 items-center">
-              
-              <div className="lg:col-span-6 flex flex-col justify-center min-h-0 lg:min-h-[350px] lg:pl-6 order-2 lg:order-1">
-                <div className="space-y-4 text-center sm:space-y-5 lg:space-y-6 lg:text-left">
-                  <div className="inline-flex max-w-full items-center gap-1.5 self-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground sm:text-xs lg:self-start">
-                    <Sparkles className="h-4 w-4" />
-                    <span className="truncate">Welcome to VidyaSchool</span>
-                  </div>
-                  
-                  <h1 className="text-[clamp(2.25rem,10vw,3.75rem)] font-extrabold tracking-tight text-foreground leading-[1.05] text-balance sm:text-[clamp(3rem,7vw,4.5rem)] lg:text-[clamp(3.25rem,4.6vw,5rem)]">
-                    Empowering Minds, Shaping Futures
-                  </h1>
-                  
-                  <p className="mx-auto max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base md:text-lg lg:mx-0">
-                    Welcome to VidyaSchool, where academic excellence meets holistic development. Discover our wings, modern labs, arts programs, and vibrant student community.
-                  </p>
-  
-                  <div className="flex w-full flex-col items-stretch gap-3 pt-2 sm:flex-row sm:items-center sm:justify-center lg:justify-start">
-                    <Button asChild variant="default" size="md" className="w-full sm:w-auto">
-                      <Link href="/student">
-                        <span>Student Portal</span>
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                    <Button asChild variant="outline" size="md" className="w-full sm:w-auto">
-                      <Link href="/teacher">Teacher Portal</Link>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-  
-              <div className="lg:col-span-6 flex items-center justify-center lg:pr-6 order-1 lg:order-2">
-                <LiquidMetalHero />
-              </div>
-            </div>
-          </div>
+      <main className="flex-1 flex flex-col">
+        <HeroSection />
 
-          {/* Video */}
-          <section className="w-full mt-16 md:mt-24 py-8">
+        <div className="w-full px-4 sm:px-8 md:px-12 lg:px-24 max-w-none">
+          <section id="about" className="w-full mt-16 md:mt-24 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
               <div className="lg:col-span-7"><VideoModal /></div>
               <div className="lg:col-span-5 flex flex-col justify-center space-y-6">
@@ -116,7 +71,7 @@ export default function Home() {
           </section>
 
           {/* Bento */}
-          <section className="w-full mt-20 md:mt-28 py-6">
+          <section id="students" className="w-full mt-20 md:mt-28 py-6">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
               <h2 className="text-center text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Our Students</h2>
             </div>
@@ -137,7 +92,7 @@ export default function Home() {
           </section>
 
           {/* Partners */}
-          <section className="w-full mt-16 md:mt-20 py-6 overflow-hidden">
+          <section id="partners" className="w-full mt-16 md:mt-20 py-6 overflow-hidden">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-4">
               <h2 className="text-center text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Platforms & Programs Empowering Our Digital Classroom</h2>
             </div>

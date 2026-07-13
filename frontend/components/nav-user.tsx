@@ -24,7 +24,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { useTheme } from "next-themes"
+import { useTheme } from "@/components/theme-provider"
 import { EllipsisVerticalIcon, CircleUserRoundIcon, BellIcon, LogOutIcon, SunIcon } from "lucide-react"
 import { useSession, authClient } from "@/lib/auth-client"
 import Link from "next/link"

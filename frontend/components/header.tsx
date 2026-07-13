@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useTheme } from "next-themes"
+import { useTheme } from "@/components/theme-provider"
 import { Sun, Moon, Menu, X, Terminal, Monitor, Laptop, ChevronDown } from "lucide-react"
 
 import {
@@ -59,8 +59,10 @@ export function Header() {
 
   return (
     <header className={cn(
-      "sticky top-0 z-50 w-full bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 transition-colors duration-200",
-      isScrolled ? "border-b border-border" : "border-b border-transparent"
+      "sticky top-0 z-50 w-full transition-all duration-300",
+      isScrolled
+        ? "bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 border-b border-border"
+        : "bg-transparent border-b border-transparent"
     )}>
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         

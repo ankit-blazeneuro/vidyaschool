@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@wrksz/themes/next"
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,7 +41,7 @@ import { RootProvider } from "fumadocs-ui/provider/next"
 import { PWARegister } from "@/components/pwa-register"
 import { CustomSearchDialog } from "@/components/custom-search-dialog"
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
