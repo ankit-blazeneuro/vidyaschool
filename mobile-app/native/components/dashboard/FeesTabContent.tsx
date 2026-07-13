@@ -92,6 +92,24 @@ export const FeesTabContent: React.FC<FeesTabContentProps> = ({
       const email = await SessionManager.getEmail();
       const isMock = order.mock_payment === true;
 
+      if (isMock) {
+        // Mock mode: directly mark as paid in backend (bypass Razorpay SDK completely)
+        try {
+          await ApiService.payFees({
+            installment_ids: [payingInstallment.id],
+            payment_method: "Razorpay (Mock)",
+          });
+          Alert.alert("✓ Payment Successful", "Your mock fee payment has been successfully recorded.");
+          fetchFees();
+        } catch (e: any) {
+          Alert.alert("Error", "Mock payment failed: " + e.message);
+        } finally {
+          setIsProcessingPayment(false);
+          setPayingInstallment(null);
+        }
+        return;
+      }
+
       // Step 2: Launch Razorpay checkout
       const options: any = {
         name: "Vidya School",
