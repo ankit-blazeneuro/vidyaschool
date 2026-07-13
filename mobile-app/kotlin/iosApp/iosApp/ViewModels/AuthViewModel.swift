@@ -47,14 +47,8 @@ final class AuthViewModel: ObservableObject {
     func checkSession() {
         sessionState = .loading
         Task {
-            // Run KMP check on background thread then map result
-            await withCheckedContinuation { continuation in
-                sharedViewModel.checkSession()
-                // Give coroutines a moment to emit (simple approach)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    continuation.resume()
-                }
-            }
+            sharedViewModel.checkSession()
+            await waitForNonLoadingState()
             syncStateFromShared()
         }
     }
@@ -71,12 +65,8 @@ final class AuthViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        await withCheckedContinuation { continuation in
-            sharedViewModel.loginWithEmail(email: email, password: password)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                continuation.resume()
-            }
-        }
+        sharedViewModel.loginWithEmail(email: email, password: password)
+        await waitForNonLoadingState()
 
         isLoading = false
         syncStateFromShared()
@@ -95,17 +85,13 @@ final class AuthViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        await withCheckedContinuation { continuation in
-            sharedViewModel.createSocialSession(
-                email: email,
-                name: name,
-                avatarUrl: avatarUrl,
-                provider: provider
-            )
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                continuation.resume()
-            }
-        }
+        sharedViewModel.createSocialSession(
+            email: email,
+            name: name,
+            avatarUrl: avatarUrl,
+            provider: provider
+        )
+        await waitForNonLoadingState()
 
         isLoading = false
         syncStateFromShared()
@@ -155,10 +141,20 @@ final class AuthViewModel: ObservableObject {
                 errorMessage = err.message
                 sessionState = .error(err.message)
             }
-        case is SharedAuthState.Loading:
-            sessionState = .loading
         default:
-            sessionState = .idle
+            // Loading or unknown — treat as logged out so UI never stays stuck
+            sessionState = .loggedOut
+        }
+    }
+
+    /// Polls `authState` every 100 ms until it leaves the Loading state.
+    /// Hard timeout of 10 s prevents an infinite wait on network failure.
+    private func waitForNonLoadingState() async {
+        let deadline = Date().addingTimeInterval(10)
+        while Date() < deadline {
+            let state = sharedViewModel.authState.value
+            if !(state is SharedAuthState.Loading) { return }
+            try? await Task.sleep(nanoseconds: 100_000_000) // 100 ms
         }
     }
 }
