@@ -135,13 +135,13 @@ struct LoginView: View {
                 }
             }
         }
-        .onChange(of: authViewModel.errorMessage) { _, error in
+        .onChange(of: authViewModel.errorMessage) { error in
             if error != nil {
                 withAnimation(.default) { shakeError = true }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { shakeError = false }
             }
         }
-        .onChange(of: authViewModel.isLoggedIn) { _, loggedIn in
+        .onChange(of: authViewModel.isLoggedIn) { loggedIn in
             if loggedIn { dismiss() }
         }
     }
@@ -261,7 +261,7 @@ struct SignupView: View {
                 }
             }
         }
-        .onChange(of: authViewModel.isLoggedIn) { _, loggedIn in
+        .onChange(of: authViewModel.isLoggedIn) { loggedIn in
             if loggedIn { dismiss() }
         }
     }
