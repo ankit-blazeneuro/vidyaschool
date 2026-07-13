@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useThemeColors, useTheme } from "../theme/ThemeContext";
 import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import NotificationEvent from "../services/notificationEvent";
@@ -321,17 +322,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             styles.tabBar,
             {
               borderTopColor: colors.outline,
-              backgroundColor:
-                Platform.OS === "android"
-                  ? isDark
-                    ? "rgba(9,9,11,0.92)"
-                    : "rgba(255,255,255,0.92)"
-                  : "transparent",
+              backgroundColor: "transparent",
               paddingBottom: insets.bottom > 0 ? insets.bottom : (Platform.OS === "ios" ? 12 : 8),
               height: 60 + (insets.bottom > 0 ? insets.bottom : 0),
             },
           ]}
         >
+          <LinearGradient
+            colors={
+              isDark
+                ? ["rgba(9, 9, 11, 0.4)", "rgba(9, 9, 11, 0.88)"]
+                : ["rgba(255, 255, 255, 0.4)", "rgba(244, 244, 245, 0.88)"]
+            }
+            style={StyleSheet.absoluteFill}
+          />
           <TouchableOpacity
             onPress={() => setSelectedTab("home")}
             style={styles.tabItem}
