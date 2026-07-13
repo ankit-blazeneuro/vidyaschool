@@ -17,6 +17,7 @@
 		9905F206F31F433C96782C2F /* FeesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 066444D54F1D4830A1E7D989 /* FeesView.swift */; };
 		C8534CF4A6F84E66ABB6BA9F /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF19B36A6B749F5BBC02261 /* DashboardView.swift */; };
 		968EB7C783844B0C8317A211 /* NoticesTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D6622A2BB404181A45D6B04 /* NoticesTabView.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* SearchTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C4D5E6F7A8B9C0D1E2F3A4 /* SearchTabView.swift */; };
 		1894B0D0D59542F38FA685B4 /* UpdateBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 797648687DCE46D0B3D68D72 /* UpdateBannerView.swift */; };
 		B00E53582B634070BD689FAF /* LibraryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CCC736BB0F94F5BA2B97184 /* LibraryViewModel.swift */; };
 		9AEA9316359A4883BFC2A1E7 /* NoticesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF459D0356DA4F6289A32E60 /* NoticesViewModel.swift */; };
@@ -42,6 +43,7 @@
 		066444D54F1D4830A1E7D989 /* FeesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FeesView.swift"; path = "iosApp/Views/FeesView.swift"; sourceTree = "<group>"; };
 		DFF19B36A6B749F5BBC02261 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "DashboardView.swift"; path = "iosApp/Views/DashboardView.swift"; sourceTree = "<group>"; };
 		7D6622A2BB404181A45D6B04 /* NoticesTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "NoticesTabView.swift"; path = "iosApp/Views/NoticesTabView.swift"; sourceTree = "<group>"; };
+		B3C4D5E6F7A8B9C0D1E2F3A4 /* SearchTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "SearchTabView.swift"; path = "iosApp/Views/SearchTabView.swift"; sourceTree = "<group>"; };
 		797648687DCE46D0B3D68D72 /* UpdateBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UpdateBannerView.swift"; path = "iosApp/Views/UpdateBannerView.swift"; sourceTree = "<group>"; };
 		9CCC736BB0F94F5BA2B97184 /* LibraryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "LibraryViewModel.swift"; path = "iosApp/ViewModels/LibraryViewModel.swift"; sourceTree = "<group>"; };
 		DF459D0356DA4F6289A32E60 /* NoticesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "NoticesViewModel.swift"; path = "iosApp/ViewModels/NoticesViewModel.swift"; sourceTree = "<group>"; };
@@ -103,6 +105,7 @@
 			066444D54F1D4830A1E7D989 /* FeesView.swift */,
 			DFF19B36A6B749F5BBC02261 /* DashboardView.swift */,
 			7D6622A2BB404181A45D6B04 /* NoticesTabView.swift */,
+			B3C4D5E6F7A8B9C0D1E2F3A4 /* SearchTabView.swift */,
 			797648687DCE46D0B3D68D72 /* UpdateBannerView.swift */,
 		);
 		name = Views;
@@ -225,6 +228,7 @@
 			9905F206F31F433C96782C2F /* FeesView.swift in Sources */,
 			C8534CF4A6F84E66ABB6BA9F /* DashboardView.swift in Sources */,
 			968EB7C783844B0C8317A211 /* NoticesTabView.swift in Sources */,
+			A1B2C3D4E5F6A7B8C9D0E1F2 /* SearchTabView.swift in Sources */,
 			1894B0D0D59542F38FA685B4 /* UpdateBannerView.swift in Sources */,
 			B00E53582B634070BD689FAF /* LibraryViewModel.swift in Sources */,
 			9AEA9316359A4883BFC2A1E7 /* NoticesViewModel.swift in Sources */,

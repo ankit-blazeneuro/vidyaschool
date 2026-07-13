@@ -91,7 +91,11 @@ private struct NoticeCard: View {
                     .font(AppTheme.Font.headline)
                     .foregroundColor(.white)
 
-                Text(notice.content)
+                if let sender = notice.senderName, !sender.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text("By \(sender)")
+                        .font(.system(size: 12))
+                        .foregroundColor(AppTheme.Color.darkSecondary)
+                }
                     .font(AppTheme.Font.subheadline)
                     .foregroundColor(Color.white.opacity(0.85))
                     .lineSpacing(4)
