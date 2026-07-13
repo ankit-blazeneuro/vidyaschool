@@ -96,19 +96,11 @@ private struct NoticeCard: View {
                         .font(.system(size: 12))
                         .foregroundColor(AppTheme.Color.darkSecondary)
                 }
+
+                Text(notice.content)
                     .font(AppTheme.Font.subheadline)
                     .foregroundColor(Color.white.opacity(0.85))
                     .lineSpacing(4)
-
-                if let sender = notice.senderName, !sender.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    HStack {
-                        Spacer()
-                        Text("— \(sender)")
-                            .font(.system(size: 11, weight: .medium, design: .default))
-                            .foregroundColor(AppTheme.Color.darkSecondary)
-                    }
-                    .padding(.top, 4)
-                }
             }
         }
     }
