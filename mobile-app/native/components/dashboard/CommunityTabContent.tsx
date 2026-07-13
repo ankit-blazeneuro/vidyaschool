@@ -15,6 +15,7 @@ import {
 import { useThemeColors } from "../../theme/ThemeContext";
 import { SessionManager } from "../../services/session";
 import { ApiService } from "../../services/api";
+import { DashboardHeader } from "../DashboardHeader";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { FONT_FAMILY } from "../../theme/colors";
 import io, { Socket } from "socket.io-client";
@@ -363,40 +364,14 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
       style={[styles.container, { backgroundColor: colors.background }]}
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
-      {/* Custom Hub Header */}
-      <View style={[styles.header, { borderBottomColor: colors.outline }]}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity
-            onPress={onMenuPress}
-            style={[styles.backBtn, { borderColor: colors.outline }]}
-          >
-            <Feather name="arrow-left" size={18} color={colors.onSurface} />
-          </TouchableOpacity>
-          <View style={styles.headerInfo}>
-            <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Community Hub</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.secondary }]}>
-              {onlineCount} {onlineCount === 1 ? "user" : "users"} online
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.statusWrap}>
-          <View
-            style={[
-              styles.statusDot,
-              { backgroundColor: isConnected ? "#10B981" : "#EF4444" },
-            ]}
-          />
-          <Text
-            style={[
-              styles.statusText,
-              { color: isConnected ? "#10B981" : "#EF4444" },
-            ]}
-          >
-            {isConnected ? "Live" : "Offline"}
-          </Text>
-        </View>
-      </View>
+      {/* Dashboard Header */}
+      <DashboardHeader
+        title="Community Hub"
+        subtitle={`${onlineCount} ${onlineCount === 1 ? "user" : "users"} online • ${isConnected ? "Live" : "Offline"}`}
+        onMenuPress={onMenuPress}
+        onNotificationPress={onNotificationPress}
+        style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.outline }}
+      />
 
       {/* Loading Overlay */}
       {messages.length === 0 && !isConnected ? (

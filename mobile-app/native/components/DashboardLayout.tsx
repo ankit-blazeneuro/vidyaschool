@@ -4,18 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Modal,
   Dimensions,
   Animated,
   Platform,
   StatusBar,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeColors, useTheme } from "../theme/ThemeContext";
 import { BlurView } from "expo-blur";
-import { SessionManager } from "../services/session";
-import { ApiService } from "../services/api";
-import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import NotificationEvent from "../services/notificationEvent";
 import {
@@ -39,6 +34,7 @@ import { SessionsTabContent } from "./dashboard/SessionsTabContent";
 import { DocViewerScreen } from "./dashboard/DocViewerScreen";
 import { NotificationDrawer } from "./dashboard/NotificationDrawer";
 import { ComplaintDialog } from "./dashboard/ComplaintDialog";
+import { AppMenu } from "./AppMenu";
 import { FONT_FAMILY } from "../theme/colors";
 
 interface DashboardLayoutProps {
@@ -74,9 +70,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 }) => {
   const colors = useThemeColors();
   const { isDark } = useTheme();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
-  
+
   const [selectedTab, setSelectedTab] = useState("home");
   const [activeDocPath, setActiveDocPath] = useState<string | null>(null);
   const [activeDocFallback, setActiveDocFallback] = useState<string | null>(null);
@@ -103,72 +98,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const handleScroll = (event: any) => {
     const y = event.nativeEvent.contentOffset.y;
-    if (y > 100) {
-      if (!headerCollapsed) setHeaderCollapsed(true);
-    } else {
-      if (headerCollapsed) setHeaderCollapsed(false);
-    }
+    const shouldCollapse = y > 60;
+    if (shouldCollapse && !headerCollapsed) setHeaderCollapsed(true);
+    if (!shouldCollapse && headerCollapsed) setHeaderCollapsed(false);
   };
 
   // Modals visibility
-  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const [complaintVisible, setComplaintVisible] = useState(false);
-
-  // Animated left drawer offset & backdrop opacity
-  const slideAnim = useRef(new Animated.Value(-280)).current;
-  const backdropAnim = useRef(new Animated.Value(0)).current;
-
-  // Drawer slide action
-  useEffect(() => {
-    if (drawerVisible) {
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropAnim, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: -280,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropAnim, {
-          toValue: 0,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [drawerVisible, slideAnim, backdropAnim]);
-
-  const closeDrawer = () => {
-    Animated.parallel([
-      Animated.timing(slideAnim, {
-        toValue: -280,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(backdropAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => setDrawerVisible(false));
-  };
-
-  const handleDrawerItemPress = (tabKey: string) => {
-    setSelectedTab(tabKey);
-    closeDrawer();
-  };
 
   const handleDocSelect = (path: string, fallback: string) => {
     setActiveDocPath(path);
@@ -177,6 +115,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const handleNotificationClick = () => {
     setNotificationsVisible(true);
+  };
+
+  const handleMenuClick = () => {
+    setMenuVisible(true);
   };
 
   // Open notification drawer when user taps a push notification from the system tray
@@ -189,48 +131,57 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const isStudent = role.toLowerCase() === "student";
 
-  // Tab Header render helper
-  const getHeaderTitle = () => {
-    switch (selectedTab) {
-      case "home":
-        return "Dashboard";
-      case "notice":
-        return "Notices";
-      case "fees":
-        return "School Fees";
-      case "community":
-        return "Community Chat";
-      case "search":
-        return "Directory & Docs";
-      case "profile":
-        return "Settings";
-      case "sessions":
-        return "Active Sessions";
-      default:
-        return "Vidya School";
-    }
-  };
+  // Menu items for AppMenu
+  const menuItems = [
+    {
+      icon: "edit-2",
+      label: "File a Complaint",
+      sublabel: "Submit a formal school complaint",
+      onPress: () => setComplaintVisible(true),
+    },
+    {
+      icon: "shield",
+      label: "Manage Sessions",
+      sublabel: "View & revoke active sessions",
+      onPress: () => setSelectedTab("sessions"),
+    },
+    {
+      icon: "log-out",
+      label: "Log Out",
+      sublabel: "Sign out of your account",
+      onPress: onLogout,
+      danger: true,
+    },
+  ];
 
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
         backgroundColor="transparent"
         translucent={true}
       />
-      
-      {/* 1. Top Bar Navigation (when doc viewer is not active and on search tab) */}
+
+      {/* 1. Top Bar Navigation (search tab only) */}
       {activeDocPath === null && selectedTab === "search" && (
-        <View style={[styles.topBar, { borderBottomColor: colors.outline }]}>
+        <View
+          style={[
+            styles.topBar,
+            {
+              borderBottomColor: colors.outline,
+              paddingTop: (StatusBar.currentHeight ?? 0) + 6,
+            },
+          ]}
+        >
           <TouchableOpacity
-            onPress={() => setDrawerVisible(true)}
+            onPress={handleMenuClick}
             style={[styles.circleBtn, { borderColor: colors.outline }]}
           >
             <CustomMenuIcon size={16} color={colors.onSurface} />
           </TouchableOpacity>
-          
+
           <Text style={[styles.headerTitle, { color: colors.onSurface }]}>
-            {getHeaderTitle()}
+            Directory &amp; Docs
           </Text>
 
           <TouchableOpacity
@@ -257,24 +208,24 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <>
             {selectedTab === "home" && homeContent(
               handleNotificationClick,
-              () => setDrawerVisible(true),
+              handleMenuClick,
               handleScroll
             )}
             {selectedTab === "notice" && (
               <NoticeTabContent
-                onMenuPress={() => setDrawerVisible(true)}
+                onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
               />
             )}
             {selectedTab === "fees" && isStudent && (
               <FeesTabContent
-                onMenuPress={() => setDrawerVisible(true)}
+                onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
               />
             )}
             {selectedTab === "community" && !isStudent && (
               <CommunityTabContent
-                onMenuPress={() => setDrawerVisible(true)}
+                onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
               />
             )}
@@ -289,13 +240,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <ProfileTabContent
                 onThemeChange={onThemeChange}
                 onLogout={onLogout}
-                onMenuPress={() => setDrawerVisible(true)}
+                onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
               />
             )}
             {selectedTab === "sessions" && (
               <SessionsTabContent
-                onMenuPress={() => setDrawerVisible(true)}
+                onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
               />
             )}
@@ -303,27 +254,39 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         )}
       </View>
 
-      {/* Animated Sticky Header (matches Kotlin DashboardStickyHeader) */}
+      {/* Animated Sticky Floating Header */}
       {activeDocPath === null && selectedTab === "home" && (
         <Animated.View
+          pointerEvents={headerCollapsed ? "auto" : "none"}
           style={[
             styles.stickyTopBar,
             {
               borderBottomColor: colors.outline,
-              paddingTop: insets.top,
-              height: 54 + insets.top,
+              paddingTop: StatusBar.currentHeight ?? 0,
+              height: 54 + (StatusBar.currentHeight ?? 0),
               opacity: headerAlpha,
               transform: [{ translateY: headerSlide }],
-              backgroundColor: colors.background,
-            }
+              backgroundColor: isDark
+                ? "rgba(9,9,11,0.95)"
+                : "rgba(255,255,255,0.95)",
+            },
           ]}
         >
+          <BlurView
+            intensity={Platform.OS === "ios" ? 80 : 90}
+            tint={isDark ? "dark" : "light"}
+            style={StyleSheet.absoluteFill}
+          />
           <View style={styles.stickyHeaderRow}>
             <TouchableOpacity
-              onPress={() => setDrawerVisible(true)}
+              onPress={handleMenuClick}
               style={[
                 styles.circleBtn,
-                { borderColor: isDark ? "rgba(255, 255, 255, 0.15)" : "rgba(24, 24, 27, 0.15)" },
+                {
+                  borderColor: isDark
+                    ? "rgba(255,255,255,0.15)"
+                    : "rgba(24,24,27,0.15)",
+                },
               ]}
             >
               <CustomMenuIcon size={16} color={colors.onSurface} />
@@ -337,7 +300,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               onPress={handleNotificationClick}
               style={[
                 styles.circleBtn,
-                { borderColor: isDark ? "rgba(255, 255, 255, 0.15)" : "rgba(24, 24, 27, 0.15)" },
+                {
+                  borderColor: isDark
+                    ? "rgba(255,255,255,0.15)"
+                    : "rgba(24,24,27,0.15)",
+                },
               ]}
             >
               <CustomNotificationIcon size={16} color={colors.onSurface} />
@@ -355,10 +322,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             styles.tabBar,
             {
               borderTopColor: colors.outline,
-              backgroundColor: Platform.OS === "android" ? (isDark ? "rgba(9,9,11,0.92)" : "rgba(255,255,255,0.92)") : "transparent",
-              paddingBottom: Platform.OS === "ios" ? insets.bottom : (insets.bottom > 0 ? insets.bottom : 8),
-              height: 60 + (insets.bottom > 0 ? insets.bottom : 8),
-            }
+              backgroundColor:
+                Platform.OS === "android"
+                  ? isDark
+                    ? "rgba(9,9,11,0.92)"
+                    : "rgba(255,255,255,0.92)"
+                  : "transparent",
+            },
           ]}
         >
           <TouchableOpacity
@@ -473,105 +443,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </BlurView>
       )}
 
-      {/* 4. Left Animated Side Drawer Modal */}
-      <Modal
-        visible={drawerVisible}
-        transparent={true}
-        animationType="none"
-        onRequestClose={closeDrawer}
-      >
-        <View style={styles.drawerOverlay}>
-          {/* Animated Backdrop Overlay */}
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                backgroundColor: "rgba(0,0,0,0.4)",
-                opacity: backdropAnim,
-              },
-            ]}
-          />
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={closeDrawer}
-            style={styles.drawerDismiss}
-          />
-          <Animated.View
-            style={[
-              styles.drawerContent,
-              {
-                backgroundColor: colors.surface,
-                transform: [{ translateX: slideAnim }],
-              },
-            ]}
-          >
-            <SafeAreaView style={{ flex: 1 }}>
-              {/* Profile card in drawer */}
-              <View style={styles.drawerHeader}>
-                <View style={[styles.drawerAvatarCircle, { backgroundColor: colors.outline }]}>
-                  <Text style={[styles.drawerAvatarText, { color: colors.onSurface }]}>
-                    {name.substring(0, 1).toUpperCase()}
-                  </Text>
-                </View>
-                <View style={styles.drawerHeaderText}>
-                  <Text style={[styles.drawerName, { color: colors.onSurface }]} numberOfLines={1}>
-                    {name}
-                  </Text>
-                  <Text style={[styles.drawerEmail, { color: colors.secondary }]} numberOfLines={1}>
-                    {email}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={[styles.drawerDivider, { backgroundColor: colors.outline }]} />
-
-              {/* Drawer Menu Items */}
-              <View style={styles.drawerMenu}>
-                <TouchableOpacity
-                  onPress={() => {
-                    closeDrawer();
-                    setComplaintVisible(true);
-                  }}
-                  style={styles.drawerItem}
-                >
-                  <Feather name="edit-2" size={16} color={colors.onSurface} style={styles.drawerItemIcon} />
-                  <Text style={[styles.drawerItemText, { color: colors.onSurface }]}>
-                    File a Complaint
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => handleDrawerItemPress("sessions")}
-                  style={[
-                    styles.drawerItem,
-                    selectedTab === "sessions" && { backgroundColor: colors.outline },
-                  ]}
-                >
-                  <Feather name="shield" size={16} color={colors.onSurface} style={styles.drawerItemIcon} />
-                  <Text style={[styles.drawerItemText, { color: colors.onSurface }]}>
-                    Manage Sessions
-                  </Text>
-                </TouchableOpacity>
-
-                <View style={{ flex: 1 }} />
-
-                <TouchableOpacity
-                  onPress={() => {
-                    closeDrawer();
-                    onLogout();
-                  }}
-                  style={[styles.drawerItem, styles.logoutItem]}
-                >
-                  <Feather name="log-out" size={16} color="#DC2626" style={styles.drawerItemIcon} />
-                  <Text style={[styles.drawerItemText, { color: "#DC2626", fontWeight: "600" }]}>
-                    Log Out
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </SafeAreaView>
-          </Animated.View>
-        </View>
-      </Modal>
+      {/* 4. AppMenu bottom sheet */}
+      <AppMenu
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        name={name}
+        email={email}
+        role={role}
+        items={menuItems}
+      />
 
       {/* 5. Standing Modals */}
       <NotificationDrawer
@@ -583,12 +463,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         visible={complaintVisible}
         onClose={() => setComplaintVisible(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  root: {
     flex: 1,
   },
   topBar: {
@@ -596,6 +476,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
+    paddingBottom: 10,
     borderBottomWidth: 1,
   },
   stickyTopBar: {
@@ -603,8 +484,9 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 10,
-    borderBottomWidth: 1,
+    zIndex: 100,
+    elevation: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   stickyHeaderRow: {
     flexDirection: "row",
@@ -624,10 +506,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: "700",
-
-      fontFamily: FONT_FAMILY,
-
-    },
+    fontFamily: FONT_FAMILY,
+  },
   body: {
     flex: 1,
   },
@@ -658,91 +538,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 4,
     fontWeight: "500",
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  drawerOverlay: {
-    flex: 1,
-    flexDirection: "row",
-  },
-  drawerDismiss: {
-    flex: 1,
-  },
-  drawerContent: {
-    width: 280,
-    height: "100%",
-    position: "absolute",
-    left: 0,
-    paddingTop: Platform.OS === "ios" ? 44 : 20,
-    paddingHorizontal: 20,
-  },
-  drawerHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 16,
-  },
-  drawerAvatarCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  drawerAvatarText: {
-    fontSize: 20,
-    fontWeight: "700",
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  drawerHeaderText: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  drawerName: {
-    fontSize: 15,
-    fontWeight: "700",
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  drawerEmail: {
-    fontSize: 11,
-    marginTop: 2,
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  drawerDivider: {
-    height: 1,
-    width: "100%",
-    marginVertical: 12,
-  },
-  drawerMenu: {
-    flex: 1,
-    paddingTop: 16,
-  },
-  drawerItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  drawerItemIcon: {
-    marginRight: 12,
-  },
-  drawerItemText: {
-    fontSize: 14,
-    fontWeight: "500",
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  logoutItem: {
-    marginBottom: Platform.OS === "ios" ? 24 : 20,
+    fontFamily: FONT_FAMILY,
   },
 });
 export default DashboardLayout;

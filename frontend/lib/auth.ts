@@ -8,6 +8,9 @@ import { eq } from 'drizzle-orm'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export const auth = betterAuth({
+  trustedOrigins: [
+    "https://vidyaschool.vercel.app",
+  ],
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema,
