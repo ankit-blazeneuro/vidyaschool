@@ -115,6 +115,27 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     setActiveDocFallback(fallback);
   };
 
+  const getHeaderTitle = () => {
+    switch (selectedTab) {
+      case "home":
+        return "Dashboard";
+      case "notice":
+        return "Notices";
+      case "fees":
+        return "School Fees";
+      case "community":
+        return "Community Chat";
+      case "search":
+        return "Directory & Docs";
+      case "profile":
+        return "Settings";
+      case "sessions":
+        return "Active Sessions";
+      default:
+        return "Vidya School";
+    }
+  };
+
   const handleNotificationClick = () => {
     setNotificationsVisible(true);
   };
