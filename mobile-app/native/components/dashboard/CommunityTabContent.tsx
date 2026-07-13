@@ -15,7 +15,7 @@ import {
 import { useThemeColors } from "../../theme/ThemeContext";
 import { SessionManager } from "../../services/session";
 import { ApiService } from "../../services/api";
-import { Feather, AntDesign, MaterialIcons } from "@expo/vector-icons";
+import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { FONT_FAMILY } from "../../theme/colors";
 import io, { Socket } from "socket.io-client";
 
@@ -228,7 +228,7 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
 
   const handleLongPress = (msg: CommunityMsg) => {
     const isMe = currentUser && msg.userId === currentUser.id;
-    const options = [
+    const options: any[] = [
       { text: "Reply", onPress: () => setReplyingTo(msg) },
       { text: "Cancel", style: "cancel" as const },
     ];
@@ -370,7 +370,7 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
             onPress={onMenuPress}
             style={[styles.backBtn, { borderColor: colors.outline }]}
           >
-            <AntDesign name="arrowleft" size={18} color={colors.onSurface} />
+            <Feather name="arrow-left" size={18} color={colors.onSurface} />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
             <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Community Hub</Text>
@@ -446,7 +446,7 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
             },
           ]}
         >
-          <AntDesign name="arrowdown" size={18} color={colors.surface} />
+          <Feather name="arrow-down" size={18} color={colors.surface} />
         </TouchableOpacity>
       )}
 
@@ -474,7 +474,7 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setReplyingTo(null)} style={styles.bannerCloseBtn}>
-                <AntDesign name="close" size={14} color={colors.onSurface} />
+                <Feather name="x" size={14} color={colors.onSurface} />
               </TouchableOpacity>
             </View>
           )}
@@ -489,7 +489,7 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setEditingMessage(null)} style={styles.bannerCloseBtn}>
-                <AntDesign name="close" size={14} color={colors.onSurface} />
+                <Feather name="x" size={14} color={colors.onSurface} />
               </TouchableOpacity>
             </View>
           )}
@@ -500,7 +500,7 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
               onPress={() => Alert.alert("Coming Soon!", "Attachments features are coming soon.")}
               style={styles.attachBtn}
             >
-              <AntDesign name="plus" size={20} color={colors.secondary} />
+              <Feather name="plus" size={20} color={colors.secondary} />
             </TouchableOpacity>
 
             <TextInput
