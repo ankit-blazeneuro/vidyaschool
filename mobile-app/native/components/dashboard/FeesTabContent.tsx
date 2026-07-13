@@ -83,6 +83,8 @@ export const FeesTabContent: React.FC<FeesTabContentProps> = ({
 
       if (!orderResp.ok) {
         Alert.alert("Error", "Order creation failed. Please try again.");
+        setIsProcessingPayment(false);
+        setPayingInstallment(null);
         return;
       }
 
@@ -111,53 +113,97 @@ export const FeesTabContent: React.FC<FeesTabContentProps> = ({
       }
 
       // Step 3: Open Razorpay — callbacks handle success/failure
-      RazorpayCheckout.open(options)
-        .then(async (data: any) => {
-          // Payment success — verify with backend
-          try {
-            if (isMock) {
-              // Mock mode: directly mark as paid
-              await ApiService.payFees({
-                installment_ids: [payingInstallment.id],
-                payment_method: "Razorpay",
-              });
-            } else {
-              // Real mode: verify HMAC signature with backend
-              await ApiService.verifyPayment({
-                order_id: order.order_id || "",
-                payment_id: data.razorpay_payment_id,
-                signature: data.razorpay_signature,
-                installment_ids: [payingInstallment.id],
-                payment_method: "Razorpay",
-              });
+      try {
+        if (!RazorpayCheckout || typeof RazorpayCheckout.open !== "function") {
+          throw new Error("Razorpay native SDK is not linked/available in this build.");
+        }
+
+        RazorpayCheckout.open(options)
+          .then(async (data: any) => {
+            // Payment success — verify with backend
+            try {
+              if (isMock) {
+                // Mock mode: directly mark as paid
+                await ApiService.payFees({
+                  installment_ids: [payingInstallment.id],
+                  payment_method: "Razorpay",
+                });
+              } else {
+                // Real mode: verify HMAC signature with backend
+                await ApiService.verifyPayment({
+                  order_id: order.order_id || "",
+                  payment_id: data.razorpay_payment_id,
+                  signature: data.razorpay_signature,
+                  installment_ids: [payingInstallment.id],
+                  payment_method: "Razorpay",
+                });
+              }
+              Alert.alert("✓ Payment Successful", "Your fee payment has been recorded.");
+              fetchFees();
+            } catch (e: any) {
+              console.error("Post-payment verification failed:", e);
+              Alert.alert("Warning", "Payment done but verification failed. Contact admin.");
+              fetchFees();
+            } finally {
+              setIsProcessingPayment(false);
+              setPayingInstallment(null);
             }
-            Alert.alert("✓ Payment Successful", "Your fee payment has been recorded.");
-            fetchFees();
-          } catch (e: any) {
-            console.error("Post-payment verification failed:", e);
-            Alert.alert("Warning", "Payment done but verification failed. Contact admin.");
-            fetchFees();
-          }
-        })
-        .catch((error: any) => {
-          // Payment cancelled or failed
-          const code = error?.code ?? -1;
-          const message =
-            code === 0
-              ? "Payment cancelled."
-              : code === 1
-              ? "Payment failed. Please try again."
-              : code === 2
-              ? "Network error. Check your connection."
-              : "Payment was not completed.";
-          if (code !== 0) {
-            // Don't show alert for user-initiated cancellation
-            Alert.alert("Payment Failed", message);
-          }
-        });
+          })
+          .catch((error: any) => {
+            // Payment cancelled or failed
+            const code = error?.code ?? -1;
+            const message =
+              code === 0
+                ? "Payment cancelled."
+                : code === 1
+                ? "Payment failed. Please try again."
+                : code === 2
+                ? "Network error. Check your connection."
+                : "Payment was not completed.";
+            if (code !== 0) {
+              Alert.alert("Payment Failed", message);
+            }
+            setIsProcessingPayment(false);
+            setPayingInstallment(null);
+          });
+      } catch (sdkError: any) {
+        console.warn("Razorpay open failed, offering mock simulation:", sdkError);
+        Alert.alert(
+          "Environment Alert",
+          "Razorpay Native SDK is not available in this environment (normal in Expo Go / Simulator). Would you like to simulate a successful payment?",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+              onPress: () => {
+                setIsProcessingPayment(false);
+                setPayingInstallment(null);
+              }
+            },
+            {
+              text: "Simulate Success",
+              onPress: async () => {
+                try {
+                  // Direct pay fees (mark as paid)
+                  await ApiService.payFees({
+                    installment_ids: [payingInstallment.id],
+                    payment_method: "Simulated (SDK Missing)",
+                  });
+                  Alert.alert("✓ Payment Simulated", "Your fee payment has been successfully recorded (simulation).");
+                  fetchFees();
+                } catch (e: any) {
+                  Alert.alert("Error", "Simulation failed: " + e.message);
+                } finally {
+                  setIsProcessingPayment(false);
+                  setPayingInstallment(null);
+                }
+              }
+            }
+          ]
+        );
+      }
     } catch (e: any) {
       Alert.alert("Error", e.message || "Something went wrong. Please try again.");
-    } finally {
       setIsProcessingPayment(false);
       setPayingInstallment(null);
     }

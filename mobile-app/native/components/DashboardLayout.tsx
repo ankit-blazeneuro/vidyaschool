@@ -318,11 +318,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <BlurView
           intensity={Platform.OS === "ios" ? 85 : 95}
           tint={isDark ? "dark" : "light"}
+          experimentalBlurMethod="regular"
           style={[
             styles.tabBar,
             {
               borderTopColor: colors.outline,
-              backgroundColor: "transparent",
+              backgroundColor: Platform.OS === "ios"
+                ? "transparent"
+                : isDark
+                  ? "rgba(9, 9, 11, 0.55)"
+                  : "rgba(255, 255, 255, 0.55)",
               paddingBottom: insets.bottom > 0 ? insets.bottom : (Platform.OS === "ios" ? 12 : 8),
               height: 60 + (insets.bottom > 0 ? insets.bottom : 0),
             },
@@ -331,8 +336,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <LinearGradient
             colors={
               isDark
-                ? ["rgba(9, 9, 11, 0.4)", "rgba(9, 9, 11, 0.88)"]
-                : ["rgba(255, 255, 255, 0.4)", "rgba(244, 244, 245, 0.88)"]
+                ? ["rgba(9, 9, 11, 0.2)", "rgba(9, 9, 11, 0.65)"]
+                : ["rgba(255, 255, 255, 0.2)", "rgba(244, 244, 245, 0.65)"]
             }
             style={StyleSheet.absoluteFill}
           />
