@@ -25,12 +25,21 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
-    // Configure framework for all native iOS targets statically registered
+    // Configure native framework for iOS targets
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
         binaries.framework {
             baseName = "Shared"
             isStatic = true
             xcf.add(this)
+        }
+    }
+
+    // Suppress expect/actual classes are in Beta warning globally across all targets (Android, iOS, JVM)
+    targets.configureEach {
+        compilations.configureEach {
+            compilerOptions.configure {
+                freeCompilerArgs.add("-Xexpect-actual-classes")
+            }
         }
     }
 
@@ -43,7 +52,7 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 implementation(compose.runtime)
                 implementation(compose.foundation)
@@ -67,7 +76,7 @@ kotlin {
             }
         }
 
-        val androidMain by getting {
+        androidMain {
             dependencies {
                 implementation("io.ktor:ktor-client-okhttp:2.3.7")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
@@ -75,13 +84,13 @@ kotlin {
             }
         }
 
-        val iosMain by getting {
+        iosMain {
             dependencies {
                 implementation("io.ktor:ktor-client-darwin:2.3.7")
             }
         }
 
-        val desktopMain by getting {
+        named("desktopMain") {
             dependencies {
                 implementation("io.ktor:ktor-client-cio:2.3.7")
             }
