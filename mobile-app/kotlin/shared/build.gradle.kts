@@ -8,6 +8,8 @@ plugins {
 }
 
 kotlin {
+    applyDefaultHierarchyTemplate()
+
     val xcf = XCFramework("Shared")
 
     androidTarget {
@@ -18,12 +20,14 @@ kotlin {
         }
     }
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
+    // Static declaration of iOS targets
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    // Configure framework for all native iOS targets statically registered
+    targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget>().configureEach {
+        binaries.framework {
             baseName = "Shared"
             isStatic = true
             xcf.add(this)

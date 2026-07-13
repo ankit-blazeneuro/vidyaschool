@@ -3490,6 +3490,26 @@ fun FeesTabContent(
                 }
                 val order = orderResp.body()!!
 
+                if (order.mockPayment == true) {
+                    android.widget.Toast.makeText(context, "Simulating mock payment...", android.widget.Toast.LENGTH_SHORT).show()
+                    val payResp = RetrofitClient.authApi.payFees(
+                        authHeader = "Bearer $token",
+                        request = PayFeesRequest(
+                            installmentIds = order.installmentIds ?: listOf(inst.id),
+                            paymentMethod = "Razorpay (Mock)"
+                        )
+                    )
+                    if (payResp.isSuccessful && payResp.body()?.success == true) {
+                        android.widget.Toast.makeText(context, "Mock payment successful!", android.widget.Toast.LENGTH_SHORT).show()
+                        fetchFees()
+                    } else {
+                        val errMsg = payResp.body()?.message ?: "Unknown error"
+                        android.widget.Toast.makeText(context, "Mock payment failed: $errMsg", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                    isProcessingPayment = null
+                    return@launch
+                }
+
                 val activity = context as? com.vidyaschool.app.MainActivity ?: run { isProcessingPayment = null; return@launch }
                 activity.pendingInstallmentId = inst.id
                 activity.pendingOrderId = order.orderId ?: ""
