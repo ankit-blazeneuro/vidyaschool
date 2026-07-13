@@ -95,10 +95,14 @@ export const FeesTabContent: React.FC<FeesTabContentProps> = ({
       if (isMock) {
         // Mock mode: directly mark as paid in backend (bypass Razorpay SDK completely)
         try {
-          await ApiService.payFees({
+          const payResp = await ApiService.payFees({
             installment_ids: [payingInstallment.id],
             payment_method: "Razorpay (Mock)",
           });
+          if (!payResp.ok) {
+            const errData = await payResp.json().catch(() => ({}));
+            throw new Error(errData.detail || "Mock payment verification failed.");
+          }
           Alert.alert("✓ Payment Successful", "Your mock fee payment has been successfully recorded.");
           fetchFees();
         } catch (e: any) {
@@ -142,25 +146,33 @@ export const FeesTabContent: React.FC<FeesTabContentProps> = ({
             try {
               if (isMock) {
                 // Mock mode: directly mark as paid
-                await ApiService.payFees({
+                const payResp = await ApiService.payFees({
                   installment_ids: [payingInstallment.id],
                   payment_method: "Razorpay",
                 });
+                if (!payResp.ok) {
+                  const errData = await payResp.json().catch(() => ({}));
+                  throw new Error(errData.detail || "Mock payment verification failed.");
+                }
               } else {
                 // Real mode: verify HMAC signature with backend
-                await ApiService.verifyPayment({
+                const verifyResp = await ApiService.verifyPayment({
                   order_id: order.order_id || "",
                   payment_id: data.razorpay_payment_id,
                   signature: data.razorpay_signature,
                   installment_ids: [payingInstallment.id],
                   payment_method: "Razorpay",
                 });
+                if (!verifyResp.ok) {
+                  const errData = await verifyResp.json().catch(() => ({}));
+                  throw new Error(errData.detail || "Payment signature verification failed.");
+                }
               }
               Alert.alert("✓ Payment Successful", "Your fee payment has been recorded.");
               fetchFees();
             } catch (e: any) {
               console.error("Post-payment verification failed:", e);
-              Alert.alert("Warning", "Payment done but verification failed. Contact admin.");
+              Alert.alert("Warning", "Payment done but verification failed. Contact admin: " + e.message);
               fetchFees();
             } finally {
               setIsProcessingPayment(false);
@@ -203,10 +215,14 @@ export const FeesTabContent: React.FC<FeesTabContentProps> = ({
               onPress: async () => {
                 try {
                   // Direct pay fees (mark as paid)
-                  await ApiService.payFees({
+                  const payResp = await ApiService.payFees({
                     installment_ids: [payingInstallment.id],
                     payment_method: "Simulated (SDK Missing)",
                   });
+                  if (!payResp.ok) {
+                    const errData = await payResp.json().catch(() => ({}));
+                    throw new Error(errData.detail || "Simulation verification failed.");
+                  }
                   Alert.alert("✓ Payment Simulated", "Your fee payment has been successfully recorded (simulation).");
                   fetchFees();
                 } catch (e: any) {
