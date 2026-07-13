@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native
 import { useThemeColors, useTheme } from "../theme/ThemeContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CustomMenuIcon, CustomNotificationIcon } from "./icons/CustomIcons";
+import { FONT_FAMILY } from "../theme/colors";
 
 interface DashboardHeaderProps {
   title: string;
@@ -96,10 +97,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   subtitle: {
     fontSize: 12,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
 });
 export default DashboardHeader;

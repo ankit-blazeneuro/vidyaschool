@@ -1,6 +1,7 @@
 import React from "react";
-import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from "react-native";
+import { TouchableOpacity, Text, ActivityIndicator, StyleSheet, View } from "react-native";
 import { useThemeColors } from "../theme/ThemeContext";
+import { FONT_FAMILY } from "../theme/colors";
 
 interface SecondaryButtonProps {
   text: string;
@@ -8,6 +9,7 @@ interface SecondaryButtonProps {
   loading?: boolean;
   disabled?: boolean;
   style?: any;
+  icon?: React.ReactNode;
 }
 
 export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
@@ -16,6 +18,7 @@ export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
   loading = false,
   disabled = false,
   style,
+  icon,
 }) => {
   const colors = useThemeColors();
 
@@ -37,7 +40,10 @@ export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
       {loading ? (
         <ActivityIndicator size="small" color={colors.onSurface} />
       ) : (
-        <Text style={[styles.text, { color: colors.onSurface }]}>{text}</Text>
+        <View style={styles.contentContainer}>
+          {icon && <View style={styles.iconContainer}>{icon}</View>}
+          <Text style={[styles.text, { color: colors.onSurface }]}>{text}</Text>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -53,8 +59,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
   },
+  contentContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconContainer: {
+    marginRight: 8,
+  },
   text: {
     fontSize: 15,
     fontWeight: "500",
+    fontFamily: FONT_FAMILY,
   },
 });
+

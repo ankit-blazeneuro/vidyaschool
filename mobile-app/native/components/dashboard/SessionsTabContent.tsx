@@ -4,6 +4,7 @@ import { useThemeColors } from "../../theme/ThemeContext";
 import { SessionManager } from "../../services/session";
 import { DashboardHeader } from "../DashboardHeader";
 import { PrimaryButton } from "../PrimaryButton";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface SessionsTabContentProps {
   onMenuPress: () => void;
@@ -117,7 +118,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     marginBottom: 20,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   card: {
     borderWidth: 1,
     borderRadius: 8,
@@ -138,23 +142,35 @@ const styles = StyleSheet.create({
   deviceTitle: {
     fontSize: 14,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   mockDeviceTitle: {
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 8,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   details: {
     paddingLeft: 16,
   },
   text: {
     fontSize: 13,
     lineHeight: 20,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   mockText: {
     fontSize: 12,
     lineHeight: 18,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   revokeBtn: {
     marginTop: 8,
   },

@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useThemeColors } from "../theme/ThemeContext";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../theme/colors";
 
 interface SearchResultRowProps {
   title: string;
@@ -124,11 +125,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 13.5,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   subtitle: {
     fontSize: 11.5,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   rightContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -142,7 +149,10 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 8.5,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   arrow: {
     marginLeft: 6,
   },

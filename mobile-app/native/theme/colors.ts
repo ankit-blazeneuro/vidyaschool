@@ -1,3 +1,5 @@
+import { Platform } from "react-native";
+
 export const lightColors = {
   primary: "#18181B",
   onPrimary: "#FFFFFF",
@@ -36,3 +38,9 @@ export const darkColors = {
 
 export type ThemeColors = typeof lightColors;
 export type ThemeMode = "light" | "dark" | "system";
+
+export const FONT_FAMILY = Platform.select({
+  ios: "Helvetica Neue",
+  android: "sans-serif-medium",
+  default: "System",
+});

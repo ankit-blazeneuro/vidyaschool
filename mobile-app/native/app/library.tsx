@@ -15,6 +15,7 @@ import { useThemeColors } from "../theme/ThemeContext";
 import { ApiService } from "../services/api";
 import { StudentBorrowingResponse } from "../types";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../theme/colors";
 
 export default function LibraryHubScreen() {
   const colors = useThemeColors();
@@ -239,11 +240,17 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   headerSub: {
     fontSize: 11,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   placeholder: {
     width: 36,
   },
@@ -278,7 +285,10 @@ const styles = StyleSheet.create({
   bookIconText: {
     fontSize: 22,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   bookDetails: {
     marginLeft: 14,
     flex: 1,
@@ -287,11 +297,17 @@ const styles = StyleSheet.create({
   bookTitle: {
     fontSize: 14,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   bookAuthor: {
     fontSize: 11,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   statusMeta: {
     flexDirection: "row",
     alignItems: "center",
@@ -305,7 +321,10 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: 10,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   pipsRow: {
     flexDirection: "row",
     marginRight: 8,
@@ -318,7 +337,10 @@ const styles = StyleSheet.create({
   },
   renewCountText: {
     fontSize: 10,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   renewBtn: {
     borderWidth: 1,
     borderRadius: 8,
@@ -328,7 +350,10 @@ const styles = StyleSheet.create({
   renewBtnText: {
     fontSize: 12,
     fontWeight: "500",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   maxBadge: {
     borderRadius: 8,
     paddingHorizontal: 14,
@@ -337,7 +362,10 @@ const styles = StyleSheet.create({
   maxBadgeText: {
     fontSize: 12,
     fontWeight: "500",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -346,5 +374,8 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     marginTop: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
 });

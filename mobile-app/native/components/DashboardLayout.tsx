@@ -39,6 +39,7 @@ import { SessionsTabContent } from "./dashboard/SessionsTabContent";
 import { DocViewerScreen } from "./dashboard/DocViewerScreen";
 import { NotificationDrawer } from "./dashboard/NotificationDrawer";
 import { ComplaintDialog } from "./dashboard/ComplaintDialog";
+import { FONT_FAMILY } from "../theme/colors";
 
 interface DashboardLayoutProps {
   role: string;
@@ -623,7 +624,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   body: {
     flex: 1,
   },
@@ -654,7 +658,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginTop: 4,
     fontWeight: "500",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   drawerOverlay: {
     flex: 1,
     flexDirection: "row",
@@ -685,7 +692,10 @@ const styles = StyleSheet.create({
   drawerAvatarText: {
     fontSize: 20,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   drawerHeaderText: {
     marginLeft: 12,
     flex: 1,
@@ -693,11 +703,17 @@ const styles = StyleSheet.create({
   drawerName: {
     fontSize: 15,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   drawerEmail: {
     fontSize: 11,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   drawerDivider: {
     height: 1,
     width: "100%",
@@ -721,7 +737,10 @@ const styles = StyleSheet.create({
   drawerItemText: {
     fontSize: 14,
     fontWeight: "500",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   logoutItem: {
     marginBottom: Platform.OS === "ios" ? 24 : 20,
   },

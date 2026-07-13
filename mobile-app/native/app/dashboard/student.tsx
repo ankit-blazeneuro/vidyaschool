@@ -22,6 +22,7 @@ import { DashboardHeader } from "../../components/DashboardHeader";
 import { StudentBorrowingResponse, SliderImage } from "../../types";
 import { Feather } from "@expo/vector-icons";
 import Svg, { Line, Path, Circle, Rect, Defs, LinearGradient, Stop, Text as SvgText } from "react-native-svg";
+import { FONT_FAMILY } from "../../theme/colors";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -680,11 +681,17 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 20,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   greetingSub: {
     fontSize: 12,
     marginTop: 4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   slider: {
     marginBottom: 24,
   },
@@ -698,10 +705,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     marginBottom: 4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   cardSubtitle: {
     fontSize: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   chartWrapper: {
     height: 180,
     flexDirection: "row",
@@ -728,7 +741,10 @@ const styles = StyleSheet.create({
   chartLabel: {
     fontSize: 10,
     marginTop: 6,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   attendanceWrapper: {
     height: 180,
     flexDirection: "row",
@@ -754,11 +770,17 @@ const styles = StyleSheet.create({
   piePercentage: {
     fontSize: 22,
     fontWeight: "800",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   pieText: {
     fontSize: 9,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   pieLegend: {
     justifyContent: "center",
   },
@@ -775,7 +797,10 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 11.5,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   chartTabs: {
     flexDirection: "row",
     borderRadius: 8,
@@ -790,7 +815,10 @@ const styles = StyleSheet.create({
   },
   chartTabText: {
     fontSize: 11,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   cardHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -800,14 +828,20 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 12,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   emptyBooks: {
     paddingVertical: 24,
     alignItems: "center",
   },
   emptyBooksText: {
     fontSize: 12.5,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   booksList: {
     width: "100%",
   },
@@ -827,7 +861,10 @@ const styles = StyleSheet.create({
   bookIconText: {
     fontSize: 16,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   bookDetails: {
     marginLeft: 12,
     flex: 1,
@@ -836,11 +873,17 @@ const styles = StyleSheet.create({
   bookTitle: {
     fontSize: 13.5,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   bookAuthor: {
     fontSize: 11,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   bookStatusRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -849,7 +892,10 @@ const styles = StyleSheet.create({
   bookDueDate: {
     fontSize: 10,
     marginRight: 8,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   pipRow: {
     flexDirection: "row",
   },
@@ -868,7 +914,10 @@ const styles = StyleSheet.create({
   renewBtnText: {
     fontSize: 11,
     fontWeight: "500",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   maxBadge: {
     borderRadius: 6,
     paddingHorizontal: 10,
@@ -877,7 +926,10 @@ const styles = StyleSheet.create({
   maxBadgeText: {
     fontSize: 11,
     fontWeight: "500",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   spinner: {
     paddingVertical: 20,
   },

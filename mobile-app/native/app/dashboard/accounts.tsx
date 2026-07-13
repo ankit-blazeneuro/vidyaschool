@@ -12,6 +12,7 @@ import { useThemeColors } from "../../theme/ThemeContext";
 import { SessionManager } from "../../services/session";
 import { DashboardLayout } from "../../components/DashboardLayout";
 import { DashboardHeader } from "../../components/DashboardHeader";
+import { FONT_FAMILY } from "../../theme/colors";
 
 export default function AccountsScreen() {
   const colors = useThemeColors();
@@ -139,11 +140,17 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 20,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   greetingSub: {
     fontSize: 12,
     marginTop: 4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   card: {
     borderWidth: 1,
     borderRadius: 16,
@@ -154,7 +161,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     marginBottom: 16,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   invoiceList: {
     width: "100%",
   },
@@ -168,14 +178,23 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontSize: 14,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   itemStatus: {
     fontSize: 11,
     fontWeight: "600",
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   itemAmount: {
     fontSize: 15,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
 });

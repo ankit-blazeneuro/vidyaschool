@@ -18,6 +18,7 @@ import { Input } from "../CustomTextField";
 import { PrimaryButton } from "../PrimaryButton";
 import { SecondaryButton } from "../SecondaryButton";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface ProfileTabContentProps {
   onThemeChange: (mode: string) => void;
@@ -345,15 +346,24 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 32,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   profileName: {
     fontSize: 20,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   profileEmail: {
     fontSize: 13,
     marginTop: 4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   roleBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -363,7 +373,10 @@ const styles = StyleSheet.create({
   roleText: {
     fontSize: 9,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   card: {
     borderWidth: 1,
     borderRadius: 12,
@@ -374,7 +387,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     marginBottom: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   themeRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -389,7 +405,10 @@ const styles = StyleSheet.create({
   },
   themePillText: {
     fontSize: 11,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   cardHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -411,7 +430,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 12,
     letterSpacing: 0.5,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   saveBtn: {
     marginTop: 12,
   },
@@ -426,21 +448,33 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12.5,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   detailValue: {
     fontSize: 12.5,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   sectionTitleText: {
     fontSize: 11,
     fontWeight: "700",
     marginTop: 20,
     marginBottom: 8,
     letterSpacing: 0.5,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   providerText: {
     fontSize: 13,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   logoutBtn: {
     marginTop: 8,
     borderColor: "#DC2626", // Red border for danger action

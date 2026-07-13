@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useThemeColors } from "../theme/ThemeContext";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../theme/colors";
 
 export interface SelectOption {
   value: string;
@@ -138,7 +139,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "500",
     marginBottom: 6,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   button: {
     height: 44,
     borderWidth: 1,
@@ -150,7 +154,10 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 14,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -178,7 +185,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "center",
     marginBottom: 16,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   listContent: {
     paddingBottom: 24,
   },
@@ -190,7 +200,10 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: 15,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   separator: {
     height: 1,
     width: "100%",

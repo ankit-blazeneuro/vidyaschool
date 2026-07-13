@@ -18,6 +18,7 @@ import { Input } from "../CustomTextField";
 import { Select, SelectOption } from "../Select";
 import { PrimaryButton } from "../PrimaryButton";
 import { SecondaryButton } from "../SecondaryButton";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface StudentOnboardingDrawerProps {
   email: string;
@@ -388,16 +389,25 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   subtitle: {
     fontSize: 12,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   stepText: {
     fontSize: 11,
     fontWeight: "700",
     marginTop: 4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   progressTrack: {
     height: 4,
     borderRadius: 2,
@@ -415,13 +425,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     marginBottom: 16,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   helpText: {
     fontSize: 11.5,
     marginTop: -4,
     marginBottom: 16,
     lineHeight: 16,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   infoBox: {
     borderRadius: 8,
     padding: 12,
@@ -429,7 +445,10 @@ const styles = StyleSheet.create({
   },
   infoBoxText: {
     fontSize: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   footer: {
     flexDirection: "row",
     alignItems: "center",

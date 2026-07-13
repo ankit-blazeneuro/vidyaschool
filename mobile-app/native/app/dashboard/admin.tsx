@@ -19,6 +19,7 @@ import { Input } from "../../components/CustomTextField";
 import { PrimaryButton } from "../../components/PrimaryButton";
 import { SliderImage } from "../../types";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../../theme/colors";
 
 export default function AdminScreen() {
   const colors = useThemeColors();
@@ -323,11 +324,17 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 20,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   greetingSub: {
     fontSize: 12,
     marginTop: 4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   card: {
     borderWidth: 1,
     borderRadius: 16,
@@ -338,12 +345,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     marginBottom: 4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   cardDesc: {
     fontSize: 11.5,
     marginBottom: 16,
     lineHeight: 16,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   sliderList: {
     width: "100%",
   },
@@ -361,11 +374,17 @@ const styles = StyleSheet.create({
   imgTitle: {
     fontSize: 13.5,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   imgMeta: {
     fontSize: 11,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   sliderControlRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -389,7 +408,10 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     fontWeight: "700",
     marginBottom: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   field: {
     marginBottom: 12,
   },
@@ -397,7 +419,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "500",
     marginBottom: 6,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   chipsRow: {
     flexDirection: "row",
     marginBottom: 16,
@@ -411,7 +436,10 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 11,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   addBtn: {
     marginTop: 8,
   },
@@ -421,5 +449,8 @@ const styles = StyleSheet.create({
   opsText: {
     fontSize: 13.5,
     lineHeight: 20,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
 });

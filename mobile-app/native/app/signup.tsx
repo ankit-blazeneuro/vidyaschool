@@ -1,11 +1,16 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, StatusBar, TouchableOpacity, Alert } from "react-native";
+import { View, Text, StyleSheet, StatusBar, TouchableOpacity, Alert, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { useRouter } from "expo-router";
 import { BottomDrawer } from "../components/BottomDrawer";
 import { CustomTextField } from "../components/CustomTextField";
 import { Select, SelectOption } from "../components/Select";
 import { PrimaryButton } from "../components/PrimaryButton";
+import { SecondaryButton } from "../components/SecondaryButton";
+import { GlobeBackdrop } from "../components/GlobeBackdrop";
 import { ApiService } from "../services/api";
+import { FONT_FAMILY } from "../theme/colors";
+import { useThemeColors } from "../theme/ThemeContext";
+import { AntDesign } from "@expo/vector-icons";
 
 const ROLE_OPTIONS: SelectOption[] = [
   { value: "student", label: "Student" },
@@ -16,6 +21,7 @@ const ROLE_OPTIONS: SelectOption[] = [
 
 export default function SignupScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -64,73 +70,104 @@ export default function SignupScreen() {
     }
   };
 
+  const handleSocialLogin = (provider: string) => {
+    Alert.alert("Social Auth", `${provider} registration is not configured on this device yet.`);
+  };
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent={true} backgroundColor="transparent" />
-      <View style={styles.headerSection}>
-        <Text style={styles.appName}>Vidya School</Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" translucent={true} backgroundColor="transparent" />
+        
+        {/* Background SVG outlines */}
+        <GlobeBackdrop width={350} height={347} stroke="#FFFFFF" strokeOpacity={0.22} strokeWidth={2.0} style={styles.bgTopLeft} />
+        <GlobeBackdrop width={220} height={218} stroke="#FFFFFF" strokeOpacity={0.18} strokeWidth={2.0} style={styles.bgBottomRight} anticlockwise={true} />
+
+        <View style={styles.headerSection}>
+          <Text style={styles.appName}>Vidya School</Text>
+        </View>
+
+        <BottomDrawer style={styles.drawer}>
+          <Text style={styles.title}>Create account</Text>
+
+          <CustomTextField
+            value={name}
+            onValueChange={setName}
+            placeholder="e.g. Ravi Kumar"
+            label="Full Name"
+            autoCapitalize="words"
+          />
+
+          <CustomTextField
+            value={email}
+            onValueChange={setEmail}
+            placeholder="e.g. you@school.edu"
+            label="Email"
+            keyboardType="email-address"
+          />
+
+          <CustomTextField
+            value={password}
+            onValueChange={setPassword}
+            placeholder="Min. 8 characters"
+            label="Password"
+            isPassword={true}
+          />
+
+          <CustomTextField
+            value={confirmPassword}
+            onValueChange={setConfirmPassword}
+            placeholder="Re-enter your password"
+            label="Confirm Password"
+            isPassword={true}
+          />
+
+          <Select
+            selectedValue={role}
+            onValueChange={setRole}
+            options={ROLE_OPTIONS}
+            label="Preferred Role"
+            placeholder="Select role"
+          />
+
+          <PrimaryButton
+            text="Create Account"
+            onPress={handleSignup}
+            loading={isLoading}
+            style={styles.button}
+          />
+
+          <View style={styles.divider}>
+            <View style={[styles.dividerLine, { backgroundColor: colors.outline }]} />
+            <Text style={[styles.dividerText, { color: colors.secondary }]}>or</Text>
+            <View style={[styles.dividerLine, { backgroundColor: colors.outline }]} />
+          </View>
+
+          <SecondaryButton
+            text="Continue with Google"
+            onPress={() => handleSocialLogin("Google")}
+            style={styles.socialButton}
+            icon={<AntDesign name="google" size={18} color={colors.onSurface} />}
+          />
+
+          <SecondaryButton
+            text="Continue with GitHub"
+            onPress={() => handleSocialLogin("GitHub")}
+            style={styles.socialButton}
+            icon={<AntDesign name="github" size={18} color={colors.onSurface} />}
+          />
+
+          <TouchableOpacity
+            onPress={() => router.push("/login")}
+            style={styles.loginLink}
+          >
+            <Text style={styles.loginText}>
+              Already have an account? <Text style={styles.underline}>Sign In</Text>
+            </Text>
+          </TouchableOpacity>
+        </BottomDrawer>
       </View>
-
-      <BottomDrawer style={styles.drawer}>
-        <Text style={styles.title}>Create account</Text>
-
-        <CustomTextField
-          value={name}
-          onValueChange={setName}
-          placeholder="e.g. Ravi Kumar"
-          label="Full Name"
-          autoCapitalize="words"
-        />
-
-        <CustomTextField
-          value={email}
-          onValueChange={setEmail}
-          placeholder="e.g. you@school.edu"
-          label="Email"
-          keyboardType="email-address"
-        />
-
-        <CustomTextField
-          value={password}
-          onValueChange={setPassword}
-          placeholder="Min. 8 characters"
-          label="Password"
-          isPassword={true}
-        />
-
-        <CustomTextField
-          value={confirmPassword}
-          onValueChange={setConfirmPassword}
-          placeholder="Re-enter your password"
-          label="Confirm Password"
-          isPassword={true}
-        />
-
-        <Select
-          selectedValue={role}
-          onValueChange={setRole}
-          options={ROLE_OPTIONS}
-          label="Preferred Role"
-          placeholder="Select role"
-        />
-
-        <PrimaryButton
-          text="Create Account"
-          onPress={handleSignup}
-          loading={isLoading}
-          style={styles.button}
-        />
-
-        <TouchableOpacity
-          onPress={() => router.push("/login")}
-          style={styles.loginLink}
-        >
-          <Text style={styles.loginText}>
-            Already have an account? <Text style={styles.underline}>Sign In</Text>
-          </Text>
-        </TouchableOpacity>
-      </BottomDrawer>
-    </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -139,6 +176,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#000000",
     justifyContent: "space-between",
+    position: "relative",
+    overflow: "hidden",
+  },
+  bgTopLeft: {
+    position: "absolute",
+    top: -60,
+    left: -60,
+  },
+  bgBottomRight: {
+    position: "absolute",
+    bottom: 270,
+    right: -30,
   },
   headerSection: {
     flex: 1,
@@ -150,6 +199,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 28,
     fontWeight: "600",
+    fontFamily: FONT_FAMILY,
   },
   drawer: {
     paddingBottom: 20,
@@ -159,21 +209,41 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 16,
     color: "#18181B",
+    fontFamily: FONT_FAMILY,
   },
   button: {
     marginTop: 8,
-    marginBottom: 12,
+    marginBottom: 8,
+  },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 14,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    fontSize: 12,
+    marginHorizontal: 12,
+    fontFamily: FONT_FAMILY,
+  },
+  socialButton: {
+    marginBottom: 10,
   },
   loginLink: {
     alignItems: "center",
-    marginTop: 4,
+    marginTop: 10,
   },
   loginText: {
     fontSize: 12,
     color: "#71717A",
+    fontFamily: FONT_FAMILY,
   },
   underline: {
     textDecorationLine: "underline",
     fontWeight: "500",
+    fontFamily: FONT_FAMILY,
   },
 });

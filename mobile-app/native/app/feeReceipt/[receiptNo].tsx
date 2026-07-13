@@ -12,6 +12,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useThemeColors } from "../../theme/ThemeContext";
 import { ApiService } from "../../services/api";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../../theme/colors";
 
 export default function FeeReceiptScreen() {
   const colors = useThemeColors();
@@ -147,7 +148,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   placeholder: {
     width: 36,
   },
@@ -160,15 +164,24 @@ const styles = StyleSheet.create({
   errorIcon: {
     fontSize: 40,
     marginBottom: 8,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   errorText: {
     fontSize: 15,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   errorDesc: {
     fontSize: 12,
     marginTop: 4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   scrollContent: {
     padding: 24,
     paddingBottom: 40,
@@ -184,16 +197,25 @@ const styles = StyleSheet.create({
   verifiedIcon: {
     fontSize: 22,
     marginRight: 10,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   verifiedTitle: {
     color: "#10B981",
     fontSize: 15,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   verifiedSub: {
     fontSize: 11,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   card: {
     borderWidth: 1,
     borderRadius: 16,
@@ -208,15 +230,24 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 13,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   infoValue: {
     fontSize: 13,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   footerText: {
     fontSize: 11,
     lineHeight: 16,
     textAlign: "center",
     paddingHorizontal: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
 });

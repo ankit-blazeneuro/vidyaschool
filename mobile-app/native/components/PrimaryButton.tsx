@@ -1,6 +1,7 @@
 import React from "react";
 import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { useThemeColors } from "../theme/ThemeContext";
+import { FONT_FAMILY } from "../theme/colors";
 
 interface PrimaryButtonProps {
   text: string;
@@ -54,5 +55,8 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 15,
     fontWeight: "500",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
 });

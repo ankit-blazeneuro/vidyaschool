@@ -14,6 +14,7 @@ import { Select, SelectOption } from "../Select";
 import { Input } from "../CustomTextField";
 import { PrimaryButton } from "../PrimaryButton";
 import { SecondaryButton } from "../SecondaryButton";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface ComplaintDialogProps {
   visible: boolean;
@@ -161,7 +162,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 16,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   form: {
     marginBottom: 20,
   },

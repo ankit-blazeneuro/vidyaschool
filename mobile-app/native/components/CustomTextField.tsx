@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from "react-native";
 import { useThemeColors } from "../theme/ThemeContext";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../theme/colors";
 
 interface CustomTextFieldProps {
   value: string;
@@ -109,7 +110,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "500",
     marginBottom: 6,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   inputWrapper: {
     height: 44,
     borderWidth: 1,
@@ -125,8 +129,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     height: "100%",
-    padding: 0, // Reset default padding
-  },
+    padding: 0, // Reset default padding,
+
+      fontFamily: FONT_FAMILY,
+
+    },
   eyeIcon: {
     padding: 8,
     marginLeft: 4,

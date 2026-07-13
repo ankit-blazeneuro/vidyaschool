@@ -11,6 +11,7 @@ import { useThemeColors } from "../../theme/ThemeContext";
 import { ApiService } from "../../services/api";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface DocViewerScreenProps {
   path: string;
@@ -195,7 +196,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 16,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   placeholder: {
     width: 36,
   },
@@ -215,24 +219,36 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 8,
     borderBottomWidth: 1,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   h2: {
     fontSize: 18,
     fontWeight: "700",
     marginTop: 18,
     marginBottom: 8,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   h3: {
     fontSize: 15,
     fontWeight: "600",
     marginTop: 14,
     marginBottom: 6,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   paragraph: {
     fontSize: 14,
     lineHeight: 22,
     marginBottom: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   bulletRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -243,24 +259,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     width: 16,
     textAlign: "center",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   bulletText: {
     fontSize: 14,
     lineHeight: 20,
     flex: 1,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   space: {
     height: 8,
   },
   boldText: {
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   errorText: {
     fontSize: 14,
     fontWeight: "500",
     textAlign: "center",
     marginBottom: 16,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   retryBtn: {
     paddingHorizontal: 16,
     paddingVertical: 10,

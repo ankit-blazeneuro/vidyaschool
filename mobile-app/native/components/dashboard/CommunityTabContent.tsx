@@ -15,6 +15,7 @@ import { useThemeColors } from "../../theme/ThemeContext";
 import { SessionManager } from "../../services/session";
 import { DashboardHeader } from "../DashboardHeader";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface Message {
   id: string;
@@ -282,7 +283,10 @@ const styles = StyleSheet.create({
   senderName: {
     fontSize: 11,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   roleBadge: {
     borderWidth: 1,
     borderRadius: 4,
@@ -293,7 +297,10 @@ const styles = StyleSheet.create({
   roleBadgeText: {
     fontSize: 7.5,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   bubble: {
     borderRadius: 12,
     borderWidth: 1,
@@ -303,12 +310,18 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 13.5,
     lineHeight: 18,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   timeText: {
     fontSize: 9,
     alignSelf: "flex-end",
     marginTop: 4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   typingContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -320,7 +333,10 @@ const styles = StyleSheet.create({
   },
   typingText: {
     fontSize: 11.5,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -336,7 +352,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 14,
     marginRight: 8,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   sendBtn: {
     width: 40,
     height: 40,

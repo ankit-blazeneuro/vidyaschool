@@ -15,6 +15,7 @@ import { ApiService } from "../../services/api";
 import { SearchUserResponse, SearchBackendResponse } from "../../types";
 import { SearchResultRow } from "../SearchResultRow";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface SearchTabContentProps {
   onTabSelect: (tab: string) => void;
@@ -336,7 +337,10 @@ const styles = StyleSheet.create({
     height: "100%",
     fontSize: 14,
     padding: 0,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   clearBtn: {
     padding: 4,
   },
@@ -355,7 +359,10 @@ const styles = StyleSheet.create({
   },
   pillText: {
     fontSize: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 100,
@@ -373,7 +380,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 10,
     letterSpacing: 0.5,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -405,15 +415,24 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 24,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   modalName: {
     fontSize: 18,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   modalUsername: {
     fontSize: 13,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   separator: {
     height: 1,
     width: "100%",
@@ -427,11 +446,17 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 13,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   infoValue: {
     fontSize: 13,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   closeModalBtn: {
     width: "100%",
     height: 38,

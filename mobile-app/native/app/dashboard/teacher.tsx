@@ -16,6 +16,7 @@ import { ImageSlider } from "../../components/ImageSlider";
 import { SliderSkeleton } from "../../components/SliderSkeleton";
 import { DashboardHeader } from "../../components/DashboardHeader";
 import { SliderImage } from "../../types";
+import { FONT_FAMILY } from "../../theme/colors";
 
 export default function TeacherScreen() {
   const colors = useThemeColors();
@@ -158,11 +159,17 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 20,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   greetingSub: {
     fontSize: 12,
     marginTop: 4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   slider: {
     marginBottom: 24,
   },
@@ -176,7 +183,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     marginBottom: 16,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   scheduleList: {
     width: "100%",
   },
@@ -188,13 +198,22 @@ const styles = StyleSheet.create({
   itemTime: {
     fontSize: 11,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   itemTitle: {
     fontSize: 14,
     fontWeight: "700",
     marginVertical: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   itemRoom: {
     fontSize: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
 });

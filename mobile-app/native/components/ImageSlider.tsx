@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useThemeColors } from "../theme/ThemeContext";
 import { LinearGradient } from "expo-linear-gradient";
+import { FONT_FAMILY } from "../theme/colors";
 
 interface SliderImage {
   id: number;
@@ -156,7 +157,10 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   dotsContainer: {
     position: "absolute",
     bottom: 16,

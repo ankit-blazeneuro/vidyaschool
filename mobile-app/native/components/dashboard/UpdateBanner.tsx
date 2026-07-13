@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useThemeColors } from "../../theme/ThemeContext";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface UpdateBannerProps {
   version: string;
@@ -94,11 +95,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 13.5,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   subtitle: {
     fontSize: 11.5,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   actions: {
     flexDirection: "row",
     alignItems: "center",
@@ -111,7 +118,10 @@ const styles = StyleSheet.create({
   updateBtnText: {
     fontSize: 12,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   closeBtn: {
     marginLeft: 12,
     padding: 4,

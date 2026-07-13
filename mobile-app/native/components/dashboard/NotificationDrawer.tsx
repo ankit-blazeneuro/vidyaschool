@@ -13,6 +13,7 @@ import { ApiService } from "../../services/api";
 import { NotificationHistoryItem } from "../../types";
 import { Feather } from "@expo/vector-icons";
 import { BottomDrawer } from "../BottomDrawer";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface NotificationDrawerProps {
   visible: boolean;
@@ -157,7 +158,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     letterSpacing: -0.4,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   closeBtn: {
     width: 28,
     height: 28,
@@ -174,7 +178,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 12,
     fontWeight: "500",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   listContainer: {
     paddingBottom: 24,
   },
@@ -205,14 +212,23 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     flex: 1,
     marginRight: 8,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   itemBody: {
     fontSize: 13,
     lineHeight: 18,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   itemTime: {
     fontSize: 11,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   separator: {
     height: StyleSheet.hairlineWidth,
     marginVertical: 4,

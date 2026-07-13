@@ -1,54 +1,84 @@
-import { View, Text, Pressable, StyleSheet, useColorScheme } from "react-native";
-import { StatusBar } from "expo-status-bar";
-import { Link } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, StatusBar, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useRouter } from "expo-router";
+import { BottomDrawer } from "../components/BottomDrawer";
+import { PrimaryButton } from "../components/PrimaryButton";
+import { SessionManager } from "../services/session";
+import { useTheme } from "../theme/ThemeContext";
+import { GlobeBackdrop } from "../components/GlobeBackdrop";
+import { FONT_FAMILY } from "../theme/colors";
 
 export default function Welcome() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const router = useRouter();
+  const { isDark } = useTheme();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const loggedIn = await SessionManager.isLoggedIn();
+        if (loggedIn) {
+          const role = await SessionManager.getRole();
+          if (role) {
+            let destRole = role.toLowerCase();
+            if (destRole === "account") {
+              destRole = "accounts";
+            }
+            router.replace(`/dashboard/${destRole}`);
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Auth check failed:", e);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  if (checkingAuth) {
+    return (
+      <View style={[styles.container, { backgroundColor: "#000000", justifyContent: "center", alignItems: "center" }]}>
+        <StatusBar barStyle="light-content" translucent={true} backgroundColor="transparent" />
+        <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? "#09090b" : "#fafafa" }]}>
-      <StatusBar style={isDark ? "light" : "dark"} />
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: isDark ? "#ffffff" : "#18181b" }]}>
-          Vidya School
-        </Text>
-      </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent={true} backgroundColor="transparent" />
       
-      <View style={[styles.drawer, { 
-        backgroundColor: isDark ? "#18181b" : "#ffffff",
-        borderTopColor: isDark ? "#27272a" : "#e4e4e7"
-      }]}>
-        <View style={styles.handle} />
-        
-        <Link href="/login" asChild>
-          <Pressable 
-            style={StyleSheet.flatten([styles.button, { 
-              backgroundColor: isDark ? "#ffffff" : "#18181b" 
-            }])}
-          >
-            <Text style={StyleSheet.flatten([styles.buttonText, { color: isDark ? "#18181b" : "#ffffff" }])}>
-              Login
-            </Text>
-          </Pressable>
-        </Link>
+      {/* Background SVG outlines */}
+      <GlobeBackdrop width={350} height={347} stroke="#FFFFFF" strokeOpacity={0.22} strokeWidth={2.0} style={styles.bgTopLeft} />
+      <GlobeBackdrop width={220} height={218} stroke="#FFFFFF" strokeOpacity={0.18} strokeWidth={2.0} style={styles.bgBottomRight} anticlockwise={true} />
 
-        <Pressable 
-          style={StyleSheet.flatten([styles.button, styles.secondaryButton, { 
-            borderColor: isDark ? "#3f3f46" : "#d4d4d8"
-          }])}
-        >
-          <Text style={StyleSheet.flatten([styles.buttonText, { color: isDark ? "#ffffff" : "#18181b" }])}>
-            Create Account
-          </Text>
-        </Pressable>
-
-        <Text style={[styles.termsText, { color: isDark ? "#a1a1aa" : "#71717a" }]}>
-          By continuing, you agree to our{" "}
-          <Text style={styles.link}>Terms & Conditions</Text> and{" "}
-          <Text style={styles.link}>Privacy Policy</Text>.
-        </Text>
+      <View style={styles.headerSection}>
+        <Text style={styles.appName}>Vidya School</Text>
       </View>
+
+      <BottomDrawer style={styles.drawer}>
+        <PrimaryButton
+          text="Login"
+          onPress={() => router.push("/login")}
+          style={styles.loginButton}
+        />
+
+        <TouchableOpacity 
+          style={[styles.signupButton, { borderColor: isDark ? "#3f3f46" : "#E4E4E7" }]}
+          onPress={() => router.push("/signup")}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.signupButtonText, { color: isDark ? "#FFFFFF" : "#18181B" }]}>Create Account</Text>
+        </TouchableOpacity>
+
+        <Text style={[styles.termsText, { color: isDark ? "#a1a1aa" : "#71717A" }]}>
+          By continuing, you agree to our{" "}
+          <Text style={[styles.link, { color: isDark ? "#FFFFFF" : "#18181B" }]}>Terms & Conditions</Text> and{" "}
+          <Text style={[styles.link, { color: isDark ? "#FFFFFF" : "#18181B" }]}>Privacy Policy</Text>.
+        </Text>
+      </BottomDrawer>
     </View>
   );
 }
@@ -56,54 +86,68 @@ export default function Welcome() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#000000",
+    justifyContent: "space-between",
+    position: "relative",
+    overflow: "hidden",
   },
-  content: {
+  bgTopLeft: {
+    position: "absolute",
+    top: -60,
+    left: -60,
+  },
+  bgBottomRight: {
+    position: "absolute",
+    bottom: 270,
+    right: -30,
+  },
+  headerSection: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
   },
-  title: {
+  appName: {
+    color: "#FFFFFF",
     fontSize: 28,
+    fontFamily: FONT_FAMILY,
     fontWeight: "600",
+    letterSpacing: 0.5,
   },
   drawer: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderTopWidth: 1,
-    padding: 24,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: "#d4d4d8",
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 24,
-  },
-  button: {
-    borderRadius: 6,
-    paddingVertical: 10,
+  loginButton: {
+    marginTop: 8,
     marginBottom: 12,
   },
-  secondaryButton: {
+  signupButton: {
     borderWidth: 1,
-    backgroundColor: "transparent",
+    borderColor: "#E4E4E7",
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 16,
+    backgroundColor: "transparent",
   },
-  buttonText: {
-    textAlign: "center",
-    fontSize: 14,
+  signupButtonText: {
+    fontSize: 13.5,
+    fontFamily: FONT_FAMILY,
     fontWeight: "500",
+    color: "#FFFFFF",
   },
   termsText: {
-    fontSize: 12,
+    fontSize: 11.5,
+    fontFamily: FONT_FAMILY,
+    color: "#71717A",
     textAlign: "center",
     lineHeight: 18,
+    marginTop: 6,
   },
   link: {
     textDecorationLine: "underline",
     fontWeight: "500",
+    color: "#A1A1AA",
+    fontFamily: FONT_FAMILY,
   },
 });

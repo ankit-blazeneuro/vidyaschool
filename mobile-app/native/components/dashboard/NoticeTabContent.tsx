@@ -12,6 +12,7 @@ import { ApiService } from "../../services/api";
 import { NoticeResponse } from "../../types";
 import { DashboardHeader } from "../DashboardHeader";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface NoticeTabContentProps {
   onMenuPress: () => void;
@@ -191,7 +192,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     lineHeight: 20,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   urgentBadge: {
     alignSelf: "flex-start",
     paddingHorizontal: 6,
@@ -203,7 +207,10 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 9,
     fontWeight: "800",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   categoryBadge: {
     borderWidth: 1,
     borderRadius: 6,
@@ -213,12 +220,18 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 9,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   content: {
     fontSize: 13,
     lineHeight: 20,
     marginBottom: 14,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   footer: {
     borderTopWidth: 1,
     paddingTop: 10,
@@ -227,7 +240,10 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 11,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -236,6 +252,9 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     marginTop: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
 });
 export default NoticeTabContent;

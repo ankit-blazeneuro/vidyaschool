@@ -18,6 +18,7 @@ import { FeeInstallment } from "../../types";
 import { DashboardHeader } from "../DashboardHeader";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { FONT_FAMILY } from "../../theme/colors";
 
 interface FeesTabContentProps {
   onMenuPress: () => void;
@@ -371,11 +372,17 @@ const styles = StyleSheet.create({
   monthText: {
     fontSize: 15,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   dueText: {
     fontSize: 11.5,
     marginTop: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -384,7 +391,10 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 9,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   amountRow: {
     borderTopWidth: 1,
     paddingTop: 12,
@@ -395,11 +405,17 @@ const styles = StyleSheet.create({
   },
   amountLabel: {
     fontSize: 13,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   amountValue: {
     fontSize: 16,
     fontWeight: "700",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   actions: {
     width: "100%",
   },
@@ -413,7 +429,10 @@ const styles = StyleSheet.create({
   payBtnText: {
     fontSize: 13,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   receiptBtn: {
     height: 38,
     borderRadius: 8,
@@ -425,7 +444,10 @@ const styles = StyleSheet.create({
   receiptBtnText: {
     fontSize: 13,
     fontWeight: "500",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   btnIcon: {
     marginRight: 6,
   },
@@ -437,7 +459,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     marginTop: 12,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -457,7 +482,10 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 16,
     textAlign: "center",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   modalDetails: {
     alignItems: "center",
     marginBottom: 20,
@@ -465,15 +493,24 @@ const styles = StyleSheet.create({
   modalLabel: {
     fontSize: 11,
     marginBottom: 2,
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   modalValue: {
     fontSize: 14,
     fontWeight: "600",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   modalValueLarge: {
     fontSize: 20,
     fontWeight: "800",
-  },
+
+      fontFamily: FONT_FAMILY,
+
+    },
   spacer: {
     height: 12,
   },

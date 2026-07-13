@@ -1,220 +1,219 @@
-import { View, Text, TextInput, Pressable, StyleSheet, useColorScheme, Alert, ActivityIndicator } from "react-native";
-import { StatusBar } from "expo-status-bar";
-import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, StatusBar, TouchableOpacity, Alert, TouchableWithoutFeedback, Keyboard } from "react-native";
+import { useRouter } from "expo-router";
+import { BottomDrawer } from "../components/BottomDrawer";
+import { CustomTextField } from "../components/CustomTextField";
+import { PrimaryButton } from "../components/PrimaryButton";
+import { SecondaryButton } from "../components/SecondaryButton";
+import { GlobeBackdrop } from "../components/GlobeBackdrop";
+import { AntDesign } from "@expo/vector-icons";
+import { ApiService } from "../services/api";
+import { SessionManager } from "../services/session";
+import { FONT_FAMILY } from "../theme/colors";
+import { useThemeColors } from "../theme/ThemeContext";
 
-const API_URL = "https://vidyaschool.vercel.app";
-
-export default function Login() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+export default function LoginScreen() {
   const router = useRouter();
-  
+  const colors = useThemeColors();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!email.trim() || !password.trim()) {
       Alert.alert("Error", "Please enter email and password");
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/sign-in/email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-
+      const response = await ApiService.login({ email, password });
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert("Success", "Login successful!");
-        // Navigate to home or dashboard
+        const token = data.session?.token || data.token;
+        const user = data.user;
+
+        if (!user) {
+          Alert.alert("Error", data.message || "User data not found in response.");
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch complete user details to get role and student class
+        let role = user.role || "student";
+        let studentClass: string | null = null;
+        let name = user.name;
+        let avatarUrl = user.image;
+
+        try {
+          const roleResponse = await ApiService.getUserRole(user.email);
+          if (roleResponse.ok) {
+            const roleData = await roleResponse.json();
+            role = roleData.role || role;
+            name = roleData.name || name;
+            avatarUrl = roleData.image || avatarUrl;
+            studentClass = roleData.student_class;
+          }
+        } catch (roleError) {
+          console.error("Failed to fetch user role:", roleError);
+        }
+
+        await SessionManager.saveSession(
+          "email",
+          user.email,
+          name,
+          role,
+          avatarUrl,
+          token,
+          studentClass,
+          null
+        );
+
+        let destRole = role.toLowerCase();
+        if (destRole === "account") {
+          destRole = "accounts";
+        }
+        router.replace(`/dashboard/${destRole}`);
       } else {
-        Alert.alert("Error", data.message || "Login failed");
+        const errMsg = data.error?.message || data.message || "Invalid credentials.";
+        Alert.alert("Login Failed", errMsg);
       }
-    } catch (error) {
-      Alert.alert("Error", "Network error. Please try again.");
+    } catch (e: any) {
+      console.error("Login catch error:", e);
+      Alert.alert("Network Error", e.message || "Something went wrong.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
+  const handleSocialLogin = (provider: string) => {
+    Alert.alert("Social Auth", `${provider} login is not configured on this device yet.`);
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? "#09090b" : "#fafafa" }]}>
-      <StatusBar style={isDark ? "light" : "dark"} />
-      <View style={styles.content}>
-        <Text style={[styles.title, { color: isDark ? "#ffffff" : "#18181b" }]}>
-          Vidya School
-        </Text>
-      </View>
-      
-      <View style={[styles.drawer, { 
-        backgroundColor: isDark ? "#18181b" : "#ffffff",
-        borderTopColor: isDark ? "#27272a" : "#e4e4e7"
-      }]}>
-        <View style={styles.handle} />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" translucent={true} backgroundColor="transparent" />
         
-        <Text style={[styles.heading, { color: isDark ? "#ffffff" : "#18181b" }]}>
-          Welcome back
-        </Text>
+        {/* Background SVG outlines */}
+        <GlobeBackdrop width={350} height={347} stroke="#FFFFFF" strokeOpacity={0.22} strokeWidth={2.0} style={styles.bgTopLeft} />
+        <GlobeBackdrop width={220} height={218} stroke="#FFFFFF" strokeOpacity={0.18} strokeWidth={2.0} style={styles.bgBottomRight} anticlockwise={true} />
 
-        <TextInput
-          style={[styles.input, { 
-            backgroundColor: isDark ? "#09090b" : "#fafafa",
-            borderColor: isDark ? "#27272a" : "#e4e4e7",
-            color: isDark ? "#ffffff" : "#18181b"
-          }]}
-          placeholder="Email"
-          placeholderTextColor={isDark ? "#71717a" : "#a1a1aa"}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
-
-        <TextInput
-          style={[styles.input, { 
-            backgroundColor: isDark ? "#09090b" : "#fafafa",
-            borderColor: isDark ? "#27272a" : "#e4e4e7",
-            color: isDark ? "#ffffff" : "#18181b"
-          }]}
-          placeholder="Password"
-          placeholderTextColor={isDark ? "#71717a" : "#a1a1aa"}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-
-        <Pressable style={styles.forgotPassword}>
-          <Text style={[styles.link, { color: isDark ? "#ffffff" : "#18181b" }]}>
-            Forgot password?
-          </Text>
-        </Pressable>
-
-        <Pressable 
-          style={[styles.button, { 
-            backgroundColor: isDark ? "#ffffff" : "#18181b",
-            opacity: loading ? 0.6 : 1 
-          }]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color={isDark ? "#18181b" : "#ffffff"} />
-          ) : (
-            <Text style={[styles.buttonText, { color: isDark ? "#18181b" : "#ffffff" }]}>
-              Login
-            </Text>
-          )}
-        </Pressable>
-
-        <View style={styles.divider}>
-          <View style={[styles.dividerLine, { backgroundColor: isDark ? "#27272a" : "#e4e4e7" }]} />
-          <Text style={[styles.dividerText, { color: isDark ? "#71717a" : "#a1a1aa" }]}>OR</Text>
-          <View style={[styles.dividerLine, { backgroundColor: isDark ? "#27272a" : "#e4e4e7" }]} />
+        <View style={styles.headerSection}>
+          <Text style={styles.appName}>Vidya School</Text>
         </View>
 
-        <Pressable 
-          style={[styles.button, styles.socialButton, { 
-            borderColor: isDark ? "#3f3f46" : "#d4d4d8"
-          }]}
-        >
-          <Text style={[styles.buttonText, { color: isDark ? "#ffffff" : "#18181b" }]}>
-            Continue with Google
-          </Text>
-        </Pressable>
+        <BottomDrawer style={styles.drawer}>
+          <Text style={styles.title}>Welcome back</Text>
 
-        <Pressable 
-          style={[styles.button, styles.socialButton, { 
-            borderColor: isDark ? "#3f3f46" : "#d4d4d8"
-          }]}
-        >
-          <Text style={[styles.buttonText, { color: isDark ? "#ffffff" : "#18181b" }]}>
-            Continue with GitHub
-          </Text>
-        </Pressable>
+          <CustomTextField
+            value={email}
+            onValueChange={setEmail}
+            placeholder="e.g. you@school.edu"
+            label="Email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-        <Text style={[styles.footerText, { color: isDark ? "#a1a1aa" : "#71717a" }]}>
-          Don't have an account?{" "}
-          <Text style={styles.link}>Create Account</Text>
-        </Text>
+          <CustomTextField
+            value={password}
+            onValueChange={setPassword}
+            placeholder="Enter your password"
+            label="Password"
+            isPassword={true}
+          />
+
+          <PrimaryButton
+            text="Sign In"
+            onPress={handleLogin}
+            loading={isLoading}
+            style={styles.button}
+          />
+
+          <View style={styles.divider}>
+            <View style={[styles.dividerLine, { backgroundColor: colors.outline }]} />
+            <Text style={[styles.dividerText, { color: colors.secondary }]}>or</Text>
+            <View style={[styles.dividerLine, { backgroundColor: colors.outline }]} />
+          </View>
+
+          <SecondaryButton
+            text="Continue with Google"
+            onPress={() => handleSocialLogin("Google")}
+            style={styles.socialButton}
+            icon={<AntDesign name="google" size={18} color={colors.onSurface} />}
+          />
+
+          <SecondaryButton
+            text="Continue with GitHub"
+            onPress={() => handleSocialLogin("GitHub")}
+            style={styles.socialButton}
+            icon={<AntDesign name="github" size={18} color={colors.onSurface} />}
+          />
+
+          <TouchableOpacity
+            onPress={() => router.push("/signup")}
+            style={styles.signupLink}
+          >
+            <Text style={styles.signupText}>
+              Don't have an account? <Text style={styles.underline}>Create Account</Text>
+            </Text>
+          </TouchableOpacity>
+        </BottomDrawer>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#000000",
+    justifyContent: "space-between",
+    position: "relative",
+    overflow: "hidden",
   },
-  content: {
+  bgTopLeft: {
+    position: "absolute",
+    top: -60,
+    left: -60,
+  },
+  bgBottomRight: {
+    position: "absolute",
+    bottom: 270,
+    right: -30,
+  },
+  headerSection: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingBottom: 280,
   },
-  title: {
+  appName: {
+    color: "#FFFFFF",
     fontSize: 28,
+    fontFamily: FONT_FAMILY,
     fontWeight: "600",
+    letterSpacing: 0.5,
   },
   drawer: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderTopWidth: 1,
-    padding: 24,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: "#d4d4d8",
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 20,
-  },
-  heading: {
+  title: {
     fontSize: 20,
     fontWeight: "600",
     marginBottom: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 12,
-    fontSize: 14,
-    height: 40,
-  },
-  forgotPassword: {
-    alignSelf: "flex-end",
-    marginBottom: 16,
+    color: "#18181B",
+    fontFamily: FONT_FAMILY,
   },
   button: {
-    borderRadius: 6,
-    paddingVertical: 10,
-    marginBottom: 12,
-  },
-  socialButton: {
-    borderWidth: 1,
-    backgroundColor: "transparent",
-  },
-  buttonText: {
-    textAlign: "center",
-    fontSize: 14,
-    fontWeight: "500",
+    marginTop: 8,
+    marginBottom: 8,
   },
   divider: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 16,
+    marginVertical: 14,
   },
   dividerLine: {
     flex: 1,
@@ -223,14 +222,23 @@ const styles = StyleSheet.create({
   dividerText: {
     fontSize: 12,
     marginHorizontal: 12,
+    fontFamily: FONT_FAMILY,
   },
-  link: {
+  socialButton: {
+    marginBottom: 10,
+  },
+  signupLink: {
+    alignItems: "center",
+    marginTop: 10,
+  },
+  signupText: {
+    fontSize: 12,
+    color: "#71717A",
+    fontFamily: FONT_FAMILY,
+  },
+  underline: {
     textDecorationLine: "underline",
     fontWeight: "500",
-  },
-  footerText: {
-    fontSize: 12,
-    textAlign: "center",
-    marginTop: 16,
+    fontFamily: FONT_FAMILY,
   },
 });
