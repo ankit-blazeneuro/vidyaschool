@@ -44,11 +44,13 @@ interface CommunityTypingUser {
 interface CommunityTabContentProps {
   onMenuPress: () => void;
   onNotificationPress: () => void;
+  onScroll?: (event: any) => void;
 }
 
 export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
   onMenuPress,
   onNotificationPress,
+  onScroll,
 }) => {
   const colors = useThemeColors();
   const flatListRef = useRef<FlatList>(null);
@@ -352,6 +354,9 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
     const layoutHeight = event.nativeEvent.layoutMeasurement.height;
     // Show "scroll to bottom" FAB if we are scrolled up more than 150px
     setShowScrollBottom(contentHeight - layoutHeight - offsetY > 150);
+    if (onScroll) {
+      onScroll(event);
+    }
   };
 
   const scrollToBottom = () => {
@@ -389,6 +394,7 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
           renderItem={renderMessageItem}
           contentContainerStyle={styles.list}
           onScroll={handleScroll}
+          scrollEventThrottle={16}
           onContentSizeChange={scrollToBottom}
           onLayout={scrollToBottom}
         />

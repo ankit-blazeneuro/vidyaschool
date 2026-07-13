@@ -9,11 +9,13 @@ import { FONT_FAMILY } from "../../theme/colors";
 interface SessionsTabContentProps {
   onMenuPress: () => void;
   onNotificationPress: () => void;
+  onScroll?: (event: any) => void;
 }
 
 export const SessionsTabContent: React.FC<SessionsTabContentProps> = ({
   onMenuPress,
   onNotificationPress,
+  onScroll,
 }) => {
   const colors = useThemeColors();
   const [provider, setProvider] = useState("");
@@ -31,7 +33,11 @@ export const SessionsTabContent: React.FC<SessionsTabContentProps> = ({
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+    >
       <DashboardHeader
         title="Manage Sessions"
         subtitle="Active account session instances"

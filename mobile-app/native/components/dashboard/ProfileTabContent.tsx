@@ -25,6 +25,7 @@ interface ProfileTabContentProps {
   onLogout: () => void;
   onMenuPress: () => void;
   onNotificationPress: () => void;
+  onScroll?: (event: any) => void;
 }
 
 export const ProfileTabContent: React.FC<ProfileTabContentProps> = ({
@@ -32,6 +33,7 @@ export const ProfileTabContent: React.FC<ProfileTabContentProps> = ({
   onLogout,
   onMenuPress,
   onNotificationPress,
+  onScroll,
 }) => {
   const colors = useThemeColors();
   const { themeMode } = useTheme();
@@ -152,7 +154,11 @@ export const ProfileTabContent: React.FC<ProfileTabContentProps> = ({
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+    >
       <DashboardHeader
         title="My Profile"
         subtitle="Account settings & preferences"

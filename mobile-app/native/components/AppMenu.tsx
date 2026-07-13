@@ -13,6 +13,7 @@ import {
 import { BlurView } from "expo-blur";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../theme/ThemeContext";
 import { FONT_FAMILY } from "../theme/colors";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -44,15 +45,31 @@ export const AppMenu: React.FC<AppMenuProps> = ({
   items,
 }) => {
   const insets = useSafeAreaInsets();
+  const { isDark } = useTheme();
   const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const backdropAnim = useRef(new Animated.Value(0)).current;
+
+  // B&W contrast theme logic for dark/light mode
+  const sheetBg = isDark ? "#09090B" : "#ffffff";
+  const textColor = isDark ? "#ffffff" : "#0a0a0a";
+  const subtextColor = isDark ? "#a1a1aa" : "#71717a";
+  const itemBg = isDark ? "#18181B" : "#fafafa";
+  const itemBorder = isDark ? "#27272A" : "#f4f4f5";
+  const iconWrapBg = isDark ? "#27272A" : "#f4f4f5";
+  const dividerBg = isDark ? "#27272A" : "#e4e4e7";
+  const avatarBg = isDark ? "#ffffff" : "#0a0a0a";
+  const avatarTextColor = isDark ? "#0a0a0a" : "#ffffff";
+  const pillBg = isDark ? "#18181B" : "#f4f4f5";
+  const pillBorder = isDark ? "#27272A" : "#e4e4e7";
+  const pillText = isDark ? "#e4e4e7" : "#3f3f46";
+  const handleBg = isDark ? "#3f3f46" : "#d4d4d8";
 
   useEffect(() => {
     if (visible) {
       Animated.parallel([
         Animated.spring(slideAnim, {
           toValue: 0,
-          damping: 22,
+          damping: 24,
           stiffness: 260,
           useNativeDriver: true,
         }),
@@ -63,20 +80,30 @@ export const AppMenu: React.FC<AppMenuProps> = ({
         }),
       ]).start();
     } else {
-      Animated.parallel([
-        Animated.timing(slideAnim, {
-          toValue: SHEET_HEIGHT,
-          duration: 260,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdropAnim, {
-          toValue: 0,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      slideAnim.setValue(SHEET_HEIGHT);
+      backdropAnim.setValue(0);
     }
   }, [visible]);
+
+  const handleClose = (callback?: () => void) => {
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: SHEET_HEIGHT,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropAnim, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+      if (callback) {
+        callback();
+      }
+    });
+  };
 
   const initials = name
     .split(" ")
@@ -93,17 +120,17 @@ export const AppMenu: React.FC<AppMenuProps> = ({
       transparent
       animationType="none"
       statusBarTranslucent
-      onRequestClose={onClose}
+      onRequestClose={() => handleClose()}
     >
       {/* Backdrop */}
       <Animated.View style={[styles.backdrop, { opacity: backdropAnim }]}>
-        <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={18} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
       </Animated.View>
 
       <TouchableOpacity
         style={styles.dismissArea}
         activeOpacity={1}
-        onPress={onClose}
+        onPress={() => handleClose()}
       />
 
       {/* Sheet */}
@@ -111,74 +138,80 @@ export const AppMenu: React.FC<AppMenuProps> = ({
         style={[
           styles.sheet,
           {
+            backgroundColor: sheetBg,
             transform: [{ translateY: slideAnim }],
-            paddingBottom: insets.bottom + 12,
+            paddingBottom: insets.bottom + 16,
           },
         ]}
       >
         {/* Pill handle */}
-        <View style={styles.handle} />
+        <View style={[styles.handle, { backgroundColor: handleBg }]} />
 
         {/* Profile card */}
         <View style={styles.profileCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
+          <View style={[styles.avatar, { backgroundColor: avatarBg }]}>
+            <Text style={[styles.avatarText, { color: avatarTextColor }]}>{initials}</Text>
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName} numberOfLines={1}>
+            <Text style={[styles.profileName, { color: textColor }]} numberOfLines={1}>
               {name}
             </Text>
-            <Text style={styles.profileEmail} numberOfLines={1}>
+            <Text style={[styles.profileEmail, { color: subtextColor }]} numberOfLines={1}>
               {email}
             </Text>
-            <View style={styles.rolePill}>
-              <Text style={styles.roleText}>{roleLabel}</Text>
+            <View style={[styles.rolePill, { backgroundColor: pillBg, borderColor: pillBorder }]}>
+              <Text style={[styles.roleText, { color: pillText }]}>{roleLabel}</Text>
             </View>
           </View>
         </View>
 
         {/* Divider */}
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: dividerBg }]} />
 
         {/* Menu items */}
         <View style={styles.menuList}>
           {items.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={[styles.menuItem, item.danger && styles.menuItemDanger]}
+              style={[
+                styles.menuItem,
+                { backgroundColor: itemBg, borderColor: itemBorder },
+                item.danger && styles.menuItemDanger,
+              ]}
               activeOpacity={0.7}
               onPress={() => {
-                onClose();
-                setTimeout(item.onPress, 220);
+                handleClose(item.onPress);
               }}
             >
               <View
                 style={[
                   styles.menuIconWrap,
+                  { backgroundColor: iconWrapBg },
                   item.danger && styles.menuIconWrapDanger,
                 ]}
               >
                 <Feather
                   name={item.icon as any}
                   size={16}
-                  color={item.danger ? "#EF4444" : "#0a0a0a"}
+                  color={item.danger ? "#EF4444" : textColor}
                 />
               </View>
               <View style={styles.menuTextWrap}>
                 <Text
                   style={[
                     styles.menuLabel,
+                    { color: textColor },
                     item.danger && { color: "#EF4444" },
                   ]}
                 >
                   {item.label}
                 </Text>
                 {item.sublabel ? (
-                  <Text style={styles.menuSublabel}>{item.sublabel}</Text>
+                  <Text style={[styles.menuSublabel, { color: subtextColor }]}>{item.sublabel}</Text>
                 ) : null}
               </View>
               {!item.danger && (
-                <Feather name="chevron-right" size={14} color="#a1a1aa" />
+                <Feather name="chevron-right" size={14} color={subtextColor} />
               )}
             </TouchableOpacity>
           ))}
@@ -197,7 +230,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheet: {
-    backgroundColor: "#ffffff",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingTop: 12,
@@ -212,7 +244,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#d4d4d8",
     alignSelf: "center",
     marginBottom: 20,
   },
@@ -226,13 +257,11 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#0a0a0a",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 14,
   },
   avatarText: {
-    color: "#ffffff",
     fontSize: 18,
     fontWeight: "700",
     fontFamily: FONT_FAMILY,
@@ -244,41 +273,35 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#0a0a0a",
     fontFamily: FONT_FAMILY,
     letterSpacing: -0.2,
   },
   profileEmail: {
     fontSize: 12,
-    color: "#71717a",
     marginTop: 2,
     fontFamily: FONT_FAMILY,
   },
   rolePill: {
     alignSelf: "flex-start",
-    backgroundColor: "#f4f4f5",
     borderRadius: 20,
     paddingHorizontal: 8,
     paddingVertical: 2,
     marginTop: 6,
     borderWidth: 1,
-    borderColor: "#e4e4e7",
   },
   roleText: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#3f3f46",
     fontFamily: FONT_FAMILY,
     letterSpacing: 0.4,
     textTransform: "uppercase",
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: "#e4e4e7",
     marginBottom: 14,
   },
   menuList: {
-    gap: 4,
+    gap: 8,
   },
   menuItem: {
     flexDirection: "row",
@@ -286,9 +309,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderRadius: 14,
-    backgroundColor: "#fafafa",
     borderWidth: 1,
-    borderColor: "#f4f4f5",
     gap: 12,
   },
   menuItemDanger: {
@@ -299,7 +320,6 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 10,
-    backgroundColor: "#f4f4f5",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -312,12 +332,10 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#0a0a0a",
     fontFamily: FONT_FAMILY,
   },
   menuSublabel: {
     fontSize: 11,
-    color: "#71717a",
     marginTop: 1,
     fontFamily: FONT_FAMILY,
   },

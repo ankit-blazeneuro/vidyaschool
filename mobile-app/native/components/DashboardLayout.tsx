@@ -12,6 +12,7 @@ import {
 import { useThemeColors, useTheme } from "../theme/ThemeContext";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import NotificationEvent from "../services/notificationEvent";
 import {
   CustomHomeIcon,
@@ -71,6 +72,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const colors = useThemeColors();
   const { isDark } = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [selectedTab, setSelectedTab] = useState("home");
   const [activeDocPath, setActiveDocPath] = useState<string | null>(null);
@@ -162,36 +164,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         translucent={true}
       />
 
-      {/* 1. Top Bar Navigation (search tab only) */}
-      {activeDocPath === null && selectedTab === "search" && (
-        <View
-          style={[
-            styles.topBar,
-            {
-              borderBottomColor: colors.outline,
-              paddingTop: (StatusBar.currentHeight ?? 0) + 6,
-            },
-          ]}
-        >
-          <TouchableOpacity
-            onPress={handleMenuClick}
-            style={[styles.circleBtn, { borderColor: colors.outline }]}
-          >
-            <CustomMenuIcon size={16} color={colors.onSurface} />
-          </TouchableOpacity>
 
-          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>
-            Directory &amp; Docs
-          </Text>
-
-          <TouchableOpacity
-            onPress={handleNotificationClick}
-            style={[styles.circleBtn, { borderColor: colors.outline }]}
-          >
-            <CustomNotificationIcon size={16} color={colors.onSurface} />
-          </TouchableOpacity>
-        </View>
-      )}
 
       {/* 2. Main Tab Body */}
       <View style={styles.body}>
@@ -215,18 +188,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <NoticeTabContent
                 onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
+                onScroll={handleScroll}
               />
             )}
             {selectedTab === "fees" && isStudent && (
               <FeesTabContent
                 onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
+                onScroll={handleScroll}
               />
             )}
             {selectedTab === "community" && !isStudent && (
               <CommunityTabContent
                 onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
+                onScroll={handleScroll}
               />
             )}
             {selectedTab === "search" && (
@@ -242,12 +218,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 onLogout={onLogout}
                 onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
+                onScroll={handleScroll}
               />
             )}
             {selectedTab === "sessions" && (
               <SessionsTabContent
                 onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
+                onScroll={handleScroll}
               />
             )}
           </>
@@ -255,15 +233,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </View>
 
       {/* Animated Sticky Floating Header */}
-      {activeDocPath === null && selectedTab === "home" && (
+      {activeDocPath === null && selectedTab !== "search" && (
         <Animated.View
           pointerEvents={headerCollapsed ? "auto" : "none"}
           style={[
             styles.stickyTopBar,
             {
               borderBottomColor: colors.outline,
-              paddingTop: StatusBar.currentHeight ?? 0,
-              height: 54 + (StatusBar.currentHeight ?? 0),
+              paddingTop: insets.top,
+              height: 54 + insets.top,
               opacity: headerAlpha,
               transform: [{ translateY: headerSlide }],
               backgroundColor: isDark
@@ -293,7 +271,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </TouchableOpacity>
 
             <Text style={[styles.headerTitle, { color: colors.onSurface }]}>
-              Dashboard
+              {getHeaderTitle()}
             </Text>
 
             <TouchableOpacity
@@ -328,6 +306,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     ? "rgba(9,9,11,0.92)"
                     : "rgba(255,255,255,0.92)"
                   : "transparent",
+              paddingBottom: insets.bottom > 0 ? insets.bottom : (Platform.OS === "ios" ? 12 : 8),
+              height: 60 + (insets.bottom > 0 ? insets.bottom : 0),
             },
           ]}
         >

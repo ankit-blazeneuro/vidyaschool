@@ -23,11 +23,13 @@ import { FONT_FAMILY } from "../../theme/colors";
 interface FeesTabContentProps {
   onMenuPress: () => void;
   onNotificationPress: () => void;
+  onScroll?: (event: any) => void;
 }
 
 export const FeesTabContent: React.FC<FeesTabContentProps> = ({
   onMenuPress,
   onNotificationPress,
+  onScroll,
 }) => {
   const colors = useThemeColors();
   const router = useRouter();
@@ -270,6 +272,8 @@ export const FeesTabContent: React.FC<FeesTabContentProps> = ({
         keyExtractor={(item) => item.id}
         renderItem={renderFeeItem}
         contentContainerStyle={styles.list}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         ListHeaderComponent={
           <DashboardHeader
             title="Fees Portal"

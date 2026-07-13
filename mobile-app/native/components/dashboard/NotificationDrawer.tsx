@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,14 +6,21 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
+  Dimensions,
   Platform,
+  ScrollView,
 } from "react-native";
-import { useThemeColors } from "../../theme/ThemeContext";
+import { BlurView } from "expo-blur";
+import { useTheme } from "../../theme/ThemeContext";
 import { ApiService } from "../../services/api";
 import { NotificationHistoryItem } from "../../types";
 import { Feather } from "@expo/vector-icons";
-import { BottomDrawer } from "../BottomDrawer";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FONT_FAMILY } from "../../theme/colors";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+const SHEET_HEIGHT = SCREEN_HEIGHT * 0.72;
 
 interface NotificationDrawerProps {
   visible: boolean;
@@ -24,13 +31,54 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
   visible,
   onClose,
 }) => {
-  const colors = useThemeColors();
+  const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<NotificationHistoryItem[]>([]);
+
+  const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const backdropAnim = useRef(new Animated.Value(0)).current;
+
+  // B&W Contrast Theme logic for dark/light mode
+  const sheetBg = isDark ? "#09090B" : "#ffffff";
+  const textColor = isDark ? "#ffffff" : "#0a0a0a";
+  const subtextColor = isDark ? "#a1a1aa" : "#71717a";
+  const itemBg = isDark ? "#18181B" : "#fafafa";
+  const itemBorder = isDark ? "#27272A" : "#f4f4f5";
+  const iconWrapBg = isDark ? "#27272A" : "#f4f4f5";
+  const dividerBg = isDark ? "#27272A" : "#e4e4e7";
+  const closeBtnBg = isDark ? "#27272A" : "#f4f4f5";
+  const handleBg = isDark ? "#3f3f46" : "#d4d4d8";
 
   useEffect(() => {
     if (visible) {
       fetchNotifications();
+      Animated.parallel([
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          damping: 24,
+          stiffness: 260,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdropAnim, {
+          toValue: 1,
+          duration: 280,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: SHEET_HEIGHT,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdropAnim, {
+          toValue: 0,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
   }, [visible]);
 
@@ -63,94 +111,154 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
     }
   };
 
+  const handleClose = () => {
+    Animated.parallel([
+      Animated.timing(slideAnim, {
+        toValue: SHEET_HEIGHT,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropAnim, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+    });
+  };
+
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
+      transparent
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={handleClose}
     >
-      <View style={styles.overlay}>
-        {/* Tap backdrop to close */}
-        <TouchableOpacity style={styles.dismissArea} activeOpacity={1} onPress={onClose} />
-        
-        {/* Use the exact same BottomDrawer component as the login page */}
-        <BottomDrawer scrollEnabled={true} style={styles.drawerStyle}>
-          {/* Header */}
-          <View style={[styles.header, { borderBottomColor: colors.outline }]}>
-            <Text style={[styles.title, { color: colors.onSurface }]}>Notifications</Text>
-            <TouchableOpacity onPress={onClose} style={[styles.closeBtn, { backgroundColor: colors.outline }]}>
-              <Feather name="x" size={16} color={colors.onSurface} />
-            </TouchableOpacity>
-          </View>
+      {/* Backdrop */}
+      <Animated.View style={[styles.backdrop, { opacity: backdropAnim }]}>
+        <BlurView intensity={18} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
+      </Animated.View>
 
-          {/* Body */}
-          {loading ? (
-            <View style={styles.center}>
-              <ActivityIndicator size="small" color={colors.primary} />
+      <TouchableOpacity
+        style={styles.dismissArea}
+        activeOpacity={1}
+        onPress={handleClose}
+      />
+
+      {/* Sheet */}
+      <Animated.View
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: sheetBg,
+            transform: [{ translateY: slideAnim }],
+            paddingBottom: insets.bottom + 16,
+            height: SHEET_HEIGHT,
+          },
+        ]}
+      >
+        {/* Pill handle */}
+        <View style={[styles.handle, { backgroundColor: handleBg }]} />
+
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: dividerBg }]}>
+          <Text style={[styles.title, { color: textColor }]}>Notifications</Text>
+          <TouchableOpacity
+            onPress={handleClose}
+            style={[styles.closeBtn, { backgroundColor: closeBtnBg }]}
+          >
+            <Feather name="x" size={16} color={textColor} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Body content */}
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="small" color={textColor} />
+          </View>
+        ) : notifications.length === 0 ? (
+          <View style={styles.center}>
+            <View style={[styles.emptyIconCircle, { backgroundColor: iconWrapBg }]}>
+              <Feather name="bell-off" size={28} color={textColor} />
             </View>
-          ) : notifications.length === 0 ? (
-            <View style={styles.center}>
-              <Feather name="bell-off" size={32} color={colors.secondary} />
-              <Text style={[styles.emptyText, { color: colors.secondary }]}>
-                No notifications yet
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.listContainer}>
-              {notifications.map((item, index) => (
-                <React.Fragment key={item.id}>
-                  <View style={styles.notificationItem}>
-                    <View style={[styles.iconWrapper, { backgroundColor: colors.outline }]}>
-                      <Feather name="bell" size={14} color={colors.onSurface} />
-                    </View>
-                    <View style={styles.textContainer}>
-                      <View style={styles.itemHeader}>
-                        <Text style={[styles.itemTitle, { color: colors.onSurface }]} numberOfLines={1}>
-                          {item.title}
-                        </Text>
-                        <Text style={[styles.itemTime, { color: colors.secondary }]}>
-                          {formatIsoDate(item.created_at)}
-                        </Text>
-                      </View>
-                      <Text style={[styles.itemBody, { color: colors.secondary }]}>
-                        {item.body}
+            <Text style={[styles.emptyText, { color: textColor }]}>
+              No notifications yet
+            </Text>
+            <Text style={[styles.emptySubtext, { color: subtextColor }]}>
+              We'll let you know when something important arrives.
+            </Text>
+          </View>
+        ) : (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+          >
+            {notifications.map((item, index) => (
+              <React.Fragment key={item.id}>
+                <View style={[styles.notificationItem, { backgroundColor: itemBg, borderColor: itemBorder }]}>
+                  <View style={[styles.iconWrapper, { backgroundColor: iconWrapBg }]}>
+                    <Feather name="bell" size={14} color={textColor} />
+                  </View>
+                  <View style={styles.textContainer}>
+                    <View style={styles.itemHeader}>
+                      <Text style={[styles.itemTitle, { color: textColor }]} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text style={[styles.itemTime, { color: subtextColor }]}>
+                        {formatIsoDate(item.created_at)}
                       </Text>
                     </View>
+                    <Text style={[styles.itemBody, { color: subtextColor }]}>
+                      {item.body}
+                    </Text>
                   </View>
-                  {index < notifications.length - 1 && (
-                    <View style={[styles.separator, { backgroundColor: colors.outline }]} />
-                  )}
-                </React.Fragment>
-              ))}
-            </View>
-          )}
-        </BottomDrawer>
-      </View>
+                </View>
+              </React.Fragment>
+            ))}
+          </ScrollView>
+        )}
+      </Animated.View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.55)",
   },
   dismissArea: {
+    flex: 1,
+  },
+  sheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 24,
     position: "absolute",
-    top: 0,
     bottom: 0,
     left: 0,
     right: 0,
   },
-  drawerStyle: {
-    maxHeight: "75%",
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 16,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 14,
+    paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     marginBottom: 16,
   },
@@ -158,45 +266,59 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     letterSpacing: -0.4,
-
-      fontFamily: FONT_FAMILY,
-
-    },
+    fontFamily: FONT_FAMILY,
+  },
   closeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },
   center: {
-    height: 200,
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    paddingBottom: 60,
+  },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 14,
-    marginTop: 12,
-    fontWeight: "500",
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  listContainer: {
+    fontSize: 16,
+    fontWeight: "600",
+    fontFamily: FONT_FAMILY,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    marginTop: 6,
+    textAlign: "center",
+    paddingHorizontal: 32,
+    lineHeight: 18,
+    fontFamily: FONT_FAMILY,
+  },
+  listContent: {
     paddingBottom: 24,
+    gap: 10,
   },
   notificationItem: {
     flexDirection: "row",
-    paddingVertical: 12,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
   },
   iconWrapper: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
-    marginTop: 2,
   },
   textContainer: {
     flex: 1,
@@ -212,26 +334,17 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     flex: 1,
     marginRight: 8,
-
-      fontFamily: FONT_FAMILY,
-
-    },
+    fontFamily: FONT_FAMILY,
+  },
   itemBody: {
     fontSize: 13,
     lineHeight: 18,
-
-      fontFamily: FONT_FAMILY,
-
-    },
+    fontFamily: FONT_FAMILY,
+  },
   itemTime: {
-    fontSize: 11,
-
-      fontFamily: FONT_FAMILY,
-
-    },
-  separator: {
-    height: StyleSheet.hairlineWidth,
-    marginVertical: 4,
+    fontSize: 10,
+    fontWeight: "500",
+    fontFamily: FONT_FAMILY,
   },
 });
 

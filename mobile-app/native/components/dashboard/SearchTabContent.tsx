@@ -15,6 +15,7 @@ import { ApiService } from "../../services/api";
 import { SearchUserResponse, SearchBackendResponse } from "../../types";
 import { SearchResultRow } from "../SearchResultRow";
 import { Feather } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FONT_FAMILY } from "../../theme/colors";
 
 interface SearchTabContentProps {
@@ -57,6 +58,7 @@ export const SearchTabContent: React.FC<SearchTabContentProps> = ({
   onShowLibrary,
 }) => {
   const colors = useThemeColors();
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [loading, setLoading] = useState(false);
@@ -148,7 +150,7 @@ export const SearchTabContent: React.FC<SearchTabContentProps> = ({
     : DEFAULT_DOCS;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 12 }]}>
       {/* Search Input Box */}
       <View
         style={[

@@ -17,11 +17,13 @@ import { FONT_FAMILY } from "../../theme/colors";
 interface NoticeTabContentProps {
   onMenuPress: () => void;
   onNotificationPress: () => void;
+  onScroll?: (event: any) => void;
 }
 
 export const NoticeTabContent: React.FC<NoticeTabContentProps> = ({
   onMenuPress,
   onNotificationPress,
+  onScroll,
 }) => {
   const colors = useThemeColors();
   const [loading, setLoading] = useState(true);
@@ -133,6 +135,8 @@ export const NoticeTabContent: React.FC<NoticeTabContentProps> = ({
         keyExtractor={(item) => item.id}
         renderItem={renderNoticeItem}
         contentContainerStyle={styles.list}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         ListHeaderComponent={
           <DashboardHeader
             title="Notice Board"
