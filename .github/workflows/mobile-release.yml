@@ -4,18 +4,17 @@ on:
   push:
     branches: [ main ]
 
-# Only one release pipeline runs at a time; cancel older runs
-concurrency:
-  group: mobile-release
-  cancel-in-progress: true
-
 jobs:
   # ─────────────────────────────────────────────────────────────
   # JOB 1 — iOS IPA  (macos — slower, 10× minutes)
   # ─────────────────────────────────────────────────────────────
   build-ios:
     name: 🍎 Build iOS IPA
-    runs-on: macos-14          # Apple Silicon runner (M1) — fastest macOS option
+    runs-on: macos-14
+    concurrency:
+      group: build-ios-${{ github.ref }}
+      cancel-in-progress: true
+    timeout-minutes: 60
     permissions:
       contents: write
     outputs:
@@ -124,6 +123,10 @@ jobs:
   build-android:
     name: 🤖 Build Android APK
     runs-on: ubuntu-latest
+    concurrency:
+      group: build-android-${{ github.ref }}
+      cancel-in-progress: true
+    timeout-minutes: 30
     permissions:
       contents: write
     needs: build-ios            # run after iOS; reuse version from Job 1
@@ -177,6 +180,7 @@ jobs:
   create-release:
     name: 🚀 Create GitHub Release
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [ build-android, build-ios ]
     permissions:
       contents: write
