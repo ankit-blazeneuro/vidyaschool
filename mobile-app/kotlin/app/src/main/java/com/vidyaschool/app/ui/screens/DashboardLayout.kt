@@ -3503,8 +3503,7 @@ fun FeesTabContent(
                         android.widget.Toast.makeText(context, "Mock payment successful!", android.widget.Toast.LENGTH_SHORT).show()
                         fetchFees()
                     } else {
-                        val errMsg = payResp.body()?.message ?: "Unknown error"
-                        android.widget.Toast.makeText(context, "Mock payment failed: $errMsg", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, "Mock payment failed", android.widget.Toast.LENGTH_SHORT).show()
                     }
                     isProcessingPayment = null
                     return@launch
