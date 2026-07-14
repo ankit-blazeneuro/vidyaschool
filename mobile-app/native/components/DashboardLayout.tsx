@@ -273,8 +273,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               opacity: headerAlpha,
               transform: [{ translateY: headerSlide }],
               backgroundColor: isDark
-                ? "rgba(9,9,11,0.95)"
-                : "rgba(255,255,255,0.95)",
+                ? "rgba(9, 9, 11, 0.75)"
+                : "rgba(255, 255, 255, 0.75)",
             },
           ]}
         >
@@ -293,6 +293,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               style={StyleSheet.absoluteFill}
             />
           )}
+          <LinearGradient
+            colors={
+              isDark
+                ? ["rgba(0, 0, 0, 0.85)", "rgba(0, 0, 0, 0.55)"]
+                : ["rgba(250, 250, 250, 0.6)", "rgba(250, 250, 250, 0.15)"]
+            }
+            style={StyleSheet.absoluteFill}
+          />
           <View style={styles.stickyHeaderRow}>
             <TouchableOpacity
               onPress={handleMenuClick}
