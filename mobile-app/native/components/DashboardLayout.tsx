@@ -315,9 +315,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* 3. Bottom Navigation Bar */}
       {activeDocPath === null && (
-        <BlurView
-          intensity={Platform.OS === "ios" ? 85 : 95}
-          tint={isDark ? "dark" : "light"}
+        <View
           style={[
             styles.tabBar,
             {
@@ -332,6 +330,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             },
           ]}
         >
+          {Platform.OS === "ios" && (
+            <BlurView
+              intensity={85}
+              tint={isDark ? "dark" : "light"}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
           {Platform.OS === "android" && (
             <LinearGradient
               colors={
@@ -451,7 +456,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               Settings
             </Text>
           </TouchableOpacity>
-        </BlurView>
+        </View>
       )}
 
       {/* 4. AppMenu bottom sheet */}
