@@ -370,8 +370,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <LinearGradient
             colors={
               isDark
-                ? ["rgba(0, 0, 0, 0.55)", "rgba(0, 0, 0, 0.85)"]
-                : ["rgba(250, 250, 250, 0.15)", "rgba(250, 250, 250, 0.6)"]
+                ? ["rgba(0, 0, 0, 0.7)", "rgba(0, 0, 0, 0.95)"]
+                : ["rgba(250, 250, 250, 0.35)", "rgba(250, 250, 250, 0.75)"]
             }
             style={StyleSheet.absoluteFill}
           />
