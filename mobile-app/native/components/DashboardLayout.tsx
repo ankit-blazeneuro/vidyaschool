@@ -10,7 +10,7 @@ import {
   StatusBar,
 } from "react-native";
 import { useThemeColors, useTheme } from "../theme/ThemeContext";
-import { BlurView } from "expo-blur";
+import { BlurView, BlurTargetView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -74,6 +74,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { isDark } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const bodyTargetRef = useRef(null);
+  const ContainerView = Platform.OS === "android" ? BlurTargetView : View;
 
   const [selectedTab, setSelectedTab] = useState("home");
   const [activeDocPath, setActiveDocPath] = useState<string | null>(null);
@@ -189,7 +192,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
 
       {/* 2. Main Tab Body */}
-      <View style={styles.body}>
+      <ContainerView
+        ref={bodyTargetRef}
+        style={styles.body}
+      >
         {activeDocPath !== null ? (
           <DocViewerScreen
             path={activeDocPath}
@@ -252,7 +258,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             )}
           </>
         )}
-      </View>
+      </ContainerView>
 
       {/* Animated Sticky Floating Header */}
       {activeDocPath === null && selectedTab !== "search" && (
@@ -272,11 +278,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             },
           ]}
         >
-          <BlurView
-            intensity={Platform.OS === "ios" ? 80 : 90}
-            tint={isDark ? "dark" : "light"}
-            style={StyleSheet.absoluteFill}
-          />
+          {Platform.OS === "ios" ? (
+            <BlurView
+              intensity={80}
+              tint={isDark ? "dark" : "light"}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : (
+            <BlurView
+              intensity={90}
+              tint={isDark ? "dark" : "light"}
+              blurTarget={bodyTargetRef}
+              blurMethod="dimezisBlurViewSdk31Plus"
+              style={StyleSheet.absoluteFill}
+            />
+          )}
           <View style={styles.stickyHeaderRow}>
             <TouchableOpacity
               onPress={handleMenuClick}
@@ -330,20 +346,18 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             },
           ]}
         >
-          {Platform.OS === "ios" && (
+          {Platform.OS === "ios" ? (
             <BlurView
               intensity={85}
               tint={isDark ? "dark" : "light"}
               style={StyleSheet.absoluteFill}
             />
-          )}
-          {Platform.OS === "android" && (
-            <LinearGradient
-              colors={
-                isDark
-                  ? ["rgba(9, 9, 11, 0.2)", "rgba(9, 9, 11, 0.65)"]
-                  : ["rgba(255, 255, 255, 0.2)", "rgba(244, 244, 245, 0.65)"]
-              }
+          ) : (
+            <BlurView
+              intensity={95}
+              tint={isDark ? "dark" : "light"}
+              blurTarget={bodyTargetRef}
+              blurMethod="dimezisBlurViewSdk31Plus"
               style={StyleSheet.absoluteFill}
             />
           )}
