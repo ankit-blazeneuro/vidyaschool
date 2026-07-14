@@ -362,17 +362,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <LinearGradient
             colors={
               isDark
-                ? ["rgba(9, 9, 11, 0.15)", "rgba(9, 9, 11, 0.6)"]
+                ? ["rgba(0, 0, 0, 0.55)", "rgba(0, 0, 0, 0.85)"]
                 : ["rgba(250, 250, 250, 0.15)", "rgba(250, 250, 250, 0.6)"]
             }
             style={StyleSheet.absoluteFill}
           />
-          {isDark && (
-            <LinearGradient
-              colors={["transparent", "rgba(0, 0, 0, 0.75)"]}
-              style={StyleSheet.absoluteFill}
-            />
-          )}
           <TouchableOpacity
             onPress={() => setSelectedTab("home")}
             style={styles.tabItem}
