@@ -111,7 +111,7 @@ def _mark_installments_paid(db: Session, installments: list[FeeInstallment], pay
     return {"success": True, "receipt_no": receipt_no, "paid_date": paid_date}
 
 
-def _create_razorpay_order(amount: int, receipt: str) -> dict[str, Any]:
+def _create_razorpay_order(amount: int, receipt: str, notes: dict[str, Any] | None = None) -> dict[str, Any]:
     RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET = _get_razorpay_creds()
     if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
         return {
@@ -125,7 +125,10 @@ def _create_razorpay_order(amount: int, receipt: str) -> dict[str, Any]:
     if amount < 100:
         raise HTTPException(status_code=400, detail="Minimum Razorpay amount is 100 paise")
 
-    payload = json.dumps({"amount": amount, "currency": "INR", "receipt": receipt}).encode("utf-8")
+    payload_dict = {"amount": amount, "currency": "INR", "receipt": receipt}
+    if notes:
+        payload_dict["notes"] = notes
+    payload = json.dumps(payload_dict).encode("utf-8")
     auth = base64.b64encode(f"{RAZORPAY_KEY_ID}:{RAZORPAY_KEY_SECRET}".encode("utf-8")).decode("utf-8")
     request = urllib_request.Request(
         "https://api.razorpay.com/v1/orders",
@@ -230,7 +233,11 @@ def create_order(payload: dict[str, Any], user: User = Depends(get_current_user)
     except (TypeError, ValueError) as exc:
         raise HTTPException(status_code=400, detail="Amount must be a number") from exc
 
-    order = _create_razorpay_order(amount_value, receipt)
+    notes = {
+        "installment_ids": ",".join(map(str, installment_ids)),
+        "user_id": str(user.id),
+    }
+    order = _create_razorpay_order(amount_value, receipt, notes)
     return {
         **order,
         "receipt": receipt,
@@ -274,7 +281,7 @@ def verify_payment(payload: dict[str, Any], user: User = Depends(get_current_use
 
 
 @router.post("/api/razorpay/webhook")
-async def razorpay_webhook(request: Request):
+async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
     payload = await request.body()
     signature = request.headers.get("x-razorpay-signature", "")
     _, key_secret = _get_razorpay_creds()
@@ -286,6 +293,38 @@ async def razorpay_webhook(request: Request):
     expected_signature = hmac.new(RAZORPAY_WEBHOOK_SECRET.encode("utf-8"), payload, hashlib.sha256).hexdigest()
     if not hmac.compare_digest(signature, expected_signature):
         raise HTTPException(status_code=400, detail="Webhook signature mismatch")
+
+    try:
+        body_json = json.loads(payload)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload") from exc
+
+    event = body_json.get("event")
+    if event in ("order.paid", "payment.captured"):
+        # Try to get notes from order, then payment
+        order_entity = body_json.get("payload", {}).get("order", {}).get("entity", {})
+        payment_entity = body_json.get("payload", {}).get("payment", {}).get("entity", {})
+        notes = order_entity.get("notes") or payment_entity.get("notes") or {}
+        
+        installment_ids_str = notes.get("installment_ids")
+        if installment_ids_str:
+            try:
+                installment_ids = [int(i.strip()) for i in installment_ids_str.split(",") if i.strip()]
+            except (ValueError, TypeError):
+                installment_ids = []
+            
+            if installment_ids:
+                installments = db.query(FeeInstallment).filter(
+                    FeeInstallment.id.in_(installment_ids)
+                ).all()
+                if installments:
+                    payment_id = payment_entity.get("id") or "Webhook"
+                    payment_method = payment_entity.get("method") or "Razorpay"
+                    _mark_installments_paid(
+                        db,
+                        installments,
+                        payment_method=f"{payment_method} (Webhook: {payment_id})"
+                    )
 
     return {"received": True}
 
