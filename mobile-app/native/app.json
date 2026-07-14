@@ -20,11 +20,12 @@
           "phonepe",
           "paytmmp"
         ]
-      }
+      },
+      "bundleIdentifier": "com.vidyaschool"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.vidyaschool"
@@ -34,7 +35,15 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24
+          }
+        }
+      ]
     ],
     "scheme": "native"
   }
