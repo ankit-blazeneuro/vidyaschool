@@ -46,9 +46,14 @@ final class AuthViewModel: ObservableObject {
 
     func checkSession() {
         sessionState = .loading
+        guard sessionStorage.isLoggedIn() else {
+            sessionState = .loggedOut
+            return
+        }
         Task {
+            let initialState = sharedViewModel.authState.value
             sharedViewModel.checkSession()
-            await waitForNonLoadingState()
+            await waitForStateChange(from: initialState)
             syncStateFromShared()
         }
     }
@@ -65,8 +70,9 @@ final class AuthViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
+        let initialState = sharedViewModel.authState.value
         sharedViewModel.loginWithEmail(email: email, password: password)
-        await waitForNonLoadingState()
+        await waitForStateChange(from: initialState)
 
         isLoading = false
         syncStateFromShared()
@@ -85,13 +91,14 @@ final class AuthViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
+        let initialState = sharedViewModel.authState.value
         sharedViewModel.createSocialSession(
             email: email,
             name: name,
             avatarUrl: avatarUrl,
             provider: provider
         )
-        await waitForNonLoadingState()
+        await waitForStateChange(from: initialState)
 
         isLoading = false
         syncStateFromShared()
@@ -147,14 +154,46 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    /// Polls `authState` every 100 ms until it leaves the Loading state.
-    /// Hard timeout of 10 s prevents an infinite wait on network failure.
-    private func waitForNonLoadingState() async {
+    private func isSameState(_ lhs: SharedAuthState, _ rhs: SharedAuthState) -> Bool {
+        if lhs is SharedAuthState.Idle && rhs is SharedAuthState.Idle { return true }
+        if lhs is SharedAuthState.Loading && rhs is SharedAuthState.Loading { return true }
+        if lhs is SharedAuthState.LoggedOut && rhs is SharedAuthState.LoggedOut { return true }
+        if lhs is SharedAuthState.LoggedIn && rhs is SharedAuthState.LoggedIn { return true }
+        if lhs is SharedAuthState.Error && rhs is SharedAuthState.Error { return true }
+        return false
+    }
+
+    /// Waits for the authState to change from the initial state (ensuring the KMP coroutine has
+    /// been dispatched and started execution), and then waits for the loading state to complete.
+    private func waitForStateChange(from initialState: SharedAuthState) async {
         let deadline = Date().addingTimeInterval(10)
+        let dispatchDeadline = Date().addingTimeInterval(0.2) // 200 ms timeout for the coroutine to start
+        
+        var stateChanged = false
+        while Date() < dispatchDeadline {
+            let state = sharedViewModel.authState.value
+            if !isSameState(state, initialState) {
+                stateChanged = true
+                break
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000) // 10 ms
+        }
+        
+        if stateChanged {
+            let state = sharedViewModel.authState.value
+            if !(state is SharedAuthState.Loading) {
+                // If it already transitioned directly to a terminal state (e.g. LoggedOut synchronously)
+                return
+            }
+        }
+        
+        // Wait until the state is no longer Loading
         while Date() < deadline {
             let state = sharedViewModel.authState.value
-            if !(state is SharedAuthState.Loading) { return }
-            try? await Task.sleep(nanoseconds: 100_000_000) // 100 ms
+            if !(state is SharedAuthState.Loading) {
+                return
+            }
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50 ms
         }
     }
 }
