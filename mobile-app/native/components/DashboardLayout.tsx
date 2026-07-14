@@ -336,11 +336,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             styles.tabBar,
             {
               borderTopColor: colors.outline,
-              backgroundColor: Platform.OS === "ios"
-                ? "transparent"
-                : isDark
-                  ? "rgba(9, 9, 11, 0.55)"
-                  : "rgba(255, 255, 255, 0.55)",
+              backgroundColor: isDark
+                ? "rgba(9, 9, 11, 0.75)"
+                : "rgba(255, 255, 255, 0.75)",
               paddingBottom: insets.bottom > 0 ? insets.bottom : (Platform.OS === "ios" ? 12 : 8),
               height: 60 + (insets.bottom > 0 ? insets.bottom : 0),
             },
