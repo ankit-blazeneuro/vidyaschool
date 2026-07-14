@@ -27,7 +27,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.santushtiboutique.xnative"
+      "package": "com.vidyaschool"
     },
     "web": {
       "favicon": "./assets/favicon.png",
