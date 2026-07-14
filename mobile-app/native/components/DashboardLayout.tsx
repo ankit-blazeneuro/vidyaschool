@@ -318,7 +318,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <BlurView
           intensity={Platform.OS === "ios" ? 85 : 95}
           tint={isDark ? "dark" : "light"}
-          experimentalBlurMethod="regular"
           style={[
             styles.tabBar,
             {
