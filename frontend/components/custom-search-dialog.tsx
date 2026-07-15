@@ -73,25 +73,25 @@ export function CustomSearchDialog(props: SharedProps) {
         item={item}
         onClick={onClick}
         className="flex flex-col items-start gap-0.5 py-3 px-3 mx-1 w-[calc(100%-8px)] cursor-pointer
-                   border-b border-zinc-100 dark:border-zinc-800/60 last:border-b-0"
+                   border-b border-border/30 last:border-b-0"
       >
         {/* Row 1: type pill + title */}
         <div className="flex items-center gap-2 w-full">
           <span className="shrink-0 text-[9px] font-semibold tracking-widest uppercase
                            px-1.5 py-0.5 rounded
-                           bg-zinc-100 dark:bg-zinc-800
-                           text-zinc-500 dark:text-zinc-400
-                           border border-zinc-200 dark:border-zinc-700">
+                           bg-sidebar-foreground/10
+                           text-muted-foreground
+                           border border-border/60">
             {typeLabel}
           </span>
-          <span className="text-xs font-medium text-zinc-800 dark:text-zinc-100 truncate flex-1 leading-snug">
+          <span className="text-xs font-medium text-foreground truncate flex-1 leading-snug">
             {item.title}
           </span>
         </div>
 
         {/* Row 2: content snippet */}
         {item.content && (
-          <p className="text-[11px] text-zinc-500 dark:text-zinc-500 line-clamp-1 leading-normal w-full pl-[46px]">
+          <p className="text-[11px] text-muted-foreground/70 line-clamp-1 leading-normal w-full pl-[46px]">
             {item.content}
           </p>
         )}
@@ -108,24 +108,17 @@ export function CustomSearchDialog(props: SharedProps) {
       <SearchDialogContent
         className="max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-xl shadow-2xl focus:outline-none
                    border border-border/80
-                   bg-white dark:bg-sidebar-foreground/5
+                   bg-sidebar-foreground/5
                    backdrop-blur-md
                    text-muted-foreground"
       >
-        {/* Shimmer keyframes — dark: uses sidebar muted tones, light: uses zinc */}
+        {/* Shimmer — same gradient for both modes using CSS vars */}
         <style>{`
           @keyframes text-shimmer {
             0%   { background-position: 200% 0; }
             100% { background-position: -200% 0; }
           }
           .shimmer-light {
-            background: linear-gradient(90deg, #71717a 20%, #18181b 50%, #71717a 80%);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: text-shimmer 2s linear infinite;
-          }
-          .dark .shimmer-light {
             background: linear-gradient(90deg, var(--muted-foreground) 20%, var(--foreground) 50%, var(--muted-foreground) 80%);
             background-size: 200% auto;
             -webkit-background-clip: text;
