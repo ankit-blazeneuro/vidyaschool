@@ -17,8 +17,35 @@ import { Search, Sparkles } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 export function CustomSearchDialog(props: SharedProps) {
-  const { search, setSearch, query } = useDocsSearch({ type: "fetch" })
+  const [search, setSearch] = React.useState("")
+  const [results, setResults] = React.useState<any[]>([])
+  const [isLoading, setIsLoading] = React.useState(false)
   const [isFocused, setIsFocused] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!search.trim()) {
+      setResults([])
+      setIsLoading(false)
+      return
+    }
+
+    setIsLoading(true)
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(search)}`)
+        if (res.ok) {
+          const data = await res.json()
+          setResults(data)
+        }
+      } catch (err) {
+        console.error("Search fetch failed:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }, 150) // debounce search fetches
+
+    return () => clearTimeout(timer)
+  }, [search])
 
   // Render a custom item
   const renderItem = ({ item, onClick }: { item: any; onClick: () => void }) => {
@@ -71,7 +98,24 @@ export function CustomSearchDialog(props: SharedProps) {
       
       {/* Premium Glassmorphic Dialog Container styled like the sidebar search and command popovers */}
       <SearchDialogContent className="max-h-[85vh] overflow-hidden flex flex-col p-0 border border-border/80 rounded-xl shadow-2xl bg-sidebar-foreground/5 hover:bg-sidebar-foreground/10 text-muted-foreground transition-all duration-150 text-xs focus:outline-none backdrop-blur-md">
-        
+        <style>{`
+          @keyframes text-shimmer {
+            0% {
+              background-position: 200% 0;
+            }
+            100% {
+              background-position: -200% 0;
+            }
+          }
+          .animate-text-shimmer {
+            background: linear-gradient(90deg, var(--muted-foreground) 20%, var(--foreground) 50%, var(--muted-foreground) 80%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: text-shimmer 2s linear infinite;
+          }
+        `}</style>
+
         {/* Clean Header container displaying only the search input */}
         <SearchDialogHeader 
           className={`flex items-center justify-between px-3 py-1.5 h-11 shrink-0 ${
@@ -97,14 +141,14 @@ export function CustomSearchDialog(props: SharedProps) {
         {/* Scrollable list area - only render when text is entered */}
         {search.trim() !== "" && (
           <ScrollArea className="flex-1 max-h-[380px] py-1">
-            {query.isLoading && (
-              <div className="flex items-center gap-2 px-4 py-2.5 text-[11px] text-muted-foreground/70 animate-pulse border-b border-border/10">
+            {isLoading && (
+              <div className="flex items-center gap-2 px-4 py-2.5 text-[11px] border-b border-border/10">
                 <div className="size-1.5 rounded-full bg-primary animate-ping" />
-                <span className="font-medium">Searching for "{search}"...</span>
+                <span className="font-semibold animate-text-shimmer">Searching documentation...</span>
               </div>
             )}
             <SearchDialogList
-              items={query.data !== "empty" ? query.data : null}
+              items={search.trim() === "" ? null : results}
               Item={renderItem}
               className="p-1 space-y-1"
             />
