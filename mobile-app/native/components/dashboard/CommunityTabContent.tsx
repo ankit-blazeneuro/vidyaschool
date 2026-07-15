@@ -4,15 +4,19 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   FlatList,
   StyleSheet,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Alert,
   ActivityIndicator,
   Image,
 } from "react-native";
-import { useThemeColors } from "../../theme/ThemeContext";
+import { useThemeColors, useTheme } from "../../theme/ThemeContext";
+import { BlurView, BlurTargetView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { SessionManager } from "../../services/session";
 import { ApiService } from "../../services/api";
 import { DashboardHeader } from "../DashboardHeader";
@@ -45,15 +49,22 @@ interface CommunityTabContentProps {
   onMenuPress: () => void;
   onNotificationPress: () => void;
   onScroll?: (event: any) => void;
+  onBack?: () => void;
 }
 
 export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
   onMenuPress,
   onNotificationPress,
   onScroll,
+  onBack,
 }) => {
   const colors = useThemeColors();
+  const { isDark } = useTheme();
   const flatListRef = useRef<FlatList>(null);
+  const bodyTargetRef = useRef(null);
+  const ContainerView = Platform.OS === "android" ? BlurTargetView : View;
+  
+  const [isInputFocused, setIsInputFocused] = useState(false);
   
   const [messages, setMessages] = useState<CommunityMsg[]>([]);
   const [inputText, setInputText] = useState("");
@@ -360,166 +371,199 @@ export const CommunityTabContent: React.FC<CommunityTabContentProps> = ({
   };
 
   const scrollToBottom = () => {
-    flatListRef.current?.scrollToEnd({ animated: true });
+    if (!flatListRef.current) return;
+    flatListRef.current.scrollToEnd({ animated: true });
+    // Extra nudge after animation to clear the floating input card
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: false });
+    }, 300);
   };
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={[styles.container, { backgroundColor: colors.background }]}
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
-      {/* Dashboard Header */}
-      <DashboardHeader
-        title="Community Hub"
-        subtitle={`${onlineCount} ${onlineCount === 1 ? "user" : "users"} online • ${isConnected ? "Live" : "Offline"}`}
-        onMenuPress={onMenuPress}
-        onNotificationPress={onNotificationPress}
-        style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.outline }}
-      />
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <View style={{ flex: 1 }}>
+          {/* Dashboard Header */}
+          <DashboardHeader
+            title="Community Hub"
+            subtitle={`${onlineCount} ${onlineCount === 1 ? "user" : "users"} online • ${isConnected ? "Live" : "Offline"}`}
+            onMenuPress={onMenuPress}
+            onNotificationPress={onNotificationPress}
+            showBack={true}
+            onBack={onBack}
+            style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.outline }}
+          />
 
-      {/* Loading Overlay */}
-      {messages.length === 0 && !isConnected ? (
-        <View style={styles.loaderWrap}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loaderText, { color: colors.secondary }]}>
-            Connecting to #community...
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={renderMessageItem}
-          contentContainerStyle={styles.list}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          onContentSizeChange={scrollToBottom}
-          onLayout={scrollToBottom}
-        />
-      )}
-
-      {/* Floating Typing Indicator */}
-      {typingUsers.length > 0 && (
-        <View style={[styles.typingFloatingCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
-          <ActivityIndicator size="small" color={colors.secondary} style={styles.typingSpinner} />
-          <Text style={[styles.typingText, { color: colors.onSurface }]} numberOfLines={1}>
-            {typingUsers.length === 1
-              ? `${typingUsers[0].name} is typing...`
-              : typingUsers.length === 2
-              ? `${typingUsers[0].name} and ${typingUsers[1].name} are typing...`
-              : "Several people are typing..."}
-          </Text>
-        </View>
-      )}
-
-      {/* Floating Scroll to Bottom FAB */}
-      {showScrollBottom && (
-        <TouchableOpacity
-          onPress={scrollToBottom}
-          activeOpacity={0.8}
-          style={[
-            styles.scrollFAB,
-            {
-              backgroundColor: colors.onSurface,
-              borderColor: colors.outline,
-            },
-          ]}
-        >
-          <Feather name="arrow-down" size={18} color={colors.surface} />
-        </TouchableOpacity>
-      )}
-
-      {/* Bottom Floating Input Card */}
-      <View style={[styles.inputCardWrap, { backgroundColor: colors.background }]}>
-        <View
-          style={[
-            styles.inputCard,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.outline,
-            },
-          ]}
-        >
-          {/* Replying Banner */}
-          {replyingTo && (
-            <View style={[styles.bannerRow, { backgroundColor: colors.outline }]}>
-              <View style={styles.bannerLeft}>
-                <Feather name="corner-down-right" size={12} color={colors.primary} />
-                <Text style={[styles.bannerTitleText, { color: colors.onSurface }]}>
-                  Replying to @{replyingTo.name}
-                </Text>
-                <Text style={[styles.bannerExcerptText, { color: colors.secondary }]} numberOfLines={1}>
-                  "{replyingTo.content}"
+          <ContainerView
+            ref={bodyTargetRef}
+            style={{ flex: 1 }}
+          >
+            {/* Loading Overlay */}
+            {messages.length === 0 && !isConnected ? (
+              <View style={styles.loaderWrap}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.loaderText, { color: colors.secondary }]}>
+                  Connecting to #community...
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setReplyingTo(null)} style={styles.bannerCloseBtn}>
-                <Feather name="x" size={14} color={colors.onSurface} />
-              </TouchableOpacity>
-            </View>
-          )}
+            ) : (
+              <FlatList
+                ref={flatListRef}
+                data={messages}
+                keyExtractor={(item) => item.id}
+                renderItem={renderMessageItem}
+                contentContainerStyle={styles.list}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+                onContentSizeChange={scrollToBottom}
+                onLayout={scrollToBottom}
+              />
+            )}
 
-          {/* Editing Banner */}
-          {editingMessage && (
-            <View style={[styles.bannerRow, { backgroundColor: colors.outline }]}>
-              <View style={styles.bannerLeft}>
-                <MaterialIcons name="edit" size={12} color={colors.primary} />
-                <Text style={[styles.bannerTitleText, { color: colors.primary }]}>
-                  Editing message...
+            {/* Floating Typing Indicator */}
+            {typingUsers.length > 0 && (
+              <View style={[styles.typingFloatingCard, { backgroundColor: colors.surface, borderColor: colors.outline }]}>
+                <ActivityIndicator size="small" color={colors.secondary} style={styles.typingSpinner} />
+                <Text style={[styles.typingText, { color: colors.onSurface }]} numberOfLines={1}>
+                  {typingUsers.length === 1
+                    ? `${typingUsers[0].name} is typing...`
+                    : typingUsers.length === 2
+                    ? `${typingUsers[0].name} and ${typingUsers[1].name} are typing...`
+                    : "Several people are typing..."}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setEditingMessage(null)} style={styles.bannerCloseBtn}>
-                <Feather name="x" size={14} color={colors.onSurface} />
+            )}
+
+
+            {/* Scroll to Bottom FAB */}
+            {showScrollBottom && (
+              <TouchableOpacity
+                onPress={scrollToBottom}
+                activeOpacity={0.8}
+                style={[
+                  styles.scrollFAB,
+                  {
+                    backgroundColor: colors.onSurface,
+                    borderColor: colors.outline,
+                  },
+                ]}
+              >
+                <Feather name="arrow-down" size={18} color={colors.surface} />
               </TouchableOpacity>
-            </View>
-          )}
+            )}
+          </ContainerView>
 
-          {/* ChatGPT Style Input row */}
-          <View style={styles.inputRow}>
-            <TouchableOpacity
-              onPress={() => Alert.alert("Coming Soon!", "Attachments features are coming soon.")}
-              style={styles.attachBtn}
-            >
-              <Feather name="plus" size={20} color={colors.secondary} />
-            </TouchableOpacity>
-
-            <TextInput
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Message #community"
-              placeholderTextColor={colors.secondary + "99"}
-              multiline
-              maxLength={500}
-              style={[styles.inputField, { color: colors.onSurface }]}
-            />
-
-            <TouchableOpacity
-              onPress={handleSend}
-              disabled={!isConnected || !inputText.trim()}
+          {/* Bottom Input Card — in flex flow so it sticks to keyboard */}
+          <View
+            style={styles.inputCardWrap}
+          >
+            <View
               style={[
-                styles.sendButton,
+                styles.inputCard,
                 {
-                  backgroundColor:
-                    isConnected && inputText.trim()
-                      ? colors.primary
-                      : colors.outline,
+                  borderColor: colors.outline,
                 },
               ]}
             >
-              <Feather
-                name="arrow-up"
-                size={16}
-                color={
-                  isConnected && inputText.trim()
-                    ? colors.onPrimary
-                    : colors.secondary
-                }
-              />
-            </TouchableOpacity>
+
+              {replyingTo && (
+                <View style={[styles.bannerRow, { backgroundColor: colors.outline }]}>
+                  <View style={styles.bannerLeft}>
+                    <Feather name="corner-down-right" size={12} color={colors.primary} />
+                    <Text style={[styles.bannerTitleText, { color: colors.onSurface }]}>
+                      Replying to @{replyingTo.name}
+                    </Text>
+                    <Text style={[styles.bannerExcerptText, { color: colors.secondary }]} numberOfLines={1}>
+                      "{replyingTo.content}"
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setReplyingTo(null)} style={styles.bannerCloseBtn}>
+                    <Feather name="x" size={14} color={colors.onSurface} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Editing Banner */}
+              {editingMessage && (
+                <View style={[styles.bannerRow, { backgroundColor: colors.outline }]}>
+                  <View style={styles.bannerLeft}>
+                    <MaterialIcons name="edit" size={12} color={colors.primary} />
+                    <Text style={[styles.bannerTitleText, { color: colors.primary }]}>
+                      Editing message...
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setEditingMessage(null)} style={styles.bannerCloseBtn}>
+                    <Feather name="x" size={14} color={colors.onSurface} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Input row */}
+              <View style={styles.inputRow}>
+                <TouchableOpacity
+                  onPress={() => Alert.alert("Coming Soon!", "Attachments features are coming soon.")}
+                  style={styles.attachBtn}
+                >
+                  <Feather name="plus" size={20} color={colors.secondary} />
+                </TouchableOpacity>
+
+                <TextInput
+                  value={inputText}
+                  onChangeText={setInputText}
+                  placeholder="Message #community"
+                  placeholderTextColor={colors.secondary + "99"}
+                  multiline
+                  maxLength={500}
+                  style={[styles.inputField, { color: colors.onSurface }]}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
+                />
+
+                <TouchableOpacity
+                  onPress={handleSend}
+                  disabled={!isConnected || !inputText.trim()}
+                  style={[
+                    styles.sendButton,
+                    {
+                      backgroundColor:
+                        isConnected && inputText.trim()
+                          ? colors.primary
+                          : colors.outline,
+                    },
+                  ]}
+                >
+                  <Feather
+                    name="arrow-up"
+                    size={16}
+                    color={
+                      isConnected && inputText.trim()
+                        ? colors.onPrimary
+                        : colors.secondary
+                    }
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
+
+          {/* Gradient fade below input field */}
+          <LinearGradient
+            colors={
+              isDark
+                ? ["transparent", "rgba(0,0,0,1)"]
+                : ["rgba(250,250,250,0)", "rgba(250,250,250,1)"]
+            }
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.bottomGradient}
+            pointerEvents="none"
+          />
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 };
@@ -592,7 +636,7 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 110,
+    paddingBottom: 12,
   },
   msgRow: {
     width: "100%",
@@ -708,27 +752,27 @@ const styles = StyleSheet.create({
   },
   scrollFAB: {
     position: "absolute",
-    right: 16,
-    bottom: 96,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    right: 20,
+    bottom: Platform.OS === "ios" ? 110 : 90,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
+  },
+  bottomGradient: {
+    height: 16,
+    pointerEvents: "none",
   },
   inputCardWrap: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingHorizontal: 16,
-    paddingBottom: Platform.OS === "ios" ? 32 : 16,
     paddingTop: 8,
   },
   inputCard: {
