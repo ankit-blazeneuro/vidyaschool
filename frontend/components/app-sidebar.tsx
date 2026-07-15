@@ -891,9 +891,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </div>
                   <div className="grid grid-cols-3 gap-1">
                     {[
-                      { label: "Light", value: "light", icon: <SunIcon className="size-3.5" /> },
-                      { label: "Dark",  value: "dark",  icon: <MoonIcon className="size-3.5" /> },
-                      { label: "System",value: "system",icon: <Laptop   className="size-3.5" /> },
+                      { label: "Light", value: "light" as const, icon: <SunIcon className="size-3.5" /> },
+                      { label: "Dark",  value: "dark" as const,  icon: <MoonIcon className="size-3.5" /> },
+                      { label: "System",value: "system" as const,icon: <Laptop   className="size-3.5" /> },
                     ].map(({ label, value, icon }) => (
                       <button
                         key={value}
