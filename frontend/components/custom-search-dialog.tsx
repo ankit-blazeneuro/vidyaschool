@@ -108,8 +108,7 @@ export function CustomSearchDialog(props: SharedProps) {
       <SearchDialogContent
         className="max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-xl shadow-2xl focus:outline-none
                    border border-border/80
-                   bg-sidebar-foreground/5
-                   backdrop-blur-md
+                   bg-sidebar/90 backdrop-blur-md
                    text-muted-foreground"
       >
         {/* Shimmer — same gradient for both modes using CSS vars */}
