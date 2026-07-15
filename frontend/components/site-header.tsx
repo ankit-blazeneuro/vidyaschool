@@ -1,6 +1,19 @@
+"use client"
+
+import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { HeaderComplaintButton } from "@/components/header-complaint-button"
+import { Mail } from "lucide-react"
+import { usePathname } from "next/navigation"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface SiteHeaderProps {
   title?: string
@@ -8,21 +21,100 @@ interface SiteHeaderProps {
   actions?: React.ReactNode
 }
 
-export function SiteHeader({ title = "Documents", children, actions }: SiteHeaderProps) {
+export function SiteHeader({ title, children, actions }: SiteHeaderProps) {
+  const pathname = usePathname()
+  const [mailOpen, setMailOpen] = React.useState(false)
+
+  const displayTitle = React.useMemo(() => {
+    if (title) return title
+    if (!pathname) return "Dashboard"
+
+    const segments = pathname.split("/").filter(Boolean)
+    if (segments.length === 0) return "Dashboard"
+
+    const lastSegment = segments[segments.length - 1]
+    
+    // Fallback if the user is on the root role dashboard (e.g., /student, /teacher, /admin)
+    if (["student", "teacher", "admin", "librarian", "accounts"].includes(lastSegment.toLowerCase())) {
+      return "Dashboard"
+    }
+
+    const pathMap: Record<string, string> = {
+      dashboard: "Dashboard",
+      fees: "Fees",
+      library: "Library",
+      marks: "Marks",
+      notice: "Notices",
+      notices: "Notices",
+      class: "My Class",
+      subjects: "Subject Class",
+      requests: "Requests",
+      complaints: "Complaints",
+      students: "Students",
+      teachers: "Teachers",
+      "fee-management": "Fee Management",
+      slider: "Slider Banners",
+      books: "Manage Books",
+      borrowings: "Book Issues",
+      community: "Community Chat",
+      downloads: "Mobile App Downloads",
+      account: "Account Settings",
+    }
+
+    if (pathMap[lastSegment.toLowerCase()]) {
+      return pathMap[lastSegment.toLowerCase()]
+    }
+
+    // If it's a 2-segment path where the second segment is the username (e.g. /student/ankit)
+    if (segments.length === 2) {
+      return "Dashboard"
+    }
+
+    return lastSegment
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+  }, [title, pathname])
+
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-2 px-4 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1" />
         <Separator
           orientation="vertical"
-          className="mx-2 data-[orientation=vertical]:h-4"
+          className="mx-2 h-4! self-center!"
         />
-        {children || <h1 className="text-base font-medium">{title}</h1>}
+        {children || <h1 className="text-base font-medium">{displayTitle}</h1>}
         <div className="flex-1" />
         <div id="site-header-actions" className="flex items-center gap-2">
+          <HeaderComplaintButton />
+          <Button
+            onClick={() => setMailOpen(true)}
+            size="icon"
+            variant="outline"
+            className="size-8 rounded-lg border-zinc-200/80 dark:border-zinc-800 bg-background hover:bg-muted text-muted-foreground transition-colors cursor-pointer"
+          >
+            <Mail className="size-4" />
+            <span className="sr-only">Inbox</span>
+          </Button>
           {actions}
         </div>
       </div>
+
+      {/* Dialog: Coming Soon for Inbox */}
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent className="sm:max-w-xs text-center p-6 flex flex-col items-center">
+          <div className="size-12 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center mb-2">
+            <Mail className="size-6 animate-pulse" />
+          </div>
+          <DialogTitle className="text-base font-semibold">Inbox & Chat</DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+            The direct messaging and community chat feature is coming soon! Stay tuned for updates.
+          </DialogDescription>
+          <Button onClick={() => setMailOpen(false)} className="mt-4 w-full h-8 text-xs font-semibold rounded-lg">
+            Got it
+          </Button>
+        </DialogContent>
+      </Dialog>
     </header>
   )
 }

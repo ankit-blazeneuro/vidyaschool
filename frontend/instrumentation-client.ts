@@ -1,15 +1,17 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from "@sentry/browser";
+import { captureRouterTransitionStart } from "@sentry/nextjs";
 
 Sentry.init({
-  dsn: "https://42fb3541f8375e80add25a786495678f@o4511647082872832.ingest.de.sentry.io/4511647092179024",
-  sendDefaultPii: true,
-  tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1.0,
-  enableLogs: true,
-  integrations: [Sentry.replayIntegration()],
+  dsn: "https://f5c57bb78c3e83f04d987a143ab32543@o4511647082872832.ingest.de.sentry.io/4511647094210640",
+  dataCollection: {
+    // To disable sending user data and HTTP bodies, uncomment the lines below. For more info visit:
+    // https://docs.sentry.io/platforms/javascript/configuration/options/#dataCollection
+    // userInfo: false,
+    // httpBodies: []
+  }
 });
 
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+export const onRouterTransitionStart = captureRouterTransitionStart;
+

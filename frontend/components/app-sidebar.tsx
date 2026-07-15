@@ -3,9 +3,9 @@
 import * as React from "react"
 import Image from "next/image"
 
+import { cn } from "@/lib/utils"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
 import { OnboardingAlert } from "@/components/onboarding-alert"
 import { usePathname } from "next/navigation"
 import {
@@ -19,7 +19,18 @@ import {
   SidebarGroup,
   SidebarGroupContent,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle } from "lucide-react"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, MoonIcon, CircleUserRoundIcon, ChevronsUpDown, SunIcon, Laptop, ChevronRight } from "lucide-react"
 import { useSession } from "@/lib/auth-client"
 import { io } from "socket.io-client"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -31,7 +42,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Smartphone, Download } from "lucide-react"
+import { Smartphone, Download, Plus } from "lucide-react"
+import { useTheme } from "@/components/theme-provider"
+import { toast } from "sonner"
 
 // Hook to get username-based URLs
 function useStudentUrls() {
@@ -291,28 +304,6 @@ const data = {
         />
       ),
     },
-    {
-      title: "Search",
-      url: "#",
-      icon: (
-        <SearchIcon
-        />
-      ),
-      onClick: (e: React.MouseEvent<HTMLAnchorElement>) => {
-        e.preventDefault()
-        if (typeof window !== "undefined") {
-          const event = new KeyboardEvent("keydown", {
-            key: "k",
-            code: "KeyK",
-            ctrlKey: true,
-            metaKey: true,
-            bubbles: true,
-            cancelable: true,
-          })
-          window.dispatchEvent(event)
-        }
-      },
-    },
   ],
   documents: [
     {
@@ -384,11 +375,62 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isAdmin = userRole === "admin" || (userRole === undefined && pathname?.startsWith("/admin"))
   const isAccount = userRole === "account" || (userRole === undefined && pathname?.startsWith("/accounts"))
   
+  const adminUrls = useAdminUrls()
+  const accountUrls = useAccountUrls()
   const urls = useStudentUrls()
   const teacherUrls = useTeacherUrls()
   const librarianUrls = useLibrarianUrls()
-  const adminUrls = useAdminUrls()
-  const accountUrls = useAccountUrls()
+
+  const [profileUsername, setProfileUsername] = React.useState<string | null>(null)
+  const [isCommandOpen, setIsCommandOpen] = React.useState(false)
+  const [commandSearch, setCommandSearch] = React.useState("")
+  const [isThemeHovered, setIsThemeHovered] = React.useState(false)
+  const { setTheme } = useTheme()
+
+  React.useEffect(() => {
+    fetch('/api/profile/username')
+      .then(res => res.json())
+      .then(data => {
+        if (data.username) setProfileUsername(data.username)
+      })
+      .catch(() => {})
+  }, [])
+
+  const accountUrl = userRole === 'admin'
+    ? (profileUsername ? `/admin/${profileUsername}/account` : '/admin')
+    : (userRole === 'teacher' || userRole === 'librarian')
+    ? (profileUsername ? `/teacher/${profileUsername}/account` : '/teacher')
+    : (profileUsername ? `/student/${profileUsername}/account` : '/student')
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map(n => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
+  const currentRoleValue = isTeacher
+    ? "teacher"
+    : isLibrarian
+    ? "librarian"
+    : isAdmin
+    ? "admin"
+    : isAccount
+    ? "account"
+    : "student"
+
+  const handleRoleChange = (role: string) => {
+    let targetUrl = "/student"
+    if (role === "teacher") targetUrl = teacherUrls.dashboard
+    else if (role === "librarian") targetUrl = librarianUrls.dashboard
+    else if (role === "admin") targetUrl = adminUrls.dashboard
+    else if (role === "account") targetUrl = accountUrls.dashboard
+    else targetUrl = urls.dashboard
+
+    window.location.href = targetUrl
+  }
 
   // Notification states
   const [unreadCommunity, setUnreadCommunity] = React.useState(false)
@@ -484,7 +526,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return () => clearTimeout(timer)
   }, [pathname])
 
-  const navMain = isAccount
+  // Global search shortcut listener for Cmd+F / Ctrl+F
+  React.useEffect(() => {
+    const handleSearchShortcut = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key?.toLowerCase() === "f") {
+        e.preventDefault()
+        const event = new KeyboardEvent("keydown", {
+          key: "k",
+          code: "KeyK",
+          ctrlKey: true,
+          metaKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+        window.dispatchEvent(event)
+      }
+    }
+
+    window.addEventListener("keydown", handleSearchShortcut)
+    return () => window.removeEventListener("keydown", handleSearchShortcut)
+  }, [])
+
+  const baseNavMain = isAccount
     ? [
         {
           title: "Dashboard",
@@ -715,28 +778,201 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         },
       ]
 
+  const navMain = [
+    ...baseNavMain,
+    {
+      title: "Mobile App",
+      url: "/downloads",
+      icon: <Smartphone />,
+    }
+  ]
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
+      <SidebarHeader className="p-3 flex flex-col gap-5">
+        {isLoading ? (
+          <div className="flex flex-col gap-5">
+            <div className="flex items-center gap-2.5 px-1 py-1.5 w-full">
+              <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-3 w-16 rounded" />
+                <Skeleton className="h-2 w-24 rounded" />
+              </div>
+            </div>
+            <Skeleton className="h-9 w-full rounded-lg" />
+            <div className="h-px bg-sidebar-border/60 w-full" />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-5">
+            {/* Command Trigger (Popover based) */}
+            <Popover open={isCommandOpen} onOpenChange={setIsCommandOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  onClick={() => {
+                    setCommandSearch("")
+                  }}
+                  className="w-full h-auto p-1 bg-transparent! dark:bg-transparent! border-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-0 focus-visible:border-0 focus:ring-0 focus:border-0 focus:outline-none flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
+                    <div className="relative shrink-0">
+                      <Avatar className="h-8 w-8 rounded-lg">
+                        <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name} />
+                        <AvatarFallback className="rounded-lg bg-muted text-xs font-semibold text-foreground">
+                          {session?.user?.name ? getInitials(session.user.name) : "VS"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="absolute bottom-0 right-0 block size-2 rounded-full bg-green-500 ring-2 ring-white dark:ring-[#1c1c1e]" />
+                    </div>
+                    <span className="truncate font-semibold text-foreground text-sm pl-1">
+                      {session?.user?.name}
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="size-4 text-muted-foreground shrink-0" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="w-[var(--radix-popover-trigger-width)] min-w-[220px] p-0 overflow-hidden bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg shadow-md"
+                align="start"
+                sideOffset={4}
+              >
+                <div className="flex items-center gap-2.5 border-b border-zinc-100 dark:border-zinc-800/60 px-3 py-2">
+                  <SearchIcon className="size-3.5 text-muted-foreground shrink-0" />
+                  <input
+                    value={commandSearch}
+                    onChange={(e) => setCommandSearch(e.target.value)}
+                    placeholder="Type a command..."
+                    className="flex-1 bg-transparent border-0 outline-none text-xs placeholder:text-muted-foreground/60 text-foreground"
+                  />
+                </div>
+
+                <ScrollArea className="h-[210px]">
+                  <div className="p-1.5 space-y-1 pr-3">
+                    <div className="space-y-1">
+                      {/* General Group */}
+                      <div className="px-2 py-0.5 text-[9px] font-semibold text-muted-foreground/80 uppercase tracking-wider">
+                        General
+                      </div>
+                      
+                      {/* Account Button */}
+                      {("account settings".includes(commandSearch.toLowerCase()) || "account".includes(commandSearch.toLowerCase())) && (
+                        <button
+                          onClick={() => {
+                            setIsCommandOpen(false)
+                            window.location.href = accountUrl
+                          }}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                        >
+                          <CircleUserRoundIcon className="size-3.5 text-muted-foreground" />
+                          Account Settings
+                        </button>
+                      )}
+
+                      {/* Theme Options */}
+                      {("theme light dark system".includes(commandSearch.toLowerCase())) && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setTheme("light")
+                              setIsCommandOpen(false)
+                              toast.success("Theme changed to Light")
+                            }}
+                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                          >
+                            <SunIcon className="size-3.5 text-muted-foreground" />
+                            Set Theme: Light
+                          </button>
+                          <button
+                            onClick={() => {
+                              setTheme("dark")
+                              setIsCommandOpen(false)
+                              toast.success("Theme changed to Dark")
+                            }}
+                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                          >
+                            <MoonIcon className="size-3.5 text-muted-foreground" />
+                            Set Theme: Dark
+                          </button>
+                          <button
+                            onClick={() => {
+                              setTheme("system")
+                              setIsCommandOpen(false)
+                              toast.success("Theme changed to System")
+                            }}
+                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                          >
+                            <Laptop className="size-3.5 text-muted-foreground" />
+                            Set Theme: System
+                          </button>
+                        </>
+                      )}
+
+                      {/* Notifications */}
+                      {("notifications notice".includes(commandSearch.toLowerCase())) && (
+                        <button
+                          onClick={() => {
+                            setIsCommandOpen(false)
+                            toast.success("Notifications are up to date.")
+                          }}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                        >
+                          <BellIcon className="size-3.5 text-muted-foreground" />
+                          Notifications
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="h-px bg-zinc-100 dark:bg-zinc-800/60 my-1.5" />
+
+                    {/* Account Switcher Group */}
+                    <div className="space-y-1">
+                      <div className="px-2 py-0.5 text-[9px] font-semibold text-muted-foreground/80 uppercase tracking-wider">
+                        Accounts
+                      </div>
+                      
+                      {("add account login switch".includes(commandSearch.toLowerCase())) && (
+                        <button
+                          onClick={() => {
+                            setIsCommandOpen(false)
+                            window.location.href = "/login"
+                          }}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                        >
+                          <Plus className="size-3.5 text-muted-foreground" />
+                          Add Account
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
+
+            {/* Quick Search Button */}
+            <button
+              onClick={() => {
+                const event = new KeyboardEvent("keydown", {
+                  key: "k",
+                  code: "KeyK",
+                  ctrlKey: true,
+                  metaKey: true,
+                  bubbles: true,
+                  cancelable: true,
+                })
+                window.dispatchEvent(event)
+              }}
+              className="w-full h-9 flex items-center justify-between px-3 py-1.5 rounded-xl border border-border/80 bg-sidebar-foreground/5 hover:bg-sidebar-foreground/10 text-muted-foreground transition-all duration-150 text-xs cursor-pointer focus:outline-none"
             >
-              <a href="#">
-                <Image
-                  src="/assets/vidyaschool/Logo/no_title.svg"
-                  alt="Vidya School Logo"
-                  width={20}
-                  height={20}
-                  className="size-5! object-contain grayscale brightness-0 dark:invert"
-                />
-                <span className="text-base font-semibold">Vidya School</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+              <div className="flex items-center gap-2.5">
+                <SearchIcon className="size-4.5 shrink-0 text-muted-foreground/80" />
+                <span className="text-muted-foreground/80 font-normal">Quick Search</span>
+              </div>
+              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded-md border border-border bg-transparent dark:bg-transparent px-1.5 font-mono text-[9px] font-medium text-muted-foreground/60 shadow-none">
+                <span>⌘</span><span>F</span>
+              </kbd>
+            </button>
+            <div className="h-px bg-sidebar-border/60 w-full" />
+          </div>
+        )}
       </SidebarHeader>
       <SidebarContent>
         {isLoading ? (
@@ -777,31 +1013,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <OnboardingAlert isTeacher={isTeacher} />
               </div>
             )}
-            {/* Mobile App Download Card */}
-            <div className="px-3 py-2">
-              <div 
-                onClick={() => setIsQrOpen(true)}
-                className="group relative cursor-pointer overflow-hidden rounded-lg border border-primary/20 bg-linear-to-br from-primary/5 to-primary/10 p-3 transition-all duration-300 hover:border-primary/40 hover:shadow-sm dark:from-primary/10 dark:to-primary/5"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
-                    <Smartphone className="h-4.5 w-4.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">Download Android App</p>
-                    <p className="text-[10px] text-muted-foreground truncate">Get the latest {appVersion} build</p>
-                  </div>
-                  <Download className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-primary" />
-                </div>
-              </div>
-            </div>
           </>
         )}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser />
+      <SidebarFooter className="px-2 pt-0 pb-1.5">
+        <div className="flex items-center justify-start gap-1 text-[10px] text-muted-foreground/80 font-normal w-full pl-1.5">
+          <span>© {new Date().getFullYear()} VidyaSchool</span>
+          <span>•</span>
+          <a href="/terms" className="hover:text-foreground hover:underline transition-colors">Terms</a>
+          <span>•</span>
+          <a href="/privacy" className="hover:text-foreground hover:underline transition-colors">Privacy</a>
+        </div>
       </SidebarFooter>
+
       {/* Dialog: Android App QR Code */}
       <Dialog open={isQrOpen} onOpenChange={setIsQrOpen}>
         <DialogContent className="sm:max-w-md text-center flex flex-col items-center p-6">

@@ -92,7 +92,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
-import { GripVerticalIcon, CircleCheckIcon, LoaderIcon, EllipsisVerticalIcon, Columns3Icon, ChevronDownIcon, PlusIcon, ChevronsLeftIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsRightIcon, TrendingUpIcon } from "lucide-react"
+import { GripVerticalIcon, CircleCheckIcon, LoaderIcon, EllipsisVerticalIcon, Columns3Icon, ChevronDownIcon, PlusIcon, ChevronsLeftIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsRightIcon, TrendingUpIcon, Mail, MapPin, GraduationCap } from "lucide-react"
 
 export const schema = z.object({
   id: z.number(),
@@ -382,27 +382,19 @@ export function DataTable({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (active && over && active.id !== over.id) {
-      setData((data) => {
-        const oldIndex = dataIds.indexOf(active.id)
-        const newIndex = dataIds.indexOf(over.id)
-        return arrayMove(data, oldIndex, newIndex)
-      })
-    }
-  }
+  const [activeTab, setActiveTab] = React.useState("subject-teachers")
 
   return (
     <Tabs
-      defaultValue="outline"
+      value={activeTab}
+      onValueChange={setActiveTab}
       className="w-full flex-col justify-start gap-6"
     >
       <div className="flex items-center justify-between px-4 lg:px-6">
         <Label htmlFor="view-selector" className="sr-only">
           View
         </Label>
-        <Select defaultValue="outline">
+        <Select value={activeTab} onValueChange={setActiveTab}>
           <SelectTrigger
             className="flex w-fit @4xl/main:hidden"
             size="sm"
@@ -412,216 +404,177 @@ export function DataTable({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectItem value="outline">Outline</SelectItem>
-              <SelectItem value="past-performance">Past Performance</SelectItem>
-              <SelectItem value="key-personnel">Key Personnel</SelectItem>
-              <SelectItem value="focus-documents">Focus Documents</SelectItem>
+              <SelectItem value="subject-teachers">Subject teachers</SelectItem>
+              <SelectItem value="class-teacher">Class teacher</SelectItem>
             </SelectGroup>
           </SelectContent>
         </Select>
-        <TabsList className="hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:px-1 @4xl/main:flex">
-          <TabsTrigger value="outline">Outline</TabsTrigger>
-          <TabsTrigger value="past-performance">
-            Past Performance <Badge variant="secondary">3</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="key-personnel">
-            Key Personnel <Badge variant="secondary">2</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="focus-documents">Focus Documents</TabsTrigger>
+        <TabsList className="hidden @4xl/main:flex">
+          <TabsTrigger value="subject-teachers">Subject teachers</TabsTrigger>
+          <TabsTrigger value="class-teacher">Class teacher</TabsTrigger>
         </TabsList>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Columns3Icon data-icon="inline-start" />
-                Columns
-                <ChevronDownIcon data-icon="inline-end" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-32">
-              {table
-                .getAllColumns()
-                .filter(
-                  (column) =>
-                    typeof column.accessorFn !== "undefined" &&
-                    column.getCanHide()
-                )
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  )
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button variant="outline" size="sm">
-            <PlusIcon
-            />
-            <span className="hidden lg:inline">Add Section</span>
-          </Button>
-        </div>
       </div>
+
       <TabsContent
-        value="outline"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
+        value="subject-teachers"
+        className="flex flex-col px-4 lg:px-6 animate-in fade-in-50 duration-200"
       >
-        <div className="overflow-hidden rounded-lg border">
-          <DndContext
-            collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis]}
-            onDragEnd={handleDragEnd}
-            sensors={sensors}
-            id={sortableId}
-          >
-            <Table>
-              <TableHeader className="sticky top-0 z-10 bg-muted">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id} colSpan={header.colSpan}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      )
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody className="**:data-[slot=table-cell]:first:w-8">
-                {table.getRowModel().rows?.length ? (
-                  <SortableContext
-                    items={dataIds}
-                    strategy={verticalListSortingStrategy}
+        <div className="overflow-hidden rounded-xl border border-border bg-zinc-100 dark:bg-[#121212] shadow-sm">
+          <Table>
+            <TableHeader className="bg-muted/50">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="font-semibold text-foreground py-3">Subject</TableHead>
+                <TableHead className="font-semibold text-foreground py-3">Teacher</TableHead>
+                <TableHead className="font-semibold text-foreground py-3">Location</TableHead>
+                <TableHead className="font-semibold text-foreground py-3">Email</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {/* Mathematics Row */}
+              <TableRow className="hover:bg-muted/30 transition-colors group">
+                <TableCell className="font-medium py-3.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-6 rounded bg-blue-500 block shrink-0" />
+                    <span className="text-sm text-foreground">Mathematics</span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="size-8 rounded-full bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-semibold shrink-0">
+                      RS
+                    </div>
+                    <span className="text-sm font-medium text-foreground">Mr. Robert Smith</span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3.5 text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <MapPin className="size-3.5 text-muted-foreground/75" />
+                    <span>Room 302</span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3.5">
+                  <a
+                    href="mailto:r.smith@vidyaschool.edu"
+                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors group/link"
                   >
-                    {table.getRowModel().rows.map((row) => (
-                      <DraggableRow key={row.id} row={row} />
-                    ))}
-                  </SortableContext>
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </DndContext>
-        </div>
-        <div className="flex items-center justify-between px-4">
-          <div className="hidden flex-1 text-sm text-muted-foreground lg:flex">
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
-          </div>
-          <div className="flex w-full items-center gap-8 lg:w-fit">
-            <div className="hidden items-center gap-2 lg:flex">
-              <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                Rows per page
-              </Label>
-              <Select
-                value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value))
-                }}
-              >
-                <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                  <SelectValue
-                    placeholder={table.getState().pagination.pageSize}
-                  />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  <SelectGroup>
-                    {[10, 20, 30, 40, 50].map((pageSize) => (
-                      <SelectItem key={pageSize} value={`${pageSize}`}>
-                        {pageSize}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
-            </div>
-            <div className="ml-auto flex items-center gap-2 lg:ml-0">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to first page</span>
-                <ChevronsLeftIcon
-                />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Go to previous page</span>
-                <ChevronLeftIcon
-                />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to next page</span>
-                <ChevronRightIcon
-                />
-              </Button>
-              <Button
-                variant="outline"
-                className="hidden size-8 lg:flex"
-                size="icon"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Go to last page</span>
-                <ChevronsRightIcon
-                />
-              </Button>
-            </div>
-          </div>
+                    <Mail className="size-3.5 text-muted-foreground/75 group-hover/link:text-primary transition-colors" />
+                    <span className="underline decoration-muted-foreground/30 hover:decoration-primary/60">r.smith@vidyaschool.edu</span>
+                  </a>
+                </TableCell>
+              </TableRow>
+
+              {/* Physics Row */}
+              <TableRow className="hover:bg-muted/30 transition-colors group">
+                <TableCell className="font-medium py-3.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-6 rounded bg-violet-500 block shrink-0" />
+                    <span className="text-sm text-foreground">Physics</span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="size-8 rounded-full bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 flex items-center justify-center text-xs font-semibold shrink-0">
+                      SD
+                    </div>
+                    <span className="text-sm font-medium text-foreground">Mrs. Sarah Davis</span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3.5 text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <MapPin className="size-3.5 text-muted-foreground/75" />
+                    <span>Science Lab A</span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3.5">
+                  <a
+                    href="mailto:s.davis@vidyaschool.edu"
+                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors group/link"
+                  >
+                    <Mail className="size-3.5 text-muted-foreground/75 group-hover/link:text-primary transition-colors" />
+                    <span className="underline decoration-muted-foreground/30 hover:decoration-primary/60">s.davis@vidyaschool.edu</span>
+                  </a>
+                </TableCell>
+              </TableRow>
+
+              {/* Chemistry Row */}
+              <TableRow className="hover:bg-muted/30 transition-colors group">
+                <TableCell className="font-medium py-3.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-6 rounded bg-emerald-500 block shrink-0" />
+                    <span className="text-sm text-foreground">Chemistry</span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="size-8 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs font-semibold shrink-0">
+                      AM
+                    </div>
+                    <span className="text-sm font-medium text-foreground">Dr. Alan Miller</span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3.5 text-muted-foreground">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <MapPin className="size-3.5 text-muted-foreground/75" />
+                    <span>Science Lab B</span>
+                  </div>
+                </TableCell>
+                <TableCell className="py-3.5">
+                  <a
+                    href="mailto:a.miller@vidyaschool.edu"
+                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors group/link"
+                  >
+                    <Mail className="size-3.5 text-muted-foreground/75 group-hover/link:text-primary transition-colors" />
+                    <span className="underline decoration-muted-foreground/30 hover:decoration-primary/60">a.miller@vidyaschool.edu</span>
+                  </a>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
       </TabsContent>
+
       <TabsContent
-        value="past-performance"
-        className="flex flex-col px-4 lg:px-6"
+        value="class-teacher"
+        className="flex flex-col px-4 lg:px-6 animate-in fade-in-50 duration-200"
       >
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
-      </TabsContent>
-      <TabsContent value="key-personnel" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
-      </TabsContent>
-      <TabsContent
-        value="focus-documents"
-        className="flex flex-col px-4 lg:px-6"
-      >
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
+        <div className="max-w-md rounded-xl border border-border bg-zinc-100 dark:bg-[#121212] p-5 flex flex-col gap-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="size-12 rounded-full bg-primary/10 dark:bg-primary/20 text-primary flex items-center justify-center text-base font-bold shrink-0">
+              CW
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-semibold text-foreground leading-snug">Ms. Clara Wilson</h3>
+              <p className="text-xs text-muted-foreground">Class Teacher — Grade 10-A</p>
+            </div>
+          </div>
+
+          <div className="h-px bg-border" />
+
+          <div className="space-y-2.5 text-sm">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="size-4 shrink-0 text-muted-foreground/70" />
+              <span className="text-xs text-foreground">Main Block, Room 101</span>
+            </div>
+            
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Mail className="size-4 shrink-0 text-muted-foreground/70" />
+              <a
+                href="mailto:c.wilson@vidyaschool.edu"
+                className="text-xs text-foreground hover:underline"
+              >
+                c.wilson@vidyaschool.edu
+              </a>
+            </div>
+
+            <div className="flex items-start gap-2 text-muted-foreground pt-1.5">
+              <GraduationCap className="size-4 shrink-0 text-muted-foreground/70 mt-0.5" />
+              <div className="text-xs flex-1">
+                <span className="font-medium text-foreground block mb-0.5">Parent Consultation Hours</span>
+                <span className="text-muted-foreground">Mondays & Wednesdays (2:00 PM - 4:00 PM)</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </TabsContent>
     </Tabs>
   )

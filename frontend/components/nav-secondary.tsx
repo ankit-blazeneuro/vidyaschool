@@ -26,10 +26,10 @@ export function NavSecondary({
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
-        <SidebarMenu>
+        <SidebarMenu className="pl-1">
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
+              <SidebarMenuButton asChild className="text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/40 transition-all duration-150 h-9 rounded-xl pl-2">
                 <Link href={item.url} onClick={item.onClick}>
                   {item.icon}
                   <span>{item.title}</span>
