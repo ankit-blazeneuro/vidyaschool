@@ -69,44 +69,47 @@ export function CustomSearchDialog(props: SharedProps) {
       {/* Premium Blurred Backdrop Overlay with subtle dark tint */}
       <SearchDialogOverlay className="backdrop-blur-md bg-black/50" />
       
-      {/* Premium Glassmorphic Dialog Container */}
-      <SearchDialogContent className="max-h-[85vh] overflow-hidden flex flex-col *:border-b-0 bg-fd-popover/90 backdrop-blur-xl border border-fd-border/40 shadow-2xl [&_mark]:bg-primary/20 [&_mark]:text-primary [&_mark]:font-semibold [&_mark]:px-0.5 [&_mark]:rounded-sm">
+      {/* Premium Glassmorphic Dialog Container styled like the sidebar search and command popovers */}
+      <SearchDialogContent className="max-h-[85vh] overflow-hidden flex flex-col p-0 border border-border/80 rounded-xl shadow-2xl bg-sidebar-foreground/5 hover:bg-sidebar-foreground/10 text-muted-foreground transition-all duration-150 text-xs focus:outline-none backdrop-blur-md">
         
-        {/* Glow Header container */}
+        {/* Clean Header container displaying only the search input */}
         <SearchDialogHeader 
-          className={`flex items-center gap-3 border-b border-fd-border/30 px-4 py-4 shrink-0 h-15 transition-all duration-300 ${
-            isFocused ? "bg-primary/5 border-b-primary/30" : ""
+          className={`flex items-center justify-between px-3 py-1.5 h-9 shrink-0 ${
+            search.trim() !== "" ? "border-b border-border/80" : ""
           }`}
         >
-          <Search 
-            className={`size-4 shrink-0 transition-colors duration-300 ${
-              isFocused ? "text-primary scale-110" : "text-fd-muted-foreground"
-            }`} 
-          />
-          
-          <SearchDialogInput 
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            className="flex-1 bg-transparent text-sm placeholder:text-fd-muted-foreground/75 focus-visible:outline-none h-full font-medium" 
-          />
-          
-          <div className="flex items-center gap-1.5">
-            <span className="hidden md:inline-flex items-center gap-0.5 text-[10px] font-medium text-fd-muted-foreground/60 bg-fd-muted px-1.5 py-0.5 rounded border border-fd-border/20">
-              <Sparkles className="size-3 text-amber-500 animate-pulse" />
-              <span>Smart Search</span>
-            </span>
-            <SearchDialogClose className="hover:bg-fd-accent text-fd-muted-foreground hover:text-fd-foreground rounded-lg transition-colors p-1" />
+          <div className="flex items-center gap-2.5 flex-1 h-full">
+            <Search className="size-4.5 shrink-0 text-muted-foreground/80" />
+            <SearchDialogInput 
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              className="flex-1 bg-transparent text-xs text-muted-foreground font-normal placeholder:text-muted-foreground/50 focus-visible:outline-none h-full py-0 border-none outline-none" 
+              placeholder="Quick Search"
+            />
           </div>
+          {search.trim() === "" && (
+            <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded-md border border-border bg-transparent dark:bg-transparent px-1.5 font-mono text-[9px] font-medium text-muted-foreground/60 shadow-none">
+              <span>⌘</span><span>F</span>
+            </kbd>
+          )}
         </SearchDialogHeader>
 
-        {/* Scrollable list area */}
-        <ScrollArea className="flex-1 max-h-[380px] py-1">
-          <SearchDialogList
-            items={query.data !== "empty" ? query.data : null}
-            Item={renderItem}
-            className="p-1 space-y-1"
-          />
-        </ScrollArea>
+        {/* Scrollable list area - only render when text is entered */}
+        {search.trim() !== "" && (
+          <ScrollArea className="flex-1 max-h-[380px] py-1">
+            {query.isLoading && (
+              <div className="flex items-center gap-2 px-4 py-2.5 text-[11px] text-muted-foreground/70 animate-pulse border-b border-border/10">
+                <div className="size-1.5 rounded-full bg-primary animate-ping" />
+                <span className="font-medium">Searching for "{search}"...</span>
+              </div>
+            )}
+            <SearchDialogList
+              items={query.data !== "empty" ? query.data : null}
+              Item={renderItem}
+              className="p-1 space-y-1"
+            />
+          </ScrollArea>
+        )}
       </SearchDialogContent>
     </SearchDialog>
   )
