@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from "react"
-import { useDocsSearch } from "fumadocs-core/search/client"
 import {
   SearchDialog,
   SearchDialogOverlay,
@@ -10,10 +9,9 @@ import {
   SearchDialogListItem,
   SearchDialogHeader,
   SearchDialogInput,
-  SearchDialogClose,
   type SharedProps,
 } from "fumadocs-ui/components/dialog/search"
-import { Search, Sparkles } from "lucide-react"
+import { Search } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 export function CustomSearchDialog(props: SharedProps) {
@@ -28,11 +26,9 @@ export function CustomSearchDialog(props: SharedProps) {
       setLoaderPhase(0)
       return
     }
-
     const interval = setInterval(() => {
       setLoaderPhase((prev) => (prev + 1) % 2)
     }, 1300)
-
     return () => clearInterval(interval)
   }, [isLoading])
 
@@ -42,7 +38,6 @@ export function CustomSearchDialog(props: SharedProps) {
       setIsLoading(false)
       return
     }
-
     setIsLoading(true)
     const timer = setTimeout(async () => {
       try {
@@ -56,12 +51,10 @@ export function CustomSearchDialog(props: SharedProps) {
       } finally {
         setIsLoading(false)
       }
-    }, 150) // debounce search fetches
-
+    }, 150)
     return () => clearTimeout(timer)
   }, [search])
 
-  // Render a custom item
   const renderItem = ({ item, onClick }: { item: any; onClick: () => void }) => {
     if (item.type === "action") {
       return (
@@ -91,14 +84,14 @@ export function CustomSearchDialog(props: SharedProps) {
                            border border-zinc-200 dark:border-zinc-700">
             {typeLabel}
           </span>
-          <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate flex-1 leading-snug">
+          <span className="text-xs font-medium text-zinc-800 dark:text-zinc-100 truncate flex-1 leading-snug">
             {item.title}
           </span>
         </div>
 
         {/* Row 2: content snippet */}
         {item.content && (
-          <p className="text-[11px] text-zinc-400 dark:text-zinc-500 line-clamp-1 leading-normal w-full pl-[46px]">
+          <p className="text-[11px] text-zinc-500 dark:text-zinc-500 line-clamp-1 leading-normal w-full pl-[46px]">
             {item.content}
           </p>
         )}
@@ -108,21 +101,31 @@ export function CustomSearchDialog(props: SharedProps) {
 
   return (
     <SearchDialog search={search} onSearchChange={setSearch} {...props}>
-      {/* Premium Blurred Backdrop Overlay with subtle dark tint */}
+      {/* Overlay — same as sidebar backdrop */}
       <SearchDialogOverlay className="backdrop-blur-md bg-black/50" />
-      
-      {/* Premium Glassmorphic Dialog Container styled like the sidebar search and command popovers */}
-      <SearchDialogContent className="max-h-[85vh] overflow-hidden flex flex-col p-0 border border-border/80 rounded-xl shadow-2xl bg-sidebar-foreground/5 hover:bg-sidebar-foreground/10 text-muted-foreground transition-all duration-150 text-xs focus:outline-none backdrop-blur-md">
+
+      {/* Dialog container — solid white in light mode, sidebar-glass in dark */}
+      <SearchDialogContent
+        className="max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-xl shadow-2xl focus:outline-none
+                   border border-border/80
+                   bg-white dark:bg-sidebar-foreground/5
+                   backdrop-blur-md
+                   text-muted-foreground"
+      >
+        {/* Shimmer keyframes — dark: uses sidebar muted tones, light: uses zinc */}
         <style>{`
           @keyframes text-shimmer {
-            0% {
-              background-position: 200% 0;
-            }
-            100% {
-              background-position: -200% 0;
-            }
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
           }
-          .animate-text-shimmer {
+          .shimmer-light {
+            background: linear-gradient(90deg, #71717a 20%, #18181b 50%, #71717a 80%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: text-shimmer 2s linear infinite;
+          }
+          .dark .shimmer-light {
             background: linear-gradient(90deg, var(--muted-foreground) 20%, var(--foreground) 50%, var(--muted-foreground) 80%);
             background-size: 200% auto;
             -webkit-background-clip: text;
@@ -131,38 +134,40 @@ export function CustomSearchDialog(props: SharedProps) {
           }
         `}</style>
 
-        {/* Clean Header container displaying only the search input */}
-        <SearchDialogHeader 
+        {/* Header */}
+        <SearchDialogHeader
           className={`flex items-center justify-between px-3 py-1.5 h-11 shrink-0 ${
             search.trim() !== "" ? "border-b border-border/80" : ""
           }`}
         >
           <div className="flex items-center gap-2.5 flex-1 h-full">
             <Search className="size-4.5 shrink-0 text-muted-foreground/80" />
-            <SearchDialogInput 
+            <SearchDialogInput
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              className="flex-1 bg-transparent text-xs text-muted-foreground font-normal placeholder:text-muted-foreground/50 focus-visible:outline-none h-full py-0 border-none outline-none" 
+              className="flex-1 bg-transparent text-xs text-muted-foreground font-normal
+                         placeholder:text-muted-foreground/50
+                         focus-visible:outline-none h-full py-0 border-none outline-none"
               placeholder="Quick Search"
             />
           </div>
           {search.trim() === "" && (
-            <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded-md border border-border bg-transparent dark:bg-transparent px-1.5 font-mono text-[9px] font-medium text-muted-foreground/60 shadow-none">
+            <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5
+                            rounded-md border border-border
+                            bg-transparent dark:bg-transparent
+                            px-1.5 font-mono text-[9px] font-medium
+                            text-muted-foreground/60 shadow-none">
               <span>⌘</span><span>F</span>
             </kbd>
           )}
         </SearchDialogHeader>
 
-        {/* Scrollable list area - only render when text is entered */}
+        {/* Results list */}
         {search.trim() !== "" && (
-          <ScrollArea
-            className="flex-1 max-h-[380px] py-1"
-            // Force the Radix scrollbar to always show
-            type="always"
-          >
+          <ScrollArea className="flex-1 max-h-[380px] py-1" type="always">
             {isLoading && (
-              <div className="flex items-center px-4 py-2.5 border-b border-border/10">
-                <span className="text-xs font-semibold animate-text-shimmer">
+              <div className="flex items-center px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/60">
+                <span className="text-xs font-semibold shimmer-light">
                   {loaderPhase === 0 ? "Searching in documentations..." : "Searching in pages..."}
                 </span>
               </div>
