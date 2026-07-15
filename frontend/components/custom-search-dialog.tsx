@@ -74,7 +74,7 @@ export function CustomSearchDialog(props: SharedProps) {
         
         {/* Clean Header container displaying only the search input */}
         <SearchDialogHeader 
-          className={`flex items-center justify-between px-3 py-1.5 h-10.5 shrink-0 ${
+          className={`flex items-center justify-between px-3 py-1.5 h-11 shrink-0 ${
             search.trim() !== "" ? "border-b border-border/80" : ""
           }`}
         >
