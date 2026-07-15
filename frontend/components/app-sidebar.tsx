@@ -30,9 +30,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, MoonIcon, CircleUserRoundIcon, ChevronsUpDown, SunIcon, Laptop, ChevronRight } from "lucide-react"
-import { useSession } from "@/lib/auth-client"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, MoonIcon, CircleUserRoundIcon, ChevronsUpDown, SunIcon, Laptop, ChevronRight, LogOut } from "lucide-react"
+import { useSession, signOut } from "@/lib/auth-client"
 import { io } from "socket.io-client"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -794,158 +793,141 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="p-3 flex flex-col gap-5">
         {isLoading ? (
           <div className="flex flex-col gap-5">
-            <div className="flex items-center gap-2.5 px-1 py-1.5 w-full">
-              <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
-              <div className="flex-1 space-y-1">
-                <Skeleton className="h-3 w-16 rounded" />
-                <Skeleton className="h-2 w-24 rounded" />
+            {/* Avatar row: h-8 avatar + name + chevron icon */}
+            <div className="flex items-center justify-between px-1 py-1.5 w-full">
+              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                <Skeleton className="h-8 w-8 rounded-lg shrink-0 bg-muted-foreground/15" />
+                <Skeleton className="h-3.5 w-28 rounded bg-muted-foreground/15" />
               </div>
+              <Skeleton className="size-4 rounded shrink-0 bg-muted-foreground/10" />
             </div>
-            <Skeleton className="h-9 w-full rounded-lg" />
+            {/* Quick Search button placeholder: h-9, full width, rounded-xl */}
+            <Skeleton className="h-9 w-full rounded-xl bg-muted-foreground/10" />
             <div className="h-px bg-sidebar-border/60 w-full" />
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            {/* Command Trigger (Popover based) */}
+            {/* User Card Dropdown */}
             <Popover open={isCommandOpen} onOpenChange={setIsCommandOpen}>
               <PopoverTrigger asChild>
                 <button
-                  onClick={() => {
-                    setCommandSearch("")
-                  }}
-                  className="w-full h-auto p-1 bg-transparent! dark:bg-transparent! border-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-0 focus-visible:border-0 focus:ring-0 focus:border-0 focus:outline-none flex items-center justify-between cursor-pointer"
+                  onClick={() => setIsCommandOpen(true)}
+                  className="group w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer focus:outline-none"
                 >
-                  <div className="flex items-center gap-2.5 text-left min-w-0 flex-1">
-                    <div className="relative shrink-0">
-                      <Avatar className="h-8 w-8 rounded-lg">
-                        <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name} />
-                        <AvatarFallback className="rounded-lg bg-muted text-xs font-semibold text-foreground">
-                          {session?.user?.name ? getInitials(session.user.name) : "VS"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="absolute bottom-0 right-0 block size-2 rounded-full bg-green-500 ring-2 ring-white dark:ring-[#1c1c1e]" />
-                    </div>
-                    <span className="truncate font-semibold text-foreground text-sm pl-1">
+                  <div className="relative shrink-0">
+                    <Avatar className="h-8 w-8 rounded-lg">
+                      <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name} />
+                      <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                        {session?.user?.name ? getInitials(session.user.name) : "VS"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="absolute -bottom-0.5 -right-0.5 block size-2 rounded-full bg-green-500 ring-2 ring-sidebar dark:ring-[#1c1c1e]" />
+                  </div>
+                  <div className="flex flex-col items-start min-w-0 flex-1">
+                    <span className="truncate text-sm font-semibold text-foreground leading-tight">
                       {session?.user?.name}
                     </span>
                   </div>
-                  <ChevronsUpDown className="size-4 text-muted-foreground shrink-0" />
+                  <ChevronsUpDown className="size-3.5 text-muted-foreground/60 shrink-0 group-hover:text-muted-foreground transition-colors" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent 
-                className="w-[var(--radix-popover-trigger-width)] min-w-[220px] p-0 overflow-hidden bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg shadow-md"
+
+              <PopoverContent
+                className="w-[var(--radix-popover-trigger-width)] min-w-[220px] p-0 overflow-hidden bg-white dark:bg-[#141414] border border-zinc-200/70 dark:border-zinc-800/70 rounded-xl shadow-xl"
                 align="start"
-                sideOffset={4}
+                sideOffset={6}
               >
-                <div className="flex items-center gap-2.5 border-b border-zinc-100 dark:border-zinc-800/60 px-3 py-2">
-                  <SearchIcon className="size-3.5 text-muted-foreground shrink-0" />
-                  <input
-                    value={commandSearch}
-                    onChange={(e) => setCommandSearch(e.target.value)}
-                    placeholder="Type a command..."
-                    className="flex-1 bg-transparent border-0 outline-none text-xs placeholder:text-muted-foreground/60 text-foreground"
-                  />
+                {/* User info header */}
+                <div className="flex items-center gap-3 px-3.5 py-3 border-b border-zinc-100 dark:border-zinc-800/60">
+                  <Avatar className="h-9 w-9 rounded-lg shrink-0">
+                    <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name} />
+                    <AvatarFallback className="rounded-lg bg-primary/10 text-sm font-bold text-primary">
+                      {session?.user?.name ? getInitials(session.user.name) : "VS"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold text-foreground truncate leading-snug">
+                      {session?.user?.name}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground truncate leading-snug">
+                      {session?.user?.email}
+                    </span>
+                  </div>
                 </div>
 
-                <ScrollArea className="h-[210px]">
-                  <div className="p-1.5 space-y-1 pr-3">
-                    <div className="space-y-1">
-                      {/* General Group */}
-                      <div className="px-2 py-0.5 text-[9px] font-semibold text-muted-foreground/80 uppercase tracking-wider">
-                        General
-                      </div>
-                      
-                      {/* Account Button */}
-                      {("account settings".includes(commandSearch.toLowerCase()) || "account".includes(commandSearch.toLowerCase())) && (
-                        <button
-                          onClick={() => {
-                            setIsCommandOpen(false)
-                            window.location.href = accountUrl
-                          }}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
-                        >
-                          <CircleUserRoundIcon className="size-3.5 text-muted-foreground" />
-                          Account Settings
-                        </button>
-                      )}
+                {/* Menu items */}
+                <div className="p-1.5 space-y-0.5">
+                  <button
+                    onClick={() => { setIsCommandOpen(false); window.location.href = accountUrl }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                  >
+                    <CircleUserRoundIcon className="size-4 text-muted-foreground shrink-0" />
+                    Account Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsCommandOpen(false)
+                      const noticeUrl = isAdmin
+                        ? adminUrls.notices
+                        : isTeacher
+                        ? teacherUrls.notice
+                        : isLibrarian
+                        ? librarianUrls.notice
+                        : urls.notice
+                      window.location.href = noticeUrl
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                  >
+                    <BellIcon className="size-4 text-muted-foreground shrink-0" />
+                    Notifications
+                  </button>
+                </div>
 
-                      {/* Theme Options */}
-                      {("theme light dark system".includes(commandSearch.toLowerCase())) && (
-                        <>
-                          <button
-                            onClick={() => {
-                              setTheme("light")
-                              setIsCommandOpen(false)
-                              toast.success("Theme changed to Light")
-                            }}
-                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
-                          >
-                            <SunIcon className="size-3.5 text-muted-foreground" />
-                            Set Theme: Light
-                          </button>
-                          <button
-                            onClick={() => {
-                              setTheme("dark")
-                              setIsCommandOpen(false)
-                              toast.success("Theme changed to Dark")
-                            }}
-                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
-                          >
-                            <MoonIcon className="size-3.5 text-muted-foreground" />
-                            Set Theme: Dark
-                          </button>
-                          <button
-                            onClick={() => {
-                              setTheme("system")
-                              setIsCommandOpen(false)
-                              toast.success("Theme changed to System")
-                            }}
-                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
-                          >
-                            <Laptop className="size-3.5 text-muted-foreground" />
-                            Set Theme: System
-                          </button>
-                        </>
-                      )}
-
-                      {/* Notifications */}
-                      {("notifications notice".includes(commandSearch.toLowerCase())) && (
-                        <button
-                          onClick={() => {
-                            setIsCommandOpen(false)
-                            toast.success("Notifications are up to date.")
-                          }}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
-                        >
-                          <BellIcon className="size-3.5 text-muted-foreground" />
-                          Notifications
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="h-px bg-zinc-100 dark:bg-zinc-800/60 my-1.5" />
-
-                    {/* Account Switcher Group */}
-                    <div className="space-y-1">
-                      <div className="px-2 py-0.5 text-[9px] font-semibold text-muted-foreground/80 uppercase tracking-wider">
-                        Accounts
-                      </div>
-                      
-                      {("add account login switch".includes(commandSearch.toLowerCase())) && (
-                        <button
-                          onClick={() => {
-                            setIsCommandOpen(false)
-                            window.location.href = "/login"
-                          }}
-                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-xs text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
-                        >
-                          <Plus className="size-3.5 text-muted-foreground" />
-                          Add Account
-                        </button>
-                      )}
-                    </div>
+                {/* Theme section */}
+                <div className="px-1.5 pb-1.5">
+                  <div className="px-2.5 pt-1 pb-1.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">
+                    Theme
                   </div>
-                </ScrollArea>
+                  <div className="grid grid-cols-3 gap-1">
+                    {[
+                      { label: "Light", value: "light", icon: <SunIcon className="size-3.5" /> },
+                      { label: "Dark",  value: "dark",  icon: <MoonIcon className="size-3.5" /> },
+                      { label: "System",value: "system",icon: <Laptop   className="size-3.5" /> },
+                    ].map(({ label, value, icon }) => (
+                      <button
+                        key={value}
+                        onClick={() => { setTheme(value); setIsCommandOpen(false); toast.success(`Theme: ${label}`) }}
+                        className="flex flex-col items-center gap-1 py-2 rounded-lg text-[11px] font-medium text-muted-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 hover:text-foreground transition-colors cursor-pointer"
+                      >
+                        {icon}
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Divider + Add Account + Log Out */}
+                <div className="border-t border-zinc-100 dark:border-zinc-800/60 p-1.5 space-y-0.5">
+                  <button
+                    onClick={() => { setIsCommandOpen(false); window.location.href = "/login" }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-sm text-muted-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    <Plus className="size-4 shrink-0" />
+                    Add Account
+                  </button>
+                  <Button
+                    variant="destructive"
+                    className="w-full justify-start gap-2.5 px-2.5"
+                    onClick={async () => {
+                      setIsCommandOpen(false)
+                      await signOut()
+                      window.location.href = "/login"
+                    }}
+                  >
+                    <LogOut className="size-4 shrink-0" />
+                    Log Out
+                  </Button>
+                </div>
               </PopoverContent>
             </Popover>
 
@@ -982,28 +964,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         {isLoading ? (
           <SidebarGroup>
-            <SidebarGroupContent className="flex flex-col gap-2">
+            <SidebarGroupContent className="flex flex-col gap-1">
+              {/* 6 main nav items: Dashboard / Fees / Library / Marks / Notices / Mobile App */}
               <SidebarMenu>
-                {/* File a Complaint button skeleton */}
-                <SidebarMenuItem className="flex items-center gap-2 pointer-events-none">
-                  <SidebarMenuButton className="min-w-8 bg-sidebar-foreground/5">
-                    <Skeleton className="size-4 shrink-0 rounded bg-muted-foreground/20" />
-                    <Skeleton className="h-4 w-28 rounded bg-muted-foreground/20" />
-                  </SidebarMenuButton>
-                  <div className="size-8 rounded-md bg-sidebar-foreground/5 flex items-center justify-center shrink-0">
-                    <Skeleton className="size-4 rounded bg-muted-foreground/20" />
-                  </div>
-                </SidebarMenuItem>
-              </SidebarMenu>
-              <SidebarMenu className="space-y-1">
-                {/* Menu items skeletons */}
-                {[...Array(5)].map((_, i) => (
+                {[
+                  { w: "w-20" }, // Dashboard
+                  { w: "w-9"  }, // Fees
+                  { w: "w-14" }, // Library
+                  { w: "w-11" }, // Marks
+                  { w: "w-14" }, // Notices
+                  { w: "w-20" }, // Mobile App
+                ].map(({ w }, i) => (
                   <SidebarMenuItem key={i} className="pointer-events-none">
-                    <SidebarMenuButton>
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="size-4 shrink-0 rounded bg-muted-foreground/20" />
-                        <Skeleton className={`h-4 rounded bg-muted-foreground/20 ${i % 2 === 0 ? 'w-24' : i % 3 === 0 ? 'w-20' : 'w-28'}`} />
-                      </div>
+                    <SidebarMenuButton className="gap-2">
+                      <Skeleton className="size-4 shrink-0 rounded bg-muted-foreground/15" />
+                      <Skeleton className={`h-3.5 rounded bg-muted-foreground/15 ${w}`} />
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -1020,15 +995,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             )}
           </>
         )}
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        {isLoading ? (
+          <SidebarGroup className="mt-auto">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {/* Secondary nav: Sessions / Get Help */}
+                {[{ w: "w-14" }, { w: "w-16" }].map(({ w }, i) => (
+                  <SidebarMenuItem key={i} className="pointer-events-none">
+                    <SidebarMenuButton className="gap-2">
+                      <Skeleton className="size-4 shrink-0 rounded bg-muted-foreground/15" />
+                      <Skeleton className={`h-3.5 rounded bg-muted-foreground/15 ${w}`} />
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : (
+          <NavSecondary items={data.navSecondary} className="mt-auto" />
+        )}
       </SidebarContent>
       <SidebarFooter className="px-2 pt-0 pb-1.5">
         <div className="flex items-center justify-start gap-1 text-[10px] text-muted-foreground/80 font-normal w-full pl-1.5">
           <span>© {new Date().getFullYear()} VidyaSchool</span>
           <span>•</span>
-          <a href="/terms" className="hover:text-foreground hover:underline transition-colors">Terms</a>
+          <a href="/docs/terms-of-service" className="hover:text-foreground hover:underline transition-colors">Terms</a>
           <span>•</span>
-          <a href="/privacy" className="hover:text-foreground hover:underline transition-colors">Privacy</a>
+          <a href="/docs/privacy-policy" className="hover:text-foreground hover:underline transition-colors">Privacy</a>
         </div>
       </SidebarFooter>
 
