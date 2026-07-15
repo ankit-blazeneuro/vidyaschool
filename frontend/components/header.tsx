@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
-import { Sun, Moon, Menu, X, Terminal, Monitor, Laptop, ChevronDown } from "lucide-react"
+import { Sun, Moon, Menu, X, Smartphone } from "lucide-react"
 
 import {
   NavigationMenu,
@@ -23,6 +23,7 @@ function ThemeToggle() {
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 
@@ -124,7 +125,33 @@ export function Header() {
                 </NavigationMenuContent>
               </NavigationMenuItem>
 
+              {/* About Us Dropdown */}
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="text-foreground/80 hover:text-foreground text-sm font-medium">
+                  About Us
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    <ListItem href="/torch-bearers" title="Torch Bearers">
+                      Meet the visionary leaders, Principal, and mentors guiding VidyaSchool.
+                    </ListItem>
+                    <ListItem href="/sponsors" title="Sponsors & Partners">
+                      Organizations backing and empowering our digital classrooms.
+                    </ListItem>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
               {/* Direct Links */}
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="/downloads" className="text-foreground/80 hover:text-foreground text-sm font-medium flex items-center gap-1.5">
+                    <Smartphone className="h-3.5 w-3.5 text-primary shrink-0" />
+                    Mobile App
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
                   <Link href="/student/notice" className="text-foreground/80 hover:text-foreground text-sm font-medium">
@@ -218,8 +245,25 @@ export function Header() {
             </div>
           </div>
 
+          {/* About Us Panel */}
+          <div>
+            <div className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">About Us</div>
+            <div className="grid gap-1">
+              <Link href="/torch-bearers" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+                Torch Bearers
+              </Link>
+              <Link href="/sponsors" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+                Sponsors & Partners
+              </Link>
+            </div>
+          </div>
+
           {/* Direct Links Panel */}
           <div className="border-t border-border pt-3 space-y-1">
+            <Link href="/downloads" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md flex items-center gap-2">
+              <Smartphone className="h-4 w-4 text-primary shrink-0" />
+              Mobile App Download
+            </Link>
             <Link href="/student/notice" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
               Notices
             </Link>
