@@ -63,7 +63,6 @@ export function CustomSearchDialog(props: SharedProps) {
 
   // Render a custom item
   const renderItem = ({ item, onClick }: { item: any; onClick: () => void }) => {
-    // If it's an action item, just render standard
     if (item.type === "action") {
       return (
         <button key={item.id} onClick={item.onSelect} className="w-full text-left">
@@ -72,32 +71,34 @@ export function CustomSearchDialog(props: SharedProps) {
       )
     }
 
-    // Determine type: check if item.id starts with 'page-' or 'docs-'
     const isDoc = item.id?.startsWith("docs-") || item.url?.startsWith("/docs/")
-    
-    // Aesthetic badge styles
-    const badgeClass = isDoc
-      ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 dark:bg-indigo-500/20 border border-indigo-500/20"
-      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-500/20 border border-emerald-500/20"
-    const typeLabel = isDoc ? "DOCS" : "PAGE"
+    const typeLabel = isDoc ? "Docs" : "Page"
 
     return (
       <SearchDialogListItem
         key={item.id}
         item={item}
         onClick={onClick}
-        className="relative flex flex-col items-start gap-1 py-2.5 px-3.5 mx-1 rounded-xl hover:bg-fd-accent/40 text-left w-[calc(100%-8px)] transition-all duration-300 group cursor-pointer border-b border-fd-border/10 last:border-b-0 hover:translate-x-1 hover:shadow-xs hover:border-l-2 hover:border-l-primary hover:pl-3"
+        className="flex flex-col items-start gap-0.5 py-3 px-3 mx-1 w-[calc(100%-8px)] cursor-pointer
+                   border-b border-zinc-100 dark:border-zinc-800/60 last:border-b-0"
       >
+        {/* Row 1: type pill + title */}
         <div className="flex items-center gap-2 w-full">
-          <span className={`text-[8px] font-extrabold tracking-wider px-1.5 py-0.5 rounded-md uppercase shrink-0 ${badgeClass}`}>
+          <span className="shrink-0 text-[9px] font-semibold tracking-widest uppercase
+                           px-1.5 py-0.5 rounded
+                           bg-zinc-100 dark:bg-zinc-800
+                           text-zinc-500 dark:text-zinc-400
+                           border border-zinc-200 dark:border-zinc-700">
             {typeLabel}
           </span>
-          <div className="font-semibold text-xs text-fd-foreground group-hover:text-primary transition-colors truncate flex-1">
+          <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate flex-1 leading-snug">
             {item.title}
-          </div>
+          </span>
         </div>
+
+        {/* Row 2: content snippet */}
         {item.content && (
-          <p className="text-[11px] text-fd-muted-foreground line-clamp-1 leading-normal w-full pl-[56px] group-hover:text-fd-foreground/80 transition-colors">
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-500 line-clamp-1 leading-normal w-full pl-[46px]">
             {item.content}
           </p>
         )}
@@ -154,7 +155,11 @@ export function CustomSearchDialog(props: SharedProps) {
 
         {/* Scrollable list area - only render when text is entered */}
         {search.trim() !== "" && (
-          <ScrollArea className="flex-1 max-h-[380px] py-1">
+          <ScrollArea
+            className="flex-1 max-h-[380px] py-1"
+            // Force the Radix scrollbar to always show
+            type="always"
+          >
             {isLoading && (
               <div className="flex items-center px-4 py-2.5 border-b border-border/10">
                 <span className="text-xs font-semibold animate-text-shimmer">
