@@ -19,7 +19,8 @@
           "tez",
           "phonepe",
           "paytmmp"
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       },
       "bundleIdentifier": "com.vidyaschool"
     },
@@ -50,9 +51,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "a52e12ca-e80d-4858-b463-42da4d0f4fe1"
+        "projectId": "b1f8ca5d-2c66-4faf-9e0c-1819901d7f41"
       }
     },
-    "owner": "santushtiboutique"
+    "owner": "vidyaschool"
   }
 }
