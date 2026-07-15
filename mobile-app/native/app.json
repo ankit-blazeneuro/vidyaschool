@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "native",
-    "slug": "native",
+    "name": "Vidya School",
+    "slug": "vidyaschool",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -46,6 +46,13 @@
       ],
       "expo-status-bar"
     ],
-    "scheme": "native"
+    "scheme": "native",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a52e12ca-e80d-4858-b463-42da4d0f4fe1"
+      }
+    },
+    "owner": "santushtiboutique"
   }
 }
