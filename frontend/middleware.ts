@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { auth } from './lib/auth'
 
 // Public routes - accessible without authentication
-const publicRoutes = ['/', '/login', '/signup', '/unauthorized']
+const publicRoutes = ['/', '/login', '/signup', '/unauthorized', '/downloads']
 
 // FIREWALL: Protected routes with required roles
 const protectedRoutes = {
