@@ -21,6 +21,20 @@ export function CustomSearchDialog(props: SharedProps) {
   const [results, setResults] = React.useState<any[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
   const [isFocused, setIsFocused] = React.useState(false)
+  const [loaderPhase, setLoaderPhase] = React.useState(0)
+
+  React.useEffect(() => {
+    if (!isLoading) {
+      setLoaderPhase(0)
+      return
+    }
+
+    const interval = setInterval(() => {
+      setLoaderPhase((prev) => (prev + 1) % 2)
+    }, 1300)
+
+    return () => clearInterval(interval)
+  }, [isLoading])
 
   React.useEffect(() => {
     if (!search.trim()) {
@@ -143,7 +157,9 @@ export function CustomSearchDialog(props: SharedProps) {
           <ScrollArea className="flex-1 max-h-[380px] py-1">
             {isLoading && (
               <div className="flex items-center px-4 py-2.5 border-b border-border/10">
-                <span className="text-xs font-semibold animate-text-shimmer">Searching documentation...</span>
+                <span className="text-xs font-semibold animate-text-shimmer">
+                  {loaderPhase === 0 ? "Searching in documentations..." : "Searching in pages..."}
+                </span>
               </div>
             )}
             <SearchDialogList
