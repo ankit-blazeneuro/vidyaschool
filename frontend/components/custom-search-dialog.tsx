@@ -142,9 +142,8 @@ export function CustomSearchDialog(props: SharedProps) {
         {search.trim() !== "" && (
           <ScrollArea className="flex-1 max-h-[380px] py-1">
             {isLoading && (
-              <div className="flex items-center gap-2 px-4 py-2.5 text-[11px] border-b border-border/10">
-                <div className="size-1.5 rounded-full bg-primary animate-ping" />
-                <span className="font-semibold animate-text-shimmer">Searching documentation...</span>
+              <div className="flex items-center px-4 py-2.5 border-b border-border/10">
+                <span className="text-xs font-semibold animate-text-shimmer">Searching documentation...</span>
               </div>
             )}
             <SearchDialogList
