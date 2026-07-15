@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { OnboardingAlert } from "@/components/onboarding-alert"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Sidebar,
   SidebarContent,
@@ -335,6 +335,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const router = useRouter()
   const { data: session, isPending } = useSession()
   const { isMobile, setOpenMobile } = useSidebar()
   const [profileLoading, setProfileLoading] = React.useState(true)
@@ -430,7 +431,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     else if (role === "account") targetUrl = accountUrls.dashboard
     else targetUrl = urls.dashboard
 
-    window.location.href = targetUrl
+    router.push(targetUrl)
   }
 
   // Notification states
@@ -858,7 +859,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {/* Menu items */}
                 <div className="p-1.5 space-y-0.5">
                   <button
-                    onClick={() => { setIsCommandOpen(false); window.location.href = accountUrl }}
+                    onClick={() => { setIsCommandOpen(false); router.push(accountUrl) }}
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
                   >
                     <CircleUserRoundIcon className="size-4 text-muted-foreground shrink-0" />
@@ -874,7 +875,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         : isLibrarian
                         ? librarianUrls.notice
                         : urls.notice
-                      window.location.href = noticeUrl
+                      router.push(noticeUrl)
                     }}
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left text-sm text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
                   >
