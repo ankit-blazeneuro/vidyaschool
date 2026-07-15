@@ -41,7 +41,8 @@ private val ROLE_OPTIONS = listOf(
 @Composable
 fun SignupScreen(
     onBackClick: () -> Unit,
-    onSignupSuccess: () -> Unit
+    onSignupSuccess: () -> Unit,
+    onLoginClick: () -> Unit = {}
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -190,14 +191,20 @@ fun SignupScreen(
                     pop()
                 }
 
-                Text(
+                androidx.compose.foundation.text.ClickableText(
                     text = annotatedString,
-                    fontSize = 12.sp,
-                    color = Color(0xFF71717A),
-                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 12.sp,
+                        color = Color(0xFF71717A),
+                        textAlign = TextAlign.Center
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 8.dp)
+                        .padding(bottom = 8.dp),
+                    onClick = { offset ->
+                        annotatedString.getStringAnnotations("login", offset, offset)
+                            .firstOrNull()?.let { onLoginClick() }
+                    }
                 )
             }
         }

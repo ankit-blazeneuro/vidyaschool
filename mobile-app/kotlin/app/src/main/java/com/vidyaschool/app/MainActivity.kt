@@ -311,6 +311,11 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                         navController.navigate("login") {
                             popUpTo("signup") { inclusive = true }
                         }
+                    },
+                    onLoginClick = {
+                        navController.navigate("login") {
+                            popUpTo("signup") { inclusive = true }
+                        }
                     }
                 )
             }

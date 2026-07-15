@@ -26,16 +26,18 @@ class GoogleAuthProvider(
             .build()
         
         val client = GoogleSignIn.getClient(context, gso)
-        
+
         GoogleAuthCallback.setCallback { result ->
             continuation.resume(result)
         }
-        
+
         continuation.invokeOnCancellation {
             client.signOut()
         }
-        
-        activityLauncher.launch(client.signInIntent)
+
+        client.signOut().addOnCompleteListener {
+            activityLauncher.launch(client.signInIntent)
+        }
     }
     
     fun handleSignInResult(data: Intent?): AuthResult {
