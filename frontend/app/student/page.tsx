@@ -68,10 +68,10 @@ function DashboardSkeleton() {
                   <div className="h-3 w-10 bg-zinc-200 dark:bg-zinc-800 rounded pl-2 z-10" />
                   <div className="w-full border-l border-dashed border-zinc-200/80 dark:border-zinc-800/80 min-h-[150px] pt-1">
                     {i === 0 && (
-                      <div className="absolute inset-x-1.5 top-2 h-24 rounded-lg bg-emerald-100/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 p-2 flex flex-col justify-between" />
+                      <div className="absolute inset-x-1.5 top-2 h-24 rounded-lg bg-zinc-200/50 dark:bg-zinc-800/20 border border-zinc-300 dark:border-zinc-800/40 p-2 flex flex-col justify-between" />
                     )}
                     {i === 2 && (
-                      <div className="absolute inset-x-1.5 top-4 h-24 rounded-lg bg-blue-100/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 p-2 flex flex-col justify-between" />
+                      <div className="absolute inset-x-1.5 top-4 h-24 rounded-lg bg-zinc-200/50 dark:bg-zinc-800/20 border border-zinc-300 dark:border-zinc-800/40 p-2 flex flex-col justify-between" />
                     )}
                   </div>
                 </div>
