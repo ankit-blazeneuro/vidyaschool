@@ -18,6 +18,7 @@ import {
   SidebarMenuItem,
   SidebarGroup,
   SidebarGroupContent,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import {
   Avatar,
@@ -336,6 +337,7 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const { data: session, isPending } = useSession()
+  const { isMobile, setOpenMobile } = useSidebar()
   const [profileLoading, setProfileLoading] = React.useState(true)
   const [isQrOpen, setIsQrOpen] = React.useState(false)
   const [appVersion, setAppVersion] = React.useState<string>("v1.0.52")
@@ -959,6 +961,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   cancelable: true,
                 })
                 window.dispatchEvent(event)
+                if (isMobile) {
+                  setOpenMobile(false)
+                }
               }}
               className="w-full h-9 flex items-center justify-between px-3 py-1.5 rounded-xl border border-border/80 bg-sidebar-foreground/5 hover:bg-sidebar-foreground/10 text-muted-foreground transition-all duration-150 text-xs cursor-pointer focus:outline-none"
             >

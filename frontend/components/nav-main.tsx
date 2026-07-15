@@ -7,6 +7,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -44,6 +45,7 @@ export function NavMain({
   }[]
 }) {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
 
   return (
     <SidebarGroup>
@@ -70,7 +72,15 @@ export function NavMain({
                       : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/40"
                   )}
                 >
-                  <Link href={item.url} className="relative flex items-center justify-between w-full">
+                  <Link 
+                    href={item.url} 
+                    onClick={() => {
+                      if (isMobile) {
+                        setOpenMobile(false)
+                      }
+                    }}
+                    className="relative flex items-center justify-between w-full"
+                  >
                     <div className="flex items-center gap-2">
                       <div className="relative flex shrink-0">
                         {item.icon}
