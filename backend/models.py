@@ -217,3 +217,13 @@ class FeeStructure(SQLModel, table=True):
     transport_fee: int = Field(default=0, alias="transport_fee")   # extra fee for transport users
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class TeacherNote(SQLModel, table=True):
+    __tablename__ = "teacher_note"
+    id: str = Field(primary_key=True)
+    teacher_id: str = Field(alias="teacher_id", foreign_key="user.id")
+    title: str = Field(default="Untitled")
+    content: str = Field(default="")
+    color: str = Field(default="default")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)

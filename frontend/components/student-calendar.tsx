@@ -70,10 +70,41 @@ const defaultEvents: CalendarEvent[] = [
   },
 ]
 
-export function StudentCalendar() {
+interface StudentCalendarProps {
+  apiUrl?: string
+  title?: string
+}
+
+export function StudentCalendar({ 
+  apiUrl = '/api/student/timetable/today', 
+  title = 'Calendar' 
+}: StudentCalendarProps = {}) {
   const [activeTab, setActiveTab] = React.useState<Tab>("Today")
   const [playheadLeft, setPlayheadLeft] = React.useState<number | null>(null)
   const [playheadTime, setPlayheadTime] = React.useState<string>("")
+  const [events, setEvents] = React.useState<CalendarEvent[]>([])
+  const [loading, setLoading] = React.useState<boolean>(true)
+
+  React.useEffect(() => {
+    setLoading(true)
+    fetch(apiUrl)
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to load")
+        return res.json()
+      })
+      .then(data => {
+        if (data.events && Array.isArray(data.events)) {
+          setEvents(data.events)
+        } else {
+          setEvents([])
+        }
+        setLoading(false)
+      })
+      .catch(() => {
+        setEvents([])
+        setLoading(false)
+      })
+  }, [apiUrl])
 
   React.useEffect(() => {
     function updatePlayhead() {
@@ -107,7 +138,7 @@ export function StudentCalendar() {
 
         {/* ── Header ── */}
         <div className="flex items-center justify-between mb-5">
-          <h2 className="font-heading text-base leading-snug font-medium text-foreground">Calendar</h2>
+          <h2 className="font-heading text-base leading-snug font-medium text-foreground">{title}</h2>
 
           {/* Segmented tabs */}
           <div className="flex items-center gap-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg p-1">
@@ -169,25 +200,33 @@ export function StudentCalendar() {
                 {/* Column divider */}
                 <div className="w-full border-l border-dashed border-zinc-200/80 dark:border-zinc-800/80 relative min-h-[150px] pt-1">
                   {/* Render events that belong to this column */}
-                  {defaultEvents
-                    .filter((ev) => ev.hour === i)
-                    .map((ev, j) => (
-                      <div
-                        key={j}
-                        className={cn(
-                          "absolute inset-x-1.5 top-2 bottom-3 rounded-lg border px-3 py-2.5 flex flex-col justify-between shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md",
-                          ev.color.bg,
-                          ev.color.border
-                        )}
-                      >
-                        <span className={cn("text-xs font-semibold leading-snug", ev.color.title)}>
-                          {ev.title}
-                        </span>
-                        <span className={cn("text-[10px] font-medium", ev.color.time)}>
-                          {ev.time}
-                        </span>
-                      </div>
-                    ))}
+                  {loading ? (
+                    i % 3 === 1 ? (
+                      <div className="absolute inset-x-1.5 top-2 h-24 rounded-lg bg-zinc-200/70 dark:bg-zinc-800/70 animate-pulse" />
+                    ) : i % 3 === 2 ? (
+                      <div className="absolute inset-x-1.5 top-6 h-16 rounded-lg bg-zinc-200/50 dark:bg-zinc-800/50 animate-pulse" />
+                    ) : null
+                  ) : (
+                    events
+                      .filter((ev) => ev.hour === i)
+                      .map((ev, j) => (
+                        <div
+                          key={j}
+                          className={cn(
+                            "absolute inset-x-1.5 top-2 bottom-3 rounded-lg border px-3 py-2.5 flex flex-col justify-between shadow-sm transition-all duration-200 hover:scale-[1.02] hover:shadow-md",
+                            ev.color.bg,
+                            ev.color.border
+                          )}
+                        >
+                          <span className={cn("text-xs font-semibold leading-snug", ev.color.title)}>
+                            {ev.title}
+                          </span>
+                          <span className={cn("text-[10px] font-medium", ev.color.time)}>
+                            {ev.time}
+                          </span>
+                        </div>
+                      ))
+                  )}
                 </div>
               </div>
             ))}

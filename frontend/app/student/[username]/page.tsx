@@ -3,6 +3,7 @@ import { DataTable } from "@/components/data-table"
 import { StudentNotes } from "@/components/student-notes"
 import { StudentCalendar } from "@/components/student-calendar"
 import { StudentWidgets } from "@/components/student-widgets"
+import { ClassInfoWidget } from "@/components/class-info-widget"
 import { requireRole } from "@/lib/auth-helpers"
 import data from "./data.json"
 
@@ -34,6 +35,7 @@ export default async function StudentDashboardPage() {
       </div>
       <StudentNotes />
       <StudentCalendar />
+      <ClassInfoWidget />
       <StudentWidgets />
       <div className="px-4 lg:px-6">
         <ChartAreaInteractive title="Academic Performance" descriptionLine1="Overall score trend" />

@@ -58,11 +58,17 @@ export function SiteHeader({ title, children, actions }: SiteHeaderProps) {
       borrowings: "Book Issues",
       community: "Community Chat",
       downloads: "Mobile App Downloads",
-      account: "Account Settings",
+      notes: "Notes",
     }
 
     if (pathMap[lastSegment.toLowerCase()]) {
       return pathMap[lastSegment.toLowerCase()]
+    }
+
+    // If last segment looks like a UUID, use the second-to-last segment label
+    if (/^[0-9a-f-]{8,}$/i.test(lastSegment)) {
+      const parent = segments[segments.length - 2]
+      return pathMap[parent?.toLowerCase()] ?? parent?.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()) ?? "Page"
     }
 
     // If it's a 2-segment path where the second segment is the username (e.g. /student/ankit)
@@ -83,19 +89,21 @@ export function SiteHeader({ title, children, actions }: SiteHeaderProps) {
           orientation="vertical"
           className="mx-2 h-4! self-center!"
         />
-        {children || <h1 className="text-base font-medium">{displayTitle}</h1>}
-        <div className="flex-1" />
-        <div id="site-header-actions" className="flex items-center gap-2">
-          <HeaderComplaintButton />
-          <Button
-            onClick={() => setMailOpen(true)}
-            size="icon"
-            variant="outline"
-            className="size-8 rounded-lg border-zinc-200/80 dark:border-zinc-800 bg-background hover:bg-muted text-muted-foreground transition-colors cursor-pointer"
-          >
-            <Mail className="size-4" />
-            <span className="sr-only">Inbox</span>
-          </Button>
+        {!pathname.includes("/notes/") && (children || <h1 className="text-base font-medium">{displayTitle}</h1>)}
+        {!pathname.includes("/notes/") && <div className="flex-1" />}
+        <div id="site-header-actions" className="flex items-center gap-2 min-w-0 flex-1">
+          {!pathname.includes("/notes/") && <HeaderComplaintButton />}
+          {!pathname.includes("/notes/") && (
+            <Button
+              onClick={() => setMailOpen(true)}
+              size="icon"
+              variant="outline"
+              className="size-8 rounded-lg border-zinc-200/80 dark:border-zinc-800 bg-background hover:bg-muted text-muted-foreground transition-colors cursor-pointer"
+            >
+              <Mail className="size-4" />
+              <span className="sr-only">Inbox</span>
+            </Button>
+          )}
           {actions}
         </div>
       </div>

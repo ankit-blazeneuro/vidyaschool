@@ -30,7 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, MoonIcon, CircleUserRoundIcon, ChevronsUpDown, SunIcon, Laptop, ChevronRight, LogOut } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, MoonIcon, CircleUserRoundIcon, ChevronsUpDown, SunIcon, Laptop, ChevronRight, LogOut, CalendarIcon, NotebookPenIcon } from "lucide-react"
 import { useSession, signOut } from "@/lib/auth-client"
 import { io } from "socket.io-client"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -97,6 +97,8 @@ function useTeacherUrls() {
     requests: `${base}/requests`,
     notice: `${base}/notice`,
     account: `${base}/account`,
+    timetable: `${base}/timetable`,
+    notes: `${base}/notes`,
   }
 }
 
@@ -506,7 +508,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     })
 
     socket.on("complaint_created", () => {
-      if (isAdmin && !pathname?.includes("/complaints")) {
+      if ((isAdmin || isTeacher) && !pathname?.includes("/complaints")) {
         setUnreadComplaints(true)
       }
     })
@@ -668,6 +670,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "My Class",
           url: teacherUrls.class,
           icon: <UsersIcon />,
+        },
+        {
+          title: "Timetable",
+          url: teacherUrls.timetable,
+          icon: <CalendarIcon />,
+        },
+        {
+          title: "Notes",
+          url: teacherUrls.notes,
+          icon: <NotebookPenIcon />,
         },
         {
           title: "Subject Class",

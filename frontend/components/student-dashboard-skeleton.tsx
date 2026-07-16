@@ -84,6 +84,23 @@ export function StudentDashboardSkeleton() {
         </div>
       </section>
 
+      {/* ── ClassInfoWidget ── */}
+      <section className="mx-4 lg:mx-6 rounded-2xl bg-zinc-100 dark:bg-[#121212] overflow-hidden">
+        <div className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <Skeleton className="h-5 w-20 rounded bg-zinc-200 dark:bg-zinc-800" />
+            <Skeleton className="h-6 w-24 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+          <Skeleton className="h-12 w-full rounded-xl mb-4 bg-zinc-200 dark:bg-zinc-800" />
+          <Skeleton className="h-3 w-16 rounded mb-3 bg-zinc-200 dark:bg-zinc-800" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── StudentWidgets ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 lg:px-6">
         {/* Tasks */}

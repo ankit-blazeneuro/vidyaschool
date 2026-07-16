@@ -4,13 +4,16 @@ import { useThemeColors, useTheme } from "../theme/ThemeContext";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CustomMenuIcon, CustomNotificationIcon } from "./icons/CustomIcons";
 import { FONT_FAMILY } from "../theme/colors";
+import { Feather } from "@expo/vector-icons";
 
 interface DashboardHeaderProps {
   title: string;
   subtitle: string;
-  onMenuPress: () => void;
+  onMenuPress?: () => void;
   onNotificationPress: () => void;
   style?: any;
+  showBack?: boolean;
+  onBack?: () => void;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -19,6 +22,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onMenuPress,
   onNotificationPress,
   style,
+  showBack = false,
+  onBack,
 }) => {
   const colors = useThemeColors();
   const { isDark } = useTheme();
@@ -33,15 +38,25 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }, style]}>
-      {/* Left: menu button + title */}
+      {/* Left: menu/back button + title */}
       <View style={styles.leftSection}>
-        <TouchableOpacity
-          onPress={onMenuPress}
-          activeOpacity={0.7}
-          style={[styles.iconButton, { borderColor: buttonBorderColor }]}
-        >
-          <CustomMenuIcon size={18} color={colors.onBackground} />
-        </TouchableOpacity>
+        {showBack ? (
+          <TouchableOpacity
+            onPress={onBack}
+            activeOpacity={0.7}
+            style={[styles.iconButton, { borderColor: buttonBorderColor }]}
+          >
+            <Feather name="arrow-left" size={18} color={colors.onBackground} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={onMenuPress}
+            activeOpacity={0.7}
+            style={[styles.iconButton, { borderColor: buttonBorderColor }]}
+          >
+            <CustomMenuIcon size={18} color={colors.onBackground} />
+          </TouchableOpacity>
+        )}
 
         <View style={styles.textContainer}>
           <Text style={[styles.title, { color: colors.onBackground }]}>

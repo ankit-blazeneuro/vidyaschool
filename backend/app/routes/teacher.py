@@ -1,13 +1,111 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import zlib
+import uuid
+from datetime import datetime
+from pydantic import BaseModel
 
 from app.core.auth import get_current_user, require_role
 from app.core.database import get_db
-from models import User, UserProfile, FeeInstallment, SubjectClassRequest, SubjectClassAssignment, Exam, StudentSubjectMarks
+from models import User, UserProfile, FeeInstallment, SubjectClassRequest, SubjectClassAssignment, Exam, StudentSubjectMarks, TeacherNote
 
 router = APIRouter(prefix="/teacher", tags=["teacher"])
+
+# ── Teacher Notes ────────────────────────────────────────────────────────────
+
+class NoteCreate(BaseModel):
+    title: Optional[str] = "Untitled"
+    content: Optional[str] = ""
+    color: Optional[str] = "default"
+
+class NoteUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    color: Optional[str] = None
+
+ALLOWED_NOTE_ROLES = ["teacher", "admin", "librarian"]
+
+@router.get("/notes")
+def get_notes(
+    current_user: User = Depends(require_role(ALLOWED_NOTE_ROLES)),
+    db: Session = Depends(get_db)
+):
+    notes = db.query(TeacherNote).filter(
+        TeacherNote.teacher_id == current_user.id
+    ).order_by(TeacherNote.updated_at.desc()).all()
+    return {"notes": [n.model_dump() for n in notes]}
+
+@router.get("/notes/{note_id}")
+def get_note(
+    note_id: str,
+    current_user: User = Depends(require_role(ALLOWED_NOTE_ROLES)),
+    db: Session = Depends(get_db)
+):
+    note = db.query(TeacherNote).filter(
+        TeacherNote.id == note_id,
+        TeacherNote.teacher_id == current_user.id
+    ).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return {"note": note.model_dump()}
+
+@router.post("/notes")
+def create_note(
+    body: NoteCreate,
+    current_user: User = Depends(require_role(ALLOWED_NOTE_ROLES)),
+    db: Session = Depends(get_db)
+):
+    note = TeacherNote(
+        id=str(uuid.uuid4()),
+        teacher_id=current_user.id,
+        title=body.title or "Untitled",
+        content=body.content or "",
+        color=body.color or "default",
+    )
+    db.add(note)
+    db.commit()
+    db.refresh(note)
+    return {"success": True, "id": note.id}
+
+@router.patch("/notes/{note_id}")
+def update_note(
+    note_id: str,
+    body: NoteUpdate,
+    current_user: User = Depends(require_role(ALLOWED_NOTE_ROLES)),
+    db: Session = Depends(get_db)
+):
+    note = db.query(TeacherNote).filter(
+        TeacherNote.id == note_id,
+        TeacherNote.teacher_id == current_user.id
+    ).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    if body.title is not None:
+        note.title = body.title
+    if body.content is not None:
+        note.content = body.content
+    if body.color is not None:
+        note.color = body.color
+    note.updated_at = datetime.utcnow()
+    db.commit()
+    return {"success": True}
+
+@router.delete("/notes/{note_id}")
+def delete_note(
+    note_id: str,
+    current_user: User = Depends(require_role(ALLOWED_NOTE_ROLES)),
+    db: Session = Depends(get_db)
+):
+    note = db.query(TeacherNote).filter(
+        TeacherNote.id == note_id,
+        TeacherNote.teacher_id == current_user.id
+    ).first()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    db.delete(note)
+    db.commit()
+    return {"success": True}
 
 @router.get("/class/students", response_model=Dict[str, Any])
 def get_class_students(

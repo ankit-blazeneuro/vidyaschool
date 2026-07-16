@@ -231,6 +231,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 onMenuPress={handleMenuClick}
                 onNotificationPress={handleNotificationClick}
                 onScroll={handleScroll}
+                onBack={() => setSelectedTab("home")}
               />
             )}
             {selectedTab === "search" && (
@@ -261,7 +262,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       </ContainerView>
 
       {/* Animated Sticky Floating Header */}
-      {activeDocPath === null && selectedTab !== "search" && (
+      {activeDocPath === null && selectedTab !== "search" && selectedTab !== "community" && (
         <Animated.View
           pointerEvents={headerCollapsed ? "auto" : "none"}
           style={[
@@ -272,35 +273,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               height: 54 + insets.top,
               opacity: headerAlpha,
               transform: [{ translateY: headerSlide }],
-              backgroundColor: isDark
-                ? "rgba(9, 9, 11, 0.75)"
-                : "rgba(255, 255, 255, 0.75)",
+              backgroundColor: isDark ? "#000000" : "#ffffff",
             },
           ]}
         >
-          {Platform.OS === "ios" ? (
-            <BlurView
-              intensity={80}
-              tint={isDark ? "dark" : "light"}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : (
-            <BlurView
-              intensity={90}
-              tint={isDark ? "dark" : "light"}
-              blurTarget={bodyTargetRef}
-              blurMethod="dimezisBlurViewSdk31Plus"
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-          <LinearGradient
-            colors={
-              isDark
-                ? ["rgba(0, 0, 0, 0.85)", "rgba(0, 0, 0, 0.55)"]
-                : ["rgba(250, 250, 250, 0.6)", "rgba(250, 250, 250, 0.15)"]
-            }
-            style={StyleSheet.absoluteFill}
-          />
           <View style={styles.stickyHeaderRow}>
             <TouchableOpacity
               onPress={handleMenuClick}
@@ -338,17 +314,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       )}
 
       {/* 3. Bottom Navigation Bar */}
-      {activeDocPath === null && (
+      {activeDocPath === null && selectedTab !== "community" && (
         <View
           style={[
             styles.tabBar,
             {
-              borderTopColor: colors.outline,
+              borderColor: colors.outline,
               backgroundColor: isDark
-                ? "rgba(9, 9, 11, 0.75)"
-                : "rgba(255, 255, 255, 0.75)",
-              paddingBottom: insets.bottom > 0 ? insets.bottom : (Platform.OS === "ios" ? 12 : 8),
-              height: 60 + (insets.bottom > 0 ? insets.bottom : 0),
+                ? "rgba(0, 0, 0, 0.72)"
+                : "rgba(255, 255, 255, 0.72)",
+              bottom: insets.bottom > 0 ? insets.bottom : 4,
+              left: 12,
+              right: 12,
+              height: 60,
+              paddingBottom: 0,
+              zIndex: 99,
             },
           ]}
         >
@@ -356,7 +336,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <BlurView
               intensity={85}
               tint={isDark ? "dark" : "light"}
-              style={StyleSheet.absoluteFill}
+              style={[StyleSheet.absoluteFill, { borderRadius: 28 }]}
             />
           ) : (
             <BlurView
@@ -364,7 +344,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               tint={isDark ? "dark" : "light"}
               blurTarget={bodyTargetRef}
               blurMethod="dimezisBlurViewSdk31Plus"
-              style={StyleSheet.absoluteFill}
+              style={[StyleSheet.absoluteFill, { borderRadius: 28 }]}
             />
           )}
           <LinearGradient
@@ -373,7 +353,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 ? ["rgba(0, 0, 0, 0.7)", "rgba(0, 0, 0, 0.95)"]
                 : ["rgba(250, 250, 250, 0.35)", "rgba(250, 250, 250, 0.75)"]
             }
-            style={StyleSheet.absoluteFill}
+            style={[StyleSheet.absoluteFill, { borderRadius: 28 }]}
           />
           <TouchableOpacity
             onPress={() => setSelectedTab("home")}
@@ -557,20 +537,19 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     height: 60,
-    borderTopWidth: 1,
+    borderWidth: 1,
+    borderRadius: 30,
+    overflow: "hidden",
+    zIndex: 99,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    paddingBottom: Platform.OS === "ios" ? 12 : 0,
     elevation: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   tabItem: {
     alignItems: "center",

@@ -213,5 +213,30 @@ export const fcmToken = pgTable('fcm_token', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+export const teacherNote = pgTable('teacher_note', {
+  id: text('id').primaryKey(),
+  teacherId: text('teacher_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  content: text('content').notNull().default(''),
+  color: text('color').notNull().default('default'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const timetable = pgTable('timetable', {
+  id: text('id').primaryKey(),
+  teacherId: text('teacher_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  class: text('class').notNull(),
+  section: text('section').notNull(),
+  subject: text('subject').notNull(),
+  dayOfWeek: text('day_of_week').notNull(), // 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'
+  startTime: text('start_time').notNull(),  // '09:00' (HH:MM 24h)
+  endTime: text('end_time').notNull(),      // '09:45'
+  room: text('room'),                       // optional room/location
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+
 
 
