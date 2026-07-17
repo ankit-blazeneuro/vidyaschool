@@ -17,14 +17,19 @@ export async function GET() {
     return NextResponse.json({ class: null, section: null, subjects: [], classTeacher: null })
   }
 
+  // Fetch all subject-teacher assignments for this class + section,
+  // including each teacher's profile (for designation & secondaryRole)
   const assignments = await db
     .select({
       subject: subjectClassAssignment.subject,
       teacherId: subjectClassAssignment.teacherId,
       teacherName: user.name,
+      designation: userProfile.designation,
+      secondaryRole: userProfile.secondaryRole,
     })
     .from(subjectClassAssignment)
     .innerJoin(user, eq(subjectClassAssignment.teacherId, user.id))
+    .leftJoin(userProfile, eq(userProfile.userId, user.id))
     .where(
       and(
         eq(subjectClassAssignment.class, profile.class),
@@ -33,18 +38,41 @@ export async function GET() {
     )
     .orderBy(subjectClassAssignment.subject)
 
-  // Class teacher = teacher with most subject assignments for this class
-  const teacherCount: Record<string, { name: string; count: number }> = {}
-  for (const a of assignments) {
-    if (!teacherCount[a.teacherId]) teacherCount[a.teacherId] = { name: a.teacherName, count: 0 }
-    teacherCount[a.teacherId].count++
+  // Determine class teacher:
+  // Priority 1 – teacher whose designation or secondaryRole explicitly marks them as class teacher
+  // Priority 2 – teacher with the most subject assignments (heuristic fallback)
+  const classTeacherKeywords = ['class teacher', 'incharge', 'in-charge', 'class incharge']
+
+  const isClassTeacher = (designation: string | null, secondaryRole: string | null) => {
+    const haystack = `${designation ?? ''} ${secondaryRole ?? ''}`.toLowerCase()
+    return classTeacherKeywords.some((kw) => haystack.includes(kw))
   }
-  const classTeacher = Object.values(teacherCount).sort((a, b) => b.count - a.count)[0] ?? null
+
+  // Try explicit match first
+  const explicitCT = assignments.find((a) =>
+    isClassTeacher(a.designation ?? null, a.secondaryRole ?? null)
+  )
+
+  let classTeacherName: string | null = null
+
+  if (explicitCT) {
+    classTeacherName = explicitCT.teacherName
+  } else {
+    // Fallback: teacher with most subject assignments
+    const teacherCount: Record<string, { name: string; count: number }> = {}
+    for (const a of assignments) {
+      if (!teacherCount[a.teacherId])
+        teacherCount[a.teacherId] = { name: a.teacherName, count: 0 }
+      teacherCount[a.teacherId].count++
+    }
+    const top = Object.values(teacherCount).sort((a, b) => b.count - a.count)[0] ?? null
+    classTeacherName = top?.name ?? null
+  }
 
   return NextResponse.json({
     class: profile.class,
     section: profile.section,
-    subjects: assignments.map(a => ({ subject: a.subject, teacherName: a.teacherName })),
-    classTeacher: classTeacher?.name ?? null,
+    subjects: assignments.map((a) => ({ subject: a.subject, teacherName: a.teacherName })),
+    classTeacher: classTeacherName,
   })
 }

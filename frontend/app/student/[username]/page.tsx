@@ -1,4 +1,4 @@
-import { ChartAreaInteractive } from "@/components/chart-area-interactive"
+import { AcademicPerformanceChart } from "@/components/academic-performance-chart"
 import { DataTable } from "@/components/data-table"
 import { StudentNotes } from "@/components/student-notes"
 import { StudentCalendar } from "@/components/student-calendar"
@@ -38,7 +38,7 @@ export default async function StudentDashboardPage() {
       <ClassInfoWidget />
       <StudentWidgets />
       <div className="px-4 lg:px-6">
-        <ChartAreaInteractive title="Academic Performance" descriptionLine1="Overall score trend" />
+        <AcademicPerformanceChart />
       </div>
       <DataTable data={data} />
     </div>
