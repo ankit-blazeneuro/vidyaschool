@@ -22,7 +22,8 @@ import {
   RefreshCwIcon,
   Settings2Icon,
   ChevronsUpDownIcon,
-  MoreHorizontalIcon
+  MoreHorizontalIcon,
+  ZapIcon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -39,32 +40,33 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { useTheme } from "@/components/theme-provider"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
-// Responsive header actions for the note editor
-function NoteHeaderActions({
-  username, title, saveState, exporting,
-  onBack, onTitleChange, onExport, onSettings
+// Left slot: Back button + title input + save indicator
+function NoteHeaderLeft({
+  title, saveState,
+  onBack, onTitleChange
 }: {
-  username: string
   title: string
   saveState: SaveState
-  exporting: boolean
   onBack: () => void
   onTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onExport: () => void
-  onSettings: () => void
 }) {
-  const [moreOpen, setMoreOpen] = React.useState(false)
-
   return (
-    <div className="flex items-center gap-2 min-w-0 flex-1">
+    <>
       {/* Back */}
-      <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0">
+      <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0 cursor-pointer">
         <ArrowLeftIcon className="h-4 w-4" />
         <span className="hidden sm:inline">Back</span>
       </button>
@@ -79,13 +81,28 @@ function NoteHeaderActions({
         className="bg-transparent font-semibold text-sm text-foreground placeholder:text-muted-foreground/50 outline-none border-none min-w-0 flex-1 focus:ring-1 focus:ring-primary/30 rounded px-1"
       />
 
-      {/* Save indicator — icon only on mobile, text on sm+ */}
+      {/* Save indicator */}
       <span className="flex items-center shrink-0 text-xs text-muted-foreground gap-1">
         {saveState === "saving" && <Loader2Icon className="h-3 w-3 animate-spin text-primary" />}
         {saveState === "saved" && <CheckIcon className="h-3 w-3 text-emerald-500" />}
         <span className="hidden sm:inline">{saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : ""}</span>
       </span>
+    </>
+  )
+}
 
+// Right slot: PDF export + Settings (with mobile More menu)
+function NoteHeaderRight({
+  exporting, onExport, onSettings
+}: {
+  exporting: boolean
+  onExport: () => void
+  onSettings: () => void
+}) {
+  const [moreOpen, setMoreOpen] = React.useState(false)
+
+  return (
+    <>
       {/* PDF + Settings — visible sm+ */}
       <button
         onClick={onExport}
@@ -118,11 +135,153 @@ function NoteHeaderActions({
           </>
         )}
       </div>
-    </div>
+    </>
   )
 }
 
-// Class / Section options for note settings
+// Helper component to show Shadcn Tooltips for drawing tools
+function ToolButton({
+  title,
+  shortcut,
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<"button"> & {
+  title: string
+  shortcut?: string
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button {...props}>
+          {children}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="flex items-center gap-2">
+        <span className="font-medium">{title}</span>
+        {shortcut && (
+          <kbd className="bg-zinc-800 text-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 px-1.5 py-0.5 rounded text-[10px] font-mono leading-none">
+            {shortcut}
+          </kbd>
+        )}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+// Shared toolbar button content — rendered in both mobile and desktop wrappers
+function ToolbarContent({
+  tool, setTool, activeColor, setActiveColor, activeWidth, setActiveWidth,
+  historyIndex, history, handleUndo, handleRedo,
+  triggerImageUpload, fileInputRef, handleImageUpload, addPage
+}: {
+  tool: CanvasTool
+  setTool: (t: CanvasTool) => void
+  activeColor: string
+  setActiveColor: (c: string) => void
+  activeWidth: number
+  setActiveWidth: (w: number) => void
+  historyIndex: number
+  history: CanvasPage[][]
+  handleUndo: () => void
+  handleRedo: () => void
+  triggerImageUpload: () => void
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+  handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
+  addPage: () => void
+}) {
+  return (
+    <>
+      <div className="flex flex-row lg:flex-col items-center gap-1.5 lg:gap-1 shrink-0 lg:w-auto">
+        <ToolButton onClick={() => setTool("select")} className={cn("p-2 rounded-xl transition-all cursor-pointer", tool === "select" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted")} title="Select & Move" shortcut="V">
+          <MousePointerIcon className="h-4.5 w-4.5" />
+        </ToolButton>
+
+        <div className="h-6 w-px lg:h-px lg:w-6 bg-zinc-200 dark:bg-zinc-800 mx-1 lg:mx-0 lg:my-1" />
+
+        <ToolButton onClick={() => setTool("pen")} className={cn("p-2 rounded-xl transition-all cursor-pointer", tool === "pen" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted")} title="Pen" shortcut="P">
+          <PaintbrushIcon className="h-4.5 w-4.5" />
+        </ToolButton>
+        <ToolButton onClick={() => setTool("highlighter")} className={cn("p-2 rounded-xl transition-all cursor-pointer", tool === "highlighter" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted")} title="Highlighter" shortcut="H">
+          <HighlighterIcon className="h-4.5 w-4.5" />
+        </ToolButton>
+        <ToolButton onClick={() => setTool("eraser")} className={cn("p-2 rounded-xl transition-all cursor-pointer", tool === "eraser" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted")} title="Eraser" shortcut="E">
+          <EraserIcon className="h-4.5 w-4.5" />
+        </ToolButton>
+        <ToolButton onClick={() => setTool("laser")} className={cn("p-2 rounded-xl transition-all cursor-pointer", tool === "laser" ? "bg-red-500 text-white shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted")} title="Laser Pointer" shortcut="Z">
+          <ZapIcon className="h-4.5 w-4.5" />
+        </ToolButton>
+
+        <div className="h-6 w-px lg:h-px lg:w-6 bg-zinc-200 dark:bg-zinc-800 mx-1 lg:mx-0 lg:my-1" />
+
+        <ToolButton onClick={() => setTool("text")} className={cn("px-3.5 py-2 rounded-xl transition-all cursor-pointer text-sm font-bold font-serif leading-none", tool === "text" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted")} title="Text Tool" shortcut="T">
+          T
+        </ToolButton>
+
+        <div className="h-6 w-px lg:h-px lg:w-6 bg-zinc-200 dark:bg-zinc-800 mx-1 lg:mx-0 lg:my-1" />
+
+        <ToolButton onClick={() => setTool("rectangle")} className={cn("p-2 rounded-xl transition-all cursor-pointer", tool === "rectangle" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted")} title="Rectangle" shortcut="R">
+          <div className="border-2 border-current w-4 h-3.5 rounded-xs" />
+        </ToolButton>
+        <ToolButton onClick={() => setTool("circle")} className={cn("p-2 rounded-xl transition-all cursor-pointer", tool === "circle" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted")} title="Circle" shortcut="C">
+          <div className="border-2 border-current w-4 h-4 rounded-full" />
+        </ToolButton>
+        <ToolButton onClick={() => setTool("arrow")} className={cn("p-2 rounded-xl transition-all cursor-pointer", tool === "arrow" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted")} title="Arrow" shortcut="A">
+          <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5" /><polyline points="12 5 19 5 19 12" /></svg>
+        </ToolButton>
+        <ToolButton onClick={() => setTool("line")} className={cn("p-2 rounded-xl transition-all cursor-pointer", tool === "line" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted")} title="Line" shortcut="L">
+          <div className="bg-current w-4.5 h-0.5 rotate-[-45deg] my-2" />
+        </ToolButton>
+
+        <div className="h-6 w-px lg:h-px lg:w-6 bg-zinc-200 dark:bg-zinc-800 mx-1 lg:mx-0 lg:my-1" />
+
+        <ToolButton onClick={triggerImageUpload} className="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-muted cursor-pointer transition-colors" title="Insert Image">
+          <ImageIcon className="h-4.5 w-4.5" />
+        </ToolButton>
+        <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+
+        <ToolButton onClick={addPage} className="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-muted cursor-pointer transition-colors" title="Add Page">
+          <PlusIcon className="h-4.5 w-4.5" />
+        </ToolButton>
+
+        <div className="h-6 w-px lg:h-px lg:w-6 bg-zinc-200 dark:bg-zinc-800 mx-1 lg:mx-0 lg:my-1" />
+
+        <ToolButton onClick={handleUndo} disabled={historyIndex <= 0} className="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-muted disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors" title="Undo" shortcut="Ctrl+Z">
+          <Undo2Icon className="h-4.5 w-4.5" />
+        </ToolButton>
+        <ToolButton onClick={handleRedo} disabled={historyIndex >= history.length - 1} className="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-muted disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors" title="Redo" shortcut="Ctrl+Y">
+          <Redo2Icon className="h-4.5 w-4.5" />
+        </ToolButton>
+      </div>
+
+      {(tool === "pen" || tool === "highlighter" || tool === "eraser" || tool === "text" || tool === "rectangle" || tool === "circle" || tool === "arrow" || tool === "line") && (
+        <div className="flex flex-row lg:flex-col items-center gap-3 border-l lg:border-l-0 lg:border-t border-zinc-200/60 dark:border-zinc-800 pl-3 ml-1.5 lg:pl-0 lg:ml-0 lg:pt-3 lg:mt-2 px-1.5 lg:w-full shrink-0">
+          {tool !== "eraser" && (
+            <div className="flex flex-row lg:flex-col items-center gap-1.5 p-1 bg-zinc-100/60 dark:bg-zinc-800/80 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50">
+              {DRAWING_COLORS.map(col => (
+                <button key={col.value} onClick={() => setActiveColor(col.value)}
+                  className={cn("size-4 rounded-full border transition-all cursor-pointer relative flex items-center justify-center", activeColor === col.value ? "ring-2 ring-primary scale-110" : "hover:scale-105")}
+                  style={{ backgroundColor: col.value, borderColor: col.value === "#ffffff" ? "#d4d4d8" : "transparent" }}
+                  title={col.name} />
+              ))}
+            </div>
+          )}
+          {tool !== "text" && (
+            <div className="flex flex-row lg:flex-col items-center gap-1 p-1 bg-zinc-100/60 dark:bg-zinc-800/80 rounded-xl border border-zinc-200/50 dark:border-zinc-700/50">
+              {STROKE_WIDTHS.map(sw => (
+                <button key={sw.value} onClick={() => setActiveWidth(sw.value)}
+                  className={cn("size-6 flex items-center justify-center rounded-lg transition-all cursor-pointer", activeWidth === sw.value ? "bg-white dark:bg-zinc-700 text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground")}
+                  title={`${sw.label} (${sw.value}px)`}>
+                  <div className="rounded-full bg-current" style={{ width: `${Math.min(14, Math.max(3, sw.value))}px`, height: `${Math.min(14, Math.max(3, sw.value))}px` }} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
 const CLASSES_LIST = ["All", "Nursery", "KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
 const SECTIONS_LIST = ["All", "A", "B", "C", "D", "E", "F"]
 
@@ -209,7 +368,7 @@ const STROKE_WIDTHS = [
 ]
 
 type SaveState = "saved" | "saving" | "unsaved"
-type CanvasTool = "select" | "pen" | "highlighter" | "eraser" | "text" | "rectangle" | "circle" | "arrow" | "line"
+type CanvasTool = "select" | "pen" | "highlighter" | "eraser" | "laser" | "text" | "rectangle" | "circle" | "arrow" | "line"
 
 interface CanvasImage {
   id: string
@@ -221,6 +380,7 @@ interface CanvasImage {
 }
 
 interface DrawingPath {
+  id: string
   tool: "pen" | "highlighter" | "eraser"
   color: string
   width: number
@@ -234,6 +394,11 @@ interface CanvasText {
   y: number
   fontSize: number
   color: string
+  bold?: boolean
+  italic?: boolean
+  underline?: boolean
+  align?: "left" | "center" | "right"
+  fontFamily?: string
 }
 
 interface CanvasShape {
@@ -259,7 +424,7 @@ interface CanvasPage {
 interface InteractionState {
   type: "drag" | "resize"
   elementId: string
-  elementType: "image" | "text" | "shape"
+  elementType: "image" | "text" | "shape" | "drawing"
   pageIndex: number
   startX: number
   startY: number
@@ -281,8 +446,8 @@ interface CanvasPageElementProps {
   onUpdatePage: (updatedPage: CanvasPage) => void
   selectedId: string | null
   setSelectedId: (id: string | null) => void
-  selectedType: "image" | "text" | "shape" | null
-  setSelectedType: (type: "image" | "text" | "shape" | null) => void
+  selectedType: "image" | "text" | "shape" | "drawing" | null
+  setSelectedType: (type: "image" | "text" | "shape" | "drawing" | null) => void
   selectedPage: number | null
   setSelectedPage: (idx: number | null) => void
   canvasRefSetter: (el: HTMLCanvasElement | null) => void
@@ -315,6 +480,37 @@ function CanvasPageElement({
   const activeShapeRef = React.useRef<CanvasShape | null>(null)
   const imgCache = React.useRef<Record<string, HTMLImageElement>>({})
   const interactionRef = React.useRef<InteractionState | null>(null)
+  // Multi-select marquee
+  const marqueeRef = React.useRef<{ x: number; y: number; w: number; h: number } | null>(null)
+  const isMarqueeRef = React.useRef(false)
+  const [marquee, setMarquee] = React.useState<{ x: number; y: number; w: number; h: number } | null>(null)
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([])
+  // Multi-drag
+  const multiDragRef = React.useRef<{ startX: number; startY: number; origins: Record<string, { x: number; y: number }> } | null>(null)
+  // Laser pointer
+  const laserPointsRef = React.useRef<{ x: number; y: number; t: number }[]>([])
+  const laserRafRef = React.useRef<number | null>(null)
+  const isLaserRef = React.useRef(false)
+  const laserCanvasRef = React.useRef<HTMLCanvasElement | null>(null)
+
+  const { theme } = useTheme()
+  const isDark = React.useMemo(() => {
+    if (theme === "dark") return true
+    if (theme === "light") return false
+    if (typeof window !== "undefined") {
+      return document.documentElement.classList.contains("dark") || window.matchMedia("(prefers-color-scheme: dark)").matches
+    }
+    return false
+  }, [theme])
+
+  const getThemeColor = React.useCallback((col: string) => {
+    if (isDark) {
+      if (col === "#18181b" || col === "#000000") return "#ffffff"
+    } else {
+      if (col === "#ffffff") return "#18181b"
+    }
+    return col
+  }, [isDark])
 
   const [canvasWidth, setCanvasWidth] = React.useState(800)
   
@@ -343,7 +539,7 @@ function CanvasPageElement({
 
   // Helper background renderers
   const drawRuled = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
-    ctx.strokeStyle = "rgba(59, 130, 246, 0.12)" // light blue horizontal lines
+    ctx.strokeStyle = isDark ? "rgba(59, 130, 246, 0.25)" : "rgba(59, 130, 246, 0.12)" // light blue horizontal lines
     ctx.lineWidth = 1
     const lineSpacing = 32
     for (let y = 80; y < h; y += lineSpacing) {
@@ -353,7 +549,7 @@ function CanvasPageElement({
       ctx.stroke()
     }
     // Vertical margin line
-    ctx.strokeStyle = "rgba(239, 68, 68, 0.2)" // red margin
+    ctx.strokeStyle = isDark ? "rgba(239, 68, 68, 0.35)" : "rgba(239, 68, 68, 0.2)" // red margin
     ctx.lineWidth = 1.5
     ctx.beginPath()
     ctx.moveTo(90, 0)
@@ -362,7 +558,7 @@ function CanvasPageElement({
   }
 
   const drawGrid = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.04)"
+    ctx.strokeStyle = isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)"
     ctx.lineWidth = 0.75
     const gridSize = 30
     for (let x = gridSize; x < w; x += gridSize) {
@@ -380,7 +576,7 @@ function CanvasPageElement({
   }
 
   const drawDotted = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.18)"
+    ctx.fillStyle = isDark ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.18)"
     const dotSpacing = 30
     for (let x = dotSpacing; x < w; x += dotSpacing) {
       for (let y = dotSpacing; y < h; y += dotSpacing) {
@@ -393,7 +589,7 @@ function CanvasPageElement({
 
   // Draw single shape
   const drawSingleShape = React.useCallback((ctx: CanvasRenderingContext2D, shape: CanvasShape) => {
-    ctx.strokeStyle = shape.color
+    ctx.strokeStyle = getThemeColor(shape.color)
     ctx.lineWidth = shape.strokeWidth
     ctx.lineCap = "round"
     ctx.lineJoin = "round"
@@ -426,7 +622,7 @@ function CanvasPageElement({
 
       const angle = Math.atan2(toY - fromY, toX - fromX)
       const headLength = 15
-      ctx.fillStyle = shape.color
+      ctx.fillStyle = getThemeColor(shape.color)
       ctx.beginPath()
       ctx.moveTo(toX, toY)
       ctx.lineTo(toX - headLength * Math.cos(angle - Math.PI / 6), toY - headLength * Math.sin(angle - Math.PI / 6))
@@ -434,22 +630,42 @@ function CanvasPageElement({
       ctx.closePath()
       ctx.fill()
     }
-  }, [])
+  }, [getThemeColor])
 
   // Draw single text
   const drawSingleText = React.useCallback((ctx: CanvasRenderingContext2D, text: CanvasText) => {
     // Skip if editing inline currently
     if (text.id === editingTextId) return
 
+    const weight = text.bold ? "bold" : "normal"
+    const style = text.italic ? "italic" : "normal"
+    const family = text.fontFamily || "sans-serif"
     ctx.textBaseline = "top"
-    ctx.font = `bold ${text.fontSize}px sans-serif`
-    ctx.fillStyle = text.color
+    ctx.font = `${style} ${weight} ${text.fontSize}px ${family}`
+    ctx.fillStyle = getThemeColor(text.color)
+    ctx.textAlign = text.align || "left"
 
     const lines = text.text.split("\n")
+    const alignOffsetX = text.align === "center" ? 200 : text.align === "right" ? 400 : 0
     lines.forEach((line, index) => {
-      ctx.fillText(line, text.x, text.y + index * (text.fontSize * 1.25))
+      ctx.fillText(line, text.x + alignOffsetX, text.y + index * (text.fontSize * 1.25))
+      if (text.underline) {
+        const metrics = ctx.measureText(line)
+        const lineW = metrics.width
+        const lx = text.align === "center" ? text.x + alignOffsetX - lineW / 2
+          : text.align === "right" ? text.x + alignOffsetX - lineW
+          : text.x
+        const ly = text.y + index * (text.fontSize * 1.25) + text.fontSize + 2
+        ctx.beginPath()
+        ctx.strokeStyle = getThemeColor(text.color)
+        ctx.lineWidth = Math.max(1, text.fontSize / 20)
+        ctx.moveTo(lx, ly)
+        ctx.lineTo(lx + lineW, ly)
+        ctx.stroke()
+      }
     })
-  }, [editingTextId])
+    ctx.textAlign = "left"
+  }, [editingTextId, getThemeColor])
 
   // Redraw entire canvas
   const renderCanvas = React.useCallback(() => {
@@ -461,7 +677,7 @@ function CanvasPageElement({
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     // Base background
-    ctx.fillStyle = "#ffffff"
+    ctx.fillStyle = isDark ? "#000000" : "#ffffff"
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
     // Layout patterns
@@ -474,51 +690,76 @@ function CanvasPageElement({
     }
 
     const drawContent = () => {
+      // Draw content on an off-screen canvas so destination-out (eraser)
+      // only affects content, not the background/grid
+      const offscreen = document.createElement("canvas")
+      offscreen.width = canvas.width
+      offscreen.height = canvas.height
+      const octx = offscreen.getContext("2d")!
+
       // 1. Draw shapes
       if (page.shapes) {
-        page.shapes.forEach(shape => drawSingleShape(ctx, shape))
+        page.shapes.forEach(shape => drawSingleShape(octx as any, shape))
       }
       if (isDrawingShapeRef.current && activeShapeRef.current) {
-        drawSingleShape(ctx, activeShapeRef.current)
+        drawSingleShape(octx as any, activeShapeRef.current)
       }
 
       // 2. Draw texts
       if (page.texts) {
-        page.texts.forEach(text => drawSingleText(ctx, text))
+        page.texts.forEach(text => drawSingleText(octx as any, text))
       }
 
       // 3. Draw freehand path lines
       page.drawings.forEach((path) => {
         if (path.points.length === 0) return
-        ctx.beginPath()
-        ctx.lineWidth = path.width
-        ctx.lineCap = "round"
-        ctx.lineJoin = "round"
+        octx.beginPath()
+        octx.lineWidth = path.width
+        octx.lineCap = "round"
+        octx.lineJoin = "round"
 
         if (path.tool === "eraser") {
-          ctx.globalCompositeOperation = "destination-out"
-          ctx.strokeStyle = "rgba(0,0,0,1)"
-          ctx.globalAlpha = 1.0
+          octx.globalCompositeOperation = "destination-out"
+          octx.strokeStyle = "rgba(0,0,0,1)"
+          octx.globalAlpha = 1.0
         } else if (path.tool === "highlighter") {
-          ctx.globalCompositeOperation = "multiply"
-          ctx.strokeStyle = path.color
-          ctx.globalAlpha = 0.45
+          octx.globalCompositeOperation = "multiply"
+          octx.strokeStyle = getThemeColor(path.color)
+          octx.globalAlpha = 0.45
         } else {
-          ctx.globalCompositeOperation = "source-over"
-          ctx.strokeStyle = path.color
-          ctx.globalAlpha = 1.0
+          octx.globalCompositeOperation = "source-over"
+          octx.strokeStyle = getThemeColor(path.color)
+          octx.globalAlpha = 1.0
         }
 
-        ctx.moveTo(path.points[0].x, path.points[0].y)
+        octx.moveTo(path.points[0].x, path.points[0].y)
         for (let i = 1; i < path.points.length; i++) {
-          ctx.lineTo(path.points[i].x, path.points[i].y)
+          octx.lineTo(path.points[i].x, path.points[i].y)
         }
-        ctx.stroke()
+        octx.stroke()
       })
 
-      // Reset context
+      // Also apply active eraser stroke (not yet committed to page.drawings)
+      const activePath = activePathRef.current
+      if (activePath && activePath.tool === "eraser" && activePath.points.length > 1) {
+        octx.beginPath()
+        octx.lineWidth = activePath.width
+        octx.lineCap = "round"
+        octx.lineJoin = "round"
+        octx.globalCompositeOperation = "destination-out"
+        octx.strokeStyle = "rgba(0,0,0,1)"
+        octx.globalAlpha = 1.0
+        octx.moveTo(activePath.points[0].x, activePath.points[0].y)
+        for (let i = 1; i < activePath.points.length; i++) {
+          octx.lineTo(activePath.points[i].x, activePath.points[i].y)
+        }
+        octx.stroke()
+      }
+
+      // Composite content layer onto main canvas (background+grid already drawn)
       ctx.globalCompositeOperation = "source-over"
       ctx.globalAlpha = 1.0
+      ctx.drawImage(offscreen, 0, 0)
     }
 
     // Draw images, loading async if not in cache
@@ -544,11 +785,49 @@ function CanvasPageElement({
         }
       })
     }
-  }, [page.drawings, page.images, page.backgroundType, page.texts, page.shapes, drawSingleShape, drawSingleText])
+  }, [page.drawings, page.images, page.backgroundType, page.texts, page.shapes, drawSingleShape, drawSingleText, isDark, getThemeColor])
 
   React.useEffect(() => {
     renderCanvas()
   }, [renderCanvas])
+
+  // Laser: draw fading trail on top of canvas, then schedule fade
+  const drawLaserTrail = React.useCallback(() => {
+    const overlay = laserCanvasRef.current
+    console.log("[laser] RAF tick, overlay=", overlay, "pts=", laserPointsRef.current.length)
+    if (!overlay) return
+    const ctx = overlay.getContext("2d")
+    if (!ctx) return
+    const now = Date.now()
+    const FADE_MS = 600
+    laserPointsRef.current = laserPointsRef.current.filter(p => now - p.t < FADE_MS)
+    const pts = laserPointsRef.current
+    ctx.clearRect(0, 0, overlay.width, overlay.height)
+    if (pts.length === 0) return
+    for (let i = 1; i < pts.length; i++) {
+      const age = now - pts[i].t
+      const alpha = Math.max(0, 1 - age / FADE_MS)
+      ctx.beginPath()
+      ctx.moveTo(pts[i - 1].x, pts[i - 1].y)
+      ctx.lineTo(pts[i].x, pts[i].y)
+      ctx.strokeStyle = `rgba(239,68,68,${alpha})`
+      ctx.lineWidth = 4
+      ctx.lineCap = "round"
+      ctx.stroke()
+    }
+    const last = pts[pts.length - 1]
+    const lastAge = now - last.t
+    const lastAlpha = Math.max(0, 1 - lastAge / FADE_MS)
+    ctx.beginPath()
+    ctx.arc(last.x, last.y, 6, 0, Math.PI * 2)
+    ctx.fillStyle = `rgba(239,68,68,${lastAlpha * 0.5})`
+    ctx.fill()
+    ctx.beginPath()
+    ctx.arc(last.x, last.y, 3, 0, Math.PI * 2)
+    ctx.fillStyle = `rgba(255,255,255,${lastAlpha})`
+    ctx.fill()
+    laserRafRef.current = requestAnimationFrame(drawLaserTrail)
+  }, [])
 
   // Display coordinates mapping to 800x1100 standard
   const getScaledCoords = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -592,6 +871,18 @@ function CanvasPageElement({
       }
     }
 
+    if (selectedType === "drawing") {
+      const el = page.drawings.find(d => d.id === selectedId)
+      if (!el || el.points.length === 0) return null
+      const xs = el.points.map(p => p.x), ys = el.points.map(p => p.y)
+      return {
+        x: Math.min(...xs) - el.width,
+        y: Math.min(...ys) - el.width,
+        w: Math.max(...xs) - Math.min(...xs) + el.width * 2,
+        h: Math.max(...ys) - Math.min(...ys) + el.width * 2
+      }
+    }
+
     return null
   }
 
@@ -607,7 +898,12 @@ function CanvasPageElement({
         x,
         y,
         fontSize: 24,
-        color: activeColor
+        color: activeColor,
+        bold: false,
+        italic: false,
+        underline: false,
+        align: "left",
+        fontFamily: "sans-serif"
       }
       onUpdatePage({
         ...page,
@@ -667,6 +963,7 @@ function CanvasPageElement({
 
       // B. Check collision with elements: Texts -> Shapes -> Images
       // Text collision check
+      console.log("[select] click at", x, y, "texts:", page.texts?.length, "shapes:", page.shapes?.length, "drawings:", page.drawings?.length)
       if (page.texts) {
         for (let i = page.texts.length - 1; i >= 0; i--) {
           const txt = page.texts[i]
@@ -752,14 +1049,75 @@ function CanvasPageElement({
         }
       }
 
-      // Empty click: Deselect
+      // Drawing (pen/highlighter) collision check — hit-test each stroke's bounding box
+      for (let i = page.drawings.length - 1; i >= 0; i--) {
+        const path = page.drawings[i]
+        if (path.tool === "eraser" || path.points.length === 0) continue
+        const xs = path.points.map(p => p.x), ys = path.points.map(p => p.y)
+        const bx = Math.min(...xs) - path.width, by = Math.min(...ys) - path.width
+        const bw = Math.max(...xs) - bx + path.width, bh = Math.max(...ys) - by + path.width
+        if (x >= bx && x <= bx + bw && y >= by && y <= by + bh) {
+          setSelectedId(path.id)
+          setSelectedType("drawing")
+          setSelectedPage(pageIndex)
+          interactionRef.current = {
+            type: "drag",
+            elementId: path.id,
+            elementType: "drawing",
+            pageIndex,
+            startX: x,
+            startY: y,
+            startImgX: 0,
+            startImgY: 0,
+            startImgW: 0,
+            startImgH: 0
+          }
+          canvasRef.current?.setPointerCapture(e.pointerId)
+          return
+        }
+      }
+
+      // Check if clicked inside an already-selected multi-selection → start multi-drag
+      if (selectedIds.length > 1) {
+        const allEls = [
+          ...(page.texts || []).filter(t => selectedIds.includes(t.id)).map(t => ({ id: t.id, x: t.x, y: t.y })),
+          ...(page.shapes || []).filter(s => selectedIds.includes(s.id)).map(s => ({ id: s.id, x: s.x, y: s.y })),
+          ...(page.images || []).filter(i => selectedIds.includes(i.id)).map(i => ({ id: i.id, x: i.x, y: i.y })),
+        ]
+        const origins: Record<string, { x: number; y: number }> = {}
+        allEls.forEach(el => { origins[el.id] = { x: el.x, y: el.y } })
+        // Check if click is inside bounding box of selection
+        const xs = allEls.map(e => e.x), ys = allEls.map(e => e.y)
+        const minX = Math.min(...xs), minY = Math.min(...ys)
+        const maxX = Math.max(...xs) + 200, maxY = Math.max(...ys) + 100
+        if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+          multiDragRef.current = { startX: x, startY: y, origins }
+          canvasRef.current?.setPointerCapture(e.pointerId)
+          return
+        }
+      }
+
+      // Empty click: start marquee selection
       setSelectedId(null)
       setSelectedType(null)
       setSelectedPage(null)
+      setSelectedIds([])
+      isMarqueeRef.current = true
+      marqueeRef.current = { x, y, w: 0, h: 0 }
+      setMarquee({ x, y, w: 0, h: 0 })
+      canvasRef.current?.setPointerCapture(e.pointerId)
+    } else if (activeTool === "laser") {
+      isLaserRef.current = true
+      laserPointsRef.current = [{ x, y, t: Date.now() }]
+      if (laserRafRef.current) cancelAnimationFrame(laserRafRef.current)
+      console.log("[laser] pointerdown, overlay=", laserCanvasRef.current, "pts=", laserPointsRef.current.length)
+      laserRafRef.current = requestAnimationFrame(drawLaserTrail)
+      canvasRef.current?.setPointerCapture(e.pointerId)
     } else {
       // 4. Drawing strokes mode: Pen, Highlighter, Eraser
       isDrawingRef.current = true
       activePathRef.current = {
+        id: `path-${Date.now()}`,
         tool: activeTool as any,
         color: activeColor,
         width: activeWidth,
@@ -790,16 +1148,16 @@ function CanvasPageElement({
             ctx.lineJoin = "round"
 
             if (activePathRef.current.tool === "eraser") {
-              ctx.globalCompositeOperation = "destination-out"
-              ctx.strokeStyle = "rgba(0,0,0,1)"
-              ctx.globalAlpha = 1.0
+              // Re-render fully so eraser uses the offscreen layer (preserves grid)
+              renderCanvas()
+              return
             } else if (activePathRef.current.tool === "highlighter") {
               ctx.globalCompositeOperation = "multiply"
-              ctx.strokeStyle = activePathRef.current.color
+              ctx.strokeStyle = getThemeColor(activePathRef.current.color)
               ctx.globalAlpha = 0.45
             } else {
               ctx.globalCompositeOperation = "source-over"
-              ctx.strokeStyle = activePathRef.current.color
+              ctx.strokeStyle = getThemeColor(activePathRef.current.color)
               ctx.globalAlpha = 1.0
             }
             ctx.stroke()
@@ -808,6 +1166,8 @@ function CanvasPageElement({
           }
         }
       }
+    } else if (isLaserRef.current) {
+      laserPointsRef.current.push({ x, y, t: Date.now() })
     } else if (isDrawingShapeRef.current && activeShapeRef.current) {
       // Dynamic shape rendering
       activeShapeRef.current.width = x - activeShapeRef.current.x
@@ -836,6 +1196,15 @@ function CanvasPageElement({
             t.id === elementId ? { ...t, x: interactionRef.current!.startImgX + dx, y: interactionRef.current!.startImgY + dy } : t
           )
           onUpdatePage({ ...page, texts: nextTexts })
+        } else if (elementType === "drawing") {
+          const ddx = x - interactionRef.current.startX
+          const ddy = y - interactionRef.current.startY
+          interactionRef.current.startX = x
+          interactionRef.current.startY = y
+          const nextDrawings = page.drawings.map(p =>
+            p.id === elementId ? { ...p, points: p.points.map(pt => ({ x: pt.x + ddx, y: pt.y + ddy })) } : p
+          )
+          onUpdatePage({ ...page, drawings: nextDrawings })
         }
       } else if (interactionRef.current.type === "resize") {
         const { elementId, elementType } = interactionRef.current
@@ -863,6 +1232,21 @@ function CanvasPageElement({
           onUpdatePage({ ...page, texts: nextTexts })
         }
       }
+    } else if (isMarqueeRef.current && marqueeRef.current) {
+      const m = marqueeRef.current
+      const newMarquee = { x: Math.min(m.x, x), y: Math.min(m.y, y), w: Math.abs(x - m.x), h: Math.abs(y - m.y) }
+      marqueeRef.current = { ...marqueeRef.current, w: x - marqueeRef.current.x, h: y - marqueeRef.current.y }
+      setMarquee(newMarquee)
+    } else if (multiDragRef.current) {
+      const dx = x - multiDragRef.current.startX
+      const dy = y - multiDragRef.current.startY
+      const origins = multiDragRef.current.origins
+      onUpdatePage({
+        ...page,
+        texts: page.texts.map(t => origins[t.id] ? { ...t, x: origins[t.id].x + dx, y: origins[t.id].y + dy } : t),
+        shapes: page.shapes.map(s => origins[s.id] ? { ...s, x: origins[s.id].x + dx, y: origins[s.id].y + dy } : s),
+        images: page.images.map(i => origins[i.id] ? { ...i, x: origins[i.id].x + dx, y: origins[i.id].y + dy } : i),
+      })
     }
   }
 
@@ -875,6 +1259,16 @@ function CanvasPageElement({
       })
       isDrawingRef.current = false
       activePathRef.current = null
+    } else if (isLaserRef.current) {
+      canvasRef.current?.releasePointerCapture(e.pointerId)
+      isLaserRef.current = false
+      // Let the fade animation finish naturally, then clear overlay
+      setTimeout(() => {
+        laserPointsRef.current = []
+        if (laserRafRef.current) cancelAnimationFrame(laserRafRef.current)
+        const overlay = laserCanvasRef.current
+        if (overlay) overlay.getContext("2d")?.clearRect(0, 0, overlay.width, overlay.height)
+      }, 650)
     } else if (isDrawingShapeRef.current && activeShapeRef.current) {
       canvasRef.current?.releasePointerCapture(e.pointerId)
       // Save shape
@@ -889,6 +1283,32 @@ function CanvasPageElement({
       // Commit update
       onUpdatePage(page)
       interactionRef.current = null
+    } else if (isMarqueeRef.current && marqueeRef.current) {
+      canvasRef.current?.releasePointerCapture(e.pointerId)
+      isMarqueeRef.current = false
+      const m = marquee
+      if (m && m.w > 5 && m.h > 5) {
+        // Collect all elements inside marquee rect
+        const ids: string[] = []
+        ;(page.texts || []).forEach(t => {
+          if (t.x >= m.x && t.y >= m.y && t.x <= m.x + m.w && t.y <= m.y + m.h) ids.push(t.id)
+        })
+        ;(page.shapes || []).forEach(s => {
+          const cx = s.x + s.width / 2, cy = s.y + s.height / 2
+          if (cx >= m.x && cy >= m.y && cx <= m.x + m.w && cy <= m.y + m.h) ids.push(s.id)
+        })
+        ;(page.images || []).forEach(i => {
+          const cx = i.x + i.width / 2, cy = i.y + i.height / 2
+          if (cx >= m.x && cy >= m.y && cx <= m.x + m.w && cy <= m.y + m.h) ids.push(i.id)
+        })
+        setSelectedIds(ids)
+      }
+      marqueeRef.current = null
+      setMarquee(null)
+    } else if (multiDragRef.current) {
+      canvasRef.current?.releasePointerCapture(e.pointerId)
+      onUpdatePage(page)
+      multiDragRef.current = null
     }
   }
 
@@ -920,8 +1340,8 @@ function CanvasPageElement({
   return (
     <div
       className={cn(
-        "relative w-full border shadow-md rounded-lg overflow-hidden bg-white select-none transition-all",
-        isActive ? "ring-2 ring-primary/60 border-primary/20 scale-[1.002]" : "border-zinc-200 dark:border-zinc-800"
+        "relative w-full border shadow-md rounded-lg overflow-hidden bg-white dark:bg-black select-none transition-all",
+        isActive ? "ring-2 ring-primary/60 border-primary/20 scale-[1.002]" : "border-zinc-200 dark:border-zinc-700"
       )}
     >
       <canvas
@@ -936,6 +1356,12 @@ function CanvasPageElement({
         style={{
           cursor: activeTool === "select" ? "default" : "crosshair"
         }}
+      />
+      <canvas
+        ref={laserCanvasRef}
+        width={800}
+        height={1100}
+        className="absolute inset-0 w-full h-full pointer-events-none"
       />
 
       {/* Inline Text Area Editor */}
@@ -962,12 +1388,17 @@ function CanvasPageElement({
                 e.currentTarget.blur()
               }
             }}
-            className="absolute bg-white text-black border border-primary p-1 shadow-md font-sans font-bold leading-tight rounded-sm outline-none resize-none z-30"
+            className="absolute bg-white dark:bg-zinc-900 border border-primary p-1 shadow-md leading-tight rounded-sm outline-none resize-none z-30"
             style={{
               left: `${(text.x / 800) * 100}%`,
               top: `${(text.y / 1100) * 100}%`,
               fontSize: `${(text.fontSize / 800) * canvasWidth}px`,
               color: text.color,
+              fontFamily: text.fontFamily || "sans-serif",
+              fontWeight: text.bold ? "bold" : "normal",
+              fontStyle: text.italic ? "italic" : "normal",
+              textDecoration: text.underline ? "underline" : "none",
+              textAlign: text.align || "left",
               minWidth: "160px",
               minHeight: "45px"
             }}
@@ -1002,6 +1433,9 @@ function CanvasPageElement({
               } else if (selectedType === "text") {
                 const nextTexts = page.texts.filter(t => t.id !== selectedId)
                 onUpdatePage({ ...page, texts: nextTexts })
+              } else if (selectedType === "drawing") {
+                const nextDrawings = page.drawings.filter(d => d.id !== selectedId)
+                onUpdatePage({ ...page, drawings: nextDrawings })
               }
 
               setSelectedId(null)
@@ -1022,6 +1456,156 @@ function CanvasPageElement({
           />
         </div>
       )}
+
+      {/* Marquee selection overlay */}
+      {marquee && marquee.w > 2 && marquee.h > 2 && (
+        <div
+          className="absolute border border-blue-500 bg-blue-500/10 pointer-events-none z-20"
+          style={{
+            left: `${(marquee.x / 800) * 100}%`,
+            top: `${(marquee.y / 1100) * 100}%`,
+            width: `${(marquee.w / 800) * 100}%`,
+            height: `${(marquee.h / 1100) * 100}%`,
+          }}
+        />
+      )}
+
+      {/* Multi-select bounding box */}
+      {selectedIds.length > 1 && (() => {
+        const allEls = [
+          ...(page.texts || []).filter(t => selectedIds.includes(t.id)).map(t => ({ x: t.x, y: t.y, w: 200, h: 40 })),
+          ...(page.shapes || []).filter(s => selectedIds.includes(s.id)).map(s => ({ x: Math.min(s.x, s.x + s.width), y: Math.min(s.y, s.y + s.height), w: Math.abs(s.width), h: Math.abs(s.height) })),
+          ...(page.images || []).filter(i => selectedIds.includes(i.id)).map(i => ({ x: i.x, y: i.y, w: i.width, h: i.height })),
+        ]
+        if (allEls.length === 0) return null
+        const minX = Math.min(...allEls.map(e => e.x))
+        const minY = Math.min(...allEls.map(e => e.y))
+        const maxX = Math.max(...allEls.map(e => e.x + e.w))
+        const maxY = Math.max(...allEls.map(e => e.y + e.h))
+        return (
+          <div
+            className="absolute border-2 border-dashed border-blue-400 pointer-events-none z-10"
+            style={{
+              left: `${(minX / 800) * 100}%`,
+              top: `${(minY / 1100) * 100}%`,
+              width: `${((maxX - minX) / 800) * 100}%`,
+              height: `${((maxY - minY) / 1100) * 100}%`,
+            }}
+          >
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                onUpdatePage({
+                  ...page,
+                  texts: page.texts.filter(t => !selectedIds.includes(t.id)),
+                  shapes: page.shapes.filter(s => !selectedIds.includes(s.id)),
+                  images: page.images.filter(i => !selectedIds.includes(i.id)),
+                })
+                setSelectedIds([])
+                toast.success("Elements removed")
+              }}
+              className="absolute -top-3.5 -right-3.5 pointer-events-auto bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 shadow-md transition-colors"
+              title="Delete selected"
+            >
+              <Trash2Icon className="h-3 w-3" />
+            </button>
+          </div>
+        )
+      })()}
+    </div>
+  )
+}
+
+// ── Text Settings Panel ───────────────────────────────────────────────────────
+const FONT_FAMILIES = ["sans-serif", "serif", "monospace", "cursive", "Georgia", "Arial", "Times New Roman", "Courier New"]
+
+function TextSettingsPanel({ text, onChange }: { text: CanvasText; onChange: (updated: CanvasText) => void }) {
+  return (
+    <div className="hidden lg:flex flex-col gap-3 sticky top-6 self-start shrink-0 w-48 bg-white/95 dark:bg-zinc-900/95 rounded-2xl border border-zinc-200 dark:border-zinc-700 shadow-xl p-3">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Text Settings</p>
+
+      {/* Font size */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[10px] text-muted-foreground font-medium">Size</label>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => onChange({ ...text, fontSize: Math.max(8, text.fontSize - 2) })} className="w-6 h-6 rounded-md bg-muted hover:bg-muted/80 text-foreground text-sm font-bold flex items-center justify-center cursor-pointer">−</button>
+          <span className="flex-1 text-center text-xs font-semibold">{Math.round(text.fontSize)}</span>
+          <button onClick={() => onChange({ ...text, fontSize: Math.min(200, text.fontSize + 2) })} className="w-6 h-6 rounded-md bg-muted hover:bg-muted/80 text-foreground text-sm font-bold flex items-center justify-center cursor-pointer">+</button>
+        </div>
+        <input type="range" min={8} max={200} value={text.fontSize} onChange={e => onChange({ ...text, fontSize: Number(e.target.value) })} className="w-full accent-primary" />
+      </div>
+
+      {/* Style toggles */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[10px] text-muted-foreground font-medium">Style</label>
+        <div className="flex gap-1">
+          {([
+            { key: "bold", label: "B", cls: "font-bold" },
+            { key: "italic", label: "I", cls: "italic" },
+            { key: "underline", label: "U", cls: "underline" },
+          ] as const).map(({ key, label, cls }) => (
+            <button
+              key={key}
+              onClick={() => onChange({ ...text, [key]: !text[key as keyof CanvasText] })}
+              className={cn("flex-1 h-7 rounded-md text-xs transition-all cursor-pointer", cls,
+                text[key as keyof CanvasText] ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
+            >{label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Alignment */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[10px] text-muted-foreground font-medium">Align</label>
+        <div className="flex gap-1">
+          {(["left", "center", "right"] as const).map(a => (
+            <button
+              key={a}
+              onClick={() => onChange({ ...text, align: a })}
+              className={cn("flex-1 h-7 rounded-md text-xs transition-all cursor-pointer flex items-center justify-center",
+                (text.align || "left") === a ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
+              title={a}
+            >
+              {a === "left" && <svg className="w-3.5 h-3.5" viewBox="0 0 14 12" fill="currentColor"><rect x="0" y="0" width="14" height="2"/><rect x="0" y="4" width="9" height="2"/><rect x="0" y="8" width="11" height="2"/></svg>}
+              {a === "center" && <svg className="w-3.5 h-3.5" viewBox="0 0 14 12" fill="currentColor"><rect x="0" y="0" width="14" height="2"/><rect x="2.5" y="4" width="9" height="2"/><rect x="1.5" y="8" width="11" height="2"/></svg>}
+              {a === "right" && <svg className="w-3.5 h-3.5" viewBox="0 0 14 12" fill="currentColor"><rect x="0" y="0" width="14" height="2"/><rect x="5" y="4" width="9" height="2"/><rect x="3" y="8" width="11" height="2"/></svg>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Font family */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[10px] text-muted-foreground font-medium">Font</label>
+        <select
+          value={text.fontFamily || "sans-serif"}
+          onChange={e => onChange({ ...text, fontFamily: e.target.value })}
+          className="w-full text-xs rounded-md border border-zinc-200 dark:border-zinc-700 bg-background px-2 py-1 cursor-pointer"
+        >
+          {FONT_FAMILIES.map(f => <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>)}
+        </select>
+      </div>
+
+      {/* Color */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[10px] text-muted-foreground font-medium">Color</label>
+        <div className="flex flex-wrap gap-1">
+          {DRAWING_COLORS.map(col => (
+            <button
+              key={col.value}
+              onClick={() => onChange({ ...text, color: col.value })}
+              className={cn("size-5 rounded-full border-2 transition-all cursor-pointer",
+                text.color === col.value ? "border-primary scale-110" : "border-transparent hover:scale-105"
+              )}
+              style={{ backgroundColor: col.value, outline: col.value === "#ffffff" ? "1px solid #d4d4d8" : undefined }}
+              title={col.name}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -1066,9 +1650,32 @@ export default function NoteEditorPage() {
   const [activeColor, setActiveColor] = React.useState("#18181b")
   const [activeWidth, setActiveWidth] = React.useState(5)
 
+  const { theme } = useTheme()
+  const isDark = React.useMemo(() => {
+    if (theme === "dark") return true
+    if (theme === "light") return false
+    if (typeof window !== "undefined") {
+      return document.documentElement.classList.contains("dark") || window.matchMedia("(prefers-color-scheme: dark)").matches
+    }
+    return false
+  }, [theme])
+
+  // Automatically adjust default pen color based on theme
+  React.useEffect(() => {
+    if (isDark) {
+      if (activeColor === "#18181b") {
+        setActiveColor("#ffffff")
+      }
+    } else {
+      if (activeColor === "#ffffff") {
+        setActiveColor("#18181b")
+      }
+    }
+  }, [isDark])
+
   // Unified selection variables
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
-  const [selectedType, setSelectedType] = React.useState<"image" | "text" | "shape" | null>(null)
+  const [selectedType, setSelectedType] = React.useState<"image" | "text" | "shape" | "drawing" | null>(null)
   const [selectedPage, setSelectedPage] = React.useState<number | null>(null)
 
   // Undo/Redo histories
@@ -1418,6 +2025,53 @@ export default function NoteEditorPage() {
     }
   }
 
+  // Keyboard Shortcuts for Undo, Redo and Canvas Tools
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in inputs or contenteditable elements
+      const target = e.target as HTMLElement;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.contentEditable === "true"
+      ) {
+        return;
+      }
+
+      const isMac = typeof window !== "undefined" && navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+      const isCmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+
+      if (isCmdOrCtrl) {
+        if (e.key.toLowerCase() === "z") {
+          e.preventDefault();
+          if (e.shiftKey) {
+            handleRedo();
+          } else {
+            handleUndo();
+          }
+        } else if (e.key.toLowerCase() === "y") {
+          e.preventDefault();
+          handleRedo();
+        }
+      } else if (!e.altKey) {
+        const key = e.key.toLowerCase();
+        if (key === "v") { e.preventDefault(); setTool("select"); }
+        else if (key === "p") { e.preventDefault(); setTool("pen"); }
+        else if (key === "h") { e.preventDefault(); setTool("highlighter"); }
+        else if (key === "e") { e.preventDefault(); setTool("eraser"); }
+        else if (key === "z" && !e.ctrlKey) { e.preventDefault(); setTool("laser"); }
+        else if (key === "t") { e.preventDefault(); setTool("text"); }
+        else if (key === "r") { e.preventDefault(); setTool("rectangle"); }
+        else if (key === "c") { e.preventDefault(); setTool("circle"); }
+        else if (key === "a") { e.preventDefault(); setTool("arrow"); }
+        else if (key === "l") { e.preventDefault(); setTool("line"); }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleUndo, handleRedo, historyIndex, history, setTool]);
+
   const bgTheme = COLORS.find(c => c.key === color)?.bg ?? COLORS[0].bg
 
   if (loading) {
@@ -1429,7 +2083,8 @@ export default function NoteEditorPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pb-24">
+    <TooltipProvider>
+      <div className="flex flex-col min-h-screen pb-24">
       {/* Settings Dialog */}
       <Dialog open={settingsOpen} onOpenChange={(o) => { setSettingsOpen(o); if (o) setDraftMeta(noteMeta) }}>
         <DialogContent className="sm:max-w-sm">
@@ -1489,16 +2144,23 @@ export default function NoteEditorPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Portal: inject note controls into the standard SiteHeader's actions slot */}
-      {mounted && typeof document !== "undefined" && document.getElementById("site-header-actions") &&
+      {/* Portal: inject Back+title into the left title slot */}
+      {mounted && typeof document !== "undefined" && document.getElementById("site-header-title") &&
         createPortal(
-          <NoteHeaderActions
-            username={username}
+          <NoteHeaderLeft
             title={title}
             saveState={saveState}
-            exporting={exporting}
             onBack={() => router.push(`/teacher/${username}/notes`)}
             onTitleChange={handleTitleChange}
+          />,
+          document.getElementById("site-header-title")!
+        )
+      }
+      {/* Portal: inject PDF+Settings into the right actions slot */}
+      {mounted && typeof document !== "undefined" && document.getElementById("site-header-actions") &&
+        createPortal(
+          <NoteHeaderRight
+            exporting={exporting}
             onExport={handleExportPDF}
             onSettings={() => setSettingsOpen(true)}
           />,
@@ -1507,216 +2169,36 @@ export default function NoteEditorPage() {
       }
 
       {/* Pages Canvas Workspace */}
-      <main className="flex-1 flex flex-row items-start py-6 gap-4 px-4 lg:px-6 w-full max-w-[980px] mx-auto select-none pb-24 md:pb-6">
-        
-        {/* Toolbar — bottom bar on mobile, sticky left column on md+ */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-row items-center gap-0 bg-white/95 dark:bg-zinc-900/95 shadow-[0_-2px_12px_rgba(0,0,0,0.08)] border-t border-zinc-200 dark:border-zinc-800 px-2 py-1.5 overflow-x-auto select-none backdrop-blur-md md:static md:sticky md:top-[76px] md:bottom-auto md:left-auto md:right-auto md:flex-col md:rounded-2xl md:border md:shadow-xl md:px-3 md:py-3 md:w-max md:shrink-0 md:overflow-x-visible">
-          <div className="flex flex-row md:flex-col items-center gap-1.5">
-            {/* Selection Tool */}
-            <button
-              onClick={() => setTool("select")}
-              className={cn(
-                "p-2 rounded-xl transition-all cursor-pointer",
-                tool === "select" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted"
-              )}
-              title="Select & Move Element"
-            >
-              <MousePointerIcon className="h-4.5 w-4.5" />
-            </button>
+      <main className="flex-1 flex flex-row items-start py-6 gap-4 px-4 lg:px-6 w-full select-none pb-24 lg:pb-6">
 
-            <div className="h-6 w-px md:h-px md:w-6 bg-zinc-200 dark:bg-zinc-800 mx-1 md:mx-0 md:my-1" />
+        {/* ── Mobile toolbar: fixed bottom bar, hidden on lg ── */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden flex flex-row items-center gap-2 bg-white/95 dark:bg-zinc-900/95 shadow-[0_-2px_12px_rgba(0,0,0,0.08)] border-t border-zinc-200 dark:border-zinc-800 px-2 py-1.5 overflow-x-auto select-none backdrop-blur-md">
+          <ToolbarContent
+            tool={tool} setTool={setTool}
+            activeColor={activeColor} setActiveColor={setActiveColor}
+            activeWidth={activeWidth} setActiveWidth={setActiveWidth}
+            historyIndex={historyIndex} history={history}
+            handleUndo={handleUndo} handleRedo={handleRedo}
+            triggerImageUpload={triggerImageUpload}
+            fileInputRef={fileInputRef}
+            handleImageUpload={handleImageUpload}
+            addPage={addPage}
+          />
+        </div>
 
-            {/* Draw Tools */}
-            <button
-              onClick={() => setTool("pen")}
-              className={cn(
-                "p-2 rounded-xl transition-all cursor-pointer",
-                tool === "pen" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted"
-              )}
-              title="Pen"
-            >
-              <PaintbrushIcon className="h-4.5 w-4.5" />
-            </button>
-
-            <button
-              onClick={() => setTool("highlighter")}
-              className={cn(
-                "p-2 rounded-xl transition-all cursor-pointer",
-                tool === "highlighter" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted"
-              )}
-              title="Highlighter"
-            >
-              <HighlighterIcon className="h-4.5 w-4.5" />
-            </button>
-
-            <button
-              onClick={() => setTool("eraser")}
-              className={cn(
-                "p-2 rounded-xl transition-all cursor-pointer",
-                tool === "eraser" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted"
-              )}
-              title="Eraser"
-            >
-              <EraserIcon className="h-4.5 w-4.5" />
-            </button>
-
-            <div className="h-6 w-px md:h-px md:w-6 bg-zinc-200 dark:bg-zinc-800 mx-1 md:mx-0 md:my-1" />
-
-            {/* Text Tool */}
-            <button
-              onClick={() => setTool("text")}
-              className={cn(
-                "px-3.5 py-2 rounded-xl transition-all cursor-pointer text-sm font-bold font-serif leading-none",
-                tool === "text" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted"
-              )}
-              title="Text Tool (Click canvas to add text)"
-            >
-              T
-            </button>
-
-            <div className="h-6 w-px md:h-px md:w-6 bg-zinc-200 dark:bg-zinc-800 mx-1 md:mx-0 md:my-1" />
-
-            {/* Shape Draw Tools */}
-            <button
-              onClick={() => setTool("rectangle")}
-              className={cn(
-                "p-2 rounded-xl transition-all cursor-pointer",
-                tool === "rectangle" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted"
-              )}
-              title="Draw Rectangle"
-            >
-              <div className="border-2 border-current w-4 h-3.5 rounded-xs" />
-            </button>
-
-            <button
-              onClick={() => setTool("circle")}
-              className={cn(
-                "p-2 rounded-xl transition-all cursor-pointer",
-                tool === "circle" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted"
-              )}
-              title="Draw Circle"
-            >
-              <div className="border-2 border-current w-4 h-4 rounded-full" />
-            </button>
-
-            <button
-              onClick={() => setTool("arrow")}
-              className={cn(
-                "p-2 rounded-xl transition-all cursor-pointer",
-                tool === "arrow" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted"
-              )}
-              title="Draw Arrow"
-            >
-              <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <line x1="5" y1="19" x2="19" y2="5" />
-                <polyline points="12 5 19 5 19 12" />
-              </svg>
-            </button>
-
-            <button
-              onClick={() => setTool("line")}
-              className={cn(
-                "p-2 rounded-xl transition-all cursor-pointer",
-                tool === "line" ? "bg-primary text-primary-foreground shadow-xs scale-105" : "text-zinc-600 dark:text-zinc-300 hover:bg-muted"
-              )}
-              title="Draw Line"
-            >
-              <div className="bg-current w-4.5 h-0.5 rotate-[-45deg] my-2" />
-            </button>
-
-            <div className="h-6 w-px md:h-px md:w-6 bg-zinc-200 dark:bg-zinc-800 mx-1 md:mx-0 md:my-1" />
-
-            {/* Add Image */}
-            <button
-              onClick={triggerImageUpload}
-              className="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-muted cursor-pointer transition-colors"
-              title="Insert Image"
-            >
-              <ImageIcon className="h-4.5 w-4.5" />
-            </button>
-
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              className="hidden"
-            />
-
-            {/* Add Page */}
-            <button
-              onClick={addPage}
-              className="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-muted cursor-pointer transition-colors"
-              title="Add Page at bottom"
-            >
-              <PlusIcon className="h-4.5 w-4.5" />
-            </button>
-
-            <div className="h-6 w-px md:h-px md:w-6 bg-zinc-200 dark:bg-zinc-800 mx-1 md:mx-0 md:my-1" />
-
-            {/* Undo/Redo */}
-            <button
-              onClick={handleUndo}
-              disabled={historyIndex <= 0}
-              className="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-muted disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors"
-              title="Undo"
-            >
-              <Undo2Icon className="h-4.5 w-4.5" />
-            </button>
-
-            <button
-              onClick={handleRedo}
-              disabled={historyIndex >= history.length - 1}
-              className="p-2 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-muted disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors"
-              title="Redo"
-            >
-              <Redo2Icon className="h-4.5 w-4.5" />
-            </button>
-          </div>
-
-          {/* Dynamic configurations panel depending on tools */}
-          {(tool === "pen" || tool === "highlighter" || tool === "eraser" || tool === "text" || tool === "rectangle" || tool === "circle" || tool === "arrow" || tool === "line") && (
-            <div className="flex flex-row md:flex-col items-center gap-3 border-l md:border-l-0 md:border-t border-zinc-100 dark:border-zinc-800 pt-2 mt-1 px-1.5 w-full">
-              {/* Color circles (hidden for eraser) */}
-              {tool !== "eraser" && (
-                <div className="flex flex-row md:grid md:grid-cols-2 gap-1 bg-zinc-100/50 dark:bg-zinc-850 px-2 py-1 rounded-lg">
-                  {DRAWING_COLORS.map(col => (
-                    <button
-                      key={col.value}
-                      onClick={() => setActiveColor(col.value)}
-                      className={cn(
-                        "size-4 rounded-full border transition-all cursor-pointer relative",
-                        activeColor === col.value ? "ring-2 ring-primary scale-110" : "hover:scale-105"
-                      )}
-                      style={{
-                        backgroundColor: col.value,
-                        borderColor: col.value === "#ffffff" ? "#d4d4d8" : "transparent"
-                      }}
-                      title={col.name}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Thickness selector */}
-              {tool !== "text" && (
-                <div className="flex flex-row md:flex-col gap-1 bg-zinc-100/50 dark:bg-zinc-850 px-2 py-1 rounded-lg">
-                  {STROKE_WIDTHS.map(sw => (
-                    <button
-                      key={sw.value}
-                      onClick={() => setActiveWidth(sw.value)}
-                      className={cn(
-                        "px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer",
-                        activeWidth === sw.value ? "bg-white dark:bg-zinc-800 text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      {sw.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+        {/* ── Desktop toolbar: sticky left column, hidden below lg ── */}
+        <div className="hidden lg:flex flex-col items-center gap-0 sticky top-6 self-start shrink-0 w-14 bg-white/95 dark:bg-zinc-900/95 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xl px-2 py-3 overflow-y-auto">
+          <ToolbarContent
+            tool={tool} setTool={setTool}
+            activeColor={activeColor} setActiveColor={setActiveColor}
+            activeWidth={activeWidth} setActiveWidth={setActiveWidth}
+            historyIndex={historyIndex} history={history}
+            handleUndo={handleUndo} handleRedo={handleRedo}
+            triggerImageUpload={triggerImageUpload}
+            fileInputRef={fileInputRef}
+            handleImageUpload={handleImageUpload}
+            addPage={addPage}
+          />
         </div>
 
         {/* Canvas Pages List Wrapper */}
@@ -1729,28 +2211,28 @@ export default function NoteEditorPage() {
             >
               {/* Page header controls */}
               <div className="flex flex-wrap items-center justify-between px-3 py-1 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xs rounded-lg border border-border/40 text-xs text-muted-foreground shadow-2xs">
-                <span className="font-semibold text-foreground flex items-center gap-1">
-                  Page {index + 1}
-                </span>
-
+                {/* Left: page number + background type selector */}
                 <div className="flex items-center gap-2">
-                  {/* Paper template selection */}
-                  <div className="flex items-center gap-0.5 border-r border-border/60 pr-2">
-                    {(["blank", "ruled", "grid", "dotted"] as const).map(type => (
-                      <button
-                        key={type}
-                        onClick={() => changePageBackground(index, type)}
-                        className={cn(
-                          "px-2 py-0.5 rounded cursor-pointer transition-colors uppercase text-[9px] font-bold",
-                          page.backgroundType === type ? "bg-zinc-200 dark:bg-zinc-800 text-foreground" : "hover:text-foreground"
-                        )}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
+                  <span className="font-semibold text-foreground">Page {index + 1}</span>
+                  <div className="h-3.5 w-px bg-border/60" />
+                  {(["blank", "ruled", "grid", "dotted"] as const).map(type => (
+                    <button
+                      key={type}
+                      onClick={() => changePageBackground(index, type)}
+                      className={cn(
+                        "px-2 py-0.5 rounded cursor-pointer transition-colors uppercase text-[9px] font-bold",
+                        page.backgroundType === type
+                          ? "bg-zinc-200 dark:bg-zinc-800 text-foreground"
+                          : "hover:text-foreground"
+                      )}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
 
-                  {/* Move Up/Down pages */}
+                {/* Right: move / clear / delete */}
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => movePage(index, "up")}
                     disabled={index === 0}
@@ -1759,7 +2241,6 @@ export default function NoteEditorPage() {
                   >
                     <ChevronUpIcon className="h-3.5 w-3.5" />
                   </button>
-
                   <button
                     onClick={() => movePage(index, "down")}
                     disabled={index === pages.length - 1}
@@ -1768,8 +2249,6 @@ export default function NoteEditorPage() {
                   >
                     <ChevronDownIcon className="h-3.5 w-3.5" />
                   </button>
-
-                  {/* Page clear / wipe */}
                   <button
                     onClick={() => clearPage(index)}
                     className="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-600 transition-colors cursor-pointer"
@@ -1777,8 +2256,6 @@ export default function NoteEditorPage() {
                   >
                     <RefreshCwIcon className="h-3.5 w-3.5" />
                   </button>
-
-                  {/* Page delete */}
                   <button
                     onClick={() => deletePage(index)}
                     disabled={pages.length <= 1}
@@ -1817,8 +2294,35 @@ export default function NoteEditorPage() {
             </div>
           ))}
         </div>
+
+        {/* Text Settings Right Panel */}
+        {(() => {
+          const selText = selectedType === "text" && selectedPage !== null
+            ? pages[selectedPage]?.texts?.find(t => t.id === selectedId)
+            : null
+          if (!selText && tool !== "text") return null
+          const textToShow = selText ?? { id: "", text: "", x: 0, y: 0, fontSize: 24, color: activeColor }
+          return (
+            <TextSettingsPanel
+              text={textToShow}
+              onChange={(updated) => {
+                if (!selText || selectedPage === null) {
+                  setActiveColor(updated.color)
+                  return
+                }
+                const nextPages = pages.map((p, idx) =>
+                  idx === selectedPage
+                    ? { ...p, texts: p.texts.map(t => t.id === updated.id ? updated : t) }
+                    : p
+                )
+                updatePagesState(nextPages)
+              }}
+            />
+          )
+        })()}
       </main>
     </div>
+    </TooltipProvider>
   )
 }
 

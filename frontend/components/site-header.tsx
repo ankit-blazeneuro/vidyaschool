@@ -89,9 +89,12 @@ export function SiteHeader({ title, children, actions }: SiteHeaderProps) {
           orientation="vertical"
           className="mx-2 h-4! self-center!"
         />
-        {!pathname.includes("/notes/") && (children || <h1 className="text-base font-medium">{displayTitle}</h1>)}
-        {!pathname.includes("/notes/") && <div className="flex-1" />}
-        <div id="site-header-actions" className="flex items-center gap-2 min-w-0 flex-1">
+        {pathname.includes("/notes/")
+          ? <div id="site-header-title" className="flex items-center gap-2 min-w-0 flex-1" />
+          : (children || <h1 className="text-base font-medium">{displayTitle}</h1>)
+        }
+        <div className="flex-1" />
+        <div id="site-header-actions" className="flex items-center gap-2 shrink-0">
           {!pathname.includes("/notes/") && <HeaderComplaintButton />}
           {!pathname.includes("/notes/") && (
             <Button
