@@ -386,6 +386,7 @@ def get_logged_in_student_marks(
     db: Session = Depends(get_db)
 ):
     from models import Exam, StudentSubjectMarks, SubjectClassAssignment, UserProfile, User
+    from sqlalchemy import func
     import zlib
 
     # 1. Find student class/section
@@ -448,7 +449,7 @@ def get_logged_in_student_marks(
             
             # Compute average class score for this subject exam
             avg_score = db.query(
-                db.func.avg(StudentSubjectMarks.score)
+                func.avg(StudentSubjectMarks.score)
             ).filter(
                 StudentSubjectMarks.exam_id == exam.id,
                 StudentSubjectMarks.subject == m.subject
