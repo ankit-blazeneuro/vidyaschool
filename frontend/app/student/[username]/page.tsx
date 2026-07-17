@@ -1,11 +1,9 @@
 import { AcademicPerformanceChart } from "@/components/academic-performance-chart"
-import { DataTable } from "@/components/data-table"
 import { StudentNotes } from "@/components/student-notes"
 import { StudentCalendar } from "@/components/student-calendar"
 import { StudentWidgets } from "@/components/student-widgets"
 import { ClassInfoWidget } from "@/components/class-info-widget"
 import { requireRole } from "@/lib/auth-helpers"
-import data from "./data.json"
 
 function getGreeting(): string {
   const hour = new Date().getHours()
@@ -35,12 +33,11 @@ export default async function StudentDashboardPage() {
       </div>
       <StudentNotes />
       <StudentCalendar />
-      <ClassInfoWidget />
       <StudentWidgets />
       <div className="px-4 lg:px-6">
         <AcademicPerformanceChart />
       </div>
-      <DataTable data={data} />
+      <ClassInfoWidget />
     </div>
   )
 }

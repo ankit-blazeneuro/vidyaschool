@@ -3,6 +3,10 @@
 import * as React from "react"
 import { GraduationCapIcon, BookOpenIcon, UserIcon } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 interface ClassInfo {
   class: string | null
@@ -24,64 +28,112 @@ export function ClassInfoWidget() {
   }, [])
 
   return (
-    <section className="mx-4 lg:mx-6 rounded-2xl bg-zinc-100 dark:bg-[#121212] overflow-hidden">
-      <div className="p-5">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-medium text-base text-foreground flex items-center gap-2">
+    <div className="mx-4 lg:mx-6">
+      <Card className="@container/card">
+        <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardTitle className="font-medium text-base text-foreground flex items-center gap-2">
             <GraduationCapIcon className="h-4 w-4 text-primary" />
             My Class
-          </h2>
+          </CardTitle>
           {loading ? (
-            <Skeleton className="h-6 w-24 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+            <Skeleton className="h-6 w-24 rounded-full" />
           ) : info?.class ? (
-            <span className="text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full">
+            <Badge variant="secondary" className="px-3 py-1 font-semibold text-xs rounded-full">
               Class {info.class} – {info.section}
-            </span>
+            </Badge>
           ) : null}
-        </div>
+        </CardHeader>
 
-        {/* Class Teacher */}
-        <div className="mb-4 flex items-center gap-2.5 bg-zinc-200/50 dark:bg-zinc-800/50 rounded-xl px-4 py-3">
-          <UserIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Class Teacher</span>
-            {loading ? (
-              <Skeleton className="h-4 w-32 rounded mt-0.5 bg-zinc-300 dark:bg-zinc-700" />
-            ) : (
-              <span className="text-sm font-medium text-foreground">{info?.classTeacher ?? "Not assigned"}</span>
-            )}
-          </div>
-        </div>
+        <CardContent>
+          <Tabs defaultValue="subjects" className="w-full">
+            <TabsList className="w-full mb-4 grid grid-cols-2">
+              <TabsTrigger value="subjects" className="gap-1.5 text-xs font-semibold">
+                <BookOpenIcon className="h-3.5 w-3.5" />
+                Subject Teachers
+              </TabsTrigger>
+              <TabsTrigger value="classteacher" className="gap-1.5 text-xs font-semibold">
+                <UserIcon className="h-3.5 w-3.5" />
+                Class Teacher
+              </TabsTrigger>
+            </TabsList>
 
-        {/* Subjects */}
-        <div className="flex items-center gap-1.5 mb-3">
-          <BookOpenIcon className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Subjects</span>
-        </div>
+            {/* Subject Teachers Tab */}
+            <TabsContent value="subjects" className="mt-0 focus-visible:outline-hidden">
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-14 rounded-xl" />
+                  ))}
+                </div>
+              ) : !info?.subjects?.length ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No subjects assigned yet.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {info.subjects.map((s, i) => (
+                    <Card key={i} size="sm" className="bg-muted/30 border-muted-foreground/10 hover:bg-muted/50 transition-colors">
+                      <CardContent className="p-3 flex flex-col gap-0.5">
+                        <span className="text-sm font-semibold text-foreground leading-snug">
+                          {s.subject}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {s.teacherName}
+                        </span>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-12 rounded-xl bg-zinc-200 dark:bg-zinc-800" />
-            ))}
-          </div>
-        ) : !info?.subjects?.length ? (
-          <p className="text-sm text-muted-foreground text-center py-4">No subjects assigned yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {info.subjects.map((s, i) => (
-              <div
-                key={i}
-                className="flex flex-col gap-0.5 bg-white dark:bg-zinc-900/60 rounded-xl px-3.5 py-2.5 border border-zinc-200/60 dark:border-zinc-800/60"
-              >
-                <span className="text-sm font-semibold text-foreground leading-snug">{s.subject}</span>
-                <span className="text-xs text-muted-foreground">{s.teacherName}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+            {/* Class Teacher Tab */}
+            <TabsContent value="classteacher" className="mt-0 focus-visible:outline-hidden">
+              {loading ? (
+                <Card size="sm" className="bg-muted/30 border-muted-foreground/10">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex flex-col gap-1.5">
+                      <Skeleton className="h-3 w-20 rounded" />
+                      <Skeleton className="h-4 w-36 rounded" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : info?.classTeacher ? (
+                <Card size="sm" className="bg-muted/30 border-muted-foreground/10 hover:bg-muted/50 transition-colors">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <Avatar size="lg" className="border border-border">
+                      <AvatarFallback className="font-bold text-primary bg-primary/10">
+                        {info.classTeacher
+                          .split(" ")
+                          .slice(0, 2)
+                          .map(n => n[0])
+                          .join("")
+                          .toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-0.5">
+                        Class Teacher
+                      </span>
+                      <span className="text-sm font-bold text-foreground truncate">
+                        {info.classTeacher}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 gap-2 text-center">
+                  <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                    <UserIcon className="h-5 w-5 text-muted-foreground/60" />
+                  </div>
+                  <p className="text-sm text-muted-foreground font-medium">No class teacher assigned yet.</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
