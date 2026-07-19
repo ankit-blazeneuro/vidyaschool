@@ -225,5 +225,8 @@ class TeacherNote(SQLModel, table=True):
     title: str = Field(default="Untitled")
     content: str = Field(default="")
     color: str = Field(default="default")
+    class_: Optional[str] = Field(default=None, alias="class", sa_column_kwargs={"name": "class"})
+    section: Optional[str] = Field(default=None)
+    subject: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

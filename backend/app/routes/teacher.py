@@ -4,7 +4,7 @@ from typing import List, Dict, Any, Optional
 import zlib
 import uuid
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user, require_role
 from app.core.database import get_db
@@ -18,11 +18,17 @@ class NoteCreate(BaseModel):
     title: Optional[str] = "Untitled"
     content: Optional[str] = ""
     color: Optional[str] = "default"
+    class_: Optional[str] = Field(default=None, alias="class")
+    section: Optional[str] = None
+    subject: Optional[str] = None
 
 class NoteUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
     color: Optional[str] = None
+    class_: Optional[str] = Field(default=None, alias="class")
+    section: Optional[str] = None
+    subject: Optional[str] = None
 
 ALLOWED_NOTE_ROLES = ["teacher", "admin", "librarian"]
 
@@ -62,6 +68,9 @@ def create_note(
         title=body.title or "Untitled",
         content=body.content or "",
         color=body.color or "default",
+        class_=body.class_,
+        section=body.section,
+        subject=body.subject,
     )
     db.add(note)
     db.commit()
@@ -87,6 +96,12 @@ def update_note(
         note.content = body.content
     if body.color is not None:
         note.color = body.color
+    if body.class_ is not None:
+        note.class_ = body.class_
+    if body.section is not None:
+        note.section = body.section
+    if body.subject is not None:
+        note.subject = body.subject
     note.updated_at = datetime.utcnow()
     db.commit()
     return {"success": True}

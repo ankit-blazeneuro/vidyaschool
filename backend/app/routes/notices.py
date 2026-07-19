@@ -3,9 +3,9 @@ from sqlalchemy import or_, and_
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, require_role
 from app.core.database import get_db
-from models import Notice, User, UserProfile
+from models import Notice, User, UserProfile, TeacherNote
 
 router = APIRouter()
 
@@ -83,3 +83,50 @@ def get_notices(current_user: User = Depends(get_current_user), db: Session = De
         )
 
     return [_serialize_notice(notice, sender) for notice, sender in results]
+
+
+@router.get("/api/student/notes")
+def get_student_notes(
+    current_user: User = Depends(require_role(["student"])),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    if not profile or not profile.class_ or profile.class_ == "none":
+        return {"notes": []}
+
+    student_class = profile.class_
+    student_section = profile.section or ""
+
+    # Fetch notes where class matches student class or is "All", and section matches student section or is "All" or is NULL/empty.
+    # Exclude teacher's personal notes (where class is None/empty)
+    results = (
+        db.query(TeacherNote, User)
+        .join(User, TeacherNote.teacher_id == User.id)
+        .filter(
+            or_(
+                TeacherNote.class_.in_(["All", "all"]),
+                TeacherNote.class_ == student_class,
+            ),
+            or_(
+                TeacherNote.section.in_(["All", "all"]),
+                TeacherNote.section.is_(None),
+                TeacherNote.section == "",
+                TeacherNote.section == student_section,
+            ),
+            and_(
+                TeacherNote.class_.is_not(None),
+                TeacherNote.class_ != "",
+                TeacherNote.class_ != "none",
+            )
+        )
+        .order_by(TeacherNote.updated_at.desc())
+        .all()
+    )
+
+    notes_list = []
+    for note, teacher in results:
+        note_dict = note.model_dump()
+        note_dict["teacher_name"] = teacher.name
+        notes_list.append(note_dict)
+
+    return {"notes": notes_list}

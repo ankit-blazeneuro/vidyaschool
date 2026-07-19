@@ -1686,7 +1686,7 @@ export default function NoteEditorPage() {
   const canvasRefs = React.useRef<Record<number, HTMLCanvasElement | null>>({})
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
-  const pendingFlushRef = React.useRef<{ t: string; currentPages: CanvasPage[]; col: string } | null>(null)
+  const pendingFlushRef = React.useRef<{ t: string; currentPages: CanvasPage[]; col: string; meta: { className: string; section: string; subject: string } } | null>(null)
 
   // localStorage key unique per note
   const lsKey = `note_draft_${noteId}`
@@ -1698,6 +1698,14 @@ export default function NoteEditorPage() {
       .then(d => {
         setTitle(d.note?.title ?? "")
         setColor(d.note?.color ?? "default")
+
+        const serverMeta = {
+          className: d.note?.class || d.note?.class_ || "",
+          section: d.note?.section || "",
+          subject: d.note?.subject || ""
+        }
+        setNoteMeta(serverMeta)
+        setDraftMeta(serverMeta)
 
         let initialPages: CanvasPage[] = []
 
@@ -1738,10 +1746,6 @@ export default function NoteEditorPage() {
                 texts: p.texts || [],
                 shapes: p.shapes || []
               }))
-              if (parsed.meta) {
-                setNoteMeta(parsed.meta)
-                setDraftMeta(parsed.meta)
-              }
             }
           } catch (e) { /* keep default */ }
         }
@@ -1766,13 +1770,20 @@ export default function NoteEditorPage() {
   }, [noteId])
 
   // Flush pending save to server (called by debounce & on unmount)
-  const flushToServer = React.useCallback((t: string, currentPages: CanvasPage[], col: string) => {
+  const flushToServer = React.useCallback((t: string, currentPages: CanvasPage[], col: string, meta: { className: string; section: string; subject: string }) => {
     setSaveState("saving")
     const contentPayload = JSON.stringify({ version: 1, pages: currentPages })
     fetch(`/api/backend/teacher/notes/${noteId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: t || "Untitled", content: contentPayload, color: col }),
+      body: JSON.stringify({
+        title: t || "Untitled",
+        content: contentPayload,
+        color: col,
+        class: meta.className || null,
+        section: meta.section || null,
+        subject: meta.subject || null
+      }),
     })
       .then(() => {
         setSaveState("saved")
@@ -1787,8 +1798,8 @@ export default function NoteEditorPage() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
       if (pendingFlushRef.current) {
-        const { t, currentPages, col } = pendingFlushRef.current
-        flushToServer(t, currentPages, col)
+        const { t, currentPages, col, meta } = pendingFlushRef.current
+        flushToServer(t, currentPages, col, meta)
       }
     }
   }, [flushToServer])
@@ -1816,13 +1827,13 @@ export default function NoteEditorPage() {
     }
 
     // 2. Keep reference for unmount flush
-    pendingFlushRef.current = { t, currentPages, col }
+    pendingFlushRef.current = { t, currentPages, col, meta }
 
     // 3. Debounce actual server PATCH to 10 s of inactivity
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       pendingFlushRef.current = null
-      flushToServer(t, currentPages, col)
+      flushToServer(t, currentPages, col, meta)
     }, 10000)
   }
 
