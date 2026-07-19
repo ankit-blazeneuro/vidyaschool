@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useRef } from "react"
 import dynamic from "next/dynamic"
-import { Skeleton } from "@/components/ui/skeleton"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Play, Pause } from "lucide-react"
 
+const LOGO_SRC = "/assets/vidyaschool/Logo/restored_no_bg_with_title.png"
+
 const LiquidMetal = dynamic(
   () => import("@paper-design/shaders-react").then((mod) => mod.LiquidMetal),
-  { ssr: false, loading: () => <Skeleton className="absolute inset-0" /> }
+  { ssr: false }
 )
 
 export default function LiquidMetalHero() {
@@ -17,7 +19,12 @@ export default function LiquidMetalHero() {
   const [isInView, setIsInView] = useState(true)
   const [isTabVisible, setIsTabVisible] = useState(true)
   const [reducedMotion, setReducedMotion] = useState(false)
+
+  // isReady  → mounts the shader
+  // showPlaceholder → hides placeholder; cleared ~150ms AFTER isReady so WebGL
+  //                   has time to paint its first frame before we remove the shimmer
   const [isReady, setIsReady] = useState(false)
+  const [showPlaceholder, setShowPlaceholder] = useState(true)
 
   useEffect(() => {
     const saved = localStorage.getItem("antigravity_logo_playing")
@@ -49,7 +56,13 @@ export default function LiquidMetalHero() {
       : null
     if (el && observer) observer.observe(el)
 
-    const frame = requestAnimationFrame(() => setIsReady(true))
+    // Mount shader on first frame, then hide placeholder only after WebGL
+    // has had enough time to paint (avoids the blank flash between the two)
+    const frame = requestAnimationFrame(() => {
+      setIsReady(true)
+      const timer = setTimeout(() => setShowPlaceholder(false), 150)
+      return () => clearTimeout(timer)
+    })
 
     return () => {
       motionQuery.removeEventListener("change", onMotionChange)
@@ -70,16 +83,56 @@ export default function LiquidMetalHero() {
   const shouldAnimate = isReady && isPlaying && isInView && isTabVisible && !reducedMotion
 
   return (
-    <div
-      ref={containerRef}
-      className="relative h-full w-full overflow-hidden"
-    >
+    <div ref={containerRef} className="relative h-full w-full overflow-hidden">
+
+      {/* Shimmer placeholder — stays mounted until shader paints its first frame */}
+      {showPlaceholder && (
+        <div className="absolute inset-0" aria-hidden>
+          {/* Grayscale logo at same scale as the shader */}
+          <Image
+            src={LOGO_SRC}
+            alt=""
+            fill
+            className="object-contain scale-[0.7] grayscale opacity-50"
+            priority
+            sizes="(max-width: 768px) 90vw, (max-width: 1024px) 50vw, 40vw"
+          />
+          {/*
+            Outer div: scale + mask (logo alpha channel as stencil).
+            Inner div: only the translateX animation.
+            Kept separate so transforms never conflict.
+          */}
+          <div
+            className="absolute inset-0 scale-[0.7] overflow-hidden"
+            style={{
+              maskImage: `url('${LOGO_SRC}')`,
+              WebkitMaskImage: `url('${LOGO_SRC}')`,
+              maskSize: "contain",
+              WebkitMaskSize: "contain",
+              maskRepeat: "no-repeat",
+              WebkitMaskRepeat: "no-repeat",
+              maskPosition: "center",
+              WebkitMaskPosition: "center",
+            }}
+          >
+            <div
+              className="logo-shimmer-sweep absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.75) 50%, transparent 75%)",
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Animated shader — mounted at isReady, overlaps placeholder for ~150ms */}
       {isReady && (
         <div className="absolute inset-0">
           <LiquidMetal
             width="100%"
             height="100%"
-            image="/assets/vidyaschool/Logo/restored_no_bg_with_title.png"
+            image={LOGO_SRC}
             colorBack="#00000000"
             colorTint="#e11d48"
             repetition={1.2}

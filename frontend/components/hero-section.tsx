@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import dynamic from "next/dynamic"
+import Image from "next/image"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Sparkles } from "lucide-react"
@@ -10,7 +11,38 @@ import { cn } from "@/lib/utils"
 
 const LiquidMetalHero = dynamic(() => import("@/components/liquid-metal-hero"), {
   loading: () => (
-    <div className="absolute inset-0 animate-pulse bg-muted/20" aria-hidden />
+    <div className="absolute inset-0" aria-hidden>
+      <Image
+        src="/assets/vidyaschool/Logo/restored_no_bg_with_title.png"
+        alt=""
+        fill
+        className="object-contain scale-[0.7] grayscale opacity-50"
+        priority
+        sizes="(max-width: 768px) 90vw, (max-width: 1024px) 50vw, 40vw"
+      />
+      {/* Shimmer masked to logo shape via PNG alpha channel */}
+      <div
+        className="absolute inset-0 scale-[0.7] overflow-hidden"
+        style={{
+          maskImage: "url('/assets/vidyaschool/Logo/restored_no_bg_with_title.png')",
+          WebkitMaskImage: "url('/assets/vidyaschool/Logo/restored_no_bg_with_title.png')",
+          maskSize: "contain",
+          WebkitMaskSize: "contain",
+          maskRepeat: "no-repeat",
+          WebkitMaskRepeat: "no-repeat",
+          maskPosition: "center",
+          WebkitMaskPosition: "center",
+        }}
+      >
+        <div
+          className="logo-shimmer-sweep absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(105deg, transparent 25%, rgba(255,255,255,0.75) 50%, transparent 75%)",
+          }}
+        />
+      </div>
+    </div>
   ),
 })
 
