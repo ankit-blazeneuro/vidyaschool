@@ -87,7 +87,7 @@ export function HeroSection() {
                   <span className="truncate">Welcome to VidyaSchool</span>
                 </div>
 
-                <h1 className="text-[clamp(1.75rem,5vw+0.75rem,4.5rem)] font-extrabold tracking-tight text-foreground leading-[1.08] text-balance">
+                <h1 className="text-[clamp(1.75rem,5vw+0.75rem,4.5rem)] tracking-tight text-foreground leading-[1.08] text-balance">
                   Empowering Minds, Shaping Futures
                 </h1>
 
