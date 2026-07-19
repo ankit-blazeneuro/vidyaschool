@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useTransition, useCallback } from "react"
 import dynamic from "next/dynamic"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -19,12 +19,12 @@ export default function LiquidMetalHero() {
   const [isInView, setIsInView] = useState(true)
   const [isTabVisible, setIsTabVisible] = useState(true)
   const [reducedMotion, setReducedMotion] = useState(false)
-
-  // isReady  → mounts the shader
-  // showPlaceholder → hides placeholder; cleared ~150ms AFTER isReady so WebGL
-  //                   has time to paint its first frame before we remove the shimmer
   const [isReady, setIsReady] = useState(false)
   const [showPlaceholder, setShowPlaceholder] = useState(true)
+
+  // Non-urgent transitions: these state updates are deprioritised so React
+  // never blocks the next user input to process them.
+  const [, startTransition] = useTransition()
 
   useEffect(() => {
     const saved = localStorage.getItem("antigravity_logo_playing")
@@ -44,13 +44,14 @@ export default function LiquidMetalHero() {
     }
     motionQuery.addEventListener("change", onMotionChange)
 
-    const onVisibilityChange = () => setIsTabVisible(!document.hidden)
+    const onVisibilityChange = () =>
+      startTransition(() => setIsTabVisible(!document.hidden))
     document.addEventListener("visibilitychange", onVisibilityChange)
 
     const el = containerRef.current
     const observer = el
       ? new IntersectionObserver(
-          ([entry]) => setIsInView(entry.isIntersecting),
+          ([entry]) => startTransition(() => setIsInView(entry.isIntersecting)),
           { threshold: 0.15 }
         )
       : null
@@ -72,13 +73,17 @@ export default function LiquidMetalHero() {
     }
   }, [])
 
-  const togglePlay = () => {
-    setIsPlaying((prev) => {
-      const next = !prev
-      localStorage.setItem("antigravity_logo_playing", String(next))
-      return next
+  // Wrapped in startTransition: toggling play is non-urgent — the WebGL
+  // re-render should never block the button's visual feedback or next input.
+  const togglePlay = useCallback(() => {
+    startTransition(() => {
+      setIsPlaying((prev) => {
+        const next = !prev
+        localStorage.setItem("antigravity_logo_playing", String(next))
+        return next
+      })
     })
-  }
+  }, [startTransition])
 
   const shouldAnimate = isReady && isPlaying && isInView && isTabVisible && !reducedMotion
 
