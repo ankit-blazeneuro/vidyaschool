@@ -58,16 +58,22 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Column 4: Information */}
+          {/* Column 4: Help & Support */}
           <div className="flex flex-col justify-between h-full min-h-[140px]">
             <div>
-              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Information</h3>
+              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Support & Contact</h3>
               <ul className="space-y-2.5 text-xs text-muted-foreground mb-4">
                 <li>
-                  <Link href="/student/notice" className="hover:text-foreground transition-colors">Academic Calendar</Link>
+                  <Link href="/student/notice" className="hover:text-foreground transition-colors">Notices & Circulars</Link>
                 </li>
                 <li>
-                  <Link href="/support" className="hover:text-foreground transition-colors">Help & Support</Link>
+                  <Link href="/docs" className="hover:text-foreground transition-colors">Help & Support</Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="hover:text-foreground transition-colors">Contact Us</Link>
+                </li>
+                <li>
+                  <Link href="/student/notice" className="hover:text-foreground transition-colors">Academic Calendar</Link>
                 </li>
               </ul>
             </div>
@@ -120,8 +126,8 @@ export function Footer() {
             &copy; {new Date().getFullYear()} VidyaSchool. All rights reserved.
           </div>
           <div className="flex gap-4 text-[11px] text-muted-foreground">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+            <Link href="/docs/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+            <Link href="/docs/terms-of-service" className="hover:text-foreground transition-colors">Terms of Service</Link>
           </div>
         </div>
       </div>
