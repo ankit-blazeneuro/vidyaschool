@@ -161,29 +161,24 @@ export function Header() {
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
+              {/* Support & Contact Dropdown */}
               <NavigationMenuItem>
-                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/student/notice" className="text-foreground/80 hover:text-foreground text-sm font-medium">
-                    Notices
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/docs" className="text-foreground/80 hover:text-foreground text-sm font-medium">
-                    Help & Support
-                  </Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/contact" className="text-foreground/80 hover:text-foreground text-sm font-medium flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-                    Contact
-                  </Link>
-                </NavigationMenuLink>
+                <NavigationMenuTrigger className="text-foreground/80 hover:text-foreground text-sm font-medium">
+                  Support & Contact
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    <ListItem href="/student/notice" title="Notices & Circulars">
+                      Read latest school-wide notifications, announcements, and bulletins.
+                    </ListItem>
+                    <ListItem href="/docs" title="Help & Support">
+                      Browse detailed guides, user onboarding instructions, and platform FAQs.
+                    </ListItem>
+                    <ListItem href="/contact" title="Contact Us">
+                      Find campus coordinates, working hours, maps, and direct phone lines.
+                    </ListItem>
+                  </ul>
+                </NavigationMenuContent>
               </NavigationMenuItem>
 
             </NavigationMenuList>
