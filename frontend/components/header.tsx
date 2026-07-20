@@ -171,7 +171,7 @@ export function Header() {
 
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/support" className="text-foreground/80 hover:text-foreground text-sm font-medium">
+                  <Link href="/docs" className="text-foreground/80 hover:text-foreground text-sm font-medium">
                     Help & Support
                   </Link>
                 </NavigationMenuLink>
@@ -276,7 +276,7 @@ export function Header() {
             <Link href="/student/notice" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
               Notices
             </Link>
-            <Link href="/support" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
+            <Link href="/docs" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
               Help & Support
             </Link>
           </div>
