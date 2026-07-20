@@ -289,7 +289,7 @@ export default function TeacherTaskChatPage() {
   }
 
   return (
-    <div className="relative flex flex-col h-[calc(100vh-var(--header-height)-32px)] border border-zinc-800 bg-black dark:bg-black rounded-2xl overflow-hidden shadow-xl">
+    <div className="relative flex flex-col h-[calc(100vh-var(--header-height)-32px)] border border-zinc-800 bg-zinc-950 dark:bg-zinc-950 rounded-2xl overflow-hidden shadow-xl">
       
       {/* Glowing Violet AI Orb (+1 color accent) */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-violet-600/10 dark:bg-violet-600/15 blur-[100px] pointer-events-none z-0" />
@@ -317,12 +317,12 @@ export default function TeacherTaskChatPage() {
               </span>
 
               {/* Bubble */}
-              <div className="space-y-1">
+              <div className="space-y-1 flex-1">
                 <div
-                  className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap shadow-xs ${
+                  className={`text-sm leading-relaxed whitespace-pre-wrap ${
                     isUser
-                      ? "bg-primary text-primary-foreground rounded-tr-none"
-                      : "bg-zinc-900/70 border border-zinc-800/80 text-zinc-100 backdrop-blur-md rounded-tl-none"
+                      ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none px-4 py-2.5 shadow-xs ml-auto w-fit"
+                      : "text-zinc-100 dark:text-zinc-200 py-1"
                   }`}
                 >
                   {msg.content}
