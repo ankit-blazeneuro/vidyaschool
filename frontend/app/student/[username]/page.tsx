@@ -1,9 +1,57 @@
-import { AcademicPerformanceChart } from "@/components/academic-performance-chart"
-import { StudentNotes } from "@/components/student-notes"
-import { StudentCalendar } from "@/components/student-calendar"
-import { StudentWidgets } from "@/components/student-widgets"
-import { ClassInfoWidget } from "@/components/class-info-widget"
+import dynamic from "next/dynamic"
 import { requireRole } from "@/lib/auth-helpers"
+import { ClassInfoWidget } from "@/components/class-info-widget"
+import { Skeleton } from "@/components/ui/skeleton"
+
+// Defer the loading and mount of heavy client-side modules to optimize initial
+// page load and fix the INP render block issue (272ms delay).
+const AcademicPerformanceChart = dynamic(
+  () => import("@/components/academic-performance-chart").then(mod => mod.AcademicPerformanceChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="px-4 lg:px-6">
+        <Skeleton className="h-[250px] w-full rounded-2xl" />
+      </div>
+    ),
+  }
+)
+
+const StudentNotes = dynamic(
+  () => import("@/components/student-notes").then(mod => mod.StudentNotes),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mx-4 lg:mx-6">
+        <Skeleton className="h-[180px] w-full rounded-2xl" />
+      </div>
+    ),
+  }
+)
+
+const StudentCalendar = dynamic(
+  () => import("@/components/student-calendar").then(mod => mod.StudentCalendar),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mx-4 lg:mx-6">
+        <Skeleton className="h-[220px] w-full rounded-2xl" />
+      </div>
+    ),
+  }
+)
+
+const StudentWidgets = dynamic(
+  () => import("@/components/student-widgets").then(mod => mod.StudentWidgets),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="px-4 lg:px-6">
+        <Skeleton className="h-[300px] w-full rounded-2xl" />
+      </div>
+    ),
+  }
+)
 
 function getGreeting(): string {
   const hour = new Date().getHours()
@@ -34,9 +82,7 @@ export default async function StudentDashboardPage() {
       <StudentNotes />
       <StudentCalendar />
       <StudentWidgets />
-      <div className="px-4 lg:px-6">
-        <AcademicPerformanceChart />
-      </div>
+      <AcademicPerformanceChart />
       <ClassInfoWidget />
     </div>
   )
