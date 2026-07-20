@@ -289,11 +289,13 @@ export default function TeacherTaskChatPage() {
   }
 
   return (
-    <div className="relative flex flex-col h-[calc(100vh-var(--header-height)-32px)] border border-border/60 bg-card rounded-2xl overflow-hidden shadow-sm">
+    <div className="relative flex flex-col h-[calc(100vh-var(--header-height)-32px)] border border-zinc-800 bg-black dark:bg-black rounded-2xl overflow-hidden shadow-xl">
       
+      {/* Glowing Violet AI Orb (+1 color accent) */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-violet-600/10 dark:bg-violet-600/15 blur-[100px] pointer-events-none z-0" />
 
       {/* ── Chat Messages Pane ── */}
-      <div className="flex-1 overflow-y-auto p-5 pb-24 space-y-4 scrollbar-thin bg-zinc-50/30 dark:bg-black/5">
+      <div className="flex-1 overflow-y-auto p-5 pb-24 space-y-4 scrollbar-thin bg-transparent relative z-10">
         {session.messages.map((msg, index) => {
           const isUser = msg.role === "user"
           return (
@@ -308,7 +310,7 @@ export default function TeacherTaskChatPage() {
                 className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${
                   isUser
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground border border-border"
+                    : "bg-zinc-900 text-zinc-400 border border-zinc-800"
                 }`}
               >
                 {isUser ? <User className="size-3.5" /> : <Brain className="size-3.5 text-primary" />}
@@ -320,7 +322,7 @@ export default function TeacherTaskChatPage() {
                   className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap shadow-xs ${
                     isUser
                       ? "bg-primary text-primary-foreground rounded-tr-none"
-                      : "bg-muted/65 dark:bg-zinc-800/40 border border-border/50 text-foreground rounded-tl-none"
+                      : "bg-zinc-900/70 border border-zinc-800/80 text-zinc-100 backdrop-blur-md rounded-tl-none"
                   }`}
                 >
                   {msg.content}
