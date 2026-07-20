@@ -28,6 +28,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ path
       return NextResponse.json({ detail: parsedError }, { status: res.status })
     }
     
+    if (res.headers.get('content-type')?.includes('text/event-stream')) {
+      return new NextResponse(res.body, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        }
+      })
+    }
+    
     const data = await res.json()
     return NextResponse.json(data)
   } catch (error: any) {
@@ -65,6 +75,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
         parsedError = jsonError.detail || errorText
       } catch {}
       return NextResponse.json({ detail: parsedError }, { status: res.status })
+    }
+
+    if (res.headers.get('content-type')?.includes('text/event-stream')) {
+      return new NextResponse(res.body, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        }
+      })
     }
     
     const data = await res.json()
