@@ -289,7 +289,7 @@ export default function TeacherTaskChatPage() {
   }
 
   return (
-    <div className="relative flex flex-col h-[calc(100vh-var(--header-height)-32px)] border border-zinc-800 bg-zinc-950 dark:bg-zinc-950 rounded-2xl overflow-hidden shadow-xl">
+    <div className="relative flex flex-col h-[calc(100vh-var(--header-height)-16px)] bg-[#090909] w-full overflow-hidden">
       
       {/* Glowing Violet AI Orb (+1 color accent) */}
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-violet-600/10 dark:bg-violet-600/15 blur-[100px] pointer-events-none z-0" />
