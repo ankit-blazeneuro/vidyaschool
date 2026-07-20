@@ -172,27 +172,58 @@ NVIDIA_TOOLS = [
 def execute_tool_call(name: str, args: dict, current_user: User, db: Session) -> str:
     try:
         if name == "get_students_with_marks":
-            exam_name = args.get("exam_name")
+            exam_name = args.get("exam_name", "")
             subject = args.get("subject")
             min_score = args.get("min_score", 70.0)
 
-            stmt = select(User, StudentSubjectMarks).join(
+            # 1. Resolve exam target
+            target_exam_ids = []
+            
+            # If requesting generic recent/last exam
+            is_recent_query = any(kw in exam_name.lower() for kw in ["recent", "last", "latest", "recent exam", "last exam", "latest exam"]) or exam_name == ""
+            
+            if is_recent_query:
+                # Find the most recently created exam
+                latest_exam = db.exec(select(Exam).order_by(Exam.created_at.desc())).first()
+                if latest_exam:
+                    target_exam_ids = [latest_exam.id]
+                    resolved_name = latest_exam.name
+                else:
+                    return "Error: No exams exist in the database yet."
+            else:
+                # Try finding matching exams via case-insensitive fuzzy match
+                exams = db.exec(select(Exam).where(Exam.name.ilike(f"%{exam_name}%"))).all()
+                if exams:
+                    target_exam_ids = [e.id for e in exams]
+                    resolved_name = ", ".join(list(set([e.name for e in exams])))
+                else:
+                    # Fallback to latest exam if no match is found
+                    latest_exam = db.exec(select(Exam).order_by(Exam.created_at.desc())).first()
+                    if latest_exam:
+                        target_exam_ids = [latest_exam.id]
+                        resolved_name = f"{latest_exam.name} (Fallback since '{exam_name}' was not found)"
+                    else:
+                        return f"Error: Exam matching '{exam_name}' not found, and no default exams exist."
+
+            # 2. Query marks for the resolved exam(s)
+            stmt = select(User, StudentSubjectMarks, Exam).join(
                 StudentSubjectMarks, User.id == StudentSubjectMarks.student_id
             ).join(
                 Exam, StudentSubjectMarks.exam_id == Exam.id
             ).where(
-                Exam.name == exam_name,
+                Exam.id.in_(target_exam_ids),
                 StudentSubjectMarks.score >= min_score
             )
             if subject:
-                stmt = stmt.where(StudentSubjectMarks.subject == subject)
+                stmt = stmt.where(StudentSubjectMarks.subject.ilike(f"%{subject}%"))
             results = db.exec(stmt).all()
             if not results:
-                return f"No students found with score >= {min_score} in {exam_name}."
+                return f"No students found with score >= {min_score} in exam '{resolved_name}'."
             
-            res = [f"Students with score >= {min_score} in {exam_name}:"]
-            for u, m in results:
-                res.append(f"- {u.name} ({u.email}): {m.score}/{m.max_score} in {m.subject}")
+            res = [f"Students with score >= {min_score} in '{resolved_name}':"]
+            for u, m, e in results:
+                subj_str = f" in {m.subject}" if m.subject else ""
+                res.append(f"- {u.name} ({u.email}): {m.score}/{m.max_score}{subj_str} (Exam: {e.name})")
             return "\n".join(res)
 
         elif name == "get_student_roster":

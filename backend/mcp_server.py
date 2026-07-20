@@ -351,6 +351,65 @@ def request_subject_class(
         session.commit()
         return f"Teaching request submitted successfully (ID: {new_req.id}). Awaiting class teacher approval."
 
+# ── Tool 9: Get Students with Marks ──
+@mcp.tool()
+def get_students_with_marks(
+    exam_name: str,
+    subject: str = None,
+    min_score: float = 70.0
+) -> str:
+    """
+    Retrieve students who scored at or above a specific score threshold in an exam.
+    :param exam_name: Name of the exam (e.g. 'Mid-Term', 'Annual Exams', or specify 'recent' for latest).
+    :param subject: Optional subject filter (e.g. 'Mathematics').
+    :param min_score: Minimum score threshold (defaults to 70.0).
+    """
+    with Session(engine) as session:
+        # 1. Resolve exam target
+        target_exam_ids = []
+        is_recent_query = any(kw in exam_name.lower() for kw in ["recent", "last", "latest", "recent exam", "last exam", "latest exam"]) or exam_name == ""
+        
+        if is_recent_query:
+            latest_exam = session.exec(select(Exam).order_by(Exam.created_at.desc())).first()
+            if latest_exam:
+                target_exam_ids = [latest_exam.id]
+                resolved_name = latest_exam.name
+            else:
+                return "Error: No exams exist in the database yet."
+        else:
+            exams = session.exec(select(Exam).where(Exam.name.ilike(f"%{exam_name}%"))).all()
+            if exams:
+                target_exam_ids = [e.id for e in exams]
+                resolved_name = ", ".join(list(set([e.name for e in exams])))
+            else:
+                latest_exam = session.exec(select(Exam).order_by(Exam.created_at.desc())).first()
+                if latest_exam:
+                    target_exam_ids = [latest_exam.id]
+                    resolved_name = f"{latest_exam.name} (Fallback since '{exam_name}' was not found)"
+                else:
+                    return f"Error: Exam matching '{exam_name}' not found, and no default exams exist."
+
+        # 2. Query marks
+        stmt = select(User, StudentSubjectMarks, Exam).join(
+            StudentSubjectMarks, User.id == StudentSubjectMarks.student_id
+        ).join(
+            Exam, StudentSubjectMarks.exam_id == Exam.id
+        ).where(
+            Exam.id.in_(target_exam_ids),
+            StudentSubjectMarks.score >= min_score
+        )
+        if subject:
+            stmt = stmt.where(StudentSubjectMarks.subject.ilike(f"%{subject}%"))
+        results = session.exec(stmt).all()
+        if not results:
+            return f"No students found with score >= {min_score} in exam '{resolved_name}'."
+        
+        res = [f"Students with score >= {min_score} in '{resolved_name}':"]
+        for u, m, e in results:
+            subj_str = f" in {m.subject}" if m.subject else ""
+            res.append(f"- {u.name} ({u.email}): {m.score}/{m.max_score}{subj_str} (Exam: {e.name})")
+        return "\n".join(res)
+
 # ── Tool 7: Schedule Timetable Slot ──
 @mcp.tool()
 def schedule_timetable_slot(
