@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Send, User, Brain, ArrowLeft, Loader2, Sparkles, HelpCircle } from "lucide-react"
+import { Send, User, Brain, ArrowLeft, Loader2, Sparkles, HelpCircle, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -24,6 +24,47 @@ interface ChatSession {
 
 type GenerationStatus = "idle" | "thinking" | "generating"
 
+function CodeBlockWrapper({ code, children }: { code: string; children: React.ReactNode }) {
+  const [copied, setCopied] = React.useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy text: ", err)
+    }
+  }
+
+  return (
+    <div className="relative group/code my-4 rounded-lg overflow-hidden border border-zinc-850 bg-zinc-900/30">
+      <div className="flex items-center justify-between px-4 py-2 bg-zinc-900/80 text-[10px] text-zinc-400 font-sans border-b border-zinc-800/80">
+        <span>Code</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
+        >
+          {copied ? (
+            <>
+              <Check className="size-3 text-emerald-500" />
+              <span className="text-emerald-500 font-medium">Copied</span>
+            </>
+          ) : (
+            <>
+              <Copy className="size-3" />
+              <span>Copy</span>
+            </>
+          )}
+        </button>
+      </div>
+      <div className="bg-zinc-950/40">
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export default function TeacherTaskChatPage() {
   const params = useParams()
   const router = useRouter()
@@ -36,6 +77,16 @@ export default function TeacherTaskChatPage() {
   const [genStatus, setGenStatus] = React.useState<GenerationStatus>("idle")
   const [isLocalMode, setIsLocalMode] = React.useState(false)
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+
+  // Auto-expand textarea on content growth (Shift + Enter)
+  React.useEffect(() => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      textarea.style.height = "auto"
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`
+    }
+  }, [input])
 
   // Scroll to bottom
   const scrollToBottom = () => {
@@ -348,7 +399,21 @@ export default function TeacherTaskChatPage() {
                           h2: ({ children }) => <h2 className="text-base font-bold mt-3.5 mb-1.5 text-white">{children}</h2>,
                           strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
                           code: ({ children }) => <code className="bg-zinc-850 px-1.5 py-0.5 rounded text-xs text-rose-400 font-mono">{children}</code>,
-                          pre: ({ children }) => <pre className="bg-zinc-900 border border-zinc-800 p-3 rounded-lg overflow-x-auto my-2.5 font-mono text-xs text-zinc-200">{children}</pre>,
+                          pre: ({ children }) => {
+                            const extractText = (node: any): string => {
+                              if (!node) return ""
+                              if (typeof node === "string") return node
+                              if (Array.isArray(node)) return node.map(extractText).join("")
+                              if (node.props?.children) return extractText(node.props.children)
+                              return ""
+                            }
+                            const codeText = extractText(children)
+                            return (
+                              <CodeBlockWrapper code={codeText}>
+                                <pre className="p-4 bg-transparent overflow-x-auto font-mono text-xs text-zinc-200">{children}</pre>
+                              </CodeBlockWrapper>
+                            )
+                          },
                           br: () => <br />,
                           table: ({ children }) => (
                             <div className="overflow-x-auto my-4 rounded-lg border border-zinc-800">
@@ -422,6 +487,7 @@ export default function TeacherTaskChatPage() {
           className="w-full flex items-end gap-2.5 p-2 rounded-3xl border border-zinc-800/80 bg-zinc-900/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-2xl focus-within:border-zinc-700/80"
         >
           <textarea
+            ref={textareaRef}
             rows={1}
             value={input}
             onChange={(e) => setInput(e.target.value)}
