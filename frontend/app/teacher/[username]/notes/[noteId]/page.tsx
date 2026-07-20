@@ -1747,7 +1747,24 @@ export default function NoteEditorPage() {
                 shapes: p.shapes || []
               }))
             }
-          } catch (e) { /* keep default */ }
+          } catch (e) {
+            // Content is plain/markdown text instead of coordinates JSON. Convert to a text box!
+            initialPages = [{
+              id: `page-${Date.now()}`,
+              backgroundType: "blank",
+              drawings: [],
+              images: [],
+              texts: [{
+                id: `txt-${Date.now()}`,
+                x: 50,
+                y: 50,
+                text: d.note.content,
+                fontSize: 16,
+                color: "#18181b"
+              }],
+              shapes: []
+            }]
+          }
         }
 
         if (initialPages.length === 0) {
