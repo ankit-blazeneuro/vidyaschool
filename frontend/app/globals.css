@@ -139,6 +139,18 @@
     @apply font-sans;
     scroll-behavior: smooth;
   }
+
+  /*
+    Targeted theme transition — only the CSS properties that actually change
+    when switching dark/light mode. Avoids the global *{ transition: none }
+    style-tag injection that caused full document style recalculations (INP ~336ms).
+  */
+  :root,
+  :root * {
+    transition-property: background-color, border-color, color, box-shadow;
+    transition-duration: 0.15s;
+    transition-timing-function: ease;
+  }
 }
 
 /* Partners Marquee scrolling wave styles */

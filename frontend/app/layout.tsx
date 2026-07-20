@@ -70,7 +70,6 @@ export default async function RootLayout({
           attribute="class"
           defaultTheme="light"
           enableSystem
-          disableTransitionOnChange
         >
           <TooltipProvider>
             <RootProvider 
