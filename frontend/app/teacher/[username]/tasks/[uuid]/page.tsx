@@ -306,7 +306,7 @@ export default function TeacherTaskChatPage() {
       
       {/* ── Chat Messages Pane ── */}
       <ScrollArea className="flex-1 px-5 pt-5 relative z-10" viewportClassName="pb-28">
-        <div className="space-y-4 max-w-3xl mx-auto w-full">
+        <div className="space-y-4 max-w-4xl mx-auto w-full">
           {session.messages.map((msg, index) => {
             const isUser = msg.role === "user"
             return (
@@ -386,7 +386,7 @@ export default function TeacherTaskChatPage() {
       </ScrollArea>
 
       {/* ── Floating & Sticky Chat Input ── */}
-      <div className="absolute bottom-4 left-0 right-0 w-full max-w-3xl mx-auto px-4 z-30">
+      <div className="absolute bottom-4 left-0 right-0 w-full max-w-4xl mx-auto px-4 z-30">
         <form
           onSubmit={handleSend}
           className="w-full flex items-end gap-2.5 p-2 rounded-3xl border border-zinc-800/80 bg-zinc-900/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-2xl focus-within:border-zinc-700/80"
