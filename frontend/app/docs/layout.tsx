@@ -1,8 +1,11 @@
 "use client"
 
+import * as React from "react"
 import { DocsLayout } from "fumadocs-ui/layouts/docs"
 import type * as PageTree from "fumadocs-core/page-tree"
-import { BookOpen } from "lucide-react"
+import { BookOpen, Sun, Moon } from "lucide-react"
+import { useTheme } from "@/components/theme-provider"
+import { Button } from "@/components/ui/button"
 
 const tree: PageTree.Root = {
   name: "Documentation",
@@ -80,6 +83,43 @@ const tree: PageTree.Root = {
   ],
 }
 
+// Custom theme toggle matching @wrksz/themes state, overriding the broken fumadocs-ui next-themes switch.
+function DocsThemeToggle() {
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return <div className="h-9 w-full rounded-md bg-muted/20 border border-border" />
+  }
+
+  const isDark = theme === "dark"
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="w-full flex items-center justify-center gap-2 cursor-pointer border-border/80 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-foreground transition-all duration-150 h-9 rounded-lg"
+    >
+      {isDark ? (
+        <>
+          <Sun className="h-4 w-4 text-amber-500 shrink-0" />
+          <span className="text-xs font-semibold">Light Mode</span>
+        </>
+      ) : (
+        <>
+          <Moon className="h-4 w-4 text-indigo-500 shrink-0" />
+          <span className="text-xs font-semibold">Dark Mode</span>
+        </>
+      )}
+    </Button>
+  )
+}
+
 export default function DocsPageLayout({ children }: { children: React.ReactNode }) {
   return (
     <DocsLayout
@@ -91,6 +131,9 @@ export default function DocsPageLayout({ children }: { children: React.ReactNode
             <span>VidyaSchool Docs</span>
           </div>
         ),
+      }}
+      slots={{
+        themeSwitch: DocsThemeToggle,
       }}
     >
       {children}
