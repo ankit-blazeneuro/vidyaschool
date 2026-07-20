@@ -2,6 +2,8 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -93,16 +95,25 @@ function NoteHeaderLeft({
 
 // Right slot: PDF export + Settings (with mobile More menu)
 function NoteHeaderRight({
-  exporting, onExport, onSettings
+  exporting, onExport, onSettings, mode, onToggle
 }: {
   exporting: boolean
   onExport: () => void
   onSettings: () => void
+  mode: "canvas" | "markdown"
+  onToggle: () => void
 }) {
   const [moreOpen, setMoreOpen] = React.useState(false)
 
   return (
     <>
+      <button
+        onClick={onToggle}
+        className="hidden sm:flex items-center gap-1.5 border border-zinc-200 dark:border-zinc-800 text-foreground hover:bg-muted px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0"
+      >
+        {mode === "canvas" ? "Markdown Mode" : "Canvas Board"}
+      </button>
+
       {/* PDF + Settings — visible sm+ */}
       <button
         onClick={onExport}
@@ -125,6 +136,9 @@ function NoteHeaderRight({
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
             <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg p-1 min-w-[150px] flex flex-col">
+              <button onClick={() => { onToggle(); setMoreOpen(false) }} className="flex items-center gap-2 px-3 py-2 text-xs rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                {mode === "canvas" ? "Markdown Mode" : "Canvas Board"}
+              </button>
               <button onClick={() => { onExport(); setMoreOpen(false) }} disabled={exporting} className="flex items-center gap-2 px-3 py-2 text-xs rounded-lg hover:bg-muted transition-colors disabled:opacity-50 cursor-pointer">
                 <DownloadIcon className="h-3.5 w-3.5" /> Export PDF
               </button>
@@ -1626,6 +1640,9 @@ export default function NoteEditorPage() {
   const [settingsOpen, setSettingsOpen] = React.useState(false)
   const [noteMeta, setNoteMeta] = React.useState({ className: "", section: "", subject: "" })
   const [draftMeta, setDraftMeta] = React.useState({ className: "", section: "", subject: "" })
+  const [mode, setMode] = React.useState<"canvas" | "markdown">("canvas")
+  const [markdownText, setMarkdownText] = React.useState<string>("")
+  const [markdownViewMode, setMarkdownViewMode] = React.useState<"preview" | "edit">("preview")
 
   React.useEffect(() => { setMounted(true) }, [])
 
@@ -1714,6 +1731,13 @@ export default function NoteEditorPage() {
         if (lsDraft) {
           try {
             const parsed = JSON.parse(lsDraft)
+            if (parsed.isMd) {
+              setMode("markdown")
+              setMarkdownText(parsed.mdVal || "")
+            } else {
+              setMode("canvas")
+              setMarkdownText("")
+            }
             if (parsed && Array.isArray(parsed.pages)) {
               initialPages = parsed.pages.map((p: any) => ({
                 id: p.id || `page-${Date.now()}`,
@@ -1738,6 +1762,8 @@ export default function NoteEditorPage() {
           try {
             const parsed = JSON.parse(d.note.content)
             if (parsed && Array.isArray(parsed.pages)) {
+              setMode("canvas")
+              setMarkdownText("")
               initialPages = parsed.pages.map((p: any) => ({
                 id: p.id || `page-${Date.now()}`,
                 backgroundType: p.backgroundType || "blank",
@@ -1749,19 +1775,14 @@ export default function NoteEditorPage() {
             }
           } catch (e) {
             // Content is plain/markdown text instead of coordinates JSON. Convert to a text box!
+            setMode("markdown")
+            setMarkdownText(d.note.content)
             initialPages = [{
               id: `page-${Date.now()}`,
               backgroundType: "blank",
               drawings: [],
               images: [],
-              texts: [{
-                id: `txt-${Date.now()}`,
-                x: 50,
-                y: 50,
-                text: d.note.content,
-                fontSize: 16,
-                color: "#18181b"
-              }],
+              texts: [],
               shapes: []
             }]
           }
