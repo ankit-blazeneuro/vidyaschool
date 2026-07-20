@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Send, Sparkles, User, Brain, ArrowLeft, Loader2 } from "lucide-react"
+import { Send, User, Brain, ArrowLeft, Loader2, Sparkles, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
@@ -19,6 +19,8 @@ interface ChatSession {
   createdAt: string
 }
 
+type GenerationStatus = "idle" | "thinking" | "generating"
+
 export default function TeacherTaskChatPage() {
   const params = useParams()
   const router = useRouter()
@@ -28,6 +30,7 @@ export default function TeacherTaskChatPage() {
   const [session, setSession] = React.useState<ChatSession | null>(null)
   const [input, setInput] = React.useState("")
   const [isTyping, setIsTyping] = React.useState(false)
+  const [genStatus, setGenStatus] = React.useState<GenerationStatus>("idle")
   const [isLocalMode, setIsLocalMode] = React.useState(false)
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
 
@@ -85,7 +88,7 @@ export default function TeacherTaskChatPage() {
   // Scroll to bottom on message change
   React.useEffect(() => {
     scrollToBottom()
-  }, [session?.messages, isTyping])
+  }, [session?.messages, isTyping, genStatus])
 
   const syncToLocalStorage = (data: ChatSession) => {
     try {
@@ -101,8 +104,11 @@ export default function TeacherTaskChatPage() {
   // Handle local mock simulated streaming typing effect
   const handleLocalSimulation = (userMessageText: string, updatedMessages: Message[], updatedSession: ChatSession) => {
     setIsTyping(true)
+    setGenStatus("thinking")
 
     setTimeout(() => {
+      setGenStatus("generating")
+      
       const localAnswers = [
         `I have received your request for: "${userMessageText}". Here is a template plan you can modify:\n\n**1. Objective:** Align with curriculum requirements.\n**2. Key Tasks:** Verify student roster allocations, assign timelines, and build test templates.\n**3. Support:** Reach academic coordinators for leaves or technical support.\n\n*Note: Running in local simulation mode since the Nvidia AI backend is pending.*`,
         `Here is a custom task sheet for "${userMessageText}":\n\n- Task 1: Grade class test submissions and update Marks records.\n- Task 2: Publish class bulletin alerts for the upcoming exams.\n- Task 3: Setup library reserve lists for science textbooks.\n\nLet me know if you would like me to refine this further!`,
@@ -140,12 +146,13 @@ export default function TeacherTaskChatPage() {
 
         if (currentLength >= fullAnswer.length) {
           clearInterval(interval)
+          setGenStatus("idle")
           // Settle in storage
           syncToLocalStorage(finalSession)
         }
       }, 35)
 
-    }, 800)
+    }, 1800) // Longer delay to showcase "Thinking..." shimmer
   }
 
   const handleSend = async (e: React.FormEvent) => {
@@ -185,6 +192,7 @@ export default function TeacherTaskChatPage() {
     }
 
     setIsTyping(true)
+    setGenStatus("thinking")
 
     // Call API and stream response
     try {
@@ -203,6 +211,7 @@ export default function TeacherTaskChatPage() {
       setIsTyping(false)
       let done = false
       let fullContent = ""
+      let isFirstChunk = true
 
       const assistantMessage: Message = {
         role: "assistant",
@@ -228,6 +237,11 @@ export default function TeacherTaskChatPage() {
             try {
               const parsed = JSON.parse(dataStr)
               if (parsed.content) {
+                if (isFirstChunk) {
+                  setGenStatus("generating")
+                  isFirstChunk = false
+                }
+                
                 fullContent += parsed.content
                 
                 // Update component state in real-time
@@ -245,6 +259,8 @@ export default function TeacherTaskChatPage() {
           }
         }
       }
+
+      setGenStatus("idle")
 
       // Final save to localStorage once stream settles
       const finalSession = {
@@ -273,7 +289,7 @@ export default function TeacherTaskChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-var(--header-height)-32px)] border border-border/60 bg-card rounded-2xl overflow-hidden shadow-sm">
+    <div className="relative flex flex-col h-[calc(100vh-var(--header-height)-32px)] border border-border/60 bg-card rounded-2xl overflow-hidden shadow-sm">
       
       {/* ── Chat Header ── */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border/60 bg-muted/20">
@@ -287,13 +303,9 @@ export default function TeacherTaskChatPage() {
             <Brain className="h-4.5 w-4.5" />
           </span>
           <div>
-            <h2 className="text-sm font-bold text-foreground truncate max-w-[200px] sm:max-w-md">
+            <h2 className="text-sm font-bold text-foreground truncate max-w-[220px] sm:max-w-md">
               {session.title}
             </h2>
-            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-              <Sparkles className="size-3 text-amber-500 shrink-0" />
-              {isLocalMode ? "Local AI Simulator" : "Nvidia AI Model"}
-            </p>
           </div>
         </div>
 
@@ -305,7 +317,7 @@ export default function TeacherTaskChatPage() {
       </div>
 
       {/* ── Chat Messages Pane ── */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-thin bg-zinc-50/30 dark:bg-black/5">
+      <div className="flex-1 overflow-y-auto p-5 pb-24 space-y-4 scrollbar-thin bg-zinc-50/30 dark:bg-black/5">
         {session.messages.map((msg, index) => {
           const isUser = msg.role === "user"
           return (
@@ -349,41 +361,60 @@ export default function TeacherTaskChatPage() {
           )
         })}
 
-        {isTyping && (
-          <div className="flex gap-3 max-w-[80%] mr-auto items-center animate-pulse">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground border border-border">
+        {/* Shimmer loading / Generation Status */}
+        {isTyping && genStatus === "thinking" && (
+          <div className="flex gap-3 max-w-[80%] mr-auto items-start">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground border border-border animate-pulse">
               <Brain className="size-3.5 text-primary" />
             </span>
-            <div className="flex gap-1.5 p-3 rounded-2xl bg-muted/60 dark:bg-zinc-800/30 border border-border/40">
-              <span className="size-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="size-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="size-1.5 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 flex items-center gap-2.5 shadow-xs animate-pulse">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              <span className="text-xs font-semibold text-primary">Thinking...</span>
             </div>
           </div>
         )}
+
+        {genStatus === "generating" && (
+          <div className="flex gap-3 max-w-[80%] mr-auto items-start">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground border border-border animate-spin duration-1000">
+              <Sparkles className="size-3.5 text-primary" />
+            </span>
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 flex items-center gap-2.5 shadow-xs">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Generating...</span>
+            </div>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Chat Input ── */}
-      <form onSubmit={handleSend} className="p-3 border-t border-border/60 bg-muted/10">
-        <div className="flex items-center gap-2 p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-background focus-within:ring-2 focus-within:ring-primary/20">
+      {/* ── Floating & Sticky Chat Input ── */}
+      <div className="absolute bottom-4 left-0 right-0 w-full max-w-2xl mx-auto px-4 z-30">
+        <form onSubmit={handleSend} className="w-full flex items-center gap-2 p-1.5 rounded-2xl border border-zinc-200/40 dark:border-zinc-800/40 bg-white/30 dark:bg-black/35 backdrop-blur-md shadow-xl focus-within:border-primary/30">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 bg-transparent text-sm text-foreground focus:outline-none px-2"
+            className="flex-1 bg-transparent text-sm text-foreground focus:outline-none px-3"
           />
           <Button
             type="submit"
             size="icon"
-            disabled={!input.trim() || isTyping}
-            className="h-8 w-8 rounded-lg"
+            disabled={!input.trim() || genStatus !== "idle"}
+            className="h-8 w-8 rounded-xl shrink-0 transition-all active:scale-95"
           >
             <Send className="h-3.5 w-3.5" />
           </Button>
-        </div>
-      </form>
+        </form>
+      </div>
 
     </div>
   )
