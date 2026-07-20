@@ -443,6 +443,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [unreadNotices, setUnreadNotices] = React.useState(false)
   const [unreadComplaints, setUnreadComplaints] = React.useState(false)
 
+  // AI Chats State for Teacher
+  const [teacherChats, setTeacherChats] = React.useState<{ id: string; title: string }[]>([])
+
+  const loadTeacherChats = React.useCallback(() => {
+    try {
+      const chats = JSON.parse(localStorage.getItem("vidya_teacher_chats") || "[]")
+      setTeacherChats(chats.map((c: any) => ({ id: c.id, title: c.title })))
+    } catch (e) {
+      console.error("Failed to load chats:", e)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    if (!isTeacher) return
+    loadTeacherChats()
+
+    // Listen for chat changes
+    window.addEventListener("vidya_chats_updated", loadTeacherChats)
+    return () => {
+      window.removeEventListener("vidya_chats_updated", loadTeacherChats)
+    }
+  }, [isTeacher, loadTeacherChats])
+
   // Clear notifications when visiting pages
   React.useEffect(() => {
     if (!pathname) return
@@ -1031,7 +1054,50 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarGroupContent>
           </SidebarGroup>
         ) : (
-          <NavSecondary items={data.navSecondary} className="mt-auto" />
+          <>
+            {/* AI Chat History group for Teacher */}
+            {isTeacher && (
+              <SidebarGroup className="mt-4 border-t border-sidebar-border/40 pt-4">
+                <div className="px-2.5 pb-2 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider flex items-center justify-between">
+                  <span>AI Chat Assistant</span>
+                  <button
+                    onClick={() => {
+                      const uuid = crypto.randomUUID()
+                      router.push(`/tasks/${uuid}`)
+                    }}
+                    className="flex items-center gap-1 text-[10px] hover:text-foreground text-primary font-semibold transition-colors cursor-pointer"
+                  >
+                    <Plus className="size-3" /> New Chat
+                  </button>
+                </div>
+                <SidebarGroupContent>
+                  <SidebarMenu className="max-h-[160px] overflow-y-auto scrollbar-none gap-0.5">
+                    {teacherChats.length === 0 ? (
+                      <div className="px-3 py-2 text-[11px] text-muted-foreground italic">
+                        No active chat threads
+                      </div>
+                    ) : (
+                      teacherChats.map((chat) => (
+                        <SidebarMenuItem key={chat.id}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={pathname === `/tasks/${chat.id}`}
+                            className="py-1 h-7.5 px-3 rounded-lg"
+                          >
+                            <Link href={`/tasks/${chat.id}`} className="flex items-center gap-2">
+                              <MessageSquare className="size-3.5 shrink-0 text-muted-foreground" />
+                              <span className="truncate text-xs font-normal">{chat.title}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))
+                    )}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+            <NavSecondary items={data.navSecondary} className="mt-auto" />
+          </>
         )}
       </SidebarContent>
       <SidebarFooter className="px-2 pt-0 pb-1.5">

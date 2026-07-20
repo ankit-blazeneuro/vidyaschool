@@ -2,9 +2,8 @@ import * as React from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { TeacherAIInput } from "@/components/teacher-ai-input"
 
-export default function TeacherLayout({
+export default function TasksLayout({
   children,
 }: {
   children: React.ReactNode
@@ -21,11 +20,10 @@ export default function TeacherLayout({
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
-        <div className="flex flex-1 flex-col relative pb-20">
+        <div className="flex flex-1 flex-col relative">
           <div className="@container/main flex flex-1 flex-col gap-2">
             {children}
           </div>
-          <TeacherAIInput />
         </div>
       </SidebarInset>
     </SidebarProvider>
