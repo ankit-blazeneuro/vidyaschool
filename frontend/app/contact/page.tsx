@@ -37,7 +37,7 @@ const HOURS = [
 ]
 
 const MAPS_EMBED =
-  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3507.8!2d77.0958!3d28.4689!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d18f5b0000001%3A0x1!2sDLF+Phase+3%2C+Sector+24%2C+Gurugram%2C+Haryana+122002!5e0!3m2!1sen!2sin!4v1700000000000"
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4388.044830651649!2d77.09666967618728!3d28.48607899071487!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d19327f21b643%3A0x3d26c212131a917f!2sVidya%20School%20(Gurugram)!5e1!3m2!1sen!2sin!4v1784549733260!5m2!1sen!2sin"
 
 export default function ContactPage() {
   return (
@@ -240,7 +240,7 @@ export default function ContactPage() {
                 style={{ border: 0 }}
                 allowFullScreen
                 loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
+                referrerPolicy="strict-origin-when-cross-origin"
                 className="absolute inset-0 h-full w-full"
               />
             </div>
