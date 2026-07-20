@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 interface Message {
   role: "user" | "assistant"
@@ -337,6 +338,7 @@ export default function TeacherTaskChatPage() {
                   ) : (
                     <div className="text-zinc-150 dark:text-zinc-100 py-1 leading-relaxed text-sm">
                       <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
                         components={{
                           p: ({ children }) => <p className="mb-2.5 last:mb-0">{children}</p>,
                           ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>,
@@ -346,7 +348,20 @@ export default function TeacherTaskChatPage() {
                           h2: ({ children }) => <h2 className="text-base font-bold mt-3.5 mb-1.5 text-white">{children}</h2>,
                           strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
                           code: ({ children }) => <code className="bg-zinc-850 px-1.5 py-0.5 rounded text-xs text-rose-400 font-mono">{children}</code>,
-                          pre: ({ children }) => <pre className="bg-zinc-900 border border-zinc-800 p-3 rounded-lg overflow-x-auto my-2.5 font-mono text-xs text-zinc-200">{children}</pre>
+                          pre: ({ children }) => <pre className="bg-zinc-900 border border-zinc-800 p-3 rounded-lg overflow-x-auto my-2.5 font-mono text-xs text-zinc-200">{children}</pre>,
+                          br: () => <br />,
+                          table: ({ children }) => (
+                            <div className="overflow-x-auto my-4 rounded-lg border border-zinc-800">
+                              <table className="min-w-full divide-y divide-zinc-800 bg-zinc-950/20 text-xs text-left text-zinc-300 border-collapse">
+                                {children}
+                              </table>
+                            </div>
+                          ),
+                          thead: ({ children }) => <thead className="bg-zinc-900/60 text-zinc-100 uppercase tracking-wider font-semibold">{children}</thead>,
+                          tbody: ({ children }) => <tbody className="divide-y divide-zinc-800/40">{children}</tbody>,
+                          tr: ({ children }) => <tr className="hover:bg-zinc-900/25 transition-colors">{children}</tr>,
+                          th: ({ children }) => <th className="px-4 py-2.5 border-b border-zinc-800 font-bold">{children}</th>,
+                          td: ({ children }) => <td className="px-4 py-2 border-r border-zinc-800 last:border-r-0">{children}</td>
                         }}
                       >
                         {msg.content}
