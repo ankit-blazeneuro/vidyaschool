@@ -1,12 +1,13 @@
 import os
 import json
+import uuid
 import httpx
 from datetime import datetime
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session
-from app.core.auth import get_current_user
+from app.core.auth import require_role
 from app.core.database import get_db
 from models import User, ChatRoom, ChatMessage
 
@@ -28,6 +29,9 @@ NVIDIA_API_KEY = os.getenv(
     "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"
 )
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
+
+# Restrict routes to portal personnel roles
+authorized_roles = ["teacher", "librarian", "admin"]
 
 async def response_stream_generator(messages_payload: list, room_id: str, db: Session):
     headers = {
@@ -54,7 +58,6 @@ async def response_stream_generator(messages_payload: list, room_id: str, db: Se
                 timeout=60.0
             ) as r:
                 if r.status_code != 200:
-                    err_msg = f"NVIDIA error status {r.status_code}"
                     yield f"data: {json.dumps({'content': 'AI model connection failed.'})}\n\n"
                     return
                 
@@ -77,10 +80,10 @@ async def response_stream_generator(messages_payload: list, room_id: str, db: Se
         yield f"data: {json.dumps({'content': f'Connection error: {str(e)}'})}\n\n"
         return
 
-    # After full stream finishes, write complete response to DB
+    # After full stream finishes, write complete response to DB using secure UUID
     try:
         assistant_msg = ChatMessage(
-            id=f"msg_ai_{datetime.utcnow().timestamp()}",
+            id=f"msg_ai_{uuid.uuid4()}",
             room_id=room_id,
             role="assistant",
             content=full_content,
@@ -100,12 +103,15 @@ async def response_stream_generator(messages_payload: list, room_id: str, db: Se
 @router.post("/api/chats")
 async def start_chat(
     req: ChatInitRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(authorized_roles)),
     db: Session = Depends(get_db)
 ):
-    # 1. Check if chat room already exists
+    # 1. Check if chat room already exists and prevent hijacked direct object spoofing (IdOR)
     room = db.query(ChatRoom).filter(ChatRoom.id == req.uuid).first()
-    if not room:
+    if room:
+        if room.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Not authorized to write to this room")
+    else:
         room = ChatRoom(
             id=req.uuid,
             user_id=current_user.id,
@@ -117,9 +123,9 @@ async def start_chat(
         db.commit()
         db.refresh(room)
 
-    # 2. Add user message
+    # 2. Add user message with secure UUID
     user_msg = ChatMessage(
-        id=f"msg_user_{datetime.utcnow().timestamp()}",
+        id=f"msg_user_{uuid.uuid4()}",
         room_id=room.id,
         role="user",
         content=req.message,
@@ -138,7 +144,7 @@ async def start_chat(
 
 @router.get("/api/chats")
 def get_chats(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(authorized_roles)),
     db: Session = Depends(get_db)
 ):
     rooms = (
@@ -157,13 +163,13 @@ def get_chats(
     ]
 
 
-@router.get("/api/chats/{uuid}")
+@router.get("/api/chats/{uuid_val}")
 def get_chat_messages(
-    uuid: str,
-    current_user: User = Depends(get_current_user),
+    uuid_val: str,
+    current_user: User = Depends(require_role(authorized_roles)),
     db: Session = Depends(get_db)
 ):
-    room = db.query(ChatRoom).filter(ChatRoom.id == uuid).first()
+    room = db.query(ChatRoom).filter(ChatRoom.id == uuid_val).first()
     if not room:
         raise HTTPException(status_code=404, detail="Chat not found")
         
@@ -172,7 +178,7 @@ def get_chat_messages(
 
     messages = (
         db.query(ChatMessage)
-        .filter(ChatMessage.room_id == uuid)
+        .filter(ChatMessage.room_id == uuid_val)
         .order_by(ChatMessage.created_at.asc())
         .all()
     )
@@ -192,23 +198,23 @@ def get_chat_messages(
     }
 
 
-@router.post("/api/chats/{uuid}")
+@router.post("/api/chats/{uuid_val}")
 async def send_chat_message(
-    uuid: str,
+    uuid_val: str,
     req: ChatMessageRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(authorized_roles)),
     db: Session = Depends(get_db)
 ):
-    room = db.query(ChatRoom).filter(ChatRoom.id == uuid).first()
+    room = db.query(ChatRoom).filter(ChatRoom.id == uuid_val).first()
     if not room:
         raise HTTPException(status_code=404, detail="Chat not found")
         
     if room.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    # 1. Add user message
+    # 1. Add user message with secure UUID
     user_msg = ChatMessage(
-        id=f"msg_user_{datetime.utcnow().timestamp()}",
+        id=f"msg_user_{uuid.uuid4()}",
         room_id=room.id,
         role="user",
         content=req.message,
@@ -225,7 +231,7 @@ async def send_chat_message(
     # 2. Get conversational context
     history = (
         db.query(ChatMessage)
-        .filter(ChatMessage.room_id == uuid)
+        .filter(ChatMessage.room_id == uuid_val)
         .order_by(ChatMessage.created_at.asc())
         .all()
     )
