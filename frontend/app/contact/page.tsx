@@ -1,6 +1,5 @@
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import Image from "next/image"
 import type { Metadata } from "next"
 import {
   MapPin,
@@ -83,12 +82,12 @@ export default function ContactPage() {
         {/* ── School image banner ── */}
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-8 sm:-mt-12 relative z-10">
           <div className="overflow-hidden rounded-2xl border border-border/60 shadow-xl">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/assets/vidyaschool/school.jpg"
               alt="VidyaSchool campus — DLF Phase 3, Gurugram"
-              width={1600}
-              height={700}
-              priority
+              fetchPriority="high"
+              decoding="async"
               className="w-full object-cover h-56 sm:h-80 lg:h-[420px]"
             />
           </div>

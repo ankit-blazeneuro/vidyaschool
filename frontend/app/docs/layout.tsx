@@ -9,11 +9,21 @@ const tree: PageTree.Root = {
   children: [
     {
       type: "folder",
+      name: "Getting Started",
+      children: [
+        { type: "page", name: "Platform Overview", url: "/docs/getting-started/overview" },
+        { type: "page", name: "Quick Start by Role", url: "/docs/getting-started/quickstart" },
+        { type: "page", name: "Roles & Permissions", url: "/docs/getting-started/roles" },
+      ],
+    },
+    {
+      type: "folder",
       name: "Account & Authentication",
       children: [
         { type: "page", name: "1. Account Registration", url: "/docs/auth/signup" },
         { type: "page", name: "2. Portal Login Streams", url: "/docs/auth/login" },
         { type: "page", name: "3. Verification & Approval", url: "/docs/auth/approval" },
+        { type: "page", name: "4. Password Reset", url: "/docs/auth/password-reset" },
       ],
     },
     {
@@ -24,7 +34,8 @@ const tree: PageTree.Root = {
         { type: "page", name: "2. Fees & Payments", url: "/docs/student/fees" },
         { type: "page", name: "3. Marks & Academic Cards", url: "/docs/student/marks" },
         { type: "page", name: "4. Library Catalog", url: "/docs/student/library" },
-        { type: "page", name: "5. Filing a Complaint", url: "/docs/student/complaints" },
+        { type: "page", name: "5. Notices & Circulars", url: "/docs/student/notices" },
+        { type: "page", name: "6. Filing a Complaint", url: "/docs/student/complaints" },
       ],
     },
     {
@@ -33,9 +44,29 @@ const tree: PageTree.Root = {
       children: [
         { type: "page", name: "1. Class Roster", url: "/docs/teacher/roster" },
         { type: "page", name: "2. Marks Submission", url: "/docs/teacher/grading" },
-        { type: "page", name: "3. Class Notice Publishing", url: "/docs/teacher/notices" },
+        { type: "page", name: "3. Notice Publishing", url: "/docs/teacher/notices" },
         { type: "page", name: "4. Requests & Leaves", url: "/docs/teacher/escalations" },
         { type: "page", name: "5. Educator Complaints", url: "/docs/teacher/complaints" },
+        { type: "page", name: "6. Community & Messaging", url: "/docs/teacher/community" },
+      ],
+    },
+    {
+      type: "folder",
+      name: "Admissions",
+      children: [
+        { type: "page", name: "Admissions Overview", url: "/docs/admissions/overview" },
+        { type: "page", name: "Document Requirements", url: "/docs/admissions/documents" },
+        { type: "page", name: "Fee Structure", url: "/docs/admissions/fees" },
+      ],
+    },
+    {
+      type: "folder",
+      name: "Co-Curricular Activities",
+      children: [
+        { type: "page", name: "Programs Overview", url: "/docs/co-curriculars/overview" },
+        { type: "page", name: "Performing Arts", url: "/docs/co-curriculars/arts" },
+        { type: "page", name: "STEM & Robotics", url: "/docs/co-curriculars/stem" },
+        { type: "page", name: "Sports & Athletics", url: "/docs/co-curriculars/sports" },
       ],
     },
     {
