@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  org: "manuels-projects-21",
+  org: "vidya-school",
   project: "javascript-nextjs",
   authToken: process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,

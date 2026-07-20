@@ -2212,6 +2212,8 @@ export default function NoteEditorPage() {
             exporting={exporting}
             onExport={handleExportPDF}
             onSettings={() => setSettingsOpen(true)}
+            mode={mode}
+            onToggle={() => setMode(m => m === "canvas" ? "markdown" : "canvas")}
           />,
           document.getElementById("site-header-actions")!
         )
