@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Send, User, Brain, ArrowLeft, Loader2, Sparkles, HelpCircle, Copy, Check, ArrowDown } from "lucide-react"
+import { Send, User, Brain, ArrowLeft, Loader2, Sparkles, HelpCircle, Copy, Check, ArrowDown, Pause } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -79,6 +79,23 @@ export default function TeacherTaskChatPage() {
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const [showScrollButton, setShowScrollButton] = React.useState(false)
+  const activeReaderRef = React.useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null)
+  const localIntervalRef = React.useRef<NodeJS.Timeout | null>(null)
+
+  const handlePause = async () => {
+    if (activeReaderRef.current) {
+      try {
+        await activeReaderRef.current.cancel()
+      } catch (e) {}
+      activeReaderRef.current = null
+    }
+    if (localIntervalRef.current) {
+      clearInterval(localIntervalRef.current)
+      localIntervalRef.current = null
+    }
+    setGenStatus("idle")
+    setIsTyping(false)
+  }
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget
@@ -204,7 +221,7 @@ export default function TeacherTaskChatPage() {
         messages: [...updatedMessages, assistantMessage]
       })
 
-      const interval = setInterval(() => {
+      localIntervalRef.current = setInterval(() => {
         currentLength += Math.min(3, fullAnswer.length - currentLength)
         const partialContent = fullAnswer.slice(0, currentLength)
 
@@ -218,7 +235,10 @@ export default function TeacherTaskChatPage() {
         setSession(finalSession)
 
         if (currentLength >= fullAnswer.length) {
-          clearInterval(interval)
+          if (localIntervalRef.current) {
+            clearInterval(localIntervalRef.current)
+            localIntervalRef.current = null
+          }
           setGenStatus("idle")
           // Settle in storage
           syncToLocalStorage(finalSession)
@@ -280,6 +300,8 @@ export default function TeacherTaskChatPage() {
       const reader = res.body?.getReader()
       const decoder = new TextDecoder()
       if (!reader) throw new Error("No reader")
+      
+      activeReaderRef.current = reader
 
       setIsTyping(false)
       let done = false
@@ -298,6 +320,7 @@ export default function TeacherTaskChatPage() {
       })
 
       while (!done) {
+        if (!activeReaderRef.current) break
         const { value, done: doneReading } = await reader.read()
         done = doneReading
         const chunkValue = decoder.decode(value)
@@ -333,6 +356,7 @@ export default function TeacherTaskChatPage() {
         }
       }
 
+      activeReaderRef.current = null
       setGenStatus("idle")
 
       // Final save to localStorage once stream settles
@@ -517,13 +541,23 @@ export default function TeacherTaskChatPage() {
             placeholder="Message AI Assistant..."
             className="flex-1 bg-transparent text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-3 py-1.5 resize-none max-h-32 min-h-[38px] scrollbar-none"
           />
-          <button
-            type="submit"
-            disabled={!input.trim() || genStatus !== "idle"}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 transition-all active:scale-95 cursor-pointer"
-          >
-            <Send className="h-4 w-4" />
-          </button>
+          {genStatus !== "idle" ? (
+            <button
+              type="button"
+              onClick={handlePause}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-black hover:bg-zinc-200 transition-all active:scale-95 cursor-pointer"
+            >
+              <Pause className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!input.trim()}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 transition-all active:scale-95 cursor-pointer"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          )}
         </form>
       </div>
 
