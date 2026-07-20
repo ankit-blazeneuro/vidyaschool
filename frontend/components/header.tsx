@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
-import { Sun, Moon, Menu, X, Smartphone } from "lucide-react"
+import { Sun, Moon, Menu, X, Smartphone, MapPin } from "lucide-react"
 
 import {
   NavigationMenu,
@@ -177,6 +177,15 @@ export function Header() {
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="/contact" className="text-foreground/80 hover:text-foreground text-sm font-medium flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                    Contact
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
             </NavigationMenuList>
           </NavigationMenu>
         </div>
@@ -278,6 +287,10 @@ export function Header() {
             </Link>
             <Link href="/docs" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
               Help & Support
+            </Link>
+            <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary shrink-0" />
+              Contact Us
             </Link>
           </div>
 
