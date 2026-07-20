@@ -230,3 +230,19 @@ class TeacherNote(SQLModel, table=True):
     subject: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ChatRoom(SQLModel, table=True):
+    __tablename__ = "chat_room"
+    id: str = Field(primary_key=True)
+    user_id: str = Field(alias="user_id", foreign_key="user.id")
+    title: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ChatMessage(SQLModel, table=True):
+    __tablename__ = "chat_message"
+    id: str = Field(primary_key=True)
+    room_id: str = Field(alias="room_id", foreign_key="chat_room.id")
+    role: str
+    content: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
