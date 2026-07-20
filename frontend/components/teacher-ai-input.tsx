@@ -1,11 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { Send, Sparkles } from "lucide-react"
 
 export function TeacherAIInput() {
   const router = useRouter()
+  const pathname = usePathname()
   const [message, setMessage] = React.useState("")
   const [username, setUsername] = React.useState("")
 
@@ -17,6 +18,11 @@ export function TeacherAIInput() {
       })
       .catch(() => {})
   }, [])
+
+  // Hide the floating bar on the chat room page itself to avoid duplicate inputs
+  if (pathname?.includes("/tasks/")) {
+    return null
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
