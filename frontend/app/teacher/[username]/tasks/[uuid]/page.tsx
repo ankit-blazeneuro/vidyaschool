@@ -86,10 +86,22 @@ export default function TeacherTaskChatPage() {
       })
   }, [uuid])
 
-  // Scroll to bottom on message change
+  // Scroll to bottom on message change and loading updates
   React.useEffect(() => {
     scrollToBottom()
+    // Fire a deferred scroll to handle paint latency
+    const t = setTimeout(scrollToBottom, 50)
+    return () => clearTimeout(t)
   }, [session?.messages, isTyping, genStatus])
+
+  // Land at bottom when first loaded
+  React.useEffect(() => {
+    if (session) {
+      scrollToBottom()
+      const t = setTimeout(scrollToBottom, 150)
+      return () => clearTimeout(t)
+    }
+  }, [session?.id])
 
   const syncToLocalStorage = (data: ChatSession) => {
     try {
@@ -320,8 +332,8 @@ export default function TeacherTaskChatPage() {
                   <div
                     className={`text-sm leading-relaxed whitespace-pre-wrap ${
                       isUser
-                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none px-4 py-2.5 shadow-xs ml-auto w-fit"
-                        : "text-zinc-100 dark:text-zinc-200 py-1"
+                        ? "bg-zinc-800/80 dark:bg-zinc-800/80 border border-zinc-700/40 text-zinc-100 rounded-3xl px-5 py-3 shadow-xs ml-auto w-fit max-w-[85%]"
+                        : "text-zinc-150 dark:text-zinc-100 py-2 leading-relaxed text-sm"
                     }`}
                   >
                     {msg.content}
@@ -375,22 +387,30 @@ export default function TeacherTaskChatPage() {
 
       {/* ── Floating & Sticky Chat Input ── */}
       <div className="absolute bottom-4 left-0 right-0 w-full max-w-2xl mx-auto px-4 z-30">
-        <form onSubmit={handleSend} className="w-full flex items-center gap-2 p-1.5 rounded-2xl border border-zinc-200/40 dark:border-zinc-800/40 bg-white/30 dark:bg-black/35 backdrop-blur-md shadow-xl focus-within:border-primary/30">
-          <input
-            type="text"
+        <form
+          onSubmit={handleSend}
+          className="w-full flex items-end gap-2.5 p-2 rounded-3xl border border-zinc-800/80 bg-zinc-900/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-2xl focus-within:border-zinc-700/80"
+        >
+          <textarea
+            rows={1}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 bg-transparent text-sm text-foreground focus:outline-none px-3"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault()
+                handleSend(e)
+              }
+            }}
+            placeholder="Message AI Assistant..."
+            className="flex-1 bg-transparent text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-3 py-1.5 resize-none max-h-32 min-h-[38px] scrollbar-none"
           />
-          <Button
+          <button
             type="submit"
-            size="icon"
             disabled={!input.trim() || genStatus !== "idle"}
-            className="h-8 w-8 rounded-xl shrink-0 transition-all active:scale-95"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 transition-all active:scale-95 cursor-pointer"
           >
-            <Send className="h-3.5 w-3.5" />
-          </Button>
+            <Send className="h-4 w-4" />
+          </button>
         </form>
       </div>
 
