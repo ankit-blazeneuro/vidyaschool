@@ -1,8 +1,10 @@
 import os
+import json
 import httpx
 from datetime import datetime
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlmodel import Session
 from app.core.auth import get_current_user
 from app.core.database import get_db
@@ -27,7 +29,7 @@ NVIDIA_API_KEY = os.getenv(
 )
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 
-async def call_nvidia_api(messages_payload: list) -> str:
+async def response_stream_generator(messages_payload: list, room_id: str, db: Session):
     headers = {
         "Authorization": f"Bearer {NVIDIA_API_KEY}",
         "Content-Type": "application/json"
@@ -38,27 +40,61 @@ async def call_nvidia_api(messages_payload: list) -> str:
         "temperature": 0.8,
         "top_p": 1,
         "max_tokens": 4096,
-        "stream": False
+        "stream": True
     }
     
+    full_content = ""
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                NVIDIA_BASE_URL,
-                headers=headers,
-                json=payload,
-                timeout=45.0
-            )
-            if response.status_code == 200:
-                res_data = response.json()
-                return res_data["choices"][0]["message"]["content"]
-            else:
-                error_msg = f"NVIDIA API Error: Status {response.status_code} - {response.text}"
-                print(error_msg)
-                return f"Sorry, I encountered an error communicating with the NVIDIA AI model. ({response.status_code})"
+            async with client.stream(
+                "POST", 
+                NVIDIA_BASE_URL, 
+                headers=headers, 
+                json=payload, 
+                timeout=60.0
+            ) as r:
+                if r.status_code != 200:
+                    err_msg = f"NVIDIA error status {r.status_code}"
+                    yield f"data: {json.dumps({'content': 'AI model connection failed.'})}\n\n"
+                    return
+                
+                async for line in r.aiter_lines():
+                    if not line:
+                        continue
+                    if line.startswith("data: "):
+                        data_str = line[6:].strip()
+                        if data_str == "[DONE]":
+                            break
+                        try:
+                            chunk_data = json.loads(data_str)
+                            content = chunk_data["choices"][0]["delta"].get("content", "")
+                            if content:
+                                full_content += content
+                                yield f"data: {json.dumps({'content': content})}\n\n"
+                        except Exception:
+                            pass
     except Exception as e:
-        print(f"Failed to reach NVIDIA API: {str(e)}")
-        return f"Failed to establish connection with the AI assistant. ({str(e)})"
+        yield f"data: {json.dumps({'content': f'Connection error: {str(e)}'})}\n\n"
+        return
+
+    # After full stream finishes, write complete response to DB
+    try:
+        assistant_msg = ChatMessage(
+            id=f"msg_ai_{datetime.utcnow().timestamp()}",
+            room_id=room_id,
+            role="assistant",
+            content=full_content,
+            created_at=datetime.utcnow()
+        )
+        db.add(assistant_msg)
+        
+        room = db.query(ChatRoom).filter(ChatRoom.id == room_id).first()
+        if room:
+            room.updated_at = datetime.utcnow()
+            
+        db.commit()
+    except Exception as ex:
+        print(f"Failed to save assistant stream to DB: {ex}")
 
 
 @router.post("/api/chats")
@@ -83,7 +119,7 @@ async def start_chat(
 
     # 2. Add user message
     user_msg = ChatMessage(
-        id=f"msg_{crypto_uuid()}" if "crypto_uuid" in globals() else f"msg_{datetime.utcnow().timestamp()}",
+        id=f"msg_user_{datetime.utcnow().timestamp()}",
         room_id=room.id,
         role="user",
         content=req.message,
@@ -92,29 +128,12 @@ async def start_chat(
     db.add(user_msg)
     db.commit()
 
-    # 3. Call NVIDIA completion
+    # 3. Stream NVIDIA completion
     nvidia_payload = [{"role": "user", "content": req.message}]
-    assistant_content = await call_nvidia_api(nvidia_payload)
-
-    # 4. Save assistant response
-    assistant_msg = ChatMessage(
-        id=f"msg_{datetime.utcnow().timestamp()}_ai",
-        room_id=room.id,
-        role="assistant",
-        content=assistant_content,
-        created_at=datetime.utcnow()
+    return StreamingResponse(
+        response_stream_generator(nvidia_payload, room.id, db),
+        media_type="text/event-stream"
     )
-    db.add(assistant_msg)
-    
-    # Update room update timestamp
-    room.updated_at = datetime.utcnow()
-    db.commit()
-
-    return {
-        "uuid": room.id,
-        "title": room.title,
-        "content": assistant_content
-    }
 
 
 @router.get("/api/chats")
@@ -212,23 +231,8 @@ async def send_chat_message(
     )
     messages_payload = [{"role": m.role, "content": m.content} for m in history]
 
-    # 3. Call NVIDIA completion
-    assistant_content = await call_nvidia_api(messages_payload)
-
-    # 4. Save assistant response
-    assistant_msg = ChatMessage(
-        id=f"msg_ai_{datetime.utcnow().timestamp()}",
-        room_id=room.id,
-        role="assistant",
-        content=assistant_content,
-        created_at=datetime.utcnow()
+    # 3. Stream NVIDIA completion
+    return StreamingResponse(
+        response_stream_generator(messages_payload, room.id, db),
+        media_type="text/event-stream"
     )
-    db.add(assistant_msg)
-    
-    room.updated_at = datetime.utcnow()
-    db.commit()
-
-    return {
-        "role": "assistant",
-        "content": assistant_content
-    }

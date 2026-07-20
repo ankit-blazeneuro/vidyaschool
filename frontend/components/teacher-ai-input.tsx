@@ -7,6 +7,16 @@ import { Send, Sparkles } from "lucide-react"
 export function TeacherAIInput() {
   const router = useRouter()
   const [message, setMessage] = React.useState("")
+  const [username, setUsername] = React.useState("")
+
+  React.useEffect(() => {
+    fetch("/api/profile/username")
+      .then(res => res.json())
+      .then(data => {
+        if (data.username) setUsername(data.username)
+      })
+      .catch(() => {})
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,7 +53,7 @@ export function TeacherAIInput() {
       // Ignore background sync errors, client fallback is active
     })
 
-    router.push(`/tasks/${uuid}`)
+    router.push(`/teacher/${username || 'username'}/tasks/${uuid}`)
   }
 
   return (

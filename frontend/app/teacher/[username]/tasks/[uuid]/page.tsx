@@ -19,9 +19,10 @@ interface ChatSession {
   createdAt: string
 }
 
-export default function TaskChatPage() {
+export default function TeacherTaskChatPage() {
   const params = useParams()
   const router = useRouter()
+  const username = params?.username as string
   const uuid = params?.uuid as string
 
   const [session, setSession] = React.useState<ChatSession | null>(null)
@@ -61,7 +62,6 @@ export default function TaskChatPage() {
       .then((data: ChatSession) => {
         setSession(data)
         setIsLocalMode(false)
-        // Keep local storage in sync
         syncToLocalStorage(data)
       })
       .catch(() => {
@@ -98,6 +98,56 @@ export default function TaskChatPage() {
     }
   }
 
+  // Handle local mock simulated streaming typing effect
+  const handleLocalSimulation = (userMessageText: string, updatedMessages: Message[], updatedSession: ChatSession) => {
+    setIsTyping(true)
+
+    setTimeout(() => {
+      const localAnswers = [
+        `I have received your request for: "${userMessageText}". Here is a template plan you can modify:\n\n**1. Objective:** Align with curriculum requirements.\n**2. Key Tasks:** Verify student roster allocations, assign timelines, and build test templates.\n**3. Support:** Reach academic coordinators for leaves or technical support.\n\n*Note: Running in local simulation mode since the Nvidia AI backend is pending.*`,
+        `Here is a custom task sheet for "${userMessageText}":\n\n- Task 1: Grade class test submissions and update Marks records.\n- Task 2: Publish class bulletin alerts for the upcoming exams.\n- Task 3: Setup library reserve lists for science textbooks.\n\nLet me know if you would like me to refine this further!`,
+        `Understood. For "${userMessageText}", I suggest scheduling a class review section. You can use the Notice board tool in the teacher workspace to alert students instantly.\n\nLet me know what other resources you need!`
+      ]
+      const fullAnswer = localAnswers[Math.floor(Math.random() * localAnswers.length)]
+      setIsTyping(false)
+
+      // Start streaming typing effect
+      let currentLength = 0
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: "",
+        createdAt: new Date().toISOString()
+      }
+
+      // Append assistant message container
+      setSession({
+        ...updatedSession,
+        messages: [...updatedMessages, assistantMessage]
+      })
+
+      const interval = setInterval(() => {
+        currentLength += Math.min(3, fullAnswer.length - currentLength)
+        const partialContent = fullAnswer.slice(0, currentLength)
+
+        const finalSession = {
+          ...updatedSession,
+          messages: [
+            ...updatedMessages,
+            { ...assistantMessage, content: partialContent }
+          ]
+        }
+        setSession(finalSession)
+
+        if (currentLength >= fullAnswer.length) {
+          clearInterval(interval)
+          // Settle in storage
+          syncToLocalStorage(finalSession)
+        }
+      }, 35)
+
+    }, 800)
+  }
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!input.trim() || !session) return
@@ -114,7 +164,7 @@ export default function TaskChatPage() {
     // Append user message immediately
     const updatedMessages = [...session.messages, userMessage]
     
-    // Assign title dynamically based on the first user message if it's currently generic
+    // Assign title dynamically based on the first user message if it's generic
     let currentTitle = session.title
     if (currentTitle === "AI Chat Assistant" || currentTitle.startsWith("New Chat")) {
       currentTitle = userMessageText.slice(0, 35) + (userMessageText.length > 35 ? "..." : "")
@@ -128,9 +178,15 @@ export default function TaskChatPage() {
 
     setSession(updatedSession)
     syncToLocalStorage(updatedSession)
+
+    if (isLocalMode) {
+      handleLocalSimulation(userMessageText, updatedMessages, updatedSession)
+      return
+    }
+
     setIsTyping(true)
 
-    // Call API or local mock simulation
+    // Call API and stream response
     try {
       const res = await fetch(`/api/backend/api/chats/${uuid}`, {
         method: "POST",
@@ -140,51 +196,71 @@ export default function TaskChatPage() {
 
       if (!res.ok) throw new Error("API failed")
 
-      const data = await res.json()
-      
+      const reader = res.body?.getReader()
+      const decoder = new TextDecoder()
+      if (!reader) throw new Error("No reader")
+
+      setIsTyping(false)
+      let done = false
+      let fullContent = ""
+
       const assistantMessage: Message = {
         role: "assistant",
-        content: data.content || data.message || "I received your message and am processing it.",
+        content: "",
         createdAt: new Date().toISOString()
       }
 
-      const finalSession = {
+      setSession({
         ...updatedSession,
         messages: [...updatedMessages, assistantMessage]
+      })
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read()
+        done = doneReading
+        const chunkValue = decoder.decode(value)
+        
+        // Parse lines of event-stream
+        const lines = chunkValue.split("\n")
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6).trim()
+            try {
+              const parsed = JSON.parse(dataStr)
+              if (parsed.content) {
+                fullContent += parsed.content
+                
+                // Update component state in real-time
+                setSession({
+                  ...updatedSession,
+                  messages: [
+                    ...updatedMessages,
+                    { ...assistantMessage, content: fullContent }
+                  ]
+                })
+              }
+            } catch (err) {
+              // Ignore line parse errors
+            }
+          }
+        }
+      }
+
+      // Final save to localStorage once stream settles
+      const finalSession = {
+        ...updatedSession,
+        messages: [
+          ...updatedMessages,
+          { ...assistantMessage, content: fullContent }
+        ]
       }
       setSession(finalSession)
       syncToLocalStorage(finalSession)
+
     } catch (err) {
-      console.warn("Backend API call failed, using local simulation mode:", err)
-      setIsLocalMode(true)
-
-      // Simulate AI response delay
-      setTimeout(() => {
-        const localAnswers = [
-          `I have received your request for: "${userMessageText}". Here is a template plan you can modify:\n\n**1. Objective:** Align with curriculum requirements.\n**2. Key Tasks:** Verify student roster allocations, assign timelines, and build test templates.\n**3. Support:** Reach academic coordinators for leaves or technical support.\n\n*Note: Running in local simulation mode since the Nvidia AI backend is pending.*`,
-          `Here is a custom task sheet for "${userMessageText}":\n\n- Task 1: Grade class test submissions and update Marks records.\n- Task 2: Publish class bulletin alerts for the upcoming exams.\n- Task 3: Setup library reserve lists for science textbooks.\n\nLet me know if you would like me to refine this further!`,
-          `Understood. For "${userMessageText}", I suggest scheduling a class review section. You can use the Notice board tool in the teacher workspace to alert students instantly.\n\nLet me know what other resources you need!`
-        ]
-        const randomAnswer = localAnswers[Math.floor(Math.random() * localAnswers.length)]
-
-        const assistantMessage: Message = {
-          role: "assistant",
-          content: randomAnswer,
-          createdAt: new Date().toISOString()
-        }
-
-        const finalSession = {
-          ...updatedSession,
-          messages: [...updatedMessages, assistantMessage]
-        }
-        setSession(finalSession)
-        syncToLocalStorage(finalSession)
-        setIsTyping(false)
-      }, 1200)
-      return
+      console.warn("Backend API call failed during chat submit, entering simulated stream:", err)
+      handleLocalSimulation(userMessageText, updatedMessages, updatedSession)
     }
-
-    setIsTyping(false)
   }
 
   if (!session) {
@@ -203,7 +279,7 @@ export default function TaskChatPage() {
       <div className="flex items-center justify-between px-5 py-4 border-b border-border/60 bg-muted/20">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" asChild className="h-8 w-8 md:hidden">
-            <Link href="/teacher">
+            <Link href={`/teacher/${username}`}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>

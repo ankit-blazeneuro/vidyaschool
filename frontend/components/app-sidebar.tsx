@@ -1064,7 +1064,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <button
                     onClick={() => {
                       const uuid = crypto.randomUUID()
-                      router.push(`/tasks/${uuid}`)
+                      router.push(`/teacher/${profileUsername || 'username'}/tasks/${uuid}`)
                     }}
                     className="flex items-center gap-1 text-[10px] hover:text-foreground text-primary font-semibold transition-colors cursor-pointer"
                   >
@@ -1082,10 +1082,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         <SidebarMenuItem key={chat.id}>
                           <SidebarMenuButton
                             asChild
-                            isActive={pathname === `/tasks/${chat.id}`}
+                            isActive={pathname === `/teacher/${profileUsername}/tasks/${chat.id}`}
                             className="py-1 h-7.5 px-3 rounded-lg"
                           >
-                            <Link href={`/tasks/${chat.id}`} className="flex items-center gap-2">
+                            <Link href={`/teacher/${profileUsername || 'username'}/tasks/${chat.id}`} className="flex items-center gap-2">
                               <MessageSquare className="size-3.5 shrink-0 text-muted-foreground" />
                               <span className="truncate text-xs font-normal">{chat.title}</span>
                             </Link>
