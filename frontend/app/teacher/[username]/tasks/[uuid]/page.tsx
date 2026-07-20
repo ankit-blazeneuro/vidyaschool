@@ -291,30 +291,6 @@ export default function TeacherTaskChatPage() {
   return (
     <div className="relative flex flex-col h-[calc(100vh-var(--header-height)-32px)] border border-border/60 bg-card rounded-2xl overflow-hidden shadow-sm">
       
-      {/* ── Chat Header ── */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border/60 bg-muted/20">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" asChild className="h-8 w-8 md:hidden">
-            <Link href={`/teacher/${username}`}>
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Brain className="h-4.5 w-4.5" />
-          </span>
-          <div>
-            <h2 className="text-sm font-bold text-foreground truncate max-w-[220px] sm:max-w-md">
-              {session.title}
-            </h2>
-          </div>
-        </div>
-
-        {isLocalMode && (
-          <span className="text-[9px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20">
-            Simulated
-          </span>
-        )}
-      </div>
 
       {/* ── Chat Messages Pane ── */}
       <div className="flex-1 overflow-y-auto p-5 pb-24 space-y-4 scrollbar-thin bg-zinc-50/30 dark:bg-black/5">
