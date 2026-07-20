@@ -6,6 +6,7 @@ import { Send, User, Brain, ArrowLeft, Loader2, Sparkles, HelpCircle } from "luc
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import ReactMarkdown from "react-markdown"
 
 interface Message {
   role: "user" | "assistant"
@@ -329,15 +330,29 @@ export default function TeacherTaskChatPage() {
 
                 {/* Bubble */}
                 <div className="space-y-1 flex-1">
-                  <div
-                    className={`text-sm leading-relaxed whitespace-pre-wrap ${
-                      isUser
-                        ? "bg-zinc-800/80 dark:bg-zinc-800/80 border border-zinc-700/40 text-zinc-100 rounded-3xl px-5 py-3 shadow-xs ml-auto w-fit max-w-[85%]"
-                        : "text-zinc-150 dark:text-zinc-100 py-2 leading-relaxed text-sm"
-                    }`}
-                  >
-                    {msg.content}
-                  </div>
+                  {isUser ? (
+                    <div className="bg-zinc-800/80 dark:bg-zinc-800/80 border border-zinc-700/40 text-zinc-100 rounded-3xl px-5 py-3 shadow-xs ml-auto w-fit max-w-[85%] text-sm leading-relaxed whitespace-pre-wrap">
+                      {msg.content}
+                    </div>
+                  ) : (
+                    <div className="text-zinc-150 dark:text-zinc-100 py-1 leading-relaxed text-sm">
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="mb-2.5 last:mb-0">{children}</p>,
+                          ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 space-y-1">{children}</ol>,
+                          li: ({ children }) => <li className="text-zinc-200">{children}</li>,
+                          h1: ({ children }) => <h1 className="text-lg font-bold mt-4 mb-2 text-white">{children}</h1>,
+                          h2: ({ children }) => <h2 className="text-base font-bold mt-3.5 mb-1.5 text-white">{children}</h2>,
+                          strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+                          code: ({ children }) => <code className="bg-zinc-850 px-1.5 py-0.5 rounded text-xs text-rose-400 font-mono">{children}</code>,
+                          pre: ({ children }) => <pre className="bg-zinc-900 border border-zinc-800 p-3 rounded-lg overflow-x-auto my-2.5 font-mono text-xs text-zinc-200">{children}</pre>
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                   <p className={`text-[9px] text-muted-foreground/60 ${isUser ? "text-right" : "text-left"}`}>
                     {new Date(msg.createdAt).toLocaleTimeString("en-US", {
                       hour: "numeric",
