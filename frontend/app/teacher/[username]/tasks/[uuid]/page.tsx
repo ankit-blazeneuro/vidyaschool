@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Send, User, Brain, ArrowLeft, Loader2, Sparkles, HelpCircle, Copy, Check } from "lucide-react"
+import { Send, User, Brain, ArrowLeft, Loader2, Sparkles, HelpCircle, Copy, Check, ArrowDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -78,6 +78,13 @@ export default function TeacherTaskChatPage() {
   const [isLocalMode, setIsLocalMode] = React.useState(false)
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+  const [showScrollButton, setShowScrollButton] = React.useState(false)
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget
+    const isFar = target.scrollHeight - target.scrollTop - target.clientHeight > 300
+    setShowScrollButton(isFar)
+  }
 
   // Auto-expand textarea on content growth (Shift + Enter)
   React.useEffect(() => {
@@ -358,7 +365,7 @@ export default function TeacherTaskChatPage() {
     <div className="relative flex flex-col h-[calc(100vh-var(--header-height)-16px)] bg-[#090909] w-full overflow-hidden">
       
       {/* ── Chat Messages Pane ── */}
-      <ScrollArea className="flex-1 px-5 pt-5 relative z-10" viewportClassName="pb-28">
+      <ScrollArea onScroll={handleScroll} className="flex-1 px-5 pt-5 relative z-10" viewportClassName="pb-28">
         <div className="space-y-4 max-w-4xl mx-auto w-full">
           {session.messages.map((msg, index) => {
             const isUser = msg.role === "user"
@@ -479,6 +486,16 @@ export default function TeacherTaskChatPage() {
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
+
+      {/* ── Scroll to Bottom Float Trigger ── */}
+      {showScrollButton && (
+        <button
+          onClick={scrollToBottom}
+          className="absolute bottom-20 right-8 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/90 text-zinc-300 hover:text-white hover:bg-zinc-850 shadow-xl transition-all cursor-pointer hover:scale-105 active:scale-95 animate-in fade-in slide-in-from-bottom-2 duration-200"
+        >
+          <ArrowDown className="size-4" />
+        </button>
+      )}
 
       {/* ── Floating & Sticky Chat Input ── */}
       <div className="absolute bottom-4 left-0 right-0 w-full max-w-4xl mx-auto px-4 z-30">
