@@ -27,6 +27,7 @@ export function HeaderComplaintButton() {
   const { data: session } = useSession()
   const [complaintOpen, setComplaintOpen] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [, startTransition] = React.useTransition()
 
   // Form states
   const [recipient, setRecipient] = React.useState("Teacher")
@@ -141,7 +142,7 @@ export function HeaderComplaintButton() {
   return (
     <>
       <Button 
-        onClick={() => setComplaintOpen(true)}
+        onClick={() => startTransition(() => setComplaintOpen(true))}
         variant="outline" 
         size="sm" 
         className="h-7 text-[11px] gap-1.5 border-zinc-200/80 dark:border-zinc-800 bg-background hover:bg-muted text-foreground font-medium rounded-lg px-2.5 shadow-none transition-colors"
@@ -151,8 +152,9 @@ export function HeaderComplaintButton() {
       </Button>
 
       {/* Dialog: File a Complaint */}
-      <Dialog open={complaintOpen} onOpenChange={setComplaintOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={complaintOpen} onOpenChange={(open) => startTransition(() => setComplaintOpen(open))}>
+        {complaintOpen && (
+          <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="size-5" /> File a Complaint
@@ -252,7 +254,8 @@ export function HeaderComplaintButton() {
               </Button>
             </DialogFooter>
           </form>
-        </DialogContent>
+          </DialogContent>
+        )}
       </Dialog>
     </>
   )
