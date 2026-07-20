@@ -306,7 +306,7 @@ export default function TeacherTaskChatPage() {
       
       {/* ── Chat Messages Pane ── */}
       <ScrollArea className="flex-1 px-5 pt-5 relative z-10" viewportClassName="pb-28">
-        <div className="space-y-4">
+        <div className="space-y-4 max-w-2xl mx-auto w-full">
           {session.messages.map((msg, index) => {
             const isUser = msg.role === "user"
             return (
