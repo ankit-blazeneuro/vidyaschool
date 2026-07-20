@@ -19,7 +19,8 @@ from models import (
     Exam, 
     StudentSubjectMarks, 
     Notice, 
-    TeacherNote
+    TeacherNote,
+    Timetable
 )
 
 # Initialize FastMCP Server
@@ -349,6 +350,87 @@ def request_subject_class(
         session.add(new_req)
         session.commit()
         return f"Teaching request submitted successfully (ID: {new_req.id}). Awaiting class teacher approval."
+
+# ── Tool 7: Schedule Timetable Slot ──
+@mcp.tool()
+def schedule_timetable_slot(
+    teacher_email: str,
+    class_name: str,
+    section: str,
+    subject: str,
+    day_of_week: str,
+    start_time: str,
+    end_time: str,
+    room: str = None
+) -> str:
+    """
+    Schedule a teaching class slot in the timetable database.
+    :param teacher_email: The email of the teacher.
+    :param class_name: The target class name (e.g. 'Class 10').
+    :param section: The section letter (e.g. 'A').
+    :param subject: The subject name (e.g. 'English').
+    :param day_of_week: The day of the week ('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday').
+    :param start_time: Start time 24h format (e.g. '09:00').
+    :param end_time: End time 24h format (e.g. '09:45').
+    :param room: Optional room/classroom location.
+    """
+    with Session(engine) as session:
+        teacher = _get_user_by_email(session, teacher_email)
+        if not teacher:
+            return f"Error: Teacher with email '{teacher_email}' not found."
+        
+        # Check for collision
+        existing = session.exec(
+            select(Timetable).where(
+                Timetable.class_ == class_name,
+                Timetable.section == section,
+                Timetable.day_of_week == day_of_week,
+                Timetable.start_time == start_time
+            )
+        ).first()
+        if existing:
+            return f"Collision: Slot already scheduled for {class_name}-{section} on {day_of_week} at {start_time}."
+
+        slot = Timetable(
+            id=f"slot_{uuid.uuid4().hex[:10]}",
+            teacher_id=teacher.id,
+            class_=class_name,
+            section=section,
+            subject=subject,
+            day_of_week=day_of_week,
+            start_time=start_time,
+            end_time=end_time,
+            room=room,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        session.add(slot)
+        session.commit()
+        return f"Successfully scheduled {subject} class for {class_name}-{section} on {day_of_week} ({start_time} - {end_time}) in Room {room or 'N/A'}."
+
+# ── Tool 8: Get Teacher Timetable ──
+@mcp.tool()
+def get_teacher_timetable(teacher_email: str) -> str:
+    """
+    Retrieve the current teacher's weekly scheduled timetable slots.
+    :param teacher_email: The email of the teacher.
+    """
+    with Session(engine) as session:
+        teacher = _get_user_by_email(session, teacher_email)
+        if not teacher:
+            return f"Error: Teacher with email '{teacher_email}' not found."
+        
+        slots = session.exec(
+            select(Timetable)
+            .where(Timetable.teacher_id == teacher.id)
+            .order_by(Timetable.day_of_week, Timetable.start_time)
+        ).all()
+        if not slots:
+            return "No scheduled classes found in your timetable."
+        res = [f"Timetable for {teacher.name}:"]
+        for s in slots:
+            res.append(f"- {s.day_of_week}: {s.subject} ({s.class_}-{s.section}) at {s.start_time}-{s.end_time} in Room {s.room or 'N/A'}")
+        return "\n".join(res)
 
 if __name__ == "__main__":
     # Start stdio transport mcp loop

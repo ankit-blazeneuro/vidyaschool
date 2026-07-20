@@ -246,3 +246,17 @@ class ChatMessage(SQLModel, table=True):
     role: str
     content: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Timetable(SQLModel, table=True):
+    __tablename__ = "timetable"
+    id: str = Field(primary_key=True)
+    teacher_id: str = Field(alias="teacher_id", foreign_key="user.id")
+    class_: str = Field(alias="class", sa_column_kwargs={"name": "class"})
+    section: str
+    subject: str
+    day_of_week: str = Field(alias="day_of_week")
+    start_time: str = Field(alias="start_time")
+    end_time: str = Field(alias="end_time")
+    room: Optional[str] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
