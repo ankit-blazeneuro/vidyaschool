@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { Send, User, Brain, ArrowLeft, Loader2, Sparkles, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface Message {
   role: "user" | "assistant"
@@ -291,87 +292,86 @@ export default function TeacherTaskChatPage() {
   return (
     <div className="relative flex flex-col h-[calc(100vh-var(--header-height)-16px)] bg-[#090909] w-full overflow-hidden">
       
-      {/* Glowing Violet AI Orb (+1 color accent) */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-violet-600/10 dark:bg-violet-600/15 blur-[100px] pointer-events-none z-0" />
-
       {/* ── Chat Messages Pane ── */}
-      <div className="flex-1 overflow-y-auto p-5 pb-24 space-y-4 scrollbar-thin bg-transparent relative z-10">
-        {session.messages.map((msg, index) => {
-          const isUser = msg.role === "user"
-          return (
-            <div
-              key={index}
-              className={`flex gap-3 max-w-[85%] ${
-                isUser ? "ml-auto flex-row-reverse" : "mr-auto"
-              }`}
-            >
-              {/* Avatar */}
-              <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${
-                  isUser
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-zinc-900 text-zinc-400 border border-zinc-800"
+      <ScrollArea className="flex-1 px-5 pt-5 relative z-10" viewportClassName="pb-28">
+        <div className="space-y-4">
+          {session.messages.map((msg, index) => {
+            const isUser = msg.role === "user"
+            return (
+              <div
+                key={index}
+                className={`flex gap-3 max-w-[85%] ${
+                  isUser ? "ml-auto flex-row-reverse" : "mr-auto"
                 }`}
               >
-                {isUser ? <User className="size-3.5" /> : <Brain className="size-3.5 text-primary" />}
-              </span>
-
-              {/* Bubble */}
-              <div className="space-y-1 flex-1">
-                <div
-                  className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                {/* Avatar */}
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${
                     isUser
-                      ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none px-4 py-2.5 shadow-xs ml-auto w-fit"
-                      : "text-zinc-100 dark:text-zinc-200 py-1"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-zinc-900 text-zinc-400 border border-zinc-800"
                   }`}
                 >
-                  {msg.content}
+                  {isUser ? <User className="size-3.5" /> : <Brain className="size-3.5 text-primary" />}
+                </span>
+
+                {/* Bubble */}
+                <div className="space-y-1 flex-1">
+                  <div
+                    className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                      isUser
+                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none px-4 py-2.5 shadow-xs ml-auto w-fit"
+                        : "text-zinc-100 dark:text-zinc-200 py-1"
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                  <p className={`text-[9px] text-muted-foreground/60 ${isUser ? "text-right" : "text-left"}`}>
+                    {new Date(msg.createdAt).toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true
+                    })}
+                  </p>
                 </div>
-                <p className={`text-[9px] text-muted-foreground/60 ${isUser ? "text-right" : "text-left"}`}>
-                  {new Date(msg.createdAt).toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true
-                  })}
-                </p>
+              </div>
+            )
+          })}
+
+          {/* Shimmer loading / Generation Status */}
+          {isTyping && genStatus === "thinking" && (
+            <div className="flex gap-3 max-w-[80%] mr-auto items-start">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground border border-border animate-pulse">
+                <Brain className="size-3.5 text-primary" />
+              </span>
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 flex items-center gap-2.5 shadow-xs animate-pulse">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
+                <span className="text-xs font-semibold text-primary">Thinking...</span>
               </div>
             </div>
-          )
-        })}
+          )}
 
-        {/* Shimmer loading / Generation Status */}
-        {isTyping && genStatus === "thinking" && (
-          <div className="flex gap-3 max-w-[80%] mr-auto items-start">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground border border-border animate-pulse">
-              <Brain className="size-3.5 text-primary" />
-            </span>
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 flex items-center gap-2.5 shadow-xs animate-pulse">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+          {genStatus === "generating" && (
+            <div className="flex gap-3 max-w-[80%] mr-auto items-start">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground border border-border animate-spin duration-1000">
+                <Sparkles className="size-3.5 text-primary" />
               </span>
-              <span className="text-xs font-semibold text-primary">Thinking...</span>
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 flex items-center gap-2.5 shadow-xs">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Generating...</span>
+              </div>
             </div>
-          </div>
-        )}
-
-        {genStatus === "generating" && (
-          <div className="flex gap-3 max-w-[80%] mr-auto items-start">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground border border-border animate-spin duration-1000">
-              <Sparkles className="size-3.5 text-primary" />
-            </span>
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 flex items-center gap-2.5 shadow-xs">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Generating...</span>
-            </div>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
-      </div>
+          )}
+          
+          <div ref={messagesEndRef} />
+        </div>
+      </ScrollArea>
 
       {/* ── Floating & Sticky Chat Input ── */}
       <div className="absolute bottom-4 left-0 right-0 w-full max-w-2xl mx-auto px-4 z-30">
