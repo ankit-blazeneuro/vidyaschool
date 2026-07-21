@@ -49,23 +49,43 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
   const { path } = await params
   const pathStr = path.join('/')
   const url = `${BACKEND_URL}/${pathStr}`
-  
+
   try {
     const cookieHeader = req.headers.get('cookie') || ''
     const authHeader = req.headers.get('authorization') || ''
-    const body = await req.json()
-    console.log(`PROXY [POST] Request to ${url} with body:`, JSON.stringify(body))
-    
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
+    const contentType = req.headers.get('content-type') || ''
+
+    let fetchBody: BodyInit
+    let fetchHeaders: Record<string, string>
+
+    if (contentType.includes('multipart/form-data')) {
+      // ── Multipart / file upload: forward raw body + preserve boundary ──
+      const rawBody = await req.arrayBuffer()
+      fetchBody = rawBody
+      fetchHeaders = {
+        'cookie': cookieHeader,
+        'content-type': contentType, // must include boundary=... for FastAPI to parse
+        ...(authHeader && { 'authorization': authHeader }),
+      }
+      console.log(`PROXY [POST] Multipart upload to ${url} (${rawBody.byteLength} bytes)`)
+    } else {
+      // ── JSON body (default) ──
+      const body = await req.json()
+      console.log(`PROXY [POST] Request to ${url} with body:`, JSON.stringify(body))
+      fetchBody = JSON.stringify(body)
+      fetchHeaders = {
         'cookie': cookieHeader,
         'Content-Type': 'application/json',
         ...(authHeader && { 'authorization': authHeader }),
-      },
-      body: JSON.stringify(body),
+      }
+    }
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: fetchHeaders,
+      body: fetchBody,
     })
-    
+
     if (!res.ok) {
       const errorText = await res.text()
       console.error(`PROXY [POST] Error response from ${url} (status: ${res.status}):`, errorText)
@@ -86,7 +106,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
         }
       })
     }
-    
+
     const data = await res.json()
     return NextResponse.json(data)
   } catch (error: any) {

@@ -1223,35 +1223,34 @@ def apply_fee_structures(
 
 @router.get("/api/student/leaderboard", response_model=Dict[str, Any])
 def get_student_class_leaderboard(
-    current_user: User = Depends(require_role(["student"])),
+    current_user: User = Depends(require_role(["student", "teacher", "admin", "librarian"])),
     db: Session = Depends(get_db)
 ):
     from models import UserProfile, StudentSubjectMarks, User as UserModel
     
-    # 1. Find current student's class and section
     profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
-    if not profile or not profile.class_ or profile.class_ == "none":
-        return {"class": None, "section": None, "leaderboard": [], "current_student_rank": None}
-        
-    # 2. Get all students in the same class and section
-    class_students = db.query(UserModel, UserProfile).join(
-        UserProfile, UserModel.id == UserProfile.user_id
-    ).filter(
-        UserProfile.class_ == profile.class_,
-        UserProfile.section == profile.section,
-        UserModel.role == "student"
-    ).all()
     
+    query = db.query(UserModel, UserProfile).join(
+        UserProfile, UserModel.id == UserProfile.user_id
+    ).filter(UserModel.role == "student")
+
+    target_class = None
+    target_section = None
+
+    if current_user.role == "student" and profile and profile.class_ and profile.class_ != "none":
+        target_class = profile.class_
+        target_section = profile.section
+        query = query.filter(UserProfile.class_ == profile.class_, UserProfile.section == profile.section)
+
+    class_students = query.all()
     student_ids = [u.id for u, _ in class_students]
     if not student_ids:
-        return {"class": profile.class_, "section": profile.section, "leaderboard": [], "current_student_rank": None}
-        
-    # 3. Get all marks for these students
+        return {"class": target_class, "section": target_section, "leaderboard": [], "current_student_rank": None}
+
     all_marks = db.query(StudentSubjectMarks).filter(
         StudentSubjectMarks.student_id.in_(student_ids)
     ).all()
-    
-    # 4. Group marks by student and compute average score
+
     leaderboard_data = []
     for u, p in class_students:
         student_marks = [m for m in all_marks if m.student_id == u.id]
@@ -1261,29 +1260,28 @@ def get_student_class_leaderboard(
             avg_pct = (total_score / total_max * 100) if total_max > 0 else 0
         else:
             avg_pct = 0.0
-            
+
         leaderboard_data.append({
             "id": u.id,
             "name": u.name,
             "username": p.username or u.name.lower().replace(" ", ""),
             "image": u.image,
+            "class": p.class_,
+            "section": p.section,
             "average": round(avg_pct, 1),
             "examsCount": len(set(m.exam_id for m in student_marks))
         })
-        
-    # 5. Sort by average score descending
+
     leaderboard_data.sort(key=lambda x: x["average"], reverse=True)
-    
-    # Add rank
+
     for rank, entry in enumerate(leaderboard_data, 1):
         entry["rank"] = rank
-        
-    # Find current student rank
+
     current_rank = next((x["rank"] for x in leaderboard_data if x["id"] == current_user.id), None)
-    
+
     return {
-        "class": profile.class_,
-        "section": profile.section,
+        "class": target_class,
+        "section": target_section,
         "leaderboard": leaderboard_data,
         "current_student_rank": current_rank
     }

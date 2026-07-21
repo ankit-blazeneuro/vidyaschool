@@ -789,7 +789,7 @@ async def send_notification_to_user(user_id: str, title: str, body: str, db: Ses
         print(f"Failed to log notification history for user {user_id}: {e}")
         db.rollback()
 
-    sids = get_online_sids_for_user(user_id)
+    sids = list(set(get_online_sids_for_user(user_id)))
     if sids:
         for sid in sids:
             try:
@@ -797,10 +797,11 @@ async def send_notification_to_user(user_id: str, title: str, body: str, db: Ses
             except Exception as e:
                 print(f"Error emitting socket notification: {e}")
         print(f"Sent notification to online user {user_id} via socket.")
-    else:
-        tokens = db.query(FCMToken).filter(FCMToken.user_id == user_id).all()
-        if tokens:
-            token_list = list(set([t.token for t in tokens]))  # De-duplicate tokens
+
+    tokens = db.query(FCMToken).filter(FCMToken.user_id == user_id).all()
+    if tokens:
+        token_list = list(set([t.token for t in tokens if t.token]))  # De-duplicate tokens
+        if token_list:
             send_fcm_notification(token_list, title, body)
             print(f"Sent notification to user {user_id} via FCM ({len(token_list)} token(s)).")
 
@@ -811,6 +812,12 @@ def register_fcm_token(data: dict, current_user: User = Depends(get_current_user
         raise HTTPException(status_code=400, detail="Token is required")
         
     from models import FCMToken
+    # Remove token from any other users (prevents duplicate delivery on shared/re-logged devices)
+    try:
+        db.query(FCMToken).filter(FCMToken.token == token, FCMToken.user_id != current_user.id).delete(synchronize_session=False)
+    except Exception as e:
+        print(f"Failed to clean up stale FCM tokens: {e}")
+
     existing = db.query(FCMToken).filter(FCMToken.user_id == current_user.id, FCMToken.token == token).first()
     if not existing:
         new_token = FCMToken(
@@ -821,7 +828,9 @@ def register_fcm_token(data: dict, current_user: User = Depends(get_current_user
             updated_at=datetime.utcnow()
         )
         db.add(new_token)
-        db.commit()
+    else:
+        existing.updated_at = datetime.utcnow()
+    db.commit()
     return {"success": True}
 
 @app.get("/api/notifications/history")
@@ -851,12 +860,49 @@ async def send_custom_notification(data: dict, current_user: User = Depends(requ
         raise HTTPException(status_code=400, detail="Title and body are required")
         
     users = get_target_users(target_role, target_class, target_section, db)
-    count = 0
-    for u in users:
-        await send_notification_to_user(u.id, title, body, db)
-        count += 1
+    user_ids = [u.id for u in users]
+    
+    if not user_ids:
+        return {"success": True, "deliveredCount": 0}
+
+    from models import FCMToken, NotificationHistory
+
+    # 1. Log notification history for all target users
+    history_entries = [
+        NotificationHistory(
+            id=f"notif-{uuid.uuid4()}",
+            user_id=uid,
+            title=title,
+            body=body,
+            created_at=datetime.utcnow()
+        )
+        for uid in user_ids
+    ]
+    try:
+        db.bulk_save_objects(history_entries)
+        db.commit()
+    except Exception as e:
+        print(f"Failed to save bulk notification history: {e}")
+        db.rollback()
+
+    # 2. Emit socket notifications to online users (deduplicated SIDs)
+    for uid in user_ids:
+        sids = set(get_online_sids_for_user(uid))
+        for sid in sids:
+            try:
+                await sio.emit('notification', {"title": title, "body": body}, room=sid)
+            except Exception as e:
+                print(f"Error emitting socket notification to {sid}: {e}")
+
+    # 3. Collect and deduplicate all FCM tokens across all target users into ONE multicast request
+    fcm_records = db.query(FCMToken).filter(FCMToken.user_id.in_(user_ids)).all()
+    all_tokens = list(set([r.token for r in fcm_records if r.token]))
+    
+    if all_tokens:
+        send_fcm_notification(all_tokens, title, body)
+        print(f"[Push Broadcast] Multicast FCM sent to {len(all_tokens)} unique device token(s) for {len(user_ids)} target user(s).")
         
-    return {"success": True, "deliveredCount": count}
+    return {"success": True, "deliveredCount": len(user_ids)}
 
 
 @app.on_event("startup")

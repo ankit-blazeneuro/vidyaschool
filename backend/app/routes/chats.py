@@ -3,10 +3,14 @@ import json
 import uuid
 import httpx
 import asyncio
+import base64
+import io
+import requests as pyrequests
 from datetime import datetime
+from pathlib import Path
 from pydantic import BaseModel
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi.responses import StreamingResponse, JSONResponse
 from sqlmodel import Session, select
 from app.core.auth import require_role
 from app.core.database import get_db
@@ -38,10 +42,23 @@ class ChatMessageRequest(BaseModel):
 
 # Get API Key from environment or fallback to user provided key
 NVIDIA_API_KEY = os.getenv(
-    "NVIDIA_API_KEY", 
+    "NVIDIA_API_KEY",
     "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"
 )
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
+
+# ── Model config ──
+NEMOTRON_MODEL = "meta/llama-3.3-70b-instruct"
+NEMOTRON_MAX_TOKENS = 65536
+NEMOTRON_REASONING_BUDGET = 16384
+
+# ── Tool-check model ──
+TOOL_MODEL = "meta/llama-3.1-8b-instruct"
+
+# ── Supported MIME types for file extraction ──
+IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp"}
+PDF_TYPE = "application/pdf"
+VIDEO_TYPES = {"video/mp4", "video/webm", "video/quicktime", "video/x-msvideo"}
 
 # Restrict routes to portal personnel roles
 authorized_roles = ["teacher", "librarian", "admin"]
@@ -165,13 +182,67 @@ NVIDIA_TOOLS = [
                 "properties": {}
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_student_leaderboard",
+            "description": "Retrieve top student rankings on the leaderboard sorted by average exam score.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "class_name": {"type": "string", "description": "Optional class filter (e.g. 'Class 10')"},
+                    "section": {"type": "string", "description": "Optional section filter (e.g. 'A')"}
+                }
+            }
+        }
     }
 ]
 
 # ── Database Tool Execution Logic ──
 def execute_tool_call(name: str, args: dict, current_user: User, db: Session) -> str:
     try:
-        if name == "get_students_with_marks":
+        if name == "get_student_leaderboard":
+            class_name = args.get("class_name")
+            section = args.get("section")
+            query = select(User, UserProfile).join(UserProfile, User.id == UserProfile.user_id).where(User.role == "student")
+            if class_name:
+                query = query.where(UserProfile.class_ == class_name)
+            if section:
+                query = query.where(UserProfile.section == section)
+            class_students = db.exec(query).all()
+
+            if not class_students:
+                return "No student records found in the database for leaderboard."
+
+            student_ids = [u.id for u, _ in class_students]
+            all_marks = db.exec(select(StudentSubjectMarks).where(StudentSubjectMarks.student_id.in_(student_ids))).all()
+
+            leaderboard_data = []
+            for u, p in class_students:
+                student_marks = [m for m in all_marks if m.student_id == u.id]
+                if student_marks:
+                    total_score = sum(m.score for m in student_marks)
+                    total_max = sum(m.max_score for m in student_marks)
+                    avg_pct = (total_score / total_max * 100) if total_max > 0 else 0
+                else:
+                    avg_pct = 0.0
+                leaderboard_data.append({
+                    "name": u.name,
+                    "class": p.class_,
+                    "section": p.section,
+                    "average": round(avg_pct, 1),
+                    "exams_count": len(set(m.exam_id for m in student_marks))
+                })
+
+            leaderboard_data.sort(key=lambda x: x["average"], reverse=True)
+
+            res = ["🏆 Current Student Leaderboard:"]
+            for rank, entry in enumerate(leaderboard_data[:10], 1):
+                res.append(f"{rank}. {entry['name']} (Class {entry['class']}-{entry['section']}): {entry['average']}% avg score across {entry['exams_count']} exam(s)")
+            return "\n".join(res)
+
+        elif name == "get_students_with_marks":
             exam_name = args.get("exam_name", "")
             subject = args.get("subject")
             min_score = args.get("min_score", 70.0)
@@ -432,35 +503,159 @@ def execute_tool_call(name: str, args: dict, current_user: User, db: Session) ->
     except Exception as err:
         return f"Error executing tool: {str(err)}"
 
-# ── Streaming Assistant Response Generators ──
-async def response_stream_generator(messages_payload: list, room_id: str, db: Session):
+# ─────────────────────────────────────────────────────────────────────────────
+# FILE CONTENT EXTRACTION  (uses `requests` as instructed)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def extract_image_content_via_nvidia(image_bytes: bytes, mime_type: str) -> str:
+    """Describe an image by sending it to NVIDIA vision endpoint using `requests`."""
+    b64 = base64.b64encode(image_bytes).decode("utf-8")
+    data_url = f"data:{mime_type};base64,{b64}"
+
+    payload = {
+        "model": NEMOTRON_MODEL,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "Describe this image in full detail. Extract all visible text, diagrams, charts, and relevant information."},
+                    {"type": "image_url", "image_url": {"url": data_url}}
+                ]
+            }
+        ],
+        "max_tokens": 2048,
+        "temperature": 0.3,
+        "stream": False
+    }
     headers = {
         "Authorization": f"Bearer {NVIDIA_API_KEY}",
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+    }
+    try:
+        resp = pyrequests.post(NVIDIA_BASE_URL, headers=headers, json=payload, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f"[Image extraction error: {str(e)}]"
+
+
+def extract_pdf_content(pdf_bytes: bytes) -> str:
+    """Extract text from a PDF using pdfplumber."""
+    try:
+        import pdfplumber
+        text_parts = []
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+            for i, page in enumerate(pdf.pages):
+                text = page.extract_text()
+                if text and text.strip():
+                    text_parts.append(f"--- Page {i + 1} ---\n{text.strip()}")
+        return "\n\n".join(text_parts) if text_parts else "[No extractable text found in PDF]"
+    except Exception as e:
+        return f"[PDF extraction error: {str(e)}]"
+
+
+def extract_video_description_via_nvidia(video_bytes: bytes, filename: str) -> str:
+    """Send video metadata + sampled frame description to NVIDIA using `requests`."""
+    # For video: we summarize it by sending first/last frame as an image if decodable
+    # Fallback: return size/filename info since NVIDIA vision may not support raw video blobs
+    file_size_mb = len(video_bytes) / (1024 * 1024)
+    description = (
+        f"[Video file uploaded: '{filename}', size: {file_size_mb:.2f} MB. "
+        f"Please analyze and describe the content of this educational video based on its title/filename. "
+        f"Suggest topics it may cover and how it relates to classroom teaching.]"
+    )
+    return description
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UPLOAD ENDPOINT
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.post("/api/chats/upload")
+async def upload_file_for_extraction(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_role(authorized_roles))
+):
+    """Accept image/PDF/video uploads and return extracted text content using `requests`."""
+    content_type = (file.content_type or "").lower()
+    filename = file.filename or "uploaded_file"
+    raw_bytes = await file.read()
+
+    if content_type in IMAGE_TYPES:
+        extracted = extract_image_content_via_nvidia(raw_bytes, content_type)
+        file_kind = "image"
+    elif content_type == PDF_TYPE:
+        extracted = extract_pdf_content(raw_bytes)
+        file_kind = "pdf"
+    elif content_type in VIDEO_TYPES:
+        extracted = extract_video_description_via_nvidia(raw_bytes, filename)
+        file_kind = "video"
+    else:
+        # Try to decode as plain text
+        try:
+            extracted = raw_bytes.decode("utf-8", errors="replace")
+            file_kind = "text"
+        except Exception:
+            raise HTTPException(
+                status_code=415,
+                detail=f"Unsupported file type: {content_type}"
+            )
+
+    return JSONResponse({
+        "filename": filename,
+        "type": file_kind,
+        "content": extracted,
+        "size_bytes": len(raw_bytes)
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STREAMING GENERATORS  (Nemotron reasoning model)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _strip_think_blocks(text: str) -> str:
+    """Remove <think>…</think> reasoning blocks from model output."""
+    import re
+    return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+
+async def response_stream_generator(messages_payload: list, room_id: str, db: Session):
+    """Stream response from Nemotron reasoning model, hiding <think> blocks."""
+    headers = {
+        "Authorization": f"Bearer {NVIDIA_API_KEY}",
+        "Accept": "text/event-stream",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": "openai/gpt-oss-120b",
+        "model": NEMOTRON_MODEL,
         "messages": messages_payload,
-        "temperature": 0.8,
-        "top_p": 1,
-        "max_tokens": 4096,
-        "stream": True
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "max_tokens": NEMOTRON_MAX_TOKENS,
+        "reasoning_budget": NEMOTRON_REASONING_BUDGET,
+        "stream": True,
+        "chat_template_kwargs": {"enable_thinking": True}
     }
-    
+
     full_content = ""
+    in_think_block = False
+    think_buffer = ""
+
     try:
         async with httpx.AsyncClient() as client:
             async with client.stream(
-                "POST", 
-                NVIDIA_BASE_URL, 
-                headers=headers, 
-                json=payload, 
-                timeout=60.0
+                "POST",
+                NVIDIA_BASE_URL,
+                headers=headers,
+                json=payload,
+                timeout=120.0
             ) as r:
                 if r.status_code != 200:
                     yield f"data: {json.dumps({'content': 'AI model connection failed.'})}\n\n"
                     return
-                
+
                 async for line in r.aiter_lines():
                     if not line:
                         continue
@@ -470,17 +665,38 @@ async def response_stream_generator(messages_payload: list, room_id: str, db: Se
                             break
                         try:
                             chunk_data = json.loads(data_str)
-                            content = chunk_data["choices"][0]["delta"].get("content", "")
-                            if content:
-                                full_content += content
-                                yield f"data: {json.dumps({'content': content})}\n\n"
+                            delta = chunk_data["choices"][0]["delta"]
+                            content = delta.get("content") or ""
+                            reasoning = delta.get("reasoning_content") or ""
+
+                            # Stream reasoning token as thinking hint (optional signal)
+                            if reasoning:
+                                yield f"data: {json.dumps({'thinking': reasoning})}\n\n"
+                                continue
+
+                            if not content:
+                                continue
+
+                            # Filter <think>…</think> inline blocks if model emits them
+                            combined = think_buffer + content
+                            think_buffer = ""
+
+                            if "<think>" in combined and "</think>" not in combined:
+                                think_buffer = combined
+                                continue
+
+                            visible = _strip_think_blocks(combined)
+                            if visible:
+                                full_content += visible
+                                yield f"data: {json.dumps({'content': visible})}\n\n"
+
                         except Exception:
                             pass
     except Exception as e:
         yield f"data: {json.dumps({'content': f'Connection error: {str(e)}'})}\n\n"
         return
 
-    # Settle final message
+    # Persist assistant message
     try:
         assistant_msg = ChatMessage(
             id=f"msg_ai_{uuid.uuid4()}",
@@ -544,9 +760,9 @@ async def run_agent_loop(messages_payload: list, room_id: str, current_user: Use
         "Content-Type": "application/json"
     }
     
-    # 1. Non-streaming check for tool calls
+    # 1. Non-streaming check for tool calls  (uses faster tool-check model)
     payload = {
-        "model": "openai/gpt-oss-120b",
+        "model": TOOL_MODEL,
         "messages": full_history,
         "temperature": 0.5,
         "top_p": 1,

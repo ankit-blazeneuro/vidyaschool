@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { Send, Sparkles } from "lucide-react"
+import { ArrowUp, Sparkles } from "lucide-react"
 
 export function TeacherAIInput() {
   const router = useRouter()
@@ -63,10 +63,10 @@ export function TeacherAIInput() {
   }
 
   return (
-    <div className="sticky bottom-4 left-0 right-0 w-full max-w-3xl mx-auto px-4 z-40">
+    <div className="sticky bottom-4 left-0 right-0 w-full max-w-4xl mx-auto px-5 z-40">
       <form
         onSubmit={handleSubmit}
-        className="w-full flex items-center gap-2.5 p-2 rounded-2xl border border-zinc-200/40 dark:border-zinc-800/40 bg-white/30 dark:bg-black/35 backdrop-blur-md shadow-xl transition-all duration-200 focus-within:border-primary/30"
+        className="w-full flex items-center gap-2.5 p-2 rounded-full border border-zinc-200/40 dark:border-zinc-800/40 bg-white/30 dark:bg-black/35 backdrop-blur-md shadow-xl transition-all duration-200 focus-within:border-primary/30"
       >
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Sparkles className="h-4.5 w-4.5 animate-pulse" />
@@ -83,7 +83,7 @@ export function TeacherAIInput() {
           disabled={!message.trim()}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
         >
-          <Send className="h-4 w-4" />
+          <ArrowUp className="h-4 w-4" />
         </button>
       </form>
     </div>
