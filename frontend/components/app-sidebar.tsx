@@ -19,6 +19,7 @@ import {
   SidebarMenuItem,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar"
 import {
@@ -1058,7 +1059,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <>
             {/* AI Chat History group for Teacher */}
             {isTeacher && (
-              <SidebarGroup className="mt-4 border-t border-sidebar-border/40 pt-4">
+              <>
+                <SidebarSeparator className="my-2" />
+                <SidebarGroup className="pt-1">
                 <div className="px-2.5 pb-2 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider flex items-center justify-between">
                   <span>AI Chat Assistant</span>
                   <button
@@ -1095,7 +1098,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     )}
                   </SidebarMenu>
                 </SidebarGroupContent>
-              </SidebarGroup>
+                </SidebarGroup>
+              </>
             )}
             <NavSecondary items={data.navSecondary} className="mt-auto" />
           </>
