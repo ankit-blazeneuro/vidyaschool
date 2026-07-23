@@ -289,6 +289,13 @@ export async function executeToolCall(
   }
 }
 
+/* ── Stable dedup key for a tool call ───────────────────────────── */
+function toolDedupKey(tool: Omit<AiToolCall, "status">): string {
+  const title = (tool.params.title || "") as string
+  const content = ((tool.params.content || tool.params.body || "") as string)
+  return `ai_widget_done:${tool.type}:${title.slice(0, 60)}:${content.slice(0, 60)}`
+}
+
 /* ── useAutoDetectTools ─────────────────────────────────────────── */
 export function useAutoDetectTools(userMsg: string, aiMsg: string) {
   const [tools, setTools] = React.useState<AiToolCall[]>([])
@@ -302,16 +309,30 @@ export function useAutoDetectTools(userMsg: string, aiMsg: string) {
 
     executedRef.current = true
 
-    // Initialize with pending status while checking backend status
+    // Initialize with pending status while checking status
     const initialTools: AiToolCall[] = detected.map(t => ({ ...t, status: "pending" }))
     setTools(initialTools)
 
     detected.forEach(async (tool) => {
+      const dedupKey = toolDedupKey(tool)
+
+      // 1. Check localStorage — if already sent in a previous session, mark done immediately
+      if (typeof window !== "undefined" && localStorage.getItem(dedupKey) === "done") {
+        setTools(prev =>
+          prev.map(t =>
+            t.type === tool.type && JSON.stringify(t.params) === JSON.stringify(tool.params)
+              ? { ...t, status: "success" }
+              : t
+          )
+        )
+        return
+      }
+
       const title = (tool.params.title || "") as string
       const content = ((tool.params.content || tool.params.body || "") as string)
 
       try {
-        // 1. Check backend database to see if this widget action was already executed
+        // 2. Check backend database to see if this widget action was already executed
         const statusRes = await fetch(
           `/api/backend/api/chats/widget-status?type=${tool.type}&title=${encodeURIComponent(title)}&content=${encodeURIComponent(content)}`
         )
@@ -319,7 +340,8 @@ export function useAutoDetectTools(userMsg: string, aiMsg: string) {
         if (statusRes.ok) {
           const statusData = await statusRes.json()
           if (statusData.executed && statusData.status === "success") {
-            // Found in backend DB — mark as success (done)
+            // Found in backend DB — mark as success and persist to localStorage
+            if (typeof window !== "undefined") localStorage.setItem(dedupKey, "done")
             setTools(prev =>
               prev.map(t =>
                 t.type === tool.type && JSON.stringify(t.params) === JSON.stringify(tool.params)
@@ -334,8 +356,11 @@ export function useAutoDetectTools(userMsg: string, aiMsg: string) {
         console.warn("Backend widget status check failed:", err)
       }
 
-      // 2. Not executed in backend DB yet — execute via API
+      // 3. Not executed yet — execute via API and persist result
       const res = await executeToolCall({ ...tool, status: "pending" })
+      if (res.status === "success" && typeof window !== "undefined") {
+        localStorage.setItem(dedupKey, "done")
+      }
       setTools(prev =>
         prev.map(t =>
           t.type === tool.type && JSON.stringify(t.params) === JSON.stringify(tool.params)
