@@ -1064,18 +1064,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {isTeacher && (
               <SidebarGroup className="pt-0 mt-1">
                 <div className="h-px bg-sidebar-border/60 mx-0 mb-3" />
-                <div className="px-2.5 pb-2 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider flex items-center justify-between">
-                  <span>AI Chat Assistant</span>
-                  <button
-                    onClick={() => {
-                      const uuid = crypto.randomUUID()
-                      router.push(`/teacher/${profileUsername || 'username'}/tasks/${uuid}`)
-                    }}
-                    className="flex items-center gap-1 text-[10px] hover:text-foreground text-primary font-semibold transition-colors cursor-pointer"
-                  >
-                    <Plus className="size-3" /> New Chat
-                  </button>
-                </div>
+                
                 <SidebarGroupContent>
                   <SidebarMenu className="max-h-[160px] overflow-y-auto scrollbar-none gap-0.5">
                     {teacherChats.length === 0 ? (
@@ -1100,7 +1089,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     )}
                   </SidebarMenu>
                 </SidebarGroupContent>
-                </SidebarGroup>
+              </SidebarGroup>
             )}
             <NavSecondary items={data.navSecondary} className="mt-auto" />
           </>

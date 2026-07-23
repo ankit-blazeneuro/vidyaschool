@@ -137,7 +137,7 @@ export function detectToolsFromMessages(
   const tools: Omit<AiToolCall, "status">[] = []
 
   // ── JSON action block detection (AI outputs raw JSON) ────────────
-  const jsonMatch = aiResponse.match(/\{[^{}]*"action"\s*:\s*"([^"]+)"[^{}]*\}/s)
+  const jsonMatch = aiResponse.match(/\{[^{}]*"action"\s*:\s*"([^"]+)"[^{}]*\}/)
   if (jsonMatch) {
     try {
       const jsonStr = jsonMatch[0]

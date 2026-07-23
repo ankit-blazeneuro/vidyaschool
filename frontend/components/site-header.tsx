@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { HeaderComplaintButton } from "@/components/header-complaint-button"
-import { Mail } from "lucide-react"
+import { Mail, Plus } from "lucide-react"
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   Dialog,
@@ -24,6 +25,7 @@ interface SiteHeaderProps {
 export function SiteHeader({ title, children, actions }: SiteHeaderProps) {
   const pathname = usePathname()
   const [mailOpen, setMailOpen] = React.useState(false)
+  const isChatPage = pathname?.includes("/tasks/")
 
   const displayTitle = React.useMemo(() => {
     if (title) return title
@@ -83,7 +85,7 @@ export function SiteHeader({ title, children, actions }: SiteHeaderProps) {
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-      <div className="flex w-full items-center gap-2 px-4 lg:gap-2 lg:px-6">
+      <div className="relative flex w-full items-center gap-2 px-4 lg:gap-2 lg:px-6">
         <SidebarTrigger className="-ml-1" />
         <Separator
           orientation="vertical"
@@ -91,6 +93,20 @@ export function SiteHeader({ title, children, actions }: SiteHeaderProps) {
         />
         {pathname.includes("/notes/")
           ? <div id="site-header-title" className="flex items-center gap-2 min-w-0 flex-1" />
+          : isChatPage
+          ? (
+            <>
+              <h1 className="text-base font-medium">{displayTitle}</h1>
+              <div className="absolute left-1/2 -translate-x-1/2 hidden sm:block">
+                <Button asChild variant="link" size="sm">
+                  <Link href={`/teacher/${pathname.split("/").filter(Boolean)[1]}/tasks/${crypto.randomUUID()}`}>
+                    <Plus className="size-3.5" />
+                    New Chat
+                  </Link>
+                </Button>
+              </div>
+            </>
+          )
           : (children || <h1 className="text-base font-medium">{displayTitle}</h1>)
         }
         <div className="flex-1" />
