@@ -448,12 +448,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // AI Chats State for Teacher
   const [teacherChats, setTeacherChats] = React.useState<{ id: string; title: string }[]>([])
 
-  const loadTeacherChats = React.useCallback(() => {
+  const loadTeacherChats = React.useCallback(async () => {
     try {
-      const chats = JSON.parse(localStorage.getItem("vidya_teacher_chats") || "[]")
-      setTeacherChats(chats.map((c: any) => ({ id: c.id, title: c.title })))
+      const res = await fetch("/api/backend/api/chats")
+      if (res.ok) {
+        const data = await res.json()
+        setTeacherChats(data.map((c: any) => ({ id: c.id, title: c.title })))
+      }
     } catch (e) {
-      console.error("Failed to load chats:", e)
+      console.error("Failed to load chats from backend:", e)
     }
   }, [])
 
@@ -1059,9 +1062,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <>
             {/* AI Chat History group for Teacher */}
             {isTeacher && (
-              <>
-                <SidebarSeparator className="my-2" />
-                <SidebarGroup className="pt-1">
+              <SidebarGroup className="pt-0 mt-1">
+                <div className="h-px bg-sidebar-border/60 mx-0 mb-3" />
                 <div className="px-2.5 pb-2 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider flex items-center justify-between">
                   <span>AI Chat Assistant</span>
                   <button
@@ -1099,7 +1101,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenu>
                 </SidebarGroupContent>
                 </SidebarGroup>
-              </>
             )}
             <NavSecondary items={data.navSecondary} className="mt-auto" />
           </>

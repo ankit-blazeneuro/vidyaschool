@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ArrowUp, User, Brain, ArrowLeft, Loader2, Copy, Check, ArrowDown, Pause, Paperclip, X, FileText, ImageIcon, Video, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -202,6 +202,7 @@ export default function TeacherTaskChatPage() {
   const [isTyping, setIsTyping] = React.useState(false)
   const [genStatus, setGenStatus] = React.useState<GenerationStatus>("idle")
   const [isLocalMode, setIsLocalMode] = React.useState(false)
+  const [authError, setAuthError] = React.useState(false)
   const messagesEndRef = React.useRef<HTMLDivElement>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const [showScrollButton, setShowScrollButton] = React.useState(false)
@@ -288,59 +289,156 @@ export default function TeacherTaskChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  // Load chat session on mount / uuid change
+  const searchParams = useSearchParams()
+
+  // Start a brand new chat session with backend API and stream initial response
+  const startNewBackendChat = async (roomUuid: string, roomTitle: string, userMsgText: string, baseSession: ChatSession) => {
+    setIsTyping(true)
+    setGenStatus("thinking")
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 180000) // 3min timeout
+
+    try {
+      const res = await fetch("/api/backend/api/chats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uuid: roomUuid, title: roomTitle, message: userMsgText }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+
+      if (res.status === 401) {
+        setAuthError(true)
+        setIsTyping(false)
+        setGenStatus("idle")
+        return
+      }
+      if (!res.ok) throw new Error(`API error ${res.status}`)
+
+      const reader = res.body?.getReader()
+      const decoder = new TextDecoder()
+      if (!reader) throw new Error("No reader")
+
+      activeReaderRef.current = reader
+      setIsTyping(false)
+
+      let done = false
+      let fullContent = ""
+      let isFirstChunk = true
+
+      liveThinkingRef.current = ""
+      setLiveThinking("")
+      const assistantMsgIndex = 1
+
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: "",
+        createdAt: new Date().toISOString()
+      }
+
+      setSession({ ...baseSession, messages: [...baseSession.messages, assistantMessage] })
+
+      let lineBuffer = ""
+      while (!done) {
+        if (!activeReaderRef.current) break
+        const { value, done: doneReading } = await reader.read()
+        done = doneReading
+        if (value) {
+          lineBuffer += decoder.decode(value, { stream: !doneReading })
+        }
+
+        const lines = lineBuffer.split("\n")
+        // Keep last possibly-incomplete line in buffer
+        lineBuffer = lines.pop() ?? ""
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue
+          const dataStr = line.slice(6).trim()
+          if (dataStr === "[DONE]") { done = true; break }
+          try {
+            const parsed = JSON.parse(dataStr)
+            if (parsed.thinking) {
+              liveThinkingRef.current += parsed.thinking
+              setLiveThinking(liveThinkingRef.current)
+              continue
+            }
+            if (parsed.content) {
+              if (isFirstChunk) {
+                setGenStatus("generating")
+                isFirstChunk = false
+              }
+              fullContent += parsed.content
+              setSession({ ...baseSession, messages: [...baseSession.messages, { ...assistantMessage, content: fullContent }] })
+            }
+          } catch {}
+        }
+      }
+
+      activeReaderRef.current = null
+      setGenStatus("idle")
+      setLiveThinking("")
+
+      if (liveThinkingRef.current) {
+        setThinkingMap(prev => ({ ...prev, [assistantMsgIndex]: liveThinkingRef.current }))
+      }
+
+      const finalSession = { ...baseSession, messages: [...baseSession.messages, { ...assistantMessage, content: fullContent }] }
+      setSession(finalSession)
+
+      // Notify sidebar to refresh list from backend DB
+      window.dispatchEvent(new Event("vidya_chats_updated"))
+
+      // Clean up search param
+      router.replace(`/teacher/${username || 'username'}/tasks/${roomUuid}`, { scroll: false })
+
+    } catch (err) {
+      clearTimeout(timeoutId)
+      console.warn("Start chat error, falling back:", err)
+      handleLocalSimulation(userMsgText, baseSession.messages, baseSession)
+    }
+  }
+
+  // Load chat session on mount / uuid change from backend DB
   React.useEffect(() => {
     if (!uuid) return
 
-    // 1. Try to load from localStorage first (for instant display)
-    let localSession: ChatSession | null = null
-    try {
-      const existing: ChatSession[] = JSON.parse(localStorage.getItem("vidya_teacher_chats") || "[]")
-      const found = existing.find(c => c.id === uuid)
-      if (found) {
-        localSession = found
-        setSession(found)
+    const initialText = searchParams?.get("initialMessage")
+    if (initialText) {
+      const title = initialText.slice(0, 35) + (initialText.length > 35 ? "..." : "")
+      const freshSession: ChatSession = {
+        id: uuid,
+        title,
+        messages: [{ role: "user", content: initialText, createdAt: new Date().toISOString() }],
+        createdAt: new Date().toISOString()
       }
-    } catch (err) {
-      console.error("Local storage error:", err)
+      setSession(freshSession)
+      startNewBackendChat(uuid, title, initialText, freshSession)
+      return
     }
 
-    // 2. Try fetching from backend API
     fetch(`/api/backend/api/chats/${uuid}`)
-      .then(res => {
-        if (!res.ok) throw new Error("Backend unavailable")
-        return res.json()
-      })
-      .then((data: ChatSession) => {
+      .then(async (res) => {
+        if (res.status === 401) {
+          setAuthError(true)
+          return
+        }
+        if (!res.ok) throw new Error(`Backend error ${res.status}`)
+        const data: ChatSession = await res.json()
         setSession(data)
         setIsLocalMode(false)
-        syncToLocalStorage(data)
       })
-      .catch(() => {
-        // Fallback to local fallback if localSession not found (create one)
+      .catch((err) => {
+        console.error("Failed to load chat from backend:", err)
         setIsLocalMode(true)
-        if (!localSession) {
-          const freshSession: ChatSession = {
-            id: uuid,
-            title: "AI Chat Assistant",
-            messages: [
-              { role: "assistant", content: "Hello! I am your AI assistant. How can I help you plan your tasks or grade sheets today?", createdAt: new Date().toISOString() }
-            ],
-            createdAt: new Date().toISOString()
-          }
-          setSession(freshSession)
-          syncToLocalStorage(freshSession)
-        }
       })
 
-    // Reset auto-send guard when navigating to a new chat
     autoSentRef.current = false
   }, [uuid])
 
   // Scroll to bottom on message change and loading updates
   React.useEffect(() => {
     scrollToBottom()
-    // Fire a deferred scroll to handle paint latency
     const t = setTimeout(scrollToBottom, 50)
     return () => clearTimeout(t)
   }, [session?.messages, isTyping, genStatus])
@@ -353,31 +451,6 @@ export default function TeacherTaskChatPage() {
       return () => clearTimeout(t)
     }
   }, [session?.id])
-
-  // ── Auto-send: if session loads with an unanswered user message, trigger AI once ──
-  React.useEffect(() => {
-    if (!session || autoSentRef.current) return
-    const msgs = session.messages
-    if (msgs.length === 0) return
-    const lastMsg = msgs[msgs.length - 1]
-    // Only auto-send if the last message is from the user (AI hasn't responded yet)
-    // This naturally prevents re-triggering on refresh when AI already replied
-    if (lastMsg.role !== "user") return
-    autoSentRef.current = true
-    autoSendUserMessage(lastMsg.content, session, msgs)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.id])
-
-  const syncToLocalStorage = (data: ChatSession) => {
-    try {
-      const existing: ChatSession[] = JSON.parse(localStorage.getItem("vidya_teacher_chats") || "[]")
-      const filtered = existing.filter(c => c.id !== data.id)
-      localStorage.setItem("vidya_teacher_chats", JSON.stringify([data, ...filtered]))
-      window.dispatchEvent(new Event("vidya_chats_updated"))
-    } catch (e) {
-      console.error(e)
-    }
-  }
 
   // Handle local mock simulated streaming typing effect
   const handleLocalSimulation = async (userMessageText: string, updatedMessages: Message[], updatedSession: ChatSession) => {
@@ -422,7 +495,6 @@ export default function TeacherTaskChatPage() {
         createdAt: new Date().toISOString()
       }
 
-      // Append assistant message container
       setSession({
         ...updatedSession,
         messages: [...updatedMessages, assistantMessage]
@@ -447,101 +519,10 @@ export default function TeacherTaskChatPage() {
             localIntervalRef.current = null
           }
           setGenStatus("idle")
-          // Settle in storage
-          syncToLocalStorage(finalSession)
         }
       }, 35)
 
-    }, 1800) // Longer delay to showcase "Thinking..." shimmer
-  }
-
-  // ── Auto-send the last unanswered user message on initial page load ──
-  const autoSendUserMessage = async (text: string, sess: ChatSession, existingMsgs: Message[]) => {
-    if (!text.trim()) return
-
-    setIsTyping(true)
-    setGenStatus("thinking")
-
-    if (isLocalMode) {
-      handleLocalSimulation(text, existingMsgs, sess)
-      return
-    }
-
-    try {
-      const res = await fetch(`/api/backend/api/chats/${uuid}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, title: sess.title })
-      })
-
-      if (!res.ok) throw new Error("API failed")
-
-      const reader = res.body?.getReader()
-      const decoder = new TextDecoder()
-      if (!reader) throw new Error("No reader")
-
-      activeReaderRef.current = reader
-      setIsTyping(false)
-
-      let done = false
-      let fullContent = ""
-      let isFirstChunk = true
-
-      liveThinkingRef.current = ""
-      setLiveThinking("")
-      const assistantMsgIndex = existingMsgs.length
-
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: "",
-        createdAt: new Date().toISOString()
-      }
-
-      setSession({ ...sess, messages: [...existingMsgs, assistantMessage] })
-
-      while (!done) {
-        if (!activeReaderRef.current) break
-        const { value, done: doneReading } = await reader.read()
-        done = doneReading
-        const chunkValue = decoder.decode(value)
-
-        const lines = chunkValue.split("\n")
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const dataStr = line.slice(6).trim()
-            try {
-              const parsed = JSON.parse(dataStr)
-              if (parsed.thinking) {
-                liveThinkingRef.current += parsed.thinking
-                setLiveThinking(liveThinkingRef.current)
-                continue
-              }
-              if (parsed.content) {
-                if (isFirstChunk) { setGenStatus("generating"); isFirstChunk = false }
-                fullContent += parsed.content
-                setSession({ ...sess, messages: [...existingMsgs, { ...assistantMessage, content: fullContent }] })
-              }
-            } catch { /* ignore parse errors */ }
-          }
-        }
-      }
-
-      activeReaderRef.current = null
-      setGenStatus("idle")
-      setLiveThinking("")
-
-      if (liveThinkingRef.current) {
-        setThinkingMap(prev => ({ ...prev, [assistantMsgIndex]: liveThinkingRef.current }))
-      }
-
-      const finalSession = { ...sess, messages: [...existingMsgs, { ...assistantMessage, content: fullContent }] }
-      setSession(finalSession)
-      syncToLocalStorage(finalSession)
-
-    } catch {
-      // Fall back to local simulation if backend fails
-      handleLocalSimulation(text, existingMsgs, sess)
-    }
+    }, 1800)
   }
 
   const handleSend = async (e: React.FormEvent) => {
@@ -561,14 +542,12 @@ export default function TeacherTaskChatPage() {
 
     const userMessage: Message = {
       role: "user",
-      content: userMessageText, // Display original message (not with raw extracted content)
+      content: userMessageText,
       createdAt: new Date().toISOString()
     }
 
-    // Append user message immediately
     const updatedMessages = [...session.messages, userMessage]
     
-    // Assign title dynamically based on the first user message if it's generic
     let currentTitle = session.title
     if (currentTitle === "AI Chat Assistant" || currentTitle.startsWith("New Chat")) {
       currentTitle = userMessageText.slice(0, 35) + (userMessageText.length > 35 ? "..." : "")
@@ -581,7 +560,6 @@ export default function TeacherTaskChatPage() {
     }
 
     setSession(updatedSession)
-    syncToLocalStorage(updatedSession)
 
     if (isLocalMode) {
       handleLocalSimulation(userMessageText, updatedMessages, updatedSession)
@@ -591,28 +569,36 @@ export default function TeacherTaskChatPage() {
     setIsTyping(true)
     setGenStatus("thinking")
 
-    // Call API and stream response  (send finalMessageText with extracted content)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 180000) // 3min timeout
+
     try {
       const res = await fetch(`/api/backend/api/chats/${uuid}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: finalMessageText, title: currentTitle })
+        body: JSON.stringify({ message: finalMessageText, title: currentTitle }),
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
 
-      if (!res.ok) throw new Error("API failed")
+      if (res.status === 401) {
+        setAuthError(true)
+        setIsTyping(false)
+        setGenStatus("idle")
+        return
+      }
+      if (!res.ok) throw new Error(`API error ${res.status}`)
 
       const reader = res.body?.getReader()
       const decoder = new TextDecoder()
       if (!reader) throw new Error("No reader")
       
       activeReaderRef.current = reader
-
       setIsTyping(false)
       let done = false
       let fullContent = ""
       let isFirstChunk = true
 
-      // Reset live thinking for this response
       liveThinkingRef.current = ""
       setLiveThinking("")
       const assistantMsgIndex = updatedMessages.length
@@ -628,48 +614,47 @@ export default function TeacherTaskChatPage() {
         messages: [...updatedMessages, assistantMessage]
       })
 
+      let lineBuffer = ""
       while (!done) {
         if (!activeReaderRef.current) break
         const { value, done: doneReading } = await reader.read()
         done = doneReading
-        const chunkValue = decoder.decode(value)
-        
-        // Parse lines of event-stream
-        const lines = chunkValue.split("\n")
+        if (value) {
+          lineBuffer += decoder.decode(value, { stream: !doneReading })
+        }
+
+        const lines = lineBuffer.split("\n")
+        // Keep last possibly-incomplete line in buffer
+        lineBuffer = lines.pop() ?? ""
+
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const dataStr = line.slice(6).trim()
-            try {
-              const parsed = JSON.parse(dataStr)
+          if (!line.startsWith("data: ")) continue
+          const dataStr = line.slice(6).trim()
+          if (dataStr === "[DONE]") { done = true; break }
+          try {
+            const parsed = JSON.parse(dataStr)
 
-              // ── Accumulate thinking / reasoning tokens live ──
-              if (parsed.thinking) {
-                liveThinkingRef.current += parsed.thinking
-                setLiveThinking(liveThinkingRef.current)
-                continue
-              }
-
-              if (parsed.content) {
-                if (isFirstChunk) {
-                  setGenStatus("generating")
-                  isFirstChunk = false
-                }
-
-                fullContent += parsed.content
-
-                // Update component state in real-time
-                setSession({
-                  ...updatedSession,
-                  messages: [
-                    ...updatedMessages,
-                    { ...assistantMessage, content: fullContent }
-                  ]
-                })
-              }
-            } catch (err) {
-              // Ignore line parse errors
+            if (parsed.thinking) {
+              liveThinkingRef.current += parsed.thinking
+              setLiveThinking(liveThinkingRef.current)
+              continue
             }
-          }
+
+            if (parsed.content) {
+              if (isFirstChunk) {
+                setGenStatus("generating")
+                isFirstChunk = false
+              }
+              fullContent += parsed.content
+              setSession({
+                ...updatedSession,
+                messages: [
+                  ...updatedMessages,
+                  { ...assistantMessage, content: fullContent }
+                ]
+              })
+            }
+          } catch {}
         }
       }
 
@@ -677,12 +662,10 @@ export default function TeacherTaskChatPage() {
       setGenStatus("idle")
       setLiveThinking("")
 
-      // Persist thinking content keyed by assistant message index
       if (liveThinkingRef.current) {
         setThinkingMap(prev => ({ ...prev, [assistantMsgIndex]: liveThinkingRef.current }))
       }
 
-      // Final save to localStorage once stream settles
       const finalSession = {
         ...updatedSession,
         messages: [
@@ -691,12 +674,31 @@ export default function TeacherTaskChatPage() {
         ]
       }
       setSession(finalSession)
-      syncToLocalStorage(finalSession)
+      window.dispatchEvent(new Event("vidya_chats_updated"))
 
     } catch (err) {
-      console.warn("Backend API call failed during chat submit, entering simulated stream:", err)
+      clearTimeout(timeoutId)
+      console.warn("Backend API call failed during chat submit:", err)
+      // Only fall back to simulation for genuine network errors, not auth/server errors
       handleLocalSimulation(userMessageText, updatedMessages, updatedSession)
     }
+  }
+
+  if (authError) {
+    return (
+      <div className="flex min-h-[400px] w-full flex-col items-center justify-center gap-4">
+        <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 px-6 py-5 text-center max-w-sm">
+          <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-1">Session Expired</p>
+          <p className="text-xs text-red-600/80 dark:text-red-500/80 mb-4">Your login session has expired. Please sign in again to continue.</p>
+          <button
+            onClick={() => router.push("/login")}
+            className="rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium px-4 py-2 transition-colors"
+          >
+            Sign In Again
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (!session) {
@@ -712,7 +714,12 @@ export default function TeacherTaskChatPage() {
     <div className="relative flex flex-col h-[calc(100dvh-var(--header-height,64px)-8px)] sm:h-[calc(100vh-var(--header-height,64px)-16px)] bg-background text-foreground w-full overflow-hidden">
       
       {/* ── Chat Messages Pane ── */}
-      <ScrollArea onScroll={handleScroll} className="flex-1 px-2.5 sm:px-5 pt-2.5 sm:pt-5 relative z-10" viewportClassName="pb-6">
+      <div className="relative flex-1 min-h-0">
+        {/* top fade */}
+        <div className="pointer-events-none absolute top-0 inset-x-0 h-8 bg-gradient-to-b from-background to-transparent z-20" />
+        {/* bottom fade */}
+        <div className="pointer-events-none absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-background to-transparent z-20" />
+        <ScrollArea onScroll={handleScroll} className="h-full px-2.5 sm:px-5 pt-2.5 sm:pt-5 relative z-10" viewportClassName="pb-6">
         <div className="space-y-3.5 sm:space-y-4 max-w-4xl mx-auto w-full">
           {session.messages.map((msg, index) => {
             const isUser = msg.role === "user"
@@ -783,7 +790,8 @@ export default function TeacherTaskChatPage() {
           
           <div ref={messagesEndRef} />
         </div>
-      </ScrollArea>
+        </ScrollArea>
+      </div>
 
       {/* ── Scroll to Bottom Float Trigger ── */}
       {showScrollButton && (
@@ -822,7 +830,7 @@ export default function TeacherTaskChatPage() {
 
         <form
           onSubmit={handleSend}
-          className="w-full flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 pl-2 sm:pl-3 rounded-full border border-zinc-200 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-lg dark:shadow-2xl focus-within:border-zinc-400 dark:focus-within:border-zinc-700/80 min-h-[46px] sm:min-h-[52px]"
+          className="w-full flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 pl-2 sm:pl-3 rounded-full border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-black shadow-lg dark:shadow-2xl focus-within:border-zinc-500 dark:focus-within:border-zinc-600 min-h-[46px] sm:min-h-[52px]"
         >
           {/* Hidden file input */}
           <input

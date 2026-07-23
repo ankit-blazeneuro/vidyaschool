@@ -10,19 +10,28 @@ export function OnboardingAlert({ isTeacher }: { isTeacher?: boolean }) {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
+    const CACHE_KEY = "vidya_onboarding_status"
+    const cached = sessionStorage.getItem(CACHE_KEY)
+
+    if (cached !== null) {
+      setShow(cached === "incomplete")
+      return
+    }
+
     fetch("/api/backend/api/onboarding/status")
       .then(res => {
         if (!res.ok) throw new Error("Not authenticated or error")
         return res.json()
       })
       .then(data => {
-        if (data && data.onboardingCompleted === false) {
-          setShow(true)
-        } else {
-          setShow(false)
-        }
+        const incomplete = data && data.onboardingCompleted === false
+        sessionStorage.setItem(CACHE_KEY, incomplete ? "incomplete" : "done")
+        setShow(incomplete)
       })
-      .catch(() => setShow(false))
+      .catch(() => {
+        sessionStorage.setItem(CACHE_KEY, "done")
+        setShow(false)
+      })
   }, [])
 
   if (!show) return null

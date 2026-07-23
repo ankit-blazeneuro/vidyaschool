@@ -51,7 +51,7 @@ export function AiToolCard({ tool, className }: AiToolCardProps) {
           .join(" · ") || "all"
 
   return (
-    <div className={cn("my-2 w-full max-w-full sm:max-w-md rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/80 dark:bg-zinc-900/60 overflow-hidden text-xs shadow-xs", className)}>
+    <div className={cn("my-2 w-full max-w-[min(100%,28rem)] rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/80 dark:bg-zinc-900/60 overflow-hidden text-xs shadow-xs", className)}>
       {/* Header */}
       <button
         type="button"
@@ -135,6 +135,39 @@ export function detectToolsFromMessages(
   aiResponse: string
 ): Omit<AiToolCall, "status">[] {
   const tools: Omit<AiToolCall, "status">[] = []
+
+  // ── JSON action block detection (AI outputs raw JSON) ────────────
+  const jsonMatch = aiResponse.match(/\{[^{}]*"action"\s*:\s*"([^"]+)"[^{}]*\}/s)
+  if (jsonMatch) {
+    try {
+      const jsonStr = jsonMatch[0]
+      const parsed = JSON.parse(jsonStr)
+      const action = parsed.action || ""
+      const message = (parsed.message || parsed.body || parsed.content || "")
+        .replace(/\\n/g, "\n")           // unescape \n
+        .replace(/^>\s*/gm, "")          // strip blockquote >
+        .replace(/\*{1,2}/g, "")         // strip bold/italic *
+        .replace(/^\(Resend\):?\s*/i, "") // strip (Resend): prefix
+        .replace(/^#+\s*/gm, "")         // strip markdown headings
+        .trim()
+      const title = parsed.title || message.split("\n").find((l: string) => l.trim()) || message.slice(0, 60)
+
+      if (/push|notification|notify/i.test(action)) {
+        tools.push({
+          type: "send_push",
+          params: { title, body: message, targetRole: parsed.targetRole || "all" },
+        })
+        return tools
+      }
+      if (/notice|announce|publish/i.test(action)) {
+        tools.push({
+          type: "send_notice",
+          params: { title, content: message, category: "General" },
+        })
+        return tools
+      }
+    } catch {}
+  }
 
   // Extract quoted title from user message or AI confirmation (supports regular, curly, and bold quotes)
   const quotedMatch =
@@ -269,56 +302,51 @@ export function useAutoDetectTools(userMsg: string, aiMsg: string) {
 
     executedRef.current = true
 
-    const initialTools: AiToolCall[] = []
+    // Initialize with pending status while checking backend status
+    const initialTools: AiToolCall[] = detected.map(t => ({ ...t, status: "pending" }))
+    setTools(initialTools)
 
-    detected.forEach((tool) => {
-      const cacheKey = `vidya_tool_exec_${tool.type}_${encodeURIComponent(JSON.stringify(tool.params))}`
-      let cached: { status?: "success" | "error"; result?: string; deliveredCount?: number } | null = null
+    detected.forEach(async (tool) => {
+      const title = (tool.params.title || "") as string
+      const content = ((tool.params.content || tool.params.body || "") as string)
 
       try {
-        const raw = localStorage.getItem(cacheKey)
-        if (raw) cached = JSON.parse(raw)
-      } catch {}
+        // 1. Check backend database to see if this widget action was already executed
+        const statusRes = await fetch(
+          `/api/backend/api/chats/widget-status?type=${tool.type}&title=${encodeURIComponent(title)}&content=${encodeURIComponent(content)}`
+        )
 
-      if (cached) {
-        // Already executed in a previous session — render result without calling API again
-        initialTools.push({
-          ...tool,
-          status: cached.status || "success",
-          result: cached.result,
-          deliveredCount: cached.deliveredCount,
-        })
-      } else {
-        // First execution — start as pending and run API
-        const pendingTool: AiToolCall = { ...tool, status: "pending" }
-        initialTools.push(pendingTool)
-
-        executeToolCall(pendingTool).then((res) => {
-          try {
-            localStorage.setItem(
-              cacheKey,
-              JSON.stringify({
-                status: res.status,
-                result: res.result,
-                deliveredCount: res.deliveredCount,
-              })
+        if (statusRes.ok) {
+          const statusData = await statusRes.json()
+          if (statusData.executed && statusData.status === "success") {
+            // Found in backend DB — mark as success (done)
+            setTools(prev =>
+              prev.map(t =>
+                t.type === tool.type && JSON.stringify(t.params) === JSON.stringify(tool.params)
+                  ? { ...t, status: "success" }
+                  : t
+              )
             )
-          } catch {}
-
-          setTools((prev) =>
-            prev.map((t) =>
-              t.type === tool.type && JSON.stringify(t.params) === JSON.stringify(tool.params)
-                ? { ...t, status: res.status, result: res.result, deliveredCount: res.deliveredCount }
-                : t
-            )
-          )
-        })
+            return
+          }
+        }
+      } catch (err) {
+        console.warn("Backend widget status check failed:", err)
       }
-    })
 
-    setTools(initialTools)
+      // 2. Not executed in backend DB yet — execute via API
+      const res = await executeToolCall({ ...tool, status: "pending" })
+      setTools(prev =>
+        prev.map(t =>
+          t.type === tool.type && JSON.stringify(t.params) === JSON.stringify(tool.params)
+            ? { ...t, status: res.status, result: res.result, deliveredCount: res.deliveredCount }
+            : t
+        )
+      )
+    })
   }, [userMsg, aiMsg])
 
   return tools
 }
+
 

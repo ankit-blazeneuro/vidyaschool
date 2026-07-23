@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse, JSONResponse
 from sqlmodel import Session, select
 from app.core.auth import require_role
-from app.core.database import get_db
+from app.core.database import get_db, engine
 from models import (
     User, 
     UserProfile, 
@@ -48,12 +48,13 @@ NVIDIA_API_KEY = os.getenv(
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 
 # ── Model config ──
-NEMOTRON_MODEL = "meta/llama-3.3-70b-instruct"
-NEMOTRON_MAX_TOKENS = 65536
-NEMOTRON_REASONING_BUDGET = 16384
+# gpt-oss-20b: fast first-token latency, good quality for school assistant
+CHAT_MODEL = "openai/gpt-oss-20b"
+CHAT_MAX_TOKENS = 1024
 
-# ── Tool-check model ──
+# ── Tool-check model (smaller, faster, no streaming) ──
 TOOL_MODEL = "meta/llama-3.1-8b-instruct"
+NEMOTRON_MODEL = "meta/llama-3.2-90b-vision-instruct"
 
 # ── Supported MIME types for file extraction ──
 IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp"}
@@ -622,96 +623,85 @@ def _strip_think_blocks(text: str) -> str:
 
 
 async def response_stream_generator(messages_payload: list, room_id: str, db: Session):
-    """Stream response from Nemotron reasoning model, hiding <think> blocks."""
+    """Stream response from the primary chat model."""
     headers = {
         "Authorization": f"Bearer {NVIDIA_API_KEY}",
         "Accept": "text/event-stream",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": NEMOTRON_MODEL,
+        "model": CHAT_MODEL,
         "messages": messages_payload,
-        "temperature": 0.6,
+        "temperature": 0.7,
         "top_p": 0.95,
-        "max_tokens": NEMOTRON_MAX_TOKENS,
-        "reasoning_budget": NEMOTRON_REASONING_BUDGET,
-        "stream": True,
-        "chat_template_kwargs": {"enable_thinking": True}
+        "max_tokens": CHAT_MAX_TOKENS,
+        "stream": True
     }
 
     full_content = ""
-    in_think_block = False
-    think_buffer = ""
 
     try:
-        async with httpx.AsyncClient() as client:
+        timeout_config = httpx.Timeout(read=120.0, connect=30.0, pool=30.0, write=30.0)
+        async with httpx.AsyncClient(timeout=timeout_config) as client:
             async with client.stream(
                 "POST",
                 NVIDIA_BASE_URL,
                 headers=headers,
                 json=payload,
-                timeout=120.0
             ) as r:
                 if r.status_code != 200:
-                    yield f"data: {json.dumps({'content': 'AI model connection failed.'})}\n\n"
+                    err_bytes = await r.aread()
+                    err_str = err_bytes.decode("utf-8", errors="replace")
+                    print(f"NVIDIA API ERROR {r.status_code}: {err_str}")
+                    yield f"data: {json.dumps({'content': f'AI Model Error ({r.status_code}): {err_str[:200]}'})}\n\n"
                     return
 
-                async for line in r.aiter_lines():
-                    if not line:
-                        continue
-                    if line.startswith("data: "):
-                        data_str = line[6:].strip()
-                        if data_str == "[DONE]":
-                            break
-                        try:
-                            chunk_data = json.loads(data_str)
-                            delta = chunk_data["choices"][0]["delta"]
-                            content = delta.get("content") or ""
-                            reasoning = delta.get("reasoning_content") or ""
-
-                            # Stream reasoning token as thinking hint (optional signal)
-                            if reasoning:
-                                yield f"data: {json.dumps({'thinking': reasoning})}\n\n"
-                                continue
-
-                            if not content:
-                                continue
-
-                            # Filter <think>…</think> inline blocks if model emits them
-                            combined = think_buffer + content
-                            think_buffer = ""
-
-                            if "<think>" in combined and "</think>" not in combined:
-                                think_buffer = combined
-                                continue
-
-                            visible = _strip_think_blocks(combined)
-                            if visible:
-                                full_content += visible
-                                yield f"data: {json.dumps({'content': visible})}\n\n"
-
-                        except Exception:
-                            pass
+                try:
+                    async for line in r.aiter_lines():
+                        if not line:
+                            continue
+                        if line.startswith("data: "):
+                            data_str = line[6:].strip()
+                            if data_str == "[DONE]":
+                                break
+                            try:
+                                chunk_data = json.loads(data_str)
+                                delta = chunk_data["choices"][0]["delta"]
+                                content = delta.get("content") or ""
+                                if content:
+                                    full_content += content
+                                    yield f"data: {json.dumps({'content': content})}\n\n"
+                            except Exception:
+                                pass
+                except Exception:
+                    pass
     except Exception as e:
-        yield f"data: {json.dumps({'content': f'Connection error: {str(e)}'})}\n\n"
-        return
+        if not full_content:
+            import traceback
+            print(f"DEBUG CHATS ERROR: {type(e).__name__} - {str(e)}")
+            traceback.print_exc()
+            yield f"data: {json.dumps({'content': 'AI model connection failed. Please try again.'})}\n\n"
+            return
 
     # Persist assistant message
     try:
-        assistant_msg = ChatMessage(
-            id=f"msg_ai_{uuid.uuid4()}",
-            room_id=room_id,
-            role="assistant",
-            content=full_content,
-            created_at=datetime.utcnow()
-        )
-        db.add(assistant_msg)
-        room = db.query(ChatRoom).filter(ChatRoom.id == room_id).first()
-        if room:
-            room.updated_at = datetime.utcnow()
-        db.commit()
+        with Session(engine) as new_db:
+            assistant_msg = ChatMessage(
+                id=f"msg_ai_{uuid.uuid4()}",
+                room_id=room_id,
+                role="assistant",
+                content=full_content,
+                created_at=datetime.utcnow()
+            )
+            new_db.add(assistant_msg)
+            room = new_db.query(ChatRoom).filter(ChatRoom.id == room_id).first()
+            if room:
+                room.updated_at = datetime.utcnow()
+            new_db.commit()
     except Exception as ex:
         print(f"Failed to commit assistant message: {ex}")
+
+    yield "data: [DONE]\n\n"
 
 
 async def simulated_stream_generator(content: str, room_id: str, db: Session):
@@ -723,105 +713,166 @@ async def simulated_stream_generator(content: str, room_id: str, db: Session):
         await asyncio.sleep(0.01)
         
     try:
-        assistant_msg = ChatMessage(
-            id=f"msg_ai_{uuid.uuid4()}",
-            room_id=room_id,
-            role="assistant",
-            content=content,
-            created_at=datetime.utcnow()
-        )
-        db.add(assistant_msg)
-        room = db.query(ChatRoom).filter(ChatRoom.id == room_id).first()
-        if room:
-            room.updated_at = datetime.utcnow()
-        db.commit()
+        with Session(engine) as new_db:
+            assistant_msg = ChatMessage(
+                id=f"msg_ai_{uuid.uuid4()}",
+                room_id=room_id,
+                role="assistant",
+                content=content,
+                created_at=datetime.utcnow()
+            )
+            new_db.add(assistant_msg)
+            room = new_db.query(ChatRoom).filter(ChatRoom.id == room_id).first()
+            if room:
+                room.updated_at = datetime.utcnow()
+            new_db.commit()
     except Exception as ex:
         print(f"Failed to commit simulated assistant message: {ex}")
+
+    yield "data: [DONE]\n\n"
+
+
+def sanitize_messages_payload(messages: list) -> list:
+    """Ensure messages strictly alternate roles and strip empty items for LLM APIs."""
+    sanitized = []
+    for msg in messages:
+        role = msg.get("role")
+        content = (msg.get("content") or "").strip()
+        if not content and role != "assistant":
+            continue
+        
+        if sanitized and sanitized[-1]["role"] == role:
+            sanitized[-1]["content"] += f"\n\n{content}"
+        else:
+            sanitized.append({"role": role, "content": content})
+    return sanitized
 
 
 # ── Core Agent execution loop with Tool Use ──
 async def run_agent_loop(messages_payload: list, room_id: str, current_user: User, db: Session):
+    clean_history = sanitize_messages_payload(messages_payload)
+
     system_msg = {
         "role": "system",
         "content": (
-            f"You are the VidyaSchool AI Assistant. The current logged-in user is a teacher named "
-            f"{current_user.name} (email: {current_user.email}, id: {current_user.id}). "
-            f"If they request actions regarding classroom marks/grades, listing student rosters, "
-            f"scheduling class timetables, publishing notices, or writing notes/lesson plans, "
-            f"use the appropriate database tool. Always default to their teacher email '{current_user.email}' "
-            f"or teacher ID '{current_user.id}' when calling tools."
+            f"You are VidyaSchool AI, a smart school assistant built into the VidyaSchool portal. "
+            f"Your name is VidyaSchool AI. "
+            f"The current logged-in user is a teacher named {current_user.name} "
+            f"(email: {current_user.email}, id: {current_user.id}). "
+            f"For simple conversational questions (greetings, your name, general knowledge, etc.), "
+            f"respond naturally WITHOUT calling any tools. "
+            f"Only use database tools when the teacher explicitly requests actions like: "
+            f"checking student marks/grades, listing student rosters, scheduling class timetables, "
+            f"publishing school notices, or managing lesson plan notes. "
+            f"Always default to their teacher email '{current_user.email}' "
+            f"or teacher ID '{current_user.id}' when calling tools. "
+            f"IMPORTANT: When the teacher asks you to send a notice, push notification, or any message to students, "
+            f"you MUST first draft the improved message with corrected grammar and spelling, show it to the teacher "
+            f"in a formatted preview, and ask for confirmation before calling any tool. "
+            f"Format the preview as:\n"
+            f"📢 **Draft Message:**\n[improved message here]\n\n"
+            f"Shall I go ahead and send this? Reply 'yes' to confirm or suggest changes. "
+            f"NEVER output raw JSON in your response. Always respond in natural language only."
         )
     }
-    
-    full_history = [system_msg] + messages_payload
-    
+
+    full_history = [system_msg] + clean_history
+
     headers = {
         "Authorization": f"Bearer {NVIDIA_API_KEY}",
         "Content-Type": "application/json"
     }
-    
-    # 1. Non-streaming check for tool calls  (uses faster tool-check model)
-    payload = {
-        "model": TOOL_MODEL,
-        "messages": full_history,
-        "temperature": 0.5,
-        "top_p": 1,
-        "max_tokens": 2048,
-        "tools": NVIDIA_TOOLS,
-        "stream": False
-    }
-    
-    try:
-        async with httpx.AsyncClient() as client:
-            res = await client.post(NVIDIA_BASE_URL, headers=headers, json=payload, timeout=60.0)
-            
-        if res.status_code != 200:
-            return StreamingResponse(
-                simulated_stream_generator("AI model failed to load. Please try again.", room_id, db),
-                media_type="text/event-stream"
-            )
-            
-        res_data = res.json()
-        choice_message = res_data["choices"][0]["message"]
-        tool_calls = choice_message.get("tool_calls")
-        
-        if tool_calls:
-            # Append the assistant's tool-call request to messages
-            full_history.append(choice_message)
-            
-            # Execute all requested tools
-            for tc in tool_calls:
-                t_name = tc["function"]["name"]
-                t_args = json.loads(tc["function"]["arguments"])
-                t_result = execute_tool_call(t_name, t_args, current_user, db)
-                
-                # Append tool response
-                full_history.append({
-                    "role": "tool",
-                    "tool_call_id": tc["id"],
-                    "name": t_name,
-                    "content": t_result
-                })
-                
-            # Now stream final response summarizing the tool execution
-            # Slice system message out of full_history before passing to generator
-            return StreamingResponse(
-                response_stream_generator(full_history[1:], room_id, db),
-                media_type="text/event-stream"
-            )
-        else:
-            # No tools called. Stream the pre-fetched content
-            chat_text = choice_message.get("content", "")
-            return StreamingResponse(
-                simulated_stream_generator(chat_text, room_id, db),
-                media_type="text/event-stream"
-            )
-            
-    except Exception as e:
-        return StreamingResponse(
-            simulated_stream_generator(f"Agent Loop error: {str(e)}", room_id, db),
-            media_type="text/event-stream"
-        )
+
+    # Check if user message requires database tool check
+    last_user_msg = ""
+    for msg in reversed(messages_payload):
+        if msg.get("role") == "user":
+            last_user_msg = (msg.get("content") or "").lower()
+            break
+
+    tool_keywords = [
+        "mark", "marks", "score", "grade", "exam", "roster", "student", "leaderboard",
+        "notice", "publish", "announce", "timetable", "schedule", "slot", "note", "planner",
+        "push", "notification", "send", "yes", "confirm"
+    ]
+    needs_tool_check = any(kw in last_user_msg for kw in tool_keywords)
+
+    # Draft-first actions: never call tool on first request, always draft and confirm
+    draft_first_keywords = ["notice", "publish", "announce", "push", "notification", "send", "notify"]
+    is_draft_first = any(kw in last_user_msg for kw in draft_first_keywords)
+
+    # Only skip draft-first if teacher is explicitly confirming
+    is_confirmation = last_user_msg.strip() in ["yes", "yes.", "yeah", "confirm", "send it", "go ahead", "ok", "okay"]
+
+    # When confirming, replace the "yes" with the drafted content so tool uses improved message
+    if is_confirmation:
+        # Find last assistant draft message in history
+        last_draft = ""
+        for msg in reversed(clean_history):
+            if msg.get("role") == "assistant" and "draft message" in msg.get("content", "").lower():
+                last_draft = msg["content"]
+                break
+        if last_draft:
+            # Extract the drafted text between "Draft Message:" and "Shall I"
+            import re
+            match = re.search(r"Draft Message[:\*\s]+(.+?)(?:Shall I|$)", last_draft, re.DOTALL | re.IGNORECASE)
+            if match:
+                drafted_content = match.group(1).strip().strip("*").strip()
+                # Replace last user "yes" with instruction containing the drafted message
+                full_history = [system_msg] + clean_history[:-1] + [{
+                    "role": "user",
+                    "content": f"Yes, confirmed. Please send this exact message:\n\n{drafted_content}"
+                }]
+
+    if needs_tool_check and (not is_draft_first or is_confirmation):
+        tool_payload = {
+            "model": TOOL_MODEL,
+            "messages": full_history,
+            "temperature": 0.3,
+            "top_p": 1,
+            "max_tokens": 1024,
+            "tools": NVIDIA_TOOLS,
+            "stream": False
+        }
+
+        try:
+            async with httpx.AsyncClient() as client:
+                tool_res = await client.post(NVIDIA_BASE_URL, headers=headers, json=tool_payload, timeout=3.0)
+
+            if tool_res.status_code == 200:
+                tool_data = tool_res.json()
+                choice_message = tool_data["choices"][0]["message"]
+                tool_calls = choice_message.get("tool_calls")
+
+                if tool_calls:
+                    full_history.append(choice_message)
+
+                    for tc in tool_calls:
+                        t_name = tc["function"]["name"]
+                        t_args = json.loads(tc["function"]["arguments"])
+                        t_result = execute_tool_call(t_name, t_args, current_user, db)
+
+                        full_history.append({
+                            "role": "tool",
+                            "tool_call_id": tc["id"],
+                            "name": t_name,
+                            "content": t_result
+                        })
+
+                    return StreamingResponse(
+                        response_stream_generator(full_history, room_id, db),
+                        media_type="text/event-stream"
+                    )
+
+        except Exception:
+            pass  # Fall through to direct streaming response
+
+    # Stream response directly with system context included
+    return StreamingResponse(
+        response_stream_generator(full_history, room_id, db),
+        media_type="text/event-stream"
+    )
+
 
 
 @router.post("/api/chats")
@@ -884,6 +935,49 @@ def get_chats(
     ]
 
 
+@router.get("/api/chats/widget-status")
+def check_widget_status(
+    type: str,
+    title: str = "",
+    content: str = "",
+    current_user: User = Depends(require_role(authorized_roles)),
+    db: Session = Depends(get_db)
+):
+    """
+    Checks backend database to verify if a tool action (notice or notification)
+    has actually been executed and saved in the database.
+    Must be registered BEFORE /api/chats/{uuid_val} to avoid route shadowing.
+    """
+    if type == "send_notice":
+        query = db.query(Notice)
+        if title.strip():
+            clean_title = title.strip().replace("%", "")
+            query = query.filter(Notice.title.ilike(f"%{clean_title}%"))
+        elif content.strip():
+            clean_content = content.strip()[:40].replace("%", "")
+            query = query.filter(Notice.content.ilike(f"%{clean_content}%"))
+        notice_obj = query.first()
+        if notice_obj:
+            return {"status": "success", "executed": True, "noticeId": notice_obj.id}
+        return {"status": "pending", "executed": False}
+
+    elif type == "send_push":
+        from models import NotificationHistory
+        query = db.query(NotificationHistory)
+        if title.strip():
+            clean_title = title.strip().replace("%", "")
+            query = query.filter(NotificationHistory.title.ilike(f"%{clean_title}%"))
+        elif content.strip():
+            clean_content = content.strip()[:40].replace("%", "")
+            query = query.filter(NotificationHistory.body.ilike(f"%{clean_content}%"))
+        notif_obj = query.first()
+        if notif_obj:
+            return {"status": "success", "executed": True}
+        return {"status": "pending", "executed": False}
+
+    return {"status": "pending", "executed": False}
+
+
 @router.get("/api/chats/{uuid_val}")
 def get_chat_messages(
     uuid_val: str,
@@ -892,7 +986,19 @@ def get_chat_messages(
 ):
     room = db.query(ChatRoom).filter(ChatRoom.id == uuid_val).first()
     if not room:
-        raise HTTPException(status_code=404, detail="Chat not found")
+        return {
+            "id": uuid_val,
+            "exists": False,
+            "title": "AI Chat Assistant",
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": "Hello! I am your AI assistant. How can I help you plan your tasks or grade sheets today?",
+                    "createdAt": datetime.utcnow().isoformat() + "Z"
+                }
+            ],
+            "createdAt": datetime.utcnow().isoformat() + "Z"
+        }
         
     if room.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
@@ -926,11 +1032,20 @@ async def send_chat_message(
     current_user: User = Depends(require_role(authorized_roles)),
     db: Session = Depends(get_db)
 ):
+    # Upsert room — create if missing so this never 404s on a race condition
     room = db.query(ChatRoom).filter(ChatRoom.id == uuid_val).first()
     if not room:
-        raise HTTPException(status_code=404, detail="Chat not found")
-        
-    if room.user_id != current_user.id:
+        room = ChatRoom(
+            id=uuid_val,
+            user_id=current_user.id,
+            title=req.title or "AI Chat Assistant",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(room)
+        db.commit()
+        db.refresh(room)
+    elif room.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
     # 1. Add user message with secure UUID
@@ -942,11 +1057,11 @@ async def send_chat_message(
         created_at=datetime.utcnow()
     )
     db.add(user_msg)
-    
+
     # Update title dynamically if provided
     if req.title and room.title != req.title:
         room.title = req.title
-        
+
     db.commit()
 
     # 2. Get conversational context
@@ -960,3 +1075,28 @@ async def send_chat_message(
 
     # 3. Trigger Agent loop
     return await run_agent_loop(messages_payload, room.id, current_user, db)
+
+
+
+
+
+@router.delete("/api/chats/{uuid_val}")
+def delete_chat(
+    uuid_val: str,
+    current_user: User = Depends(require_role(authorized_roles)),
+    db: Session = Depends(get_db)
+):
+    room = db.query(ChatRoom).filter(ChatRoom.id == uuid_val).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Chat not found")
+        
+    if room.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this chat")
+
+    # Delete all associated messages first
+    db.query(ChatMessage).filter(ChatMessage.room_id == uuid_val).delete(synchronize_session=False)
+    db.delete(room)
+    db.commit()
+
+    return {"success": True, "id": uuid_val}
+

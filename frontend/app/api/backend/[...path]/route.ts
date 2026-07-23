@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const maxDuration = 300 // 5 minutes — needed for AI streaming responses
+
 const BACKEND_URL = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '')
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
@@ -76,6 +78,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
       fetchHeaders = {
         'cookie': cookieHeader,
         'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
         ...(authHeader && { 'authorization': authHeader }),
       }
     }
@@ -84,6 +87,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
       method: 'POST',
       headers: fetchHeaders,
       body: fetchBody,
+      // @ts-ignore — required in Node.js to allow streaming body reads
+      duplex: 'half',
+      cache: 'no-store',
     })
 
     if (!res.ok) {
@@ -101,9 +107,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
       return new NextResponse(res.body, {
         headers: {
           'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'no-cache, no-transform',
           'Connection': 'keep-alive',
-        }
+          'X-Accel-Buffering': 'no',
+        },
       })
     }
 
@@ -113,6 +120,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
     return NextResponse.json({ detail: error.message }, { status: 500 })
   }
 }
+
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
