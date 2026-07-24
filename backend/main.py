@@ -29,6 +29,7 @@ from app.routes.library import router as library_router
 from app.routes.notices import router as notices_router
 from app.routes.search import router as search_router
 from app.routes.chats import router as chats_router
+from app.routes.page_builder_ai import router as page_builder_ai_router
 from models import User
 
 # Load env variables from .env (local dev only — on Render, system env vars take precedence)
@@ -379,6 +380,7 @@ app.include_router(library_router)
 app.include_router(notices_router)
 app.include_router(search_router)
 app.include_router(chats_router)
+app.include_router(page_builder_ai_router, prefix="/api/page-builder", tags=["page-builder"])
 
 # Admin endpoints for teacher approval and subject requests
 @app.get("/api/health")
