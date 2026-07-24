@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { Panel as ResizablePanel, Group as ResizablePanelGroup, Separator as ResizableHandle } from "react-resizable-panels"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 
 const PANEL_SIZE_KEY = "vidya_pb_panel_size"
 
@@ -53,7 +53,7 @@ const BLOCK_DEFS: {
       { key: "align", label: "Align", type: "select", options: ["left", "center", "right"] },
     ],
     render: ({ text, level, align }) => {
-      const Tag = (level || "h2") as keyof JSX.IntrinsicElements
+      const Tag = (level || "h2") as React.ElementType
       const sizes: Record<string, string> = { h1: "text-4xl", h2: "text-2xl", h3: "text-xl" }
       return <Tag className={cn("font-bold leading-tight", sizes[level] ?? "text-2xl", `text-${align ?? "left"}`)}>{text}</Tag>
     },
@@ -445,8 +445,8 @@ export default function PageEditorPage() {
     return Number(localStorage.getItem(PANEL_SIZE_KEY) ?? 18)
   })
 
-  const handleLeftResize = (size: number) => {
-    setLeftSize(size)
+  const handleLeftResize = (size: any) => {
+    setLeftSize(Number(size))
     localStorage.setItem(PANEL_SIZE_KEY, String(size))
   }
 
