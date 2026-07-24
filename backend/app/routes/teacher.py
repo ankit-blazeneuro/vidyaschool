@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from typing import List, Dict, Any, Optional
-import zlib
 import uuid
 from datetime import datetime
 from pydantic import BaseModel, Field
@@ -148,37 +147,12 @@ def get_class_students(
     # 3. Format students
     result = []
     for user_obj, profile in student_records:
-        # Generate stable metrics based on user_obj.id to make it realistic
-        id_hash = zlib.adler32(user_obj.id.encode('utf-8'))
-        
-        # Attendance between 75% and 100%
-        attendance_val = 75.0 + (id_hash % 250) / 10.0
-        attendance = f"{attendance_val:.1f}%"
-        
-        # GPA between 5.0 and 10.0
-        gpa = round(5.0 + (id_hash % 50) / 10.0, 1)
-        
-        # Performance and Status based on GPA
-        if gpa >= 9.0:
-            status = "Excellent"
-            performance = "improving"
-        elif gpa >= 7.0:
-            status = "Good"
-            performance = "stable"
-        else:
-            status = "Needs Attention"
-            performance = "declining"
-            
         result.append({
             "id": profile.admission_number or f"STU-{user_obj.id[:8]}",
             "userId": user_obj.id,
             "name": user_obj.name,
             "email": user_obj.email,
             "image": user_obj.image,
-            "attendance": attendance,
-            "gpa": gpa,
-            "performance": performance,
-            "status": status
         })
         
     return {
@@ -204,40 +178,7 @@ def get_student_details(
     # 3. Get student fees
     fees_records = db.query(FeeInstallment).filter(FeeInstallment.user_id == user_id).all()
     
-    # Generate stable mock marks based on student user_id
-    id_hash = zlib.adler32(user_id.encode('utf-8'))
-    math_score = 70 + (id_hash % 26)
-    phy_score = 65 + ((id_hash + 5) % 31)
-    chm_score = 72 + ((id_hash + 10) % 24)
-    eng_score = 68 + ((id_hash + 15) % 28)
-    cse_score = 80 + ((id_hash + 20) % 21)
-    
-    marks_data = {
-        "term-1": {
-            "termName": "Mid-Term Examination (Term 1)",
-            "rank": f"{3 + (id_hash % 8)}th / 40",
-            "gpa": f"{round((math_score + phy_score + chm_score + eng_score + cse_score) / 50, 1)} / 10",
-            "subjects": [
-                {"code": "MAT-101", "subject": "Mathematics", "score": math_score, "maxScore": 100, "grade": "A" if math_score >= 90 else ("B" if math_score >= 80 else "C")},
-                {"code": "PHY-101", "subject": "Physics", "score": phy_score, "maxScore": 100, "grade": "A" if phy_score >= 90 else ("B" if phy_score >= 80 else "C")},
-                {"code": "CHM-101", "subject": "Chemistry", "score": chm_score, "maxScore": 100, "grade": "A" if chm_score >= 90 else ("B" if chm_score >= 80 else "C")},
-                {"code": "ENG-101", "subject": "English Literature", "score": eng_score, "maxScore": 100, "grade": "A" if eng_score >= 90 else ("B" if eng_score >= 80 else "C")},
-                {"code": "CSE-101", "subject": "Computer Programming", "score": cse_score, "maxScore": 100, "grade": "A" if cse_score >= 90 else ("B" if cse_score >= 80 else "C")},
-            ]
-        },
-        "term-2": {
-            "termName": "Final Examination (Term 2)",
-            "rank": f"{2 + (id_hash % 6)}rd / 40",
-            "gpa": f"{round((math_score + phy_score + chm_score + eng_score + cse_score + 10) / 50, 1)} / 10",
-            "subjects": [
-                {"code": "MAT-101", "subject": "Mathematics", "score": min(100, math_score + 3), "maxScore": 100, "grade": "A" if (math_score + 3) >= 90 else ("B" if (math_score + 3) >= 80 else "C")},
-                {"code": "PHY-101", "subject": "Physics", "score": min(100, phy_score + 4), "maxScore": 100, "grade": "A" if (phy_score + 4) >= 90 else ("B" if (phy_score + 4) >= 80 else "C")},
-                {"code": "CHM-101", "subject": "Chemistry", "score": min(100, chm_score + 2), "maxScore": 100, "grade": "A" if (chm_score + 2) >= 90 else ("B" if (chm_score + 2) >= 80 else "C")},
-                {"code": "ENG-101", "subject": "English Literature", "score": min(100, eng_score + 1), "maxScore": 100, "grade": "A" if (eng_score + 1) >= 90 else ("B" if (eng_score + 1) >= 80 else "C")},
-                {"code": "CSE-101", "subject": "Computer Programming", "score": min(100, cse_score + 2), "maxScore": 100, "grade": "A" if (cse_score + 2) >= 90 else ("B" if (cse_score + 2) >= 80 else "C")},
-            ]
-        }
-    }
+    marks_data = {}
     
     # Format profile details safely
     details = {
@@ -300,7 +241,7 @@ def get_student_details(
 
     return {
         "details": details,
-        "marks": marks_data,
+        "marks": {},
         "fees": formatted_fees,
         "exams": student_exams,
         "examScores": student_exam_scores

@@ -41,10 +41,7 @@ class ChatMessageRequest(BaseModel):
     title: str = None
 
 # Get API Key from environment or fallback to user provided key
-NVIDIA_API_KEY = os.getenv(
-    "NVIDIA_API_KEY",
-    "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"
-)
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 
 # ── Model config ──
@@ -772,7 +769,11 @@ async def run_agent_loop(messages_payload: list, room_id: str, current_user: Use
             f"Format the preview as:\n"
             f"📢 **Draft Message:**\n[improved message here]\n\n"
             f"Shall I go ahead and send this? Reply 'yes' to confirm or suggest changes. "
-            f"NEVER output raw JSON in your response. Always respond in natural language only."
+            f"NEVER output raw JSON in your response. Always respond in natural language only. "
+            f"CRITICAL: NEVER fabricate, invent, or guess any student data, marks, addresses, phone numbers, "
+            f"emails, scores, ranks, or personal information. "
+            f"If you do not have real data from a tool call, say you don't have that information and suggest "
+            f"the teacher look it up in the portal directly. Only state facts you retrieved from actual tool results."
         )
     }
 

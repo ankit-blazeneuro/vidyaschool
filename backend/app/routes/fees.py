@@ -331,14 +331,29 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/api/admin/students")
 def list_students(admin: User = Depends(require_role(["admin", "account"])), db: Session = Depends(get_db)):
-    results = db.query(User, UserProfile).join(UserProfile, User.id == UserProfile.user_id).filter(User.role == "student").all()
-    students = []
-    for u, p in results:
-        dues_count = db.query(FeeInstallment).filter(
-            FeeInstallment.user_id == u.id,
-            FeeInstallment.status.in_(["pending", "overdue"]),
-        ).count()
+    from sqlalchemy import func
 
+    # Subquery to count outstanding dues per user
+    dues_subq = (
+        db.query(
+            FeeInstallment.user_id,
+            func.count(FeeInstallment.id).label("dues_count")
+        )
+        .filter(FeeInstallment.status.in_(["pending", "overdue"]))
+        .group_by(FeeInstallment.user_id)
+        .subquery()
+    )
+
+    results = (
+        db.query(User, UserProfile, dues_subq.c.dues_count)
+        .join(UserProfile, User.id == UserProfile.user_id)
+        .outerjoin(dues_subq, User.id == dues_subq.c.user_id)
+        .filter(User.role == "student")
+        .all()
+    )
+
+    students = []
+    for u, p, dues_count in results:
         students.append({
             "id": u.id,
             "name": u.name,
@@ -347,7 +362,7 @@ def list_students(admin: User = Depends(require_role(["admin", "account"])), db:
             "class": p.class_,
             "section": p.section,
             "admission_number": p.admission_number,
-            "outstanding_dues_count": dues_count,
+            "outstanding_dues_count": dues_count or 0,
         })
 
     return students
@@ -485,14 +500,12 @@ def get_logged_in_student_marks(
                 total_points += (score_percentage / 10)
             gpa_val = round(total_points / len(subjects_list), 1) if subjects_list else 0.0
             
-            name_hash = zlib.adler32(current_user.id.encode('utf-8'))
-            rank_num = max(1, 1 + (name_hash % 10) + int((10 - gpa_val) * 3))
-            attendance_val = min(100.0, 85.0 + (name_hash % 15) + (gpa_val * 0.2))
+            name_hash = 0
 
             results[exam.id] = {
                 "termName": exam.name,
-                "rank": f"{rank_num}th / 40",
-                "attendance": f"{attendance_val:.1f}%",
+                "rank": None,
+                "attendance": None,
                 "gpa": f"{gpa_val:.1f} / 10",
                 "subjects": subjects_list
             }
@@ -872,125 +885,8 @@ async def reject_teacher_request(
     return {"success": True}
 
 
-class RegisterTeacherPreferenceRequest(BaseModel):
-    email: str
-
-@router.post("/api/public/register-teacher-preference")
-def register_teacher_preference(
-    data: RegisterTeacherPreferenceRequest,
-    db: Session = Depends(get_db)
-):
-    import time
-    email_clean = data.email.strip().lower()
-    
-    # Try up to 3 times with a short sleep to handle database write lag
-    target_user = None
-    for _ in range(3):
-        target_user = db.query(User).filter(User.email == email_clean).first()
-        if target_user:
-            break
-        time.sleep(0.5)
-        
-    if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
-        
-    from models import TeacherRequest
-    existing = db.query(TeacherRequest).filter(TeacherRequest.user_id == target_user.id).first()
-    if not existing:
-        import uuid
-        from datetime import datetime
-        req = TeacherRequest(
-            id=str(uuid.uuid4()),
-            user_id=target_user.id,
-            status="pending",
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
-        )
-        db.add(req)
-        db.commit()
-        
-    return {"success": True}
-
-
-@router.get("/api/public/user-role/{email}")
-def get_user_role(email: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == email).first()
-    if user:
-        student_class = None
-        if user.role == "student":
-            profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-            if profile:
-                student_class = profile.class_
-        return {"role": user.role, "name": user.name, "image": user.image, "student_class": student_class}
-    return {"role": "student", "name": None, "image": None, "student_class": None}
-
 
 from datetime import timedelta
-
-@router.post("/api/public/create-session")
-def create_session(payload: dict[str, str], request: Request, db: Session = Depends(get_db)):
-    email = payload.get("email")
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        return {"success": False, "message": "User not found"}
-    
-    # Capture client IP from X-Forwarded-For header or fallback to client host
-    ip_address = request.headers.get("x-forwarded-for") or (request.client.host if request.client else None)
-    if ip_address and "," in ip_address:
-        ip_address = ip_address.split(",")[0].strip()
-        
-    user_agent = request.headers.get("user-agent")
-    
-    import uuid
-    token = str(uuid.uuid4())
-    session_id = str(uuid.uuid4())
-    expires_at = datetime.utcnow() + timedelta(days=7)
-    
-    db_session = DbSession(
-        id=session_id,
-        token=token,
-        user_id=user.id,
-        expires_at=expires_at,
-        ip_address=ip_address,
-        user_agent=user_agent,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
-    )
-    db.add(db_session)
-    db.commit()
-    
-    return {
-        "success": True,
-        "session": {
-            "id": session_id,
-            "token": token,
-            "expiresAt": expires_at.isoformat() + "Z"
-        }
-    }
-
-
-@router.get("/api/public/verify-session/{token}")
-def verify_session(token: str, db: Session = Depends(get_db)):
-    db_session = db.query(DbSession).filter(DbSession.token == token).first()
-    if db_session and db_session.expires_at > datetime.utcnow():
-        user = db.query(User).filter(User.id == db_session.user_id).first()
-        if user:
-            student_class = None
-            username = None
-            profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
-            if profile:
-                username = profile.username
-                if user.role == "student":
-                    student_class = profile.class_
-            return {
-                "valid": True,
-                "role": user.role,
-                "name": user.name,
-                "image": user.image,
-                "student_class": student_class,
-                "username": username
-            }
-    return {"valid": False}
 
 
 from sqlmodel import or_
@@ -1209,7 +1105,14 @@ def apply_fee_structures(
             body = f"The academic fee structure for Class {profile.class_} has been updated. Please review your pending installments in the Fee module."
             # We run this asynchronously using the existing helper which logs history and sends FCM/Socket
             import asyncio
-            asyncio.run(send_notification_to_user(u.id, title, body, db))
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.ensure_future(send_notification_to_user(u.id, title, body, db))
+                else:
+                    loop.run_until_complete(send_notification_to_user(u.id, title, body, db))
+            except RuntimeError:
+                pass  # No event loop available, skip notification
         except Exception as notif_err:
             print(f"Failed to send update notification to user {u.id}: {notif_err}")
 

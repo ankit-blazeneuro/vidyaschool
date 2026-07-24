@@ -460,17 +460,31 @@ export default function TeacherTaskChatPage() {
     let fullAnswer = ""
     const lower = userMessageText.toLowerCase()
 
-    if (lower.includes("leaderboard") || lower.includes("top student") || lower.includes("rank") || lower.includes("highest score")) {
+    if (lower.includes("leaderboard") || lower.includes("top student") || lower.includes("rank") || lower.includes("highest score") || lower.includes("second") || lower.includes("2nd") || lower.includes("third") || lower.includes("3rd")) {
       try {
         const res = await fetch("/api/backend/api/student/leaderboard")
         if (res.ok) {
           const data = await res.json()
           if (data.leaderboard && data.leaderboard.length > 0) {
-            const top = data.leaderboard[0]
             const topList = data.leaderboard.slice(0, 5)
-            fullAnswer = `🏆 **Top Student on Leaderboard:** **${top.name}** with **${top.average}%** average score!\n\n` +
-              `### Top 5 Leaderboard Standings:\n` +
-              topList.map((s: any, idx: number) => `**${idx + 1}. ${s.name}** — ${s.average}% avg (${s.examsCount} exam(s))`).join("\n")
+
+            // Detect specific rank queries
+            const rankIdx =
+              (lower.includes("second") || lower.includes("2nd")) ? 1 :
+              (lower.includes("third") || lower.includes("3rd")) ? 2 : 0
+
+            if ((lower.includes("second") || lower.includes("2nd") || lower.includes("third") || lower.includes("3rd")) && topList[rankIdx]) {
+              const medals = ["🥇", "🥈", "🥉"]
+              const s = topList[rankIdx]
+              fullAnswer = `${medals[rankIdx]} **Rank #${rankIdx + 1}:** **${s.name}** with **${s.average}%** average across ${s.examsCount} exam(s).\n\n` +
+                `### Top 5 Leaderboard Standings:\n` +
+                topList.map((s: any, idx: number) => `**${idx + 1}. ${s.name}** — ${s.average}% avg (${s.examsCount} exam(s))`).join("\n")
+            } else {
+              const top = topList[0]
+              fullAnswer = `🏆 **Top Student on Leaderboard:** **${top.name}** with **${top.average}%** average score!\n\n` +
+                `### Top 5 Leaderboard Standings:\n` +
+                topList.map((s: any, idx: number) => `**${idx + 1}. ${s.name}** — ${s.average}% avg (${s.examsCount} exam(s))`).join("\n")
+            }
           }
         }
       } catch (e) {}

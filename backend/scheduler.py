@@ -155,47 +155,6 @@ async def job_welcome_new_students():
         db.close()
 
 
-# ────────────────────────────────────────────────────────────────────────────
-# Job 4 — Marks published alert (every 30 minutes)
-# Tracks newly inserted StudentSubjectMarks since last run
-# ────────────────────────────────────────────────────────────────────────────
-_last_marks_check: datetime = datetime.utcnow()
-
-async def job_marks_published():
-    global _last_marks_check
-    print("[Scheduler] Running: marks published check")
-    from models import StudentSubjectMarks, Exam, User
-    db = _get_db()
-    try:
-        since = _last_marks_check
-        _last_marks_check = datetime.utcnow()
-
-        new_marks = db.query(StudentSubjectMarks).filter(
-            StudentSubjectMarks.created_at >= since
-        ).all()
-
-        if not new_marks:
-            return
-
-        # Group by student_id → set of subjects
-        student_subjects: dict[str, set[str]] = {}
-        for m in new_marks:
-            student_subjects.setdefault(m.student_id, set()).add(m.subject)
-
-        for student_id, subjects in student_subjects.items():
-            subj_list = ", ".join(sorted(subjects))
-            await _send_notification_to_user(
-                student_id,
-                "📝 Marks Published",
-                f"Your marks for {subj_list} have been uploaded. Check your profile to view your score.",
-                db
-            )
-        print(f"[Scheduler] Marks alerts sent to {len(student_subjects)} students.")
-    except Exception as e:
-        print(f"[Scheduler] Error in marks_published: {e}")
-    finally:
-        db.close()
-
 
 # ────────────────────────────────────────────────────────────────────────────
 # Job 5 — Library book due soon (daily at 9 AM IST, 3-day warning)
@@ -298,16 +257,6 @@ def create_scheduler() -> AsyncIOScheduler:
         name="Welcome new students daily",
         replace_existing=True,
         misfire_grace_time=3600,
-    )
-
-    # Job 4 — every 30 minutes
-    scheduler.add_job(
-        job_marks_published,
-        CronTrigger(minute="*/30", timezone="Asia/Kolkata"),
-        id="marks_published",
-        name="Marks published check every 30 min",
-        replace_existing=True,
-        misfire_grace_time=600,
     )
 
     # Job 5 — daily at 9:00 AM IST

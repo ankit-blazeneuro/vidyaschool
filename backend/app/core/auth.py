@@ -26,14 +26,7 @@ def decode_session_token(token: Optional[str]) -> Optional[str]:
     return decoded
 
 
-def log_request_debug(request: Request) -> None:
-    print(f"\n--- [DEBUG] Request at {datetime.utcnow()} ---")
-    print(f"Headers: {dict(request.headers)}")
-    print(f"Cookies: {dict(request.cookies)}")
-
-
 def get_current_user(request: Request, db: Session = Depends(get_db)):
-    log_request_debug(request)
 
     raw_token = request.cookies.get("better-auth.session_token") or request.cookies.get("__Secure-better-auth.session_token")
     token = decode_session_token(raw_token)
@@ -42,16 +35,10 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
         if auth_header and auth_header.startswith("Bearer "):
             token = decode_session_token(auth_header.split(" ", 1)[1])
 
-    print(f"Extracted token: {token}")
-
     if not token:
         raise HTTPException(status_code=401, detail="Unauthorized: No session token found")
 
     db_session = db.query(SessionModel).filter(SessionModel.token == token).first()
-
-    print(f"Found db_session: {db_session is not None}")
-    if db_session:
-        print(f"db_session user_id: {db_session.user_id}, expires_at: {db_session.expires_at}")
 
     if not db_session:
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid session")

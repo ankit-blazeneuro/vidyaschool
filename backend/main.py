@@ -6,9 +6,9 @@ from contextlib import asynccontextmanager
 import sentry_sdk
 
 sentry_sdk.init(
-    dsn="https://42fb3541f8375e80add25a786495678f@o4511647082872832.ingest.de.sentry.io/4511647092179024",
-    send_default_pii=True,
-    traces_sample_rate=1.0,
+    dsn=os.getenv("SENTRY_DSN", ""),
+    send_default_pii=False,
+    traces_sample_rate=0.1,
     enable_logs=True,
 )
 
@@ -46,7 +46,7 @@ engine = create_engine(
 )
 
 # Set up Socket.IO server
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=['http://localhost:3000', 'https://vidyaschool.vercel.app'])
 
 active_users = {}
 
@@ -363,7 +363,10 @@ app = FastAPI(title="VidyaSchool Fees Backend API")
 # Enable CORS for Next.js frontend and mobile apps
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://vidyaschool.vercel.app", "*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://vidyaschool.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -383,313 +386,15 @@ def health():
     return {"ok": True}
 
 
-@app.get("/api/admin/stats")
-async def get_admin_stats(
-    current_user: User = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db)
-):
-    """Return aggregated fee and account statistics for the admin dashboard."""
-    from models import FeeInstallment, User as UserModel, Complaint
-
-    # Total fees received (sum of all paid installments)
-    paid_installments = db.query(FeeInstallment).filter(
-        FeeInstallment.status == "paid"
-    ).all()
-    total_fee_received = sum(inst.amount for inst in paid_installments)
-
-    # Expected fees to collect (sum of pending + overdue installments)
-    outstanding_installments = db.query(FeeInstallment).filter(
-        FeeInstallment.status.in_(["pending", "overdue"])
-    ).all()
-    expected_fee_to_collect = sum(inst.amount for inst in outstanding_installments)
-
-    # Active accounts (all users in the system)
-    active_accounts = db.query(UserModel).count()
-
-    # Pending complaints count
-    pending_complaints = db.query(Complaint).filter(
-        Complaint.status == "pending"
-    ).count()
-
-    return {
-        "total_fee_received": total_fee_received,
-        "expected_fee_to_collect": expected_fee_to_collect,
-        "active_accounts": active_accounts,
-        "pending_complaints": pending_complaints,
-    }
-
-
-@app.get("/api/admin/performance")
-async def get_admin_performance(
-    current_user: User = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db)
-):
-    """Return per-class average performance for the admin dashboard chart."""
-    from models import Exam, StudentSubjectMarks, UserProfile
-
-    # Join marks → exams → user_profile to get class info
-    results = (
-        db.query(
-            UserProfile.class_,
-            StudentSubjectMarks.score,
-            StudentSubjectMarks.max_score,
-        )
-        .join(StudentSubjectMarks, StudentSubjectMarks.student_id == UserProfile.user_id)
-        .join(Exam, StudentSubjectMarks.exam_id == Exam.id)
-        .filter(UserProfile.class_.isnot(None))
-        .all()
-    )
-
-    if not results:
-        return {"performance": [], "school_average": 0}
-
-    # Aggregate by class
-    class_scores: dict[str, list[float]] = {}
-    all_percentages: list[float] = []
-
-    for class_, score, max_score in results:
-        pct = (score / max_score * 100) if max_score and max_score > 0 else 0
-        all_percentages.append(pct)
-        if class_ not in class_scores:
-            class_scores[class_] = []
-        class_scores[class_].append(pct)
-
-    school_average = round(sum(all_percentages) / len(all_percentages), 1) if all_percentages else 0
-
-    # Sort classes numerically (1,2,…,12) if possible, else alphabetically
-    def class_sort_key(c: str):
-        try:
-            return int(c)
-        except (ValueError, TypeError):
-            return 999
-
-    performance = []
-    for class_ in sorted(class_scores.keys(), key=class_sort_key):
-        scores = class_scores[class_]
-        class_avg = round(sum(scores) / len(scores), 1)
-        performance.append({
-            "class": f"Class {class_}",
-            "classAverage": class_avg,
-            "schoolAverage": school_average,
-        })
-
-    return {"performance": performance, "school_average": school_average}
-
-
-@app.get("/api/admin/requests")
-async def get_admin_subject_requests(
-    current_user: User = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db)
-):
-    """Get all pending subject-class requests for admin"""
-    from models import SubjectClassRequest, User as UserModel
-    requests = db.exec(
-        select(SubjectClassRequest, UserModel)
-        .join(UserModel, SubjectClassRequest.teacher_id == UserModel.id)
-        .where(SubjectClassRequest.status == "pending")
-    ).all()
-    
-    return [
-        {
-            "id": r.id,
-            "class": r.class_,
-            "section": r.section,
-            "subject": r.subject,
-            "status": r.status,
-            "createdAt": r.created_at.isoformat(),
-            "teacher": {
-                "id": u.id,
-                "name": u.name,
-                "email": u.email
-            }
-        } for r, u in requests
-    ]
-
-@app.get("/api/admin/teacher-requests")
-async def get_teacher_approval_requests(
-    current_user: User = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db)
-):
-    """Get all pending teacher approval requests"""
-    from models import TeacherRequest, User as UserModel
-    requests = db.exec(
-        select(TeacherRequest, UserModel)
-        .join(UserModel, TeacherRequest.user_id == UserModel.id)
-        .where(TeacherRequest.status == "pending")
-    ).all()
-    
-    return [
-        {
-            "id": r.id,
-            "userId": r.user_id,
-            "status": r.status,
-            "createdAt": r.created_at.isoformat(),
-            "user": {
-                "id": u.id,
-                "name": u.name,
-                "email": u.email,
-                "image": u.image
-            }
-        } for r, u in requests
-    ]
-
-@app.post("/api/admin/requests/{request_id}/approve")
-async def approve_subject_request(
-    request_id: str,
-    current_user: User = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db)
-):
-    """Approve a subject-class request"""
-    from models import SubjectClassRequest, SubjectClassAssignment
-    import uuid
-    
-    req = db.get(SubjectClassRequest, request_id)
-    if not req:
-        raise HTTPException(status_code=404, detail="Request not found")
-    
-    req.status = "approved"
-    req.updated_at = datetime.utcnow()
-    db.add(req)
-    
-    # Create assignment
-    assignment = SubjectClassAssignment(
-        id=f"asgn_{uuid.uuid4().hex[:8]}",
-        teacher_id=req.teacher_id,
-        class_=req.class_,
-        section=req.section,
-        subject=req.subject
-    )
-    db.add(assignment)
-    db.commit()
-    return {"status": "success"}
-
-@app.post("/api/admin/requests/{request_id}/reject")
-async def reject_subject_request(
-    request_id: str,
-    current_user: User = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db)
-):
-    """Reject a subject-class request"""
-    from models import SubjectClassRequest
-    
-    req = db.get(SubjectClassRequest, request_id)
-    if not req:
-        raise HTTPException(status_code=404, detail="Request not found")
-    
-    req.status = "rejected"
-    req.updated_at = datetime.utcnow()
-    db.add(req)
-    db.commit()
-    return {"status": "success"}
-
-@app.post("/api/admin/teacher-requests/{request_id}/approve")
-async def approve_teacher_request(
-    request_id: str,
-    current_user: User = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db)
-):
-    """Approve a teacher approval request"""
-    from models import TeacherRequest, User as UserModel
-    
-    req = db.get(TeacherRequest, request_id)
-    if not req:
-        raise HTTPException(status_code=404, detail="Request not found")
-    
-    # Update user role to teacher/librarian
-    user = db.get(UserModel, req.user_id)
-    if user:
-        user.role = user.preferred_role if user.preferred_role in ("teacher", "librarian") else "teacher"
-        db.add(user)
-    
-    req.status = "approved"
-    req.admin_id = current_user.id
-    req.updated_at = datetime.utcnow()
-    db.add(req)
-    db.commit()
-    return {"status": "success"}
-
-@app.post("/api/admin/teacher-requests/{request_id}/reject")
-async def reject_teacher_request(
-    request_id: str,
-    reason: str = None,
-    current_user: User = Depends(require_role(["admin"])),
-    db: Session = Depends(get_db)
-):
-    """Reject a teacher approval request"""
-    from models import TeacherRequest
-    from pydantic import BaseModel
-    
-    class RejectRequest(BaseModel):
-        reason: Optional[str] = None
-    
-    req = db.get(TeacherRequest, request_id)
-    if not req:
-        raise HTTPException(status_code=404, detail="Request not found")
-    
-    req.status = "rejected"
-    req.admin_id = current_user.id
-    req.rejection_reason = reason
-    req.updated_at = datetime.utcnow()
-    db.add(req)
-    db.commit()
-    return {"status": "success"}
-
-
-@app.get("/accounts/dashboard")
-async def get_accounts_dashboard():
-    return {
-        "totalRevenue": 1245000,
-        "outstandingFees": 325000,
-        "totalExpenses": 850000,
-        "netIncome": 395000,
-        "monthlyRevenue": [
-            {"month": "Jan", "revenue": 120000},
-            {"month": "Feb", "revenue": 135000},
-            {"month": "Mar", "revenue": 142000},
-            {"month": "Apr", "revenue": 155000},
-            {"month": "May", "revenue": 148000},
-            {"month": "Jun", "revenue": 165000},
-        ],
-        "paymentMethods": [
-            {"name": "Cash", "value": 35},
-            {"name": "UPI", "value": 40},
-            {"name": "Card", "value": 15},
-            {"name": "Bank Transfer", "value": 10},
-        ],
-        "recentTransactions": [
-            {
-                "id": 1,
-                "description": "Student Fee Payment - John Doe",
-                "category": "Class 10 - Section A",
-                "amount": 15000,
-                "date": "2024-06-27"
-            },
-            {
-                "id": 2,
-                "description": "Electricity Bill",
-                "category": "Maintenance",
-                "amount": -8500,
-                "date": "2024-06-26"
-            },
-            {
-                "id": 3,
-                "description": "Student Fee Payment - Jane Smith",
-                "category": "Class 9 - Section B",
-                "amount": 14000,
-                "date": "2024-06-25"
-            },
-        ]
-    }
-
 
 @app.post("/notify-teacher-request")
-async def notify_teacher_request(data: dict):
+async def notify_teacher_request(data: dict, current_user: User = Depends(require_role(["admin"]))):
     await sio.emit('teacher_request_created', data, broadcast=True)
     return {"success": True}
 
 
 @app.post("/notify-complaint")
-async def notify_complaint(data: dict):
+async def notify_complaint(data: dict, current_user: User = Depends(require_role(["admin", "teacher"]))):
     event = data.get("event", "complaint_created")
     payload = data.get("payload", data)
     await sio.emit(event, payload, room='admin_room')
@@ -728,30 +433,33 @@ def send_fcm_notification(tokens: list[str], title: str, body: str):
         return
     if not tokens:
         return
-    message = messaging.MulticastMessage(
-        notification=messaging.Notification(title=title, body=body),
-        data={"title": title, "body": body},
-        android=messaging.AndroidConfig(
-            priority="high",
-            ttl=86400,
-            notification=messaging.AndroidNotification(
-                channel_id="school_notifications",
+    # FCM multicast supports max 500 tokens per call
+    for i in range(0, len(tokens), 500):
+        batch = tokens[i:i + 500]
+        message = messaging.MulticastMessage(
+            notification=messaging.Notification(title=title, body=body),
+            data={"title": title, "body": body},
+            android=messaging.AndroidConfig(
                 priority="high",
-                default_sound=True,
-                default_vibrate_timings=True,
+                ttl=86400,
+                notification=messaging.AndroidNotification(
+                    channel_id="school_notifications",
+                    priority="high",
+                    default_sound=True,
+                    default_vibrate_timings=True,
+                ),
             ),
-        ),
-        tokens=tokens,
-    )
-    try:
-        response = messaging.send_each_for_multicast(message)
-        print(f"FCM multicast sent: {response.success_count} success, {response.failure_count} failure")
-        if response.failure_count:
-            for idx, send_response in enumerate(response.responses):
-                if not send_response.success:
-                    print(f"FCM token failure [{idx}]: {send_response.exception}")
-    except Exception as e:
-        print(f"Error sending FCM multicast: {e}")
+            tokens=batch,
+        )
+        try:
+            response = messaging.send_each_for_multicast(message)
+            print(f"FCM multicast batch sent: {response.success_count} success, {response.failure_count} failure")
+            if response.failure_count:
+                for idx, send_response in enumerate(response.responses):
+                    if not send_response.success:
+                        print(f"FCM token failure [{idx}]: {send_response.exception}")
+        except Exception as e:
+            print(f"Error sending FCM multicast batch: {e}")
 
 def get_online_sids_for_user(user_id: str) -> list[str]:
     return [sid for sid, info in active_users.items() if info["userId"] == user_id]

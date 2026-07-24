@@ -156,6 +156,7 @@ function useAdminUrls() {
     feeManagement: `${base}/fee-management`,
     notices: `${base}/notice`,
     slider: `${base}/slider`,
+    pageBuilder: `${base}/page-builder`,
   }
 }
 
@@ -790,6 +791,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Slider Banners",
           url: adminUrls.slider,
           icon: <CameraIcon />,
+        },
+        {
+          title: "Page Builder",
+          url: adminUrls.pageBuilder,
+          icon: <LayoutDashboardIcon />,
         },
       ]
     : [

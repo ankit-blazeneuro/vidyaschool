@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 from app.core.database import get_db
 from typing import Literal
+from app.core.auth import require_role
+from models import User
 
 router = APIRouter(tags=["slider"])
 
@@ -95,7 +97,7 @@ async def get_all_slider_images(db: Session = Depends(get_db)):
 
 @router.post("/api/slider/images")
 @router.post("/api/admin/slider-images")
-async def update_slider_images(images: list[SliderImageRequest], db: Session = Depends(get_db)):
+async def update_slider_images(images: list[SliderImageRequest], current_user: User = Depends(require_role(["admin"])), db: Session = Depends(get_db)):
     """Update slider images (admin only)"""
     from models import SliderImage
     
