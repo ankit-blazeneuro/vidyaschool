@@ -260,3 +260,18 @@ class Timetable(SQLModel, table=True):
     room: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserDocument(SQLModel, table=True):
+    __tablename__ = "user_document"
+    id: str = Field(primary_key=True)
+    user_id: str = Field(alias="user_id", foreign_key="user.id")
+    doc_type: str = Field(alias="doc_type")
+    doc_name: str = Field(alias="doc_name")
+    file_url: str = Field(alias="file_url")
+    file_name: str = Field(alias="file_name")
+    file_type: str = Field(alias="file_type")
+    file_size: Optional[int] = Field(default=None, alias="file_size")
+    status: str = Field(default="uploaded")
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias="created_at")
+    updated_at: datetime = Field(default_factory=datetime.utcnow, alias="updated_at")
+

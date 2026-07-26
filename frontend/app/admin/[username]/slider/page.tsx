@@ -1,10 +1,36 @@
 "use client"
 
 import * as React from "react"
-import { ImageIcon, Trash2Icon, PlusIcon, Loader2Icon } from "lucide-react"
+import {
+  ImageIcon,
+  Trash2Icon,
+  PlusIcon,
+  Loader2Icon,
+  UploadCloudIcon,
+  CloudIcon,
+  LinkIcon,
+  XIcon,
+  UsersIcon,
+  GraduationCapIcon,
+  UserCheckIcon,
+  CheckIcon,
+} from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "sonner"
 
 interface SliderImage {
   id: number
@@ -15,43 +41,15 @@ interface SliderImage {
   targetClasses?: string   // "all" or comma-separated: "1,2,3,4,5,6,7,8,9,10,11,12"
 }
 
-// A beautiful, self-contained custom Switch component using Tailwind CSS
-function CustomSwitch({
-  checked,
-  onChange,
-  disabled,
-}: {
-  checked: boolean
-  onChange: (checked: boolean) => void
-  disabled?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? "bg-primary" : "bg-input"
-      }`}
-    >
-      <span
-        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${
-          checked ? "translate-x-5" : "translate-x-0"
-        }`}
-      />
-    </button>
-  )
-}
-
-// Helper to get emoji for target audience
-function getTargetAudienceEmoji(target?: string) {
+// Icon helper for target audience
+function TargetAudienceIcon({ target, className = "h-4 w-4" }: { target?: string; className?: string }) {
   switch (target) {
     case "students":
-      return "👨‍🎓"
+      return <GraduationCapIcon className={className} />
     case "teachers":
-      return "👨‍🏫"
+      return <UserCheckIcon className={className} />
     default:
-      return "👥"
+      return <UsersIcon className={className} />
   }
 }
 
@@ -62,8 +60,12 @@ function getTargetAudienceLabel(target?: string) {
     case "teachers":
       return "Teachers"
     default:
-      return "All"
+      return "All Users"
   }
+}
+
+function isS3Url(url: string) {
+  return url.includes("amazonaws.com") || url.includes("s3.") || url.includes("/sliders/")
 }
 
 export default function SliderManagementPage() {
@@ -74,7 +76,16 @@ export default function SliderManagementPage() {
   const [newTargetAudience, setNewTargetAudience] = React.useState<string>("all")
   const [newTargetClasses, setNewTargetClasses] = React.useState<string>("all")
   const [saving, setSaving] = React.useState(false)
-  
+
+  // Upload state
+  const [uploadTab, setUploadTab] = React.useState<"file" | "url">("file")
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = React.useState<string | null>(null)
+  const [uploading, setUploading] = React.useState(false)
+  const [uploadStatus, setUploadStatus] = React.useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = React.useState(false)
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null)
+
   // Available classes (1-12)
   const availableClasses = Array.from({ length: 12 }, (_, i) => (i + 1).toString())
 
@@ -88,6 +99,7 @@ export default function SliderManagementPage() {
       }
     } catch (err) {
       console.error("Failed to fetch slider images", err)
+      toast.error("Failed to load slider images")
     } finally {
       setLoading(false)
     }
@@ -111,11 +123,117 @@ export default function SliderManagementPage() {
       if (res.ok) {
         const data = await res.json()
         setImages(data.images || updatedList)
+        toast.success("Slider banners saved successfully")
+      } else {
+        toast.error("Failed to save changes")
       }
     } catch (err) {
       console.error("Failed to save slider images", err)
+      toast.error("Error saving slider images")
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Handle file selection
+  const handleFileSelect = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file (JPEG, PNG, WEBP, GIF, SVG)")
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be under 10MB")
+      return
+    }
+
+    setSelectedFile(file)
+    const localPreview = URL.createObjectURL(file)
+    setPreviewUrl(localPreview)
+
+    if (!newTitle) {
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")
+      const formattedName = nameWithoutExt.charAt(0).toUpperCase() + nameWithoutExt.slice(1)
+      setNewTitle(formattedName)
+    }
+  }
+
+  // Clear selected file
+  const handleClearFile = () => {
+    setSelectedFile(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(null)
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
+  // Secure S3 upload handler
+  const uploadToS3 = async (file: File): Promise<string | null> => {
+    setUploading(true)
+    setUploadStatus("Preparing secure AWS S3 upload...")
+
+    try {
+      const presignedRes = await fetch("/api/admin/slider/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "get_presigned_url",
+          fileName: file.name,
+          fileType: file.type,
+        }),
+      })
+
+      if (presignedRes.ok) {
+        const presignedData = await presignedRes.json()
+
+        if (presignedData.configured && presignedData.presignedUrl) {
+          setUploadStatus("Uploading image directly to AWS S3...")
+          const uploadRes = await fetch(presignedData.presignedUrl, {
+            method: "PUT",
+            headers: {
+              "Content-Type": file.type,
+            },
+            body: file,
+          })
+
+          if (uploadRes.ok) {
+            setUploadStatus("Upload successful!")
+            return presignedData.fileUrl
+          }
+        }
+      }
+
+      setUploadStatus("Uploading to server storage...")
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const formRes = await fetch("/api/admin/slider/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (formRes.ok) {
+        const formDataResult = await formRes.json()
+        if (formDataResult.url) {
+          setUploadStatus("Upload complete!")
+          if (formDataResult.notice) {
+            toast.info(formDataResult.notice)
+          }
+          return formDataResult.url
+        }
+      }
+
+      const errorData = await formRes.json().catch(() => ({ error: "Upload failed" }))
+      throw new Error(errorData.error || "Upload failed")
+    } catch (err: any) {
+      console.error("Upload error:", err)
+      toast.error(err.message || "Failed to upload image")
+      return null
+    } finally {
+      setUploading(false)
+      setUploadStatus(null)
     }
   }
 
@@ -145,15 +263,15 @@ export default function SliderManagementPage() {
     setImages(updatedList)
     saveImages(updatedList)
   }
-  
+
   // Toggle individual class selection
   const toggleClass = (id: number, classNum: string) => {
     const img = images.find(i => i.id === id)
     if (!img) return
-    
+
     const currentClasses = img.targetClasses || "all"
     let newClasses: string
-    
+
     if (currentClasses === "all") {
       newClasses = classNum
     } else {
@@ -166,7 +284,7 @@ export default function SliderManagementPage() {
         newClasses = classList.join(",")
       }
     }
-    
+
     handleTargetClassesChange(id, newClasses)
   }
 
@@ -177,15 +295,36 @@ export default function SliderManagementPage() {
     saveImages(updatedList)
   }
 
-  // Add new image
-  const handleAdd = (e: React.FormEvent) => {
+  // Add new banner card
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTitle.trim() || !newUrl.trim()) return
+    if (!newTitle.trim()) {
+      toast.error("Please enter a title for the banner")
+      return
+    }
+
+    let finalImageUrl = newUrl.trim()
+
+    if (uploadTab === "file") {
+      if (!selectedFile) {
+        toast.error("Please select an image file to upload")
+        return
+      }
+
+      const uploadedUrl = await uploadToS3(selectedFile)
+      if (!uploadedUrl) return
+      finalImageUrl = uploadedUrl
+    } else {
+      if (!finalImageUrl) {
+        toast.error("Please enter an image URL")
+        return
+      }
+    }
 
     const nextId = images.length > 0 ? Math.max(...images.map((img) => img.id)) + 1 : 1
     const newImage: SliderImage = {
       id: nextId,
-      url: newUrl.trim(),
+      url: finalImageUrl,
       title: newTitle.trim(),
       enabled: true,
       targetAudience: newTargetAudience,
@@ -194,10 +333,12 @@ export default function SliderManagementPage() {
 
     const updatedList = [...images, newImage]
     setImages(updatedList)
-    saveImages(updatedList)
+    await saveImages(updatedList)
 
+    // Reset form
     setNewTitle("")
     setNewUrl("")
+    handleClearFile()
     setNewTargetAudience("all")
     setNewTargetClasses("all")
   }
@@ -212,36 +353,49 @@ export default function SliderManagementPage() {
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Slider Banners</h2>
-        <p className="text-muted-foreground text-sm">
-          Manage image banners with role-based targeting (All, Students, Teachers) for the mobile app.
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Slider Banners</h2>
+          <p className="text-muted-foreground text-sm">
+            Manage app carousel banners with role targeting and direct AWS S3 uploads.
+          </p>
+        </div>
+
+        <Badge variant="outline" className="w-fit gap-1.5 px-3 py-1 text-xs">
+          <CloudIcon className="h-3.5 w-3.5 text-primary" />
+          AWS S3 Storage Integrated
+        </Badge>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Left Side: Current Slider Images */}
-        <Card className="flex flex-col">
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* Left Side: Current Slider Images (7 Columns) */}
+        <Card className="lg:col-span-7 flex flex-col">
           <CardHeader>
-            <CardTitle>Banner Cards</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Banner Cards</CardTitle>
+              <Badge variant="secondary" className="font-mono text-xs">
+                {images.length} {images.length === 1 ? "banner" : "banners"}
+              </Badge>
+            </div>
             <CardDescription>
-              View, manage target audience, enable, or delete banners. Choose who sees each banner: All users, Students only, or Teachers only.
+              View, target audience, toggle visibility, or delete slider banners.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1 space-y-4">
             {images.length === 0 ? (
-              <div className="flex h-40 flex-col items-center justify-center rounded-lg border border-dashed text-center">
-                <ImageIcon className="mb-2 h-10 w-10 text-muted-foreground" />
-                <p className="text-sm font-medium text-muted-foreground">No slider images found</p>
+              <div className="flex h-44 flex-col items-center justify-center rounded-lg border border-dashed text-center">
+                <ImageIcon className="mb-2 h-10 w-10 text-muted-foreground/60" />
+                <p className="text-sm font-medium text-muted-foreground">No slider banners available</p>
+                <p className="text-xs text-muted-foreground/80 mt-1">Use the panel on the right to upload your first banner.</p>
               </div>
             ) : (
               <div className="divide-y divide-border">
                 {images.map((img) => (
                   <div key={img.id} className="flex flex-col py-4 first:pt-0 last:pb-0 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center space-x-3.5">
                         {/* Thumbnail */}
-                        <div className="relative h-12 w-20 overflow-hidden rounded-md border bg-muted">
+                        <div className="relative h-14 w-24 shrink-0 overflow-hidden rounded-md border bg-muted">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={img.url}
@@ -249,84 +403,107 @@ export default function SliderManagementPage() {
                             className="h-full w-full object-cover"
                           />
                         </div>
-                        <div>
-                          <h4 className="text-sm font-semibold">{img.title}</h4>
-                          <p className="text-xs text-muted-foreground">
-                            ID: {img.id} • Target: {getTargetAudienceEmoji(img.targetAudience)} {getTargetAudienceLabel(img.targetAudience)}
-                            {img.targetAudience === "students" && img.targetClasses !== "all" && (
-                              <span> • Classes: {img.targetClasses}</span>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-semibold leading-none">{img.title}</h4>
+                            {isS3Url(img.url) && (
+                              <Badge variant="secondary" className="gap-1 px-1.5 py-0 text-[10px] font-normal">
+                                <CloudIcon className="h-2.5 w-2.5 text-primary" /> S3
+                              </Badge>
                             )}
-                          </p>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <TargetAudienceIcon target={img.targetAudience} className="h-3.5 w-3.5 text-muted-foreground" />
+                              {getTargetAudienceLabel(img.targetAudience)}
+                            </span>
+                            {img.targetAudience === "students" && img.targetClasses !== "all" && (
+                              <span>• Classes: {img.targetClasses}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 self-end sm:self-center">
                         {/* Target Audience Selector */}
-                        <select
+                        <Select
                           value={img.targetAudience || "all"}
-                          onChange={(e) => handleTargetAudienceChange(img.id, e.target.value)}
+                          onValueChange={(val) => handleTargetAudienceChange(img.id, val)}
                           disabled={saving}
-                          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          <option value="all">👥 All</option>
-                          <option value="students">👨‍🎓 Students</option>
-                          <option value="teachers">👨‍🏫 Teachers</option>
-                        </select>
-                        
+                          <SelectTrigger className="h-8 w-32">
+                            <SelectValue placeholder="Audience" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">
+                              <span className="flex items-center gap-2">
+                                <UsersIcon className="h-3.5 w-3.5" /> All Users
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="students">
+                              <span className="flex items-center gap-2">
+                                <GraduationCapIcon className="h-3.5 w-3.5" /> Students
+                              </span>
+                            </SelectItem>
+                            <SelectItem value="teachers">
+                              <span className="flex items-center gap-2">
+                                <UserCheckIcon className="h-3.5 w-3.5" /> Teachers
+                              </span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+
                         <div className="flex items-center space-x-2">
-                          <span className="text-xs text-muted-foreground">
-                            {img.enabled ? "Enabled" : "Disabled"}
-                          </span>
-                          <CustomSwitch
+                          <Switch
                             checked={img.enabled}
-                            onChange={(checked) => handleToggle(img.id, checked)}
+                            onCheckedChange={(checked) => handleToggle(img.id, checked)}
                             disabled={saving}
+                            id={`switch-${img.id}`}
                           />
                         </div>
+
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(img.id)}
                           disabled={saving}
-                          className="text-destructive hover:bg-destructive/10"
+                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
                         >
                           <Trash2Icon className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
-                    
+
                     {/* Class Selector - Show only if Students is selected */}
                     {img.targetAudience === "students" && (
-                      <div className="ml-24 space-y-2">
+                      <div className="pl-0 sm:pl-28 space-y-2 pt-1 border-t border-border/50">
                         <div className="flex items-center justify-between">
-                          <label className="text-xs font-medium text-muted-foreground">Show to Classes:</label>
+                          <Label className="text-xs font-medium text-muted-foreground">Target Classes</Label>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleTargetClassesChange(img.id, "all")}
                             disabled={saving}
-                            className="h-6 text-xs"
+                            className="h-5 text-[11px] px-2"
                           >
                             Select All
                           </Button>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                           {availableClasses.map((classNum) => {
                             const isSelected = img.targetClasses === "all" || img.targetClasses?.split(",").includes(classNum)
                             return (
-                              <button
+                              <Button
                                 key={classNum}
                                 type="button"
+                                variant={isSelected ? "default" : "outline"}
+                                size="sm"
                                 onClick={() => toggleClass(img.id, classNum)}
                                 disabled={saving}
-                                className={`h-7 w-10 rounded-md border text-xs font-medium transition-colors ${
-                                  isSelected
-                                    ? "border-primary bg-primary text-primary-foreground"
-                                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                                } disabled:opacity-50`}
+                                className="h-6 w-8 text-xs p-0"
                               >
                                 {classNum}
-                              </button>
+                              </Button>
                             )
                           })}
                         </div>
@@ -339,19 +516,20 @@ export default function SliderManagementPage() {
           </CardContent>
         </Card>
 
-        {/* Right Side: Add New Slider Image */}
-        <Card className="h-fit">
+        {/* Right Side: Add New Slider Banner with AWS S3 Upload (5 Columns) */}
+        <Card className="lg:col-span-5 h-fit">
           <CardHeader>
             <CardTitle>Add New Banner</CardTitle>
             <CardDescription>
-              Add a new image URL and title to include it in the student carousel.
+              Upload an image to AWS S3 storage or enter a URL.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAdd} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Banner Title</label>
+                <Label htmlFor="banner-title">Banner Title</Label>
                 <Input
+                  id="banner-title"
                   type="text"
                   placeholder="e.g. Science Fair 2026"
                   value={newTitle}
@@ -359,64 +537,156 @@ export default function SliderManagementPage() {
                   required
                 />
               </div>
+
+              {/* Upload Mode Tabs */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Image URL</label>
-                <Input
-                  type="url"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={newUrl}
-                  onChange={(e) => setNewUrl(e.target.value)}
-                  required
-                />
+                <Label>Image Source</Label>
+                <Tabs value={uploadTab} onValueChange={(val) => setUploadTab(val as "file" | "url")} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="file" className="gap-1.5">
+                      <UploadCloudIcon className="h-3.5 w-3.5" />
+                      AWS S3 Upload
+                    </TabsTrigger>
+                    <TabsTrigger value="url" className="gap-1.5">
+                      <LinkIcon className="h-3.5 w-3.5" />
+                      External URL
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="file" className="pt-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleFileSelect(file)
+                      }}
+                    />
+
+                    {previewUrl ? (
+                      <div className="relative overflow-hidden rounded-lg border bg-muted p-2 space-y-2">
+                        <div className="relative aspect-video w-full overflow-hidden rounded-md border bg-background">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={previewUrl}
+                            alt="Upload preview"
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between px-1">
+                          <span className="text-xs truncate max-w-[180px] font-medium text-foreground">
+                            {selectedFile?.name}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleClearFile}
+                            className="h-7 text-xs text-destructive hover:bg-destructive/10"
+                          >
+                            <XIcon className="mr-1 h-3.5 w-3.5" /> Remove
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault()
+                          setIsDragOver(true)
+                        }}
+                        onDragLeave={() => setIsDragOver(false)}
+                        onDrop={(e) => {
+                          e.preventDefault()
+                          setIsDragOver(false)
+                          const file = e.dataTransfer.files?.[0]
+                          if (file) handleFileSelect(file)
+                        }}
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                          isDragOver
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50 hover:bg-accent/50"
+                        }`}
+                      >
+                        <div className="rounded-full bg-primary/10 p-3 mb-2">
+                          <CloudIcon className="h-6 w-6 text-primary" />
+                        </div>
+                        <p className="text-sm font-semibold">
+                          Drop image here or click to upload
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PNG, JPEG, WEBP, GIF, SVG up to 10MB
+                        </p>
+                      </div>
+                    )}
+
+                    {uploadStatus && (
+                      <div className="flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground mt-2">
+                        <Loader2Icon className="h-3.5 w-3.5 animate-spin text-primary" />
+                        <span>{uploadStatus}</span>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="url" className="pt-2">
+                    <Input
+                      type="url"
+                      placeholder="https://images.unsplash.com/photo-..."
+                      value={newUrl}
+                      onChange={(e) => setNewUrl(e.target.value)}
+                      required={uploadTab === "url"}
+                    />
+                  </TabsContent>
+                </Tabs>
               </div>
+
               <div className="space-y-2">
-                <label className="text-sm font-medium">Show To</label>
-                <div className="flex gap-2">
-                  <button
+                <Label>Target Audience</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
                     type="button"
+                    variant={newTargetAudience === "all" ? "default" : "outline"}
                     onClick={() => setNewTargetAudience("all")}
-                    className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                      newTargetAudience === "all"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                    }`}
+                    className="gap-1.5 h-9"
                   >
-                    👥 All
-                  </button>
-                  <button
+                    <UsersIcon className="h-3.5 w-3.5" /> All
+                  </Button>
+                  <Button
                     type="button"
+                    variant={newTargetAudience === "students" ? "default" : "outline"}
                     onClick={() => setNewTargetAudience("students")}
-                    className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                      newTargetAudience === "students"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                    }`}
+                    className="gap-1.5 h-9"
                   >
-                    👨‍🎓 Students
-                  </button>
-                  <button
+                    <GraduationCapIcon className="h-3.5 w-3.5" /> Students
+                  </Button>
+                  <Button
                     type="button"
+                    variant={newTargetAudience === "teachers" ? "default" : "outline"}
                     onClick={() => setNewTargetAudience("teachers")}
-                    className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                      newTargetAudience === "teachers"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                    }`}
+                    className="gap-1.5 h-9"
                   >
-                    👨‍🏫 Teachers
-                  </button>
+                    <UserCheckIcon className="h-3.5 w-3.5" /> Teachers
+                  </Button>
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={saving}>
-                {saving ? (
+
+              <Button type="submit" className="w-full gap-2" disabled={saving || uploading}>
+                {uploading ? (
                   <>
-                    <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
-                    Adding Banner...
+                    <Loader2Icon className="h-4 w-4 animate-spin" />
+                    Uploading to AWS S3...
+                  </>
+                ) : saving ? (
+                  <>
+                    <Loader2Icon className="h-4 w-4 animate-spin" />
+                    Saving Banner...
                   </>
                 ) : (
                   <>
-                    <PlusIcon className="mr-2 h-4 w-4" />
-                    Add Banner Card
+                    <PlusIcon className="h-4 w-4" />
+                    Upload & Add Banner Card
                   </>
                 )}
               </Button>

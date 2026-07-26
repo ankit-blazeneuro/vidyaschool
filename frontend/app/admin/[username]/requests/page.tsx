@@ -105,8 +105,8 @@ export default function AdminRequestsPage() {
 
   const fetchRequests = React.useCallback(() => {
     Promise.all([
-      fetch("/api/admin/requests").then(res => res.json()),
-      fetch("/api/admin/teacher-requests").then(res => res.json())
+      fetch("/api/admin/requests", { credentials: "include" }).then(res => res.json()),
+      fetch("/api/admin/teacher-requests", { credentials: "include" }).then(res => res.json())
     ])
       .then(([subjects, teachers]) => {
         setSubjectRequests(subjects)
@@ -127,6 +127,7 @@ export default function AdminRequestsPage() {
     setProcessingId(id)
     fetch(`/api/backend/teacher/requests/${id}/${action}`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" }
     })
       .then((res) => {

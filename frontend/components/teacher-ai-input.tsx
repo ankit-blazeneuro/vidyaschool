@@ -83,10 +83,13 @@ export function TeacherAIInput() {
   }
 
   return (
-    <div className="sticky bottom-3 sm:bottom-4 left-0 right-0 w-full max-w-4xl mx-auto px-2.5 sm:px-5 z-40">
+    <div
+      className="fixed bottom-3 sm:bottom-4 -translate-x-1/2 w-full max-w-4xl px-2.5 sm:px-5 z-40 pointer-events-none"
+      style={{ left: "calc(var(--sidebar-width, 0px) / 2 + 50%)" }}
+    >
       {/* File attachment preview badge */}
       {attachedFile && (
-        <div className="mb-1.5 sm:mb-2 flex items-center gap-2 px-1">
+        <div className="mb-1.5 sm:mb-2 flex items-center gap-2 px-1 pointer-events-auto">
           <div className="flex items-center gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-300 dark:border-zinc-700/60 text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-300 max-w-[200px] sm:max-w-xs shadow-md">
             {attachedFile.kind === "image" && <ImageIcon className="size-3 sm:size-3.5 text-sky-500 dark:text-sky-400 shrink-0" />}
             {attachedFile.kind === "pdf" && <FileText className="size-3 sm:size-3.5 text-rose-500 dark:text-rose-400 shrink-0" />}
@@ -107,7 +110,7 @@ export function TeacherAIInput() {
 
       <form
         onSubmit={handleSubmit}
-        className="w-full flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 pl-2 sm:pl-3 rounded-full border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-black shadow-lg dark:shadow-2xl focus-within:border-zinc-500 dark:focus-within:border-zinc-600 min-h-[46px] sm:min-h-[52px]"
+        className="w-full flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 pl-2 sm:pl-3 rounded-full border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-black shadow-lg dark:shadow-2xl focus-within:border-zinc-500 dark:focus-within:border-zinc-600 min-h-[46px] sm:min-h-[52px] pointer-events-auto"
       >
         {/* Hidden file input */}
         <input

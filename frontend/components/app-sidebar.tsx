@@ -509,7 +509,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     // 2. Fetch admin requests status
     if (isAdmin) {
-      fetch('/api/backend/api/admin/requests')
+      fetch('/api/admin/requests')
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {

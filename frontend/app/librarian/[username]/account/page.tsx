@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/date-formatter"
 import { Loader2Icon } from "lucide-react"
+import { ProfileAvatarUpload } from "@/components/profile-avatar-upload"
 
 export default function LibrarianAccountPage() {
   const [user, setUser] = useState<any>(null)
@@ -105,10 +105,11 @@ export default function LibrarianAccountPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={user.image || undefined} alt={user.name} />
-              <AvatarFallback className="text-lg">{getInitials(user.name)}</AvatarFallback>
-            </Avatar>
+            <ProfileAvatarUpload
+              currentImage={user.image}
+              userName={user.name}
+              onAvatarUpdated={(newUrl) => setUser({ ...user, image: newUrl })}
+            />
             <div>
               <h3 className="text-xl font-semibold">{user.name}</h3>
               <p className="text-sm text-muted-foreground">{user.email}</p>

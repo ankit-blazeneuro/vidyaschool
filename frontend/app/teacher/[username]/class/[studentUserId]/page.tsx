@@ -20,7 +20,10 @@ import {
   SparklesIcon,
   GraduationCapIcon,
   ActivityIcon,
-  Users
+  Users,
+  FileTextIcon,
+  ShieldCheckIcon,
+  FileCheckIcon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,6 +33,7 @@ import { formatDate } from "@/lib/date-formatter"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { DocumentUploadManager, DocumentSlot } from "@/components/document-upload-manager"
 
 const getInitials = (name: string) => {
   if (!name) return "ST"
@@ -41,6 +45,39 @@ const getInitials = (name: string) => {
     .toUpperCase()
     .slice(0, 2)
 }
+
+const STUDENT_DOCUMENT_SLOTS: DocumentSlot[] = [
+  {
+    type: "10th_certificate",
+    title: "10th Certificate",
+    description: "Class 10th passing certificate or official board marksheet (PDF or Image)",
+    required: true,
+  },
+  {
+    type: "student_aadhar",
+    title: "Student Aadhar Card",
+    description: "Student's Aadhaar identification card front & back scan (PDF or Image)",
+    required: true,
+  },
+  {
+    type: "parent_aadhar",
+    title: "Parent Aadhar Card",
+    description: "Father/Mother/Guardian Aadhaar identification card scan (PDF or Image)",
+    required: true,
+  },
+  {
+    type: "birth_certificate",
+    title: "Birth Certificate",
+    description: "Official municipal birth registration certificate (PDF or Image)",
+    required: true,
+  },
+  {
+    type: "parent_pan",
+    title: "Parent PAN Card",
+    description: "Father/Mother/Guardian Permanent Account Number (PAN) card (PDF or Image)",
+    required: false,
+  },
+]
 
 export default function StudentDetailPage() {
   const params = useParams()
@@ -183,7 +220,7 @@ export default function StudentDetailPage() {
                   <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                     <GraduationCapIcon className="h-3.5 w-3.5" /> GPA
                   </span>
-                  <span className="text-lg font-bold text-foreground mt-2">{marks[activeTerm]?.gpa.split(" ")[0] || "N/A"}</span>
+                  <span className="text-lg font-bold text-foreground mt-2">{marks[activeTerm]?.gpa?.split(" ")[0] || "N/A"}</span>
                 </CardContent>
               </Card>
             </div>
@@ -201,7 +238,10 @@ export default function StudentDetailPage() {
             <BookOpenIcon className="h-3.5 w-3.5" /> Marks & Grades
           </TabsTrigger>
           <TabsTrigger value="fees" className="flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-semibold">
-            <CircleUserRoundIcon className="h-3.5 w-3.5" /> Fee Roster
+            <CreditCardIcon className="h-3.5 w-3.5" /> Fee Roster
+          </TabsTrigger>
+          <TabsTrigger value="documents" className="flex items-center gap-1.5 rounded-md px-4 py-1.5 text-xs font-semibold">
+            <FileTextIcon className="h-3.5 w-3.5" /> Documents
           </TabsTrigger>
         </TabsList>
 
@@ -257,7 +297,7 @@ export default function StudentDetailPage() {
                       <span className="text-xs font-medium text-muted-foreground block">Parent Phone</span>
                       <span className="text-sm font-medium text-foreground block">{details.parentPhone || "Not provided"}</span>
                     </div>
-                    <div className="sm:col-span-2 space-y-1">
+                    <div className="space-y-1 sm:col-span-2">
                       <span className="text-xs font-medium text-muted-foreground block">Parent Email</span>
                       <span className="text-sm font-medium text-foreground block truncate">{details.parentEmail || "Not provided"}</span>
                     </div>
@@ -265,7 +305,7 @@ export default function StudentDetailPage() {
                 </CardContent>
               </Card>
 
-              {/* Address details */}
+              {/* Address Details */}
               <Card className="md:col-span-2">
                 <CardHeader>
                   <CardTitle className="text-base font-bold flex items-center gap-2">
@@ -274,49 +314,44 @@ export default function StudentDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                    <div className="sm:col-span-2 space-y-1">
+                    <div className="space-y-1 sm:col-span-2">
                       <span className="text-xs font-medium text-muted-foreground block">Street Address</span>
                       <span className="text-sm font-medium text-foreground block">{details.address || "Not provided"}</span>
                     </div>
                     <div className="space-y-1">
-                      <span className="text-xs font-medium text-muted-foreground block">City</span>
-                      <span className="text-sm font-medium text-foreground block">{details.city || "Not provided"}</span>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-xs font-medium text-muted-foreground block">State</span>
-                      <span className="text-sm font-medium text-foreground block">{details.state || "Not provided"}</span>
+                      <span className="text-xs font-medium text-muted-foreground block">City & State</span>
+                      <span className="text-sm font-medium text-foreground block">
+                        {details.city || details.state ? `${details.city || ""}, ${details.state || ""}` : "Not provided"}
+                      </span>
                     </div>
                     <div className="space-y-1">
                       <span className="text-xs font-medium text-muted-foreground block">Pincode</span>
-                      <span className="text-sm font-medium text-foreground block font-mono">{details.pincode || "Not provided"}</span>
+                      <span className="text-sm font-medium text-foreground block">{details.pincode || "Not provided"}</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
+
             </div>
           </TabsContent>
 
-          {/* Marks Tab */}
-          <TabsContent value="marks" className="space-y-4 outline-none">
-            <div className="flex justify-between items-center">
+          {/* Marks & Grades Tab */}
+          <TabsContent value="marks" className="space-y-6 outline-none">
+            <div className="flex items-center justify-between">
               <h3 className="font-bold text-base flex items-center gap-2 text-foreground">
-                <SparklesIcon className="h-4 w-4 text-primary" /> Subject Marksheet
+                <BookOpenIcon className="h-4 w-4 text-primary" /> Academic Report Card
               </h3>
-              
-              {/* Term Selector */}
-              <div className="flex gap-1.5 bg-muted p-1 rounded-lg">
+              <div className="flex gap-2">
                 <Button 
-                  variant={activeTerm === "term-1" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="text-xs h-7 rounded-md"
+                  size="sm" 
+                  variant={activeTerm === "term-1" ? "default" : "outline"}
                   onClick={() => setActiveTerm("term-1")}
                 >
                   Term 1
                 </Button>
                 <Button 
-                  variant={activeTerm === "term-2" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="text-xs h-7 rounded-md"
+                  size="sm" 
+                  variant={activeTerm === "term-2" ? "default" : "outline"}
                   onClick={() => setActiveTerm("term-2")}
                 >
                   Term 2
@@ -326,58 +361,58 @@ export default function StudentDetailPage() {
 
             {marks[activeTerm] ? (
               <div className="space-y-4">
-                
-                {/* GPA Hero Box */}
-                <Card className="bg-muted/50 border-none shadow-none">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                      <div className="space-y-1">
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block">Report Assessment</span>
-                        <span className="font-bold text-lg text-foreground block">{marks[activeTerm].termName}</span>
-                      </div>
-                      <div className="flex gap-8">
-                        <div className="space-y-1">
-                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block">Class Rank</span>
-                          <span className="font-bold text-xl text-foreground block">{marks[activeTerm].rank}</span>
-                        </div>
-                        <div className="space-y-1">
-                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider block">Term GPA</span>
-                          <span className="font-bold text-xl text-foreground block">{marks[activeTerm].gpa}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Card className="p-4">
+                    <span className="text-xs text-muted-foreground block font-medium">Total Marks</span>
+                    <span className="text-xl font-bold text-foreground">{marks[activeTerm].totalMarks}</span>
+                  </Card>
+                  <Card className="p-4">
+                    <span className="text-xs text-muted-foreground block font-medium">Percentage</span>
+                    <span className="text-xl font-bold text-foreground">{marks[activeTerm].percentage}</span>
+                  </Card>
+                  <Card className="p-4">
+                    <span className="text-xs text-muted-foreground block font-medium">GPA</span>
+                    <span className="text-xl font-bold text-foreground">{marks[activeTerm].gpa}</span>
+                  </Card>
+                  <Card className="p-4">
+                    <span className="text-xs text-muted-foreground block font-medium">Class Rank</span>
+                    <span className="text-xl font-bold text-foreground">{marks[activeTerm].rank}</span>
+                  </Card>
+                </div>
 
-                {/* Marksheet Table */}
-                <div className="rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Subject</TableHead>
-                        <TableHead>Marks Obtained</TableHead>
-                        <TableHead className="text-right">Grade</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {marks[activeTerm].subjects.map((sub: any, idx: number) => {
-                        return (
-                          <TableRow key={idx}>
-                            <TableCell className="font-mono text-xs text-muted-foreground">{sub.code}</TableCell>
-                            <TableCell className="font-semibold text-foreground">{sub.subject}</TableCell>
-                            <TableCell>{sub.score} / {sub.maxScore}</TableCell>
-                            <TableCell className="text-right">
-                              <Badge variant={sub.grade.includes("A") ? "default" : "secondary"}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-semibold">Subject Breakdown ({activeTerm.toUpperCase()})</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Subject</TableHead>
+                          <TableHead>Score</TableHead>
+                          <TableHead>Max Score</TableHead>
+                          <TableHead>Grade</TableHead>
+                          <TableHead>Remarks</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {marks[activeTerm].subjects?.map((sub: any, i: number) => (
+                          <TableRow key={i}>
+                            <TableCell className="font-medium">{sub.name}</TableCell>
+                            <TableCell className="font-bold">{sub.score}</TableCell>
+                            <TableCell className="text-muted-foreground">{sub.maxScore}</TableCell>
+                            <TableCell>
+                              <Badge variant={sub.grade === "A+" || sub.grade === "A" ? "default" : "secondary"}>
                                 {sub.grade}
                               </Badge>
                             </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{sub.remarks || "Good effort"}</TableCell>
                           </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground border rounded-lg border-dashed">
@@ -446,6 +481,35 @@ export default function StudentDetailPage() {
                 No fee installment records found for this student.
               </div>
             )}
+          </TabsContent>
+
+          {/* Documents Tab */}
+          <TabsContent value="documents" className="space-y-4 outline-none">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-base font-bold flex items-center gap-2">
+                      <FileCheckIcon className="h-5 w-5 text-primary" /> Verified Student Documents
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-1">
+                      Review identity certificates and documents uploaded by {details.name}.
+                    </CardDescription>
+                  </div>
+                  <Badge variant="outline" className="gap-1.5 px-2.5 py-1 text-xs shrink-0 w-fit">
+                    <ShieldCheckIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    Encrypted & Authenticated
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <DocumentUploadManager
+                  role="teacher"
+                  documentSlots={STUDENT_DOCUMENT_SLOTS}
+                  userId={studentUserId}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
         </div>
       </Tabs>

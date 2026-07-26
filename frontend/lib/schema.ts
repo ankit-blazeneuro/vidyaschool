@@ -237,6 +237,22 @@ export const timetable = pgTable('timetable', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+export const userDocument = pgTable('user_document', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  docType: text('doc_type').notNull(),
+  docName: text('doc_name').notNull(),
+  fileUrl: text('file_url').notNull(),
+  fileName: text('file_name').notNull(),
+  fileType: text('file_type').notNull(),
+  fileSize: integer('file_size'),
+  fileKey: text('file_key'),
+  status: text('status').notNull().default('uploaded'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+
 
 
 

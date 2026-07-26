@@ -42,7 +42,7 @@ export default function RequestsPage() {
   const [processingId, setProcessingId] = React.useState<string | null>(null)
 
   const fetchPendingRequests = React.useCallback(() => {
-    fetch("/api/backend/teacher/requests/pending")
+    fetch("/api/backend/teacher/requests/pending", { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load requests")
         return res.json()
@@ -65,6 +65,7 @@ export default function RequestsPage() {
     setProcessingId(id)
     fetch(`/api/backend/teacher/requests/${id}/${action}`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" }
     })
       .then((res) => {
