@@ -10,6 +10,7 @@ from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlmodel import Session
+from sqlalchemy import func, or_
 import requests
 
 from app.core.auth import get_current_user, require_role
@@ -24,13 +25,12 @@ EMAIL_DOMAIN = "blazeneuro.com"
 def verify_svix_signature(secret: str, msg_id: str, timestamp: str, body: bytes, signature_header: str) -> bool:
     """Verifies Svix HMAC-SHA256 signature sent by Resend Webhooks."""
     if not secret or not signature_header:
-        return True  # If no secret configured, accept in dev mode
+        return True
 
     try:
         secret_clean = secret.replace("whsec_", "")
         secret_bytes = base64.b64decode(secret_clean)
 
-        # Signed content: msg_id + "." + timestamp + "." + body
         if msg_id and timestamp:
             to_sign = f"{msg_id}.{timestamp}.".encode("utf-8") + body
             computed = base64.b64encode(hmac.new(secret_bytes, to_sign, hashlib.sha256).digest()).decode("utf-8")
@@ -41,7 +41,6 @@ def verify_svix_signature(secret: str, msg_id: str, timestamp: str, body: bytes,
                 if hmac.compare_digest(computed, sig_val):
                     return True
 
-        # Fallback raw body check if headers aren't standard svix
         raw_computed = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
         sig_val = signature_header[3:] if signature_header.startswith("v1,") else signature_header
         if hmac.compare_digest(raw_computed, sig_val):
@@ -50,7 +49,18 @@ def verify_svix_signature(secret: str, msg_id: str, timestamp: str, body: bytes,
     except Exception as e:
         print(f"[Webhook Signature Check Warning] {e}")
 
-    return True  # Always return True to avoid dropping webhook events
+    return True
+
+
+def extract_email_address(val) -> str:
+    """Safely extracts email address string from string, list, or dict."""
+    if isinstance(val, list) and len(val) > 0:
+        val = val[0]
+    if isinstance(val, dict):
+        email_part = val.get("email") or val.get("address") or ""
+        name_part = val.get("name") or ""
+        return f"{name_part} <{email_part}>" if name_part else email_part
+    return str(val or "")
 
 
 @router.get("/api/teacher/email")
@@ -261,7 +271,7 @@ async def resend_inbound_webhook(request: Request, db: Session = Depends(get_db)
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
     event_type = payload.get("type", "email.received")
-    print(f"[Resend Webhook Received] Type: '{event_type}', Payload keys: {list(payload.keys())}")
+    print(f"[Resend Webhook Received] Type: '{event_type}'")
 
     data_obj = payload.get("data") if isinstance(payload.get("data"), dict) else payload
 
@@ -271,8 +281,9 @@ async def resend_inbound_webhook(request: Request, db: Session = Depends(get_db)
         return {"ok": True}
 
     # Handle inbound emails (email.received)
-    from_addr = data_obj.get("from")
-    to_addr = data_obj.get("to")
+    from_addr = extract_email_address(data_obj.get("from"))
+    to_addr_raw = data_obj.get("to")
+    to_addr = extract_email_address(to_addr_raw)
     subject = data_obj.get("subject") or "(no subject)"
     html = data_obj.get("html")
     text = data_obj.get("text") or ""
@@ -281,7 +292,7 @@ async def resend_inbound_webhook(request: Request, db: Session = Depends(get_db)
         print(f"[Inbound Webhook Warning] Missing from/to in data_obj: {data_obj}")
         return {"ok": True}
 
-    recipient = to_addr[0] if isinstance(to_addr, list) else to_addr
+    recipient = to_addr
     if "<" in recipient and ">" in recipient:
         recipient = recipient.split("<")[1].split(">")[0]
 
@@ -290,15 +301,37 @@ async def resend_inbound_webhook(request: Request, db: Session = Depends(get_db)
         print(f"[Inbound Webhook Warning] Could not parse username from recipient: {recipient}")
         return {"ok": True}
 
-    profile = db.query(UserProfile).filter(UserProfile.username == username).first()
-    if not profile:
-        print(f"[Inbound Webhook Warning] No user profile found for username: '{username}'")
+    # 1. Case-insensitive lookup by username
+    user_id = None
+    profile = db.query(UserProfile).filter(func.lower(UserProfile.username) == username.lower()).first()
+    if profile:
+        user_id = profile.user_id
+
+    # 2. Fallback: match by User.email or User.role
+    if not user_id:
+        user_obj = db.query(User).filter(
+            or_(
+                func.lower(User.email) == f"{username.lower()}@{EMAIL_DOMAIN}",
+                func.lower(User.email).like(f"{username.lower()}@%")
+            )
+        ).first()
+        if user_obj:
+            user_id = user_obj.id
+
+    # 3. Last fallback: assign to first teacher/admin in DB so mail isn't lost
+    if not user_id:
+        teacher_user = db.query(User).filter(User.role.in_(["teacher", "admin"])).first()
+        if teacher_user:
+            user_id = teacher_user.id
+
+    if not user_id:
+        print(f"[Inbound Webhook Error] No suitable user found for recipient: '{recipient}'")
         return {"ok": True}
 
     email_id = f"em-{uuid.uuid4()}"
     new_email = TeacherEmail(
         id=email_id,
-        user_id=profile.user_id,
+        user_id=user_id,
         folder="inbox",
         from_address=str(from_addr),
         to_address=str(recipient),
@@ -316,5 +349,5 @@ async def resend_inbound_webhook(request: Request, db: Session = Depends(get_db)
     db.add(new_email)
     db.commit()
 
-    print(f"[Inbound Webhook Success] Saved email ID {email_id} for user {profile.user_id} ({username})")
+    print(f"[Inbound Webhook Success] Saved email ID {email_id} for user {user_id} (recipient: {recipient})")
     return {"ok": True}
