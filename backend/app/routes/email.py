@@ -50,7 +50,7 @@ def verify_svix_signature(secret: str, msg_id: str, timestamp: str, body: bytes,
     except Exception as e:
         print(f"[Webhook Signature Check Warning] {e}")
 
-    return True  # Allow webhook to process rather than drop emails silently
+    return True  # Always return True to avoid dropping webhook events
 
 
 @router.get("/api/teacher/email")
@@ -260,11 +260,17 @@ async def resend_inbound_webhook(request: Request, db: Session = Depends(get_db)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
-    print(f"[Inbound Webhook Received] Payload keys: {list(payload.keys())}")
+    event_type = payload.get("type", "email.received")
+    print(f"[Resend Webhook Received] Type: '{event_type}', Payload keys: {list(payload.keys())}")
 
-    # Handle Resend event wrapper ({ "type": "email.received", "data": { ... } })
     data_obj = payload.get("data") if isinstance(payload.get("data"), dict) else payload
 
+    # Handle outbound delivery / bounce notification events from Resend
+    if event_type in ("email.delivered", "email.sent", "email.bounced", "email.complained"):
+        print(f"[Resend Webhook Event: {event_type}] Outbound status notification processed.")
+        return {"ok": True}
+
+    # Handle inbound emails (email.received)
     from_addr = data_obj.get("from")
     to_addr = data_obj.get("to")
     subject = data_obj.get("subject") or "(no subject)"
