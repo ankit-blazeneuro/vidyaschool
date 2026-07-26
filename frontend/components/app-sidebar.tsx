@@ -228,6 +228,14 @@ const data = {
       ),
     },
     {
+      title: "Notes",
+      url: "/student/notes",
+      icon: (
+        <NotebookPenIcon
+        />
+      ),
+    },
+    {
       title: "Marks",
       url: "/student/marks",
       icon: (

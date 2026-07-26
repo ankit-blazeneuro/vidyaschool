@@ -94,19 +94,25 @@ def get_student_notes(
     if not profile or not profile.class_ or profile.class_ == "none":
         return {"notes": []}
 
-    student_class = profile.class_
-    student_section = profile.section or ""
+    raw_class = (profile.class_ or "").strip()
+    student_section = (profile.section or "").strip()
 
-    # Fetch notes where class matches student class or is "All", and section matches student section or is "All" or is NULL/empty.
-    # Exclude teacher's personal notes (where class is None/empty)
+    clean_class_num = raw_class.lower().replace("class", "").strip()
+    class_variations = list(set([
+        raw_class,
+        clean_class_num,
+        f"Class {clean_class_num}",
+        f"class {clean_class_num}",
+        "All", "all"
+    ]))
+
+    # Fetch notes where class matches student class (including variations like "12" and "Class 12") or is "All",
+    # and section matches student section or is "All" or is NULL/empty.
     results = (
         db.query(TeacherNote, User)
         .join(User, TeacherNote.teacher_id == User.id)
         .filter(
-            or_(
-                TeacherNote.class_.in_(["All", "all"]),
-                TeacherNote.class_ == student_class,
-            ),
+            TeacherNote.class_.in_(class_variations),
             or_(
                 TeacherNote.section.in_(["All", "all"]),
                 TeacherNote.section.is_(None),

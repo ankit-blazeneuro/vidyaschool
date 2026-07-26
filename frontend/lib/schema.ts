@@ -219,6 +219,9 @@ export const teacherNote = pgTable('teacher_note', {
   title: text('title').notNull(),
   content: text('content').notNull().default(''),
   color: text('color').notNull().default('default'),
+  class: text('class'),
+  section: text('section'),
+  subject: text('subject'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
