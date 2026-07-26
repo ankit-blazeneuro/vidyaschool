@@ -5,6 +5,15 @@ import { auth } from './lib/auth'
 // Public routes - accessible without authentication
 const publicRoutes = ['/', '/login', '/signup', '/unauthorized', '/downloads']
 
+// Role → destination mapping for /dashboard redirect (handled at edge, no extra DB call)
+const roleDashboardMap: Record<string, string> = {
+  teacher: '/teacher',
+  librarian: '/librarian',
+  admin: '/admin',
+  account: '/accounts',
+  student: '/student',
+}
+
 // FIREWALL: Protected routes with required roles
 const protectedRoutes = {
   '/community': ['admin', 'teacher', 'librarian'],
@@ -44,10 +53,20 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(route)
   )
 
-  // Get session
+  // Get session (single call — reused for /dashboard redirect AND firewall checks)
   const session = await auth.api.getSession({
     headers: request.headers
   })
+
+  // FAST /dashboard redirect — handled at edge with the already-fetched session
+  if (pathname === '/dashboard') {
+    if (!session?.user) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    const user = session.user as any
+    const destination = roleDashboardMap[user.role as string] ?? '/student'
+    return NextResponse.redirect(new URL(destination, request.url))
+  }
 
   // FIREWALL RULE 1: Block ALL unauthenticated users from /student and /teacher
   if (isProtectedRoute && !session?.user) {

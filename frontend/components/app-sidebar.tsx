@@ -32,7 +32,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, MoonIcon, CircleUserRoundIcon, ChevronsUpDown, SunIcon, Laptop, ChevronRight, LogOut, CalendarIcon, NotebookPenIcon, Trophy } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, MoonIcon, CircleUserRoundIcon, ChevronsUpDown, SunIcon, Laptop, ChevronRight, LogOut, CalendarIcon, NotebookPenIcon, Trophy, Mail } from "lucide-react"
 import { useSession, signOut } from "@/lib/auth-client"
 import { io } from "socket.io-client"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -48,151 +48,73 @@ import { Smartphone, Download, Plus } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { toast } from "sonner"
 
-// Hook to get username-based URLs
-function useStudentUrls() {
-  const [username, setUsername] = React.useState<string | null>(null)
+// Module-level username cache — fetched once per page load, shared across all hooks
+let _cachedUsername: string | null = null
+let _usernameFetchPromise: Promise<string | null> | null = null
 
+function fetchUsernameOnce(): Promise<string | null> {
+  if (_cachedUsername !== null) return Promise.resolve(_cachedUsername)
+  if (_usernameFetchPromise) return _usernameFetchPromise
+  _usernameFetchPromise = fetch('/api/profile/username')
+    .then(res => res.json())
+    .then(data => {
+      _cachedUsername = data.username ?? null
+      return _cachedUsername
+    })
+    .catch(() => { _cachedUsername = null; return null })
+  return _usernameFetchPromise
+}
+
+// Single shared hook — replaces the 5 duplicate per-role hooks
+function useProfileUsername(): string | null {
+  const [username, setUsername] = React.useState<string | null>(_cachedUsername)
   React.useEffect(() => {
-    fetch('/api/profile/username')
-      .then(res => res.json())
-      .then(data => {
-        if (data.username) {
-          setUsername(data.username)
-        }
-      })
-      .catch(() => setUsername(null))
+    if (_cachedUsername !== null) { setUsername(_cachedUsername); return }
+    fetchUsernameOnce().then(u => setUsername(u))
   }, [])
+  return username
+}
 
+// Derived URL builders — computed from the single username value
+function buildStudentUrls(username: string | null) {
   const base = username ? `/student/${username}` : '/student'
-  
   return {
-    dashboard: base,
-    fees: `${base}/fees`,
-    library: `${base}/library`,
-    marks: `${base}/marks`,
-    notice: `${base}/notice`,
-    account: `${base}/account`,
+    dashboard: base, fees: `${base}/fees`, library: `${base}/library`,
+    marks: `${base}/marks`, notice: `${base}/notice`, account: `${base}/account`,
     leaderboard: `${base}/leaderboard`,
   }
 }
-
-// Hook to get username-based URLs for teachers
-function useTeacherUrls() {
-  const [username, setUsername] = React.useState<string | null>(null)
-
-  React.useEffect(() => {
-    fetch('/api/profile/username')
-      .then(res => res.json())
-      .then(data => {
-        if (data.username) {
-          setUsername(data.username)
-        }
-      })
-      .catch(() => setUsername(null))
-  }, [])
-
+function buildTeacherUrls(username: string | null) {
   const base = username ? `/teacher/${username}` : '/teacher'
-  
   return {
-    dashboard: base,
-    class: `${base}/class`,
-    subjects: `${base}/subjects`,
-    requests: `${base}/requests`,
-    notice: `${base}/notice`,
-    account: `${base}/account`,
-    timetable: `${base}/timetable`,
-    notes: `${base}/notes`,
+    dashboard: base, class: `${base}/class`, subjects: `${base}/subjects`,
+    requests: `${base}/requests`, notice: `${base}/notice`, account: `${base}/account`,
+    timetable: `${base}/timetable`, notes: `${base}/notes`, email: `${base}/email`,
   }
 }
-
-// Hook to get username-based URLs for librarians
-function useLibrarianUrls() {
-  const [username, setUsername] = React.useState<string | null>(null)
-
-  React.useEffect(() => {
-    fetch('/api/profile/username')
-      .then(res => res.json())
-      .then(data => {
-        if (data.username) {
-          setUsername(data.username)
-        }
-      })
-      .catch(() => setUsername(null))
-  }, [])
-
+function buildLibrarianUrls(username: string | null) {
   const base = username ? `/librarian/${username}` : '/librarian'
-  
   return {
-    dashboard: base,
-    books: `${base}/books`,
-    borrowings: `${base}/borrowings`,
-    notice: `${base}/notice`,
-    account: `${base}/account`,
+    dashboard: base, books: `${base}/books`, borrowings: `${base}/borrowings`,
+    notice: `${base}/notice`, account: `${base}/account`,
   }
 }
-
-// Hook to get username-based URLs for admins
-function useAdminUrls() {
-  const [username, setUsername] = React.useState<string | null>(null)
-
-  React.useEffect(() => {
-    fetch('/api/profile/username')
-      .then(res => res.json())
-      .then(data => {
-        if (data.username) {
-          setUsername(data.username)
-        }
-      })
-      .catch(() => setUsername(null))
-  }, [])
-
+function buildAdminUrls(username: string | null) {
   const base = username ? `/admin/${username}` : '/admin'
-  
   return {
-    dashboard: base,
-    students: `${base}/students`,
-    teachers: `${base}/teacher`,
-    requests: `${base}/requests`,
-    feeManagement: `${base}/fee-management`,
-    notices: `${base}/notice`,
-    slider: `${base}/slider`,
-    pageBuilder: `${base}/page-builder`,
+    dashboard: base, students: `${base}/students`, teachers: `${base}/teacher`,
+    requests: `${base}/requests`, feeManagement: `${base}/fee-management`,
+    notices: `${base}/notice`, slider: `${base}/slider`, pageBuilder: `${base}/page-builder`,
   }
 }
-
-// Hook to get username-based URLs for accounts
-function useAccountUrls() {
-  const [username, setUsername] = React.useState<string | null>(null)
-
-  React.useEffect(() => {
-    fetch('/api/profile/username')
-      .then(res => res.json())
-      .then(data => {
-        if (data.username) {
-          setUsername(data.username)
-        }
-      })
-      .catch(() => setUsername(null))
-  }, [])
-
+function buildAccountUrls(username: string | null) {
   const base = username ? `/accounts/${username}` : '/accounts'
-  
   return {
-    dashboard: base,
-    fees: `${base}/fees`,
-    structures: `${base}/structures`,
-    payments: `${base}/payments`,
-    expenses: `${base}/expenses`,
-    income: `${base}/income`,
-    payroll: `${base}/payroll`,
-    ledgers: `${base}/ledgers`,
-    banks: `${base}/banks`,
-    invoices: `${base}/invoices`,
-    receipts: `${base}/receipts`,
-    refunds: `${base}/refunds`,
-    scholarships: `${base}/scholarships`,
-    reports: `${base}/reports`,
-    settings: `${base}/settings`,
+    dashboard: base, fees: `${base}/fees`, structures: `${base}/structures`,
+    payments: `${base}/payments`, expenses: `${base}/expenses`, income: `${base}/income`,
+    payroll: `${base}/payroll`, ledgers: `${base}/ledgers`, banks: `${base}/banks`,
+    invoices: `${base}/invoices`, receipts: `${base}/receipts`, refunds: `${base}/refunds`,
+    scholarships: `${base}/scholarships`, reports: `${base}/reports`, settings: `${base}/settings`,
   }
 }
 
@@ -391,26 +313,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isAdmin = userRole === "admin" || (userRole === undefined && pathname?.startsWith("/admin"))
   const isAccount = userRole === "account" || (userRole === undefined && pathname?.startsWith("/accounts"))
   
-  const adminUrls = useAdminUrls()
-  const accountUrls = useAccountUrls()
-  const urls = useStudentUrls()
-  const teacherUrls = useTeacherUrls()
-  const librarianUrls = useLibrarianUrls()
+  // Single fetch — shared by all URL builders via module-level cache
+  const profileUsername = useProfileUsername()
 
-  const [profileUsername, setProfileUsername] = React.useState<string | null>(null)
+  const adminUrls = React.useMemo(() => buildAdminUrls(profileUsername), [profileUsername])
+  const accountUrls = React.useMemo(() => buildAccountUrls(profileUsername), [profileUsername])
+  const urls = React.useMemo(() => buildStudentUrls(profileUsername), [profileUsername])
+  const teacherUrls = React.useMemo(() => buildTeacherUrls(profileUsername), [profileUsername])
+  const librarianUrls = React.useMemo(() => buildLibrarianUrls(profileUsername), [profileUsername])
+
   const [isCommandOpen, setIsCommandOpen] = React.useState(false)
   const [commandSearch, setCommandSearch] = React.useState("")
   const [isThemeHovered, setIsThemeHovered] = React.useState(false)
   const { setTheme } = useTheme()
-
-  React.useEffect(() => {
-    fetch('/api/profile/username')
-      .then(res => res.json())
-      .then(data => {
-        if (data.username) setProfileUsername(data.username)
-      })
-      .catch(() => {})
-  }, [])
 
   const accountUrl = userRole === 'admin'
     ? (profileUsername ? `/admin/${profileUsername}/account` : '/admin')
@@ -497,7 +412,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   }, [pathname])
 
+  // Keep a ref to pathname so socket handlers always see the latest value
+  // without needing pathname in the dep array (which would reconnect on every nav)
+  const pathnameRef = React.useRef(pathname)
+  React.useEffect(() => { pathnameRef.current = pathname }, [pathname])
+
   // Fetch initial pending status on mount and connect to Socket.IO
+  // Deps: session + role flags only — NOT pathname, so socket stays alive across navigations
   React.useEffect(() => {
     if (!session?.user) return
 
@@ -528,25 +449,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         .catch(() => {})
     }
 
-    // 3. Setup Socket.IO listener for real-time notification triggers
+    // 3. Setup Socket.IO — single persistent connection, reads pathname via ref
     const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000", {
       transports: ["websocket", "polling"]
     })
 
     socket.on("new_message", () => {
-      if (pathname !== "/community") {
+      if (pathnameRef.current !== "/community") {
         setUnreadCommunity(true)
       }
     })
 
     socket.on("teacher_request_created", () => {
-      if (isAdmin && !pathname?.includes("/requests")) {
+      if (isAdmin && !pathnameRef.current?.includes("/requests")) {
         setUnreadRequests(true)
       }
     })
 
     socket.on("complaint_created", () => {
-      if ((isAdmin || isTeacher) && !pathname?.includes("/complaints")) {
+      if ((isAdmin || isTeacher) && !pathnameRef.current?.includes("/complaints")) {
         setUnreadComplaints(true)
       }
     })
@@ -554,7 +475,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return () => {
       socket.disconnect()
     }
-  }, [session, pathname, isTeacher, isAdmin])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, isTeacher, isAdmin, isLibrarian])
 
   // Trigger simulated new notice dot
   React.useEffect(() => {
@@ -713,6 +635,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Timetable",
           url: teacherUrls.timetable,
           icon: <CalendarIcon />,
+        },
+        {
+          title: "Email",
+          url: teacherUrls.email,
+          icon: <Mail />,
         },
         {
           title: "Notes",

@@ -274,4 +274,20 @@ class UserDocument(SQLModel, table=True):
     status: str = Field(default="uploaded")
     created_at: datetime = Field(default_factory=datetime.utcnow, alias="created_at")
     updated_at: datetime = Field(default_factory=datetime.utcnow, alias="updated_at")
-
+class TeacherEmail(SQLModel, table=True):
+    __tablename__ = "teacher_email"
+    id: str = Field(primary_key=True)
+    user_id: str = Field(alias="user_id", foreign_key="user.id")
+    folder: str = Field(default="inbox")
+    from_address: str = Field(alias="from_address")
+    to_address: str = Field(alias="to_address")
+    cc_address: Optional[str] = Field(default=None, alias="cc_address")
+    subject: str = Field(default="(no subject)")
+    body_html: Optional[str] = Field(default=None, alias="body_html")
+    body_text: str = Field(default="", alias="body_text")
+    resend_id: Optional[str] = Field(default=None, alias="resend_id")
+    is_read: bool = Field(default=False, alias="is_read")
+    is_starred: bool = Field(default=False, alias="is_starred")
+    raw_payload: Optional[str] = Field(default=None, alias="raw_payload")
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias="created_at")
+    updated_at: datetime = Field(default_factory=datetime.utcnow, alias="updated_at")

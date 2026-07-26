@@ -256,6 +256,25 @@ export const userDocument = pgTable('user_document', {
 })
 
 
-
-
-
+export const teacherEmail = pgTable('teacher_email', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  // 'inbox' | 'sent' | 'draft' | 'trash'
+  folder: text('folder').notNull().default('inbox'),
+  // inbound: sender address; outbound: our address
+  fromAddress: text('from_address').notNull(),
+  // inbound: our address; outbound: recipient
+  toAddress: text('to_address').notNull(),
+  ccAddress: text('cc_address'),
+  subject: text('subject').notNull().default('(no subject)'),
+  bodyHtml: text('body_html'),
+  bodyText: text('body_text').notNull().default(''),
+  // Resend message ID for tracking
+  resendId: text('resend_id'),
+  isRead: boolean('is_read').notNull().default(false),
+  isStarred: boolean('is_starred').notNull().default(false),
+  // Raw inbound payload stored for debugging
+  rawPayload: text('raw_payload'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
