@@ -301,13 +301,23 @@ async def resend_inbound_webhook(request: Request, db: Session = Depends(get_db)
         try:
             print(f"[Inbound Fetch] Fetching body from Resend API for message: {resend_email_id}")
             res_val = requests.get(
-                f"https://api.resend.com/emails/{resend_email_id}",
+                f"https://api.resend.com/emails/receiving/{resend_email_id}",
                 headers={"Authorization": f"Bearer {resend_api_key}"}
             )
             if res_val.status_code == 200:
                 f_data = res_val.json()
                 html = f_data.get("html") or html
                 text = f_data.get("text") or text
+            else:
+                # Fallback to standard emails endpoint
+                res_val2 = requests.get(
+                    f"https://api.resend.com/emails/{resend_email_id}",
+                    headers={"Authorization": f"Bearer {resend_api_key}"}
+                )
+                if res_val2.status_code == 200:
+                    f_data2 = res_val2.json()
+                    html = f_data2.get("html") or html
+                    text = f_data2.get("text") or text
         except Exception as err:
             print(f"[Inbound Fetch Error] {err}")
 
