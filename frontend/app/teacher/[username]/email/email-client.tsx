@@ -812,43 +812,46 @@ export default function TeacherEmailClient() {
         onContextMenu={handleContextMenu}
         className="flex flex-col gap-3 sm:gap-4 pt-3 sm:pt-4 pb-0 px-3 sm:px-6 lg:px-8 flex-1 min-h-[calc(100vh-4rem)] bg-background font-sans relative"
       >
-        {/* Folder Cards — Responsive Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-2 sm:mb-4 shrink-0 pt-1">
-          {FOLDER_META.map((f) => {
-            const isActive = folder === f.id
-            const count = f.id === "inbox" ? unreadCount : 0
-            return (
-              <button
-                key={f.id}
-                onClick={() => setFolder(f.id)}
-                className={cn(
-                  "relative flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-start gap-2 sm:gap-4 rounded-xl p-3.5 sm:px-6 sm:py-4 text-center sm:text-left transition-all duration-150 cursor-pointer w-full",
-                  isActive
-                    ? "bg-primary/5 shadow-sm ring-1 ring-primary/20"
-                    : "bg-card hover:bg-muted/40"
-                )}
-              >
-                <f.icon
-                  className={cn("shrink-0", isActive ? "text-primary" : "text-muted-foreground")}
-                  size={isMobile ? 32 : 44}
-                />
-                <div className="flex-1 flex items-center justify-center sm:justify-start">
-                  <span className={cn(
-                    "text-xs sm:text-sm font-semibold leading-none",
-                    isActive ? "text-primary" : "text-foreground"
-                  )}>
-                    {f.label}
+        {/* Folder Cards — Horizontal Scroll on Mobile, 4-col Grid on Desktop */}
+        <ScrollArea className="w-full shrink-0 mb-2 sm:mb-4 pt-1" viewportClassName="w-full">
+          <div className="flex items-center gap-2 sm:gap-4 pb-1.5 min-w-max sm:min-w-0 sm:grid sm:grid-cols-4">
+            {FOLDER_META.map((f) => {
+              const isActive = folder === f.id
+              const count = f.id === "inbox" ? unreadCount : 0
+              return (
+                <button
+                  key={f.id}
+                  onClick={() => setFolder(f.id)}
+                  className={cn(
+                    "relative flex items-center gap-2.5 rounded-xl px-3.5 py-2 sm:px-5 sm:py-3.5 text-left transition-all duration-150 cursor-pointer min-w-[115px] sm:min-w-0 sm:w-full",
+                    isActive
+                      ? "bg-primary/5 shadow-sm ring-1 ring-primary/20"
+                      : "bg-card hover:bg-muted/40 border border-border/50"
+                  )}
+                >
+                  <f.icon
+                    className={cn("shrink-0", isActive ? "text-primary" : "text-muted-foreground")}
+                    size={isMobile ? 22 : 28}
+                  />
+                  <div className="flex-1 flex items-center justify-between gap-1.5 min-w-0">
+                    <span className={cn(
+                      "text-xs sm:text-sm font-semibold leading-none truncate",
+                      isActive ? "text-primary" : "text-foreground"
+                    )}>
+                      {f.label}
+                    </span>
                     {f.id === "inbox" && count > 0 && (
-                      <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
+                      <span className="inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold shrink-0">
                         {count}
                       </span>
                     )}
-                  </span>
-                </div>
-              </button>
-            )
-          })}
-        </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+          <ScrollBar orientation="horizontal" className="sm:hidden" />
+        </ScrollArea>
 
         {/* Action buttons row */}
         <div className="flex items-center justify-between sm:justify-start gap-2 mb-2 sm:mb-3 shrink-0">
