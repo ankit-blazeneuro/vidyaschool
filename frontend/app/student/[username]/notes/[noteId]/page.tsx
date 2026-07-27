@@ -21,15 +21,12 @@ import {
   FileTextIcon,
   Share2Icon,
   ClockIcon,
-  SparklesIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
 
 interface NoteDetail {
   id: string
@@ -80,6 +77,148 @@ function MarkdownMathRenderer({ content }: { content: string }) {
       >
         {content}
       </ReactMarkdown>
+    </div>
+  )
+}
+
+function CanvasPageRenderer({ page }: { page: any }) {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null)
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const width = 800
+    const height = 1100
+    canvas.width = width
+    canvas.height = height
+
+    ctx.clearRect(0, 0, width, height)
+
+    // 1. Draw background pattern
+    if (page.backgroundType === "grid") {
+      ctx.strokeStyle = "rgba(200, 200, 200, 0.25)"
+      ctx.lineWidth = 1
+      const step = 25
+      for (let x = 0; x <= width; x += step) {
+        ctx.beginPath()
+        ctx.moveTo(x, 0)
+        ctx.lineTo(x, height)
+        ctx.stroke()
+      }
+      for (let y = 0; y <= height; y += step) {
+        ctx.beginPath()
+        ctx.moveTo(0, y)
+        ctx.lineTo(width, y)
+        ctx.stroke()
+      }
+    } else if (page.backgroundType === "lines") {
+      ctx.strokeStyle = "rgba(200, 200, 200, 0.3)"
+      ctx.lineWidth = 1
+      const step = 30
+      for (let y = step; y <= height; y += step) {
+        ctx.beginPath()
+        ctx.moveTo(0, y)
+        ctx.lineTo(width, y)
+        ctx.stroke()
+      }
+    } else if (page.backgroundType === "dots") {
+      ctx.fillStyle = "rgba(150, 150, 150, 0.4)"
+      const step = 25
+      for (let x = step; x < width; x += step) {
+        for (let y = step; y < height; y += step) {
+          ctx.beginPath()
+          ctx.arc(x, y, 1.5, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
+    }
+
+    // 2. Draw images
+    if (Array.isArray(page.images)) {
+      page.images.forEach((imgObj: any) => {
+        if (imgObj.src) {
+          const img = new Image()
+          img.crossOrigin = "anonymous"
+          img.onload = () => {
+            ctx.drawImage(img, imgObj.x || 0, imgObj.y || 0, imgObj.width || 200, imgObj.height || 150)
+          }
+          img.src = imgObj.src
+        }
+      })
+    }
+
+    // 3. Draw shapes
+    if (Array.isArray(page.shapes)) {
+      page.shapes.forEach((shape: any) => {
+        ctx.beginPath()
+        ctx.lineWidth = shape.strokeWidth || 2
+        ctx.strokeStyle = shape.stroke || "#18181b"
+        ctx.fillStyle = shape.fill || "transparent"
+
+        if (shape.type === "rect") {
+          ctx.rect(shape.x, shape.y, shape.width, shape.height)
+          if (shape.fill && shape.fill !== "transparent") ctx.fill()
+          ctx.stroke()
+        } else if (shape.type === "circle") {
+          const rx = (shape.width || 50) / 2
+          const ry = (shape.height || 50) / 2
+          const cx = (shape.x || 0) + rx
+          const cy = (shape.y || 0) + ry
+          ctx.ellipse(cx, cy, Math.abs(rx), Math.abs(ry), 0, 0, 2 * Math.PI)
+          if (shape.fill && shape.fill !== "transparent") ctx.fill()
+          ctx.stroke()
+        } else if (shape.type === "line") {
+          ctx.moveTo(shape.x, shape.y)
+          ctx.lineTo((shape.x || 0) + (shape.width || 0), (shape.y || 0) + (shape.height || 0))
+          ctx.stroke()
+        }
+      })
+    }
+
+    // 4. Draw paint freehand strokes
+    if (Array.isArray(page.drawings)) {
+      page.drawings.forEach((path: any) => {
+        if (!path.points || path.points.length === 0) return
+        ctx.beginPath()
+        ctx.lineWidth = path.width || 3
+        ctx.lineCap = "round"
+        ctx.lineJoin = "round"
+
+        if (path.tool === "eraser") {
+          ctx.globalCompositeOperation = "destination-out"
+          ctx.strokeStyle = "rgba(0,0,0,1)"
+          ctx.globalAlpha = 1.0
+        } else if (path.tool === "highlighter") {
+          ctx.globalCompositeOperation = "multiply"
+          ctx.strokeStyle = path.color || "#fef08a"
+          ctx.globalAlpha = 0.45
+        } else {
+          ctx.globalCompositeOperation = "source-over"
+          ctx.strokeStyle = path.color || "#18181b"
+          ctx.globalAlpha = 1.0
+        }
+
+        ctx.moveTo(path.points[0].x, path.points[0].y)
+        for (let i = 1; i < path.points.length; i++) {
+          ctx.lineTo(path.points[i].x, path.points[i].y)
+        }
+        ctx.stroke()
+        ctx.globalCompositeOperation = "source-over"
+        ctx.globalAlpha = 1.0
+      })
+    }
+  }, [page])
+
+  return (
+    <div className="relative w-full overflow-hidden rounded-2xl border border-border/60 bg-white dark:bg-zinc-950 shadow-xs">
+      <canvas
+        ref={canvasRef}
+        className="w-full h-auto block max-w-full"
+        style={{ aspectRatio: "800 / 1100" }}
+      />
     </div>
   )
 }
@@ -194,36 +333,51 @@ export default function StudentNoteDetailPage() {
         const parsed = JSON.parse(note.content)
         if (parsed && Array.isArray(parsed.pages)) {
           return (
-            <div className="space-y-6">
-              {parsed.pages.map((page: any, idx: number) => (
-                <Card
-                  key={idx}
-                  className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8 shadow-xs relative overflow-hidden"
-                >
-                  <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-4">
-                    <span className="text-xs font-bold text-primary flex items-center gap-1.5">
-                      <FileTextIcon className="size-4" /> Page {idx + 1}
-                    </span>
-                    {page.backgroundType && (
-                      <Badge variant="secondary" className="text-[10px] uppercase font-semibold">
-                        {page.backgroundType} background
-                      </Badge>
-                    )}
-                  </div>
+            <div className="space-y-8">
+              {parsed.pages.map((page: any, idx: number) => {
+                const hasDrawings = Array.isArray(page.drawings) && page.drawings.length > 0
+                const hasImages = Array.isArray(page.images) && page.images.length > 0
+                const hasShapes = Array.isArray(page.shapes) && page.shapes.length > 0
+                const hasCanvasElements = hasDrawings || hasImages || hasShapes || page.backgroundType
 
-                  {Array.isArray(page.texts) && page.texts.length > 0 ? (
-                    <div className="space-y-4">
-                      {page.texts.map((txt: any, tIdx: number) => (
-                        <div key={tIdx} className="bg-muted/20 p-4 rounded-2xl border border-border/40">
-                          <MarkdownMathRenderer content={txt.text || ""} />
-                        </div>
-                      ))}
+                return (
+                  <Card
+                    key={idx}
+                    className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8 shadow-xs relative overflow-hidden"
+                  >
+                    <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-4">
+                      <span className="text-xs font-bold text-primary flex items-center gap-1.5">
+                        <FileTextIcon className="size-4" /> Page {idx + 1}
+                      </span>
+                      {page.backgroundType && (
+                        <Badge variant="secondary" className="text-[10px] uppercase font-semibold">
+                          {page.backgroundType} background
+                        </Badge>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground italic">No text content on this page.</p>
-                  )}
-                </Card>
-              ))}
+
+                    {/* Paint Canvas (Freehand drawings, shapes, images) */}
+                    {hasCanvasElements && (
+                      <div className="mb-6">
+                        <CanvasPageRenderer page={page} />
+                      </div>
+                    )}
+
+                    {/* Markdown & MathJax Text Elements */}
+                    {Array.isArray(page.texts) && page.texts.length > 0 ? (
+                      <div className="space-y-4">
+                        {page.texts.map((txt: any, tIdx: number) => (
+                          <div key={tIdx} className="bg-muted/20 p-4 rounded-2xl border border-border/40">
+                            <MarkdownMathRenderer content={txt.text || ""} />
+                          </div>
+                        ))}
+                      </div>
+                    ) : !hasCanvasElements ? (
+                      <p className="text-xs text-muted-foreground italic">No content on this page.</p>
+                    ) : null}
+                  </Card>
+                )
+              })}
             </div>
           )
         }
@@ -341,7 +495,7 @@ export default function StudentNoteDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Note Body with Markdown & MathJax support */}
+          {/* Note Body with Paint Canvas, Markdown & MathJax support */}
           {renderNoteBody()}
         </div>
       )}
