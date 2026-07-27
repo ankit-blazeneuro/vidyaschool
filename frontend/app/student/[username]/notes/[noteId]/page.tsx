@@ -2,6 +2,12 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import remarkMath from "remark-math"
+import rehypeKatex from "rehype-katex"
+import "katex/dist/katex.min.css"
+
 import {
   ArrowLeftIcon,
   BookOpenIcon,
@@ -12,11 +18,18 @@ import {
   CopyIcon,
   CheckIcon,
   TagIcon,
-  FileTextIcon
+  FileTextIcon,
+  Share2Icon,
+  ClockIcon,
+  SparklesIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 interface NoteDetail {
   id: string
@@ -31,6 +44,46 @@ interface NoteDetail {
   updated_at?: string
 }
 
+function getInitials(name: string) {
+  const parts = name.split(" ").filter(Boolean)
+  if (parts.length === 0) return "T"
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[1][0]).toUpperCase()
+}
+
+function calculateReadingTime(text: string): string {
+  const wordsPerMinute = 200
+  const words = text.trim().split(/\s+/).length
+  const minutes = Math.ceil(words / wordsPerMinute)
+  return `${minutes} min read`
+}
+
+function MarkdownMathRenderer({ content }: { content: string }) {
+  const containerRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      if ((window as any).MathJax && (window as any).MathJax.typesetPromise) {
+        (window as any).MathJax.typesetPromise([containerRef.current]).catch(() => {})
+      }
+    }
+  }, [content])
+
+  return (
+    <div
+      ref={containerRef}
+      className="prose prose-slate dark:prose-invert max-w-none text-foreground text-sm sm:text-base leading-relaxed"
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeKatex]}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
 export default function StudentNoteDetailPage() {
   const router = useRouter()
   const params = useParams<{ username: string; noteId: string }>()
@@ -41,19 +94,47 @@ export default function StudentNoteDetailPage() {
   const [loading, setLoading] = React.useState(true)
   const [copied, setCopied] = React.useState(false)
 
+  // Dynamically load MathJax v3 script for MathJax rendering support
+  React.useEffect(() => {
+    if (typeof window === "undefined") return
+    if (!(window as any).MathJax) {
+      ;(window as any).MathJax = {
+        tex: {
+          inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+          ],
+          displayMath: [
+            ["$$", "$$"],
+            ["\\[", "\\]"],
+          ],
+          processEscapes: true,
+        },
+        options: {
+          ignoreHtmlClass: "tex2jax_ignore",
+          processHtmlClass: "tex2jax_process",
+        },
+      }
+      const script = document.createElement("script")
+      script.src = "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+      script.async = true
+      document.head.appendChild(script)
+    }
+  }, [])
+
   React.useEffect(() => {
     if (!noteId) return
 
     fetch(`/api/backend/api/student/notes`)
-      .then(r => r.json())
-      .then(data => {
+      .then((r) => r.json())
+      .then((data) => {
         const found = data.notes?.find((n: any) => n.id === noteId)
         if (found) {
           setNote(found)
         } else {
           return fetch(`/api/student/notes`)
-            .then(r => r.json())
-            .then(fallbackData => {
+            .then((r) => r.json())
+            .then((fallbackData) => {
               const fbFound = fallbackData.notes?.find((n: any) => n.id === noteId)
               if (fbFound) setNote(fbFound)
             })
@@ -84,17 +165,29 @@ export default function StudentNoteDetailPage() {
 
     navigator.clipboard.writeText(textToCopy)
     setCopied(true)
-    toast.success("Note content copied to clipboard!")
+    toast.success("Note copied to clipboard!")
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleShare = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href)
+      toast.success("Note link copied to clipboard!")
+    }
   }
 
   const handlePrint = () => {
     window.print()
   }
 
-  // Render canvas or plain text pages
   const renderNoteBody = () => {
-    if (!note?.content) return <p className="text-muted-foreground">Empty note content.</p>
+    if (!note?.content) {
+      return (
+        <Card className="rounded-3xl border-border/60 p-8 text-center bg-card">
+          <p className="text-sm text-muted-foreground italic">Empty note content.</p>
+        </Card>
+      )
+    }
 
     if (note.content.startsWith("{")) {
       try {
@@ -103,34 +196,33 @@ export default function StudentNoteDetailPage() {
           return (
             <div className="space-y-6">
               {parsed.pages.map((page: any, idx: number) => (
-                <div
+                <Card
                   key={idx}
-                  className="rounded-2xl border border-border/60 bg-card p-6 shadow-xs relative overflow-hidden"
+                  className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8 shadow-xs relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-4">
                     <span className="text-xs font-bold text-primary flex items-center gap-1.5">
                       <FileTextIcon className="size-4" /> Page {idx + 1}
                     </span>
                     {page.backgroundType && (
-                      <span className="text-[10px] uppercase font-semibold text-muted-foreground/70 bg-muted px-2 py-0.5 rounded">
+                      <Badge variant="secondary" className="text-[10px] uppercase font-semibold">
                         {page.backgroundType} background
-                      </span>
+                      </Badge>
                     )}
                   </div>
 
-                  {/* Texts list */}
                   {Array.isArray(page.texts) && page.texts.length > 0 ? (
-                    <div className="space-y-3 font-mono text-sm leading-relaxed whitespace-pre-wrap">
+                    <div className="space-y-4">
                       {page.texts.map((txt: any, tIdx: number) => (
-                        <div key={tIdx} className="bg-muted/30 p-3 rounded-xl border border-muted/50">
-                          {txt.text}
+                        <div key={tIdx} className="bg-muted/20 p-4 rounded-2xl border border-border/40">
+                          <MarkdownMathRenderer content={txt.text || ""} />
                         </div>
                       ))}
                     </div>
                   ) : (
                     <p className="text-xs text-muted-foreground italic">No text content on this page.</p>
                   )}
-                </div>
+                </Card>
               ))}
             </div>
           )
@@ -139,21 +231,21 @@ export default function StudentNoteDetailPage() {
     }
 
     return (
-      <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-xs leading-relaxed whitespace-pre-wrap font-sans text-foreground text-sm sm:text-base">
-        {note.content}
-      </div>
+      <Card className="rounded-3xl border border-border/60 bg-card p-6 sm:p-10 shadow-xs">
+        <MarkdownMathRenderer content={note.content} />
+      </Card>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6 py-6 px-4 lg:px-8 max-w-4xl mx-auto min-h-screen">
-      {/* Top Header */}
+    <div className="flex flex-col gap-6 py-6 px-4 lg:px-8 max-w-4xl mx-auto min-h-screen font-sans">
+      {/* Navigation & Action Bar */}
       <div className="flex items-center justify-between gap-4">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => router.push(`/student/${username}/notes`)}
-          className="gap-2 text-xs rounded-xl"
+          className="gap-2 text-xs rounded-xl hover:bg-muted cursor-pointer"
         >
           <ArrowLeftIcon className="size-4" /> Back to Notes
         </Button>
@@ -163,7 +255,7 @@ export default function StudentNoteDetailPage() {
             variant="outline"
             size="sm"
             onClick={handleCopy}
-            className="gap-1.5 text-xs rounded-xl"
+            className="gap-1.5 text-xs rounded-xl cursor-pointer"
           >
             {copied ? <CheckIcon className="size-3.5 text-emerald-500" /> : <CopyIcon className="size-3.5" />}
             {copied ? "Copied" : "Copy"}
@@ -171,8 +263,16 @@ export default function StudentNoteDetailPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={handleShare}
+            className="gap-1.5 text-xs rounded-xl cursor-pointer"
+          >
+            <Share2Icon className="size-3.5" /> Share
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handlePrint}
-            className="gap-1.5 text-xs rounded-xl"
+            className="gap-1.5 text-xs rounded-xl cursor-pointer"
           >
             <PrinterIcon className="size-3.5" /> Print
           </Button>
@@ -180,7 +280,7 @@ export default function StudentNoteDetailPage() {
       </div>
 
       {loading ? (
-        <Card className="rounded-3xl p-8 animate-pulse">
+        <Card className="rounded-3xl p-8 animate-pulse border-border/60">
           <div className="h-6 bg-muted rounded w-1/3 mb-4" />
           <div className="h-8 bg-muted rounded w-2/3 mb-6" />
           <div className="space-y-3">
@@ -190,25 +290,29 @@ export default function StudentNoteDetailPage() {
           </div>
         </Card>
       ) : !note ? (
-        <Card className="rounded-3xl p-12 text-center">
+        <Card className="rounded-3xl p-12 text-center border-border/60">
+          <BookOpenIcon className="size-10 text-muted-foreground/50 mx-auto mb-3" />
           <p className="text-base font-semibold text-foreground">Note not found</p>
           <p className="text-xs text-muted-foreground mt-1">This note may have been removed or is no longer published.</p>
         </Card>
       ) : (
         <div className="space-y-6">
-          {/* Note Metadata Banner */}
-          <Card className="rounded-3xl border-border/60 shadow-xs overflow-hidden">
-            <CardHeader className="p-6 pb-4">
-              <div className="flex items-center gap-2 flex-wrap mb-2">
-                <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center gap-1.5">
-                  <TagIcon className="size-3.5" /> {note.subject || "General"}
-                </span>
+          {/* Minimal Note Header Banner */}
+          <Card className="rounded-3xl border-border/60 shadow-xs overflow-hidden bg-gradient-to-b from-card to-muted/20">
+            <CardHeader className="p-6 sm:p-8 pb-4">
+              <div className="flex items-center gap-2 flex-wrap mb-3">
+                <Badge variant="outline" className="px-3 py-1 rounded-full text-xs font-bold gap-1.5 bg-primary/10 text-primary border-primary/20">
+                  <TagIcon className="size-3" /> {note.subject || "General"}
+                </Badge>
                 {note.class && (
-                  <span className="px-2.5 py-1 rounded-full bg-muted text-foreground text-xs font-semibold flex items-center gap-1">
+                  <Badge variant="secondary" className="px-2.5 py-1 rounded-full text-xs font-semibold gap-1">
                     <GraduationCapIcon className="size-3.5 text-primary" />
                     Class {note.class}{note.section ? `-${note.section}` : ""}
-                  </span>
+                  </Badge>
                 )}
+                <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
+                  <ClockIcon className="size-3.5" /> {calculateReadingTime(note.content)}
+                </span>
               </div>
 
               <CardTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground leading-tight">
@@ -216,19 +320,28 @@ export default function StudentNoteDetailPage() {
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="px-6 pb-6 pt-0 border-t border-border/40 mt-2 flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2 pt-3">
-                <UserIcon className="size-4 text-primary shrink-0" />
-                <span>Published by <strong className="text-foreground">{note.teacher_name || "Teacher"}</strong></span>
+            <CardContent className="px-6 sm:px-8 pb-6 pt-0 border-t border-border/40 mt-2 flex flex-wrap items-center justify-between gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-3 pt-3">
+                <Avatar className="h-8 w-8 rounded-lg shrink-0">
+                  <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-bold text-xs">
+                    {getInitials(note.teacher_name || "Teacher")}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-foreground text-xs">
+                    {note.teacher_name || "Teacher"}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">Author & Educator</span>
+                </div>
               </div>
               <div className="flex items-center gap-1.5 pt-3">
-                <CalendarIcon className="size-4 text-muted-foreground shrink-0" />
-                <span>Updated {note.updated_at ? new Date(note.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "recently"}</span>
+                <CalendarIcon className="size-3.5 text-muted-foreground shrink-0" />
+                <span>Updated {note.updated_at ? new Date(note.updated_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recently"}</span>
               </div>
             </CardContent>
           </Card>
 
-          {/* Main Body */}
+          {/* Note Body with Markdown & MathJax support */}
           {renderNoteBody()}
         </div>
       )}
