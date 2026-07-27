@@ -82,6 +82,7 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import {
   Table,
   TableBody,
@@ -825,33 +826,36 @@ export default function TeacherEmailClient() {
               </div>
             </div>
 
-            <CardContent className="p-0 pt-0 flex-1 overflow-auto min-h-0">
+            <CardContent className="p-0 pt-0 flex-1 overflow-hidden min-h-0">
               {loading ? (
                 <div className="h-full min-h-[200px] flex flex-col items-center justify-center gap-2">
                   <Spinner size="md" />
                   <span className="text-xs text-muted-foreground font-medium">Fetching emails...</span>
                 </div>
               ) : (
-                <Table>
-                  <TableBody>
-                    {table.getRowModel().rows.length > 0 ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRowItem
-                          key={row.id}
-                          row={row}
-                          isSelected={selectedEmail?.id === row.original.id}
-                          onSelectRow={handleMarkRead}
-                        />
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={columns.length} className="h-40 text-center text-xs text-muted-foreground">
-                          No emails found in {folder}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                <ScrollArea className="w-full h-full" viewportClassName="w-full">
+                  <Table className="w-full min-w-[500px]">
+                    <TableBody>
+                      {table.getRowModel().rows.length > 0 ? (
+                        table.getRowModel().rows.map((row) => (
+                          <TableRowItem
+                            key={row.id}
+                            row={row}
+                            isSelected={selectedEmail?.id === row.original.id}
+                            onSelectRow={handleMarkRead}
+                          />
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={columns.length} className="h-40 text-center text-xs text-muted-foreground">
+                            No emails found in {folder}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
               )}
             </CardContent>
 

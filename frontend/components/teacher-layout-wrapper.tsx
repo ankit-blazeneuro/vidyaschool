@@ -7,9 +7,11 @@ import { TeacherAIInput } from "@/components/teacher-ai-input"
 export function TeacherLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isChatPage = pathname?.includes("/tasks/")
+  const isEmailPage = pathname?.includes("/email")
+  const hideAIInput = isChatPage || isEmailPage
 
   return (
-    <div className={`flex flex-1 flex-col relative ${isChatPage ? "pb-0" : "pb-20"}`}>
+    <div className={`flex flex-1 flex-col relative ${hideAIInput ? "pb-0" : "pb-20"}`}>
       <div className="@container/main flex flex-1 flex-col gap-2">
         {children}
       </div>

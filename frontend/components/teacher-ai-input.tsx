@@ -33,8 +33,8 @@ export function TeacherAIInput() {
     }
   }, [message])
 
-  // Hide the floating bar on the chat room page itself to avoid duplicate inputs
-  if (pathname?.includes("/tasks/")) {
+  // Hide the floating bar on chat room and email pages
+  if (pathname?.includes("/tasks/") || pathname?.includes("/email")) {
     return null
   }
 
