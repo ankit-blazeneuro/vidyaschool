@@ -700,9 +700,9 @@ export default function TeacherEmailClient() {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col gap-4 pt-0 pb-6 px-6 lg:px-8 flex-1 min-h-[calc(100vh-4rem)] bg-background font-sans">
+      <div className="flex flex-col gap-4 pt-6 pb-0 px-6 lg:px-8 flex-1 min-h-[calc(100vh-4rem)] bg-background font-sans">
         {/* Folder Cards — 4 horizontal cards */}
-        <div className="flex flex-wrap gap-6 mb-4 shrink-0 pt-0">
+        <div className="flex flex-wrap gap-6 mb-4 shrink-0 pt-2">
           {FOLDER_META.map((f) => {
             const isActive = folder === f.id
             const count = f.id === "inbox" ? unreadCount : 0

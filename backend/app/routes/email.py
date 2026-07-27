@@ -88,6 +88,13 @@ def get_teacher_emails(
 
     result_emails = []
     for e in emails:
+        b_html = e.body_html
+        b_text = e.body_text
+        if not b_html and b_text:
+            b_html = f"<p>{b_text}</p>"
+        if not b_text and b_html:
+            b_text = re.sub(r'<[^>]+>', '', b_html)
+
         result_emails.append({
             "id": e.id,
             "folder": e.folder,
@@ -95,8 +102,8 @@ def get_teacher_emails(
             "toAddress": e.to_address,
             "ccAddress": e.cc_address,
             "subject": e.subject,
-            "bodyHtml": e.body_html,
-            "bodyText": e.body_text,
+            "bodyHtml": b_html,
+            "bodyText": b_text,
             "resendId": e.resend_id,
             "isRead": e.is_read,
             "isStarred": e.is_starred,
@@ -287,6 +294,27 @@ async def resend_inbound_webhook(request: Request, db: Session = Depends(get_db)
     subject = data_obj.get("subject") or "(no subject)"
     html = data_obj.get("html")
     text = data_obj.get("text") or ""
+    resend_email_id = data_obj.get("email_id") or data_obj.get("id") or payload.get("id")
+
+    resend_api_key = os.getenv("RESEND_API_KEY")
+    if resend_api_key and resend_email_id and not html and not text:
+        try:
+            print(f"[Inbound Fetch] Fetching body from Resend API for message: {resend_email_id}")
+            res_val = requests.get(
+                f"https://api.resend.com/emails/{resend_email_id}",
+                headers={"Authorization": f"Bearer {resend_api_key}"}
+            )
+            if res_val.status_code == 200:
+                f_data = res_val.json()
+                html = f_data.get("html") or html
+                text = f_data.get("text") or text
+        except Exception as err:
+            print(f"[Inbound Fetch Error] {err}")
+
+    if not text and html:
+        text = re.sub(r'<[^>]+>', '', html)
+    elif not html and text:
+        html = f"<p>{text}</p>"
 
     if not to_addr or not from_addr:
         print(f"[Inbound Webhook Warning] Missing from/to in data_obj: {data_obj}")
