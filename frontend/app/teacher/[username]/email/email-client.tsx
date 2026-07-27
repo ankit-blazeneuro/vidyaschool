@@ -22,23 +22,19 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import {
   ArrowUpDown,
-  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Columns3,
   GripVertical,
-  Loader2,
-  Mail,
-  MailOpen,
-  MoreVertical,
+  MoreHorizontal,
   Plus,
   RefreshCw,
   Reply,
   Search,
   Send,
+  SlidersHorizontal,
   Star,
   Trash2,
   X,
@@ -67,6 +63,7 @@ import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
@@ -92,6 +89,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
@@ -114,30 +112,77 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-export const emailSchema = z.object({
-  id: z.string(),
-  folder: z.string(),
-  fromAddress: z.string(),
-  toAddress: z.string(),
-  ccAddress: z.string().nullable().optional(),
-  subject: z.string(),
-  bodyHtml: z.string().nullable().optional(),
-  bodyText: z.string(),
-  isRead: z.boolean(),
-  isStarred: z.boolean(),
-  createdAt: z.string(),
-})
+export interface Email {
+  id: string
+  folder: string
+  fromAddress: string
+  toAddress: string
+  ccAddress: string | null
+  subject: string
+  bodyHtml: string | null
+  bodyText: string
+  isRead: boolean
+  isStarred: boolean
+  createdAt: string
+}
 
-export type Email = z.infer<typeof emailSchema>
 type Folder = "inbox" | "sent" | "starred" | "trash"
+
+// Custom folder SVG icon
+function FolderSVG({ size = 36, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="8 33 93 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <path opacity="0.5" d="M10 54.315C10 51.0479 10 49.4162 10.3115 48.0546C10.9755 45.131 12.684 42.4417 15.2138 40.3375C17.7437 38.2334 20.9776 36.812 24.4936 36.259C26.1357 36 28.1026 36 32.0275 36C33.7452 36 34.6085 36 35.4362 36.0629C39.0009 36.3413 42.3817 37.5069 45.1372 39.4077C45.778 39.848 46.3832 40.3512 47.6025 41.365L50.05 43.4C53.6812 46.4192 55.4968 47.9288 57.6684 48.9315C58.862 49.4846 60.1282 49.9216 61.442 50.2339C63.8361 50.8 66.4037 50.8 71.5346 50.8H73.1989C84.9113 50.8 90.7719 50.8 94.5767 53.649C94.9297 53.908 95.262 54.1843 95.5735 54.4778C99 57.6413 99 62.5142 99 72.2526V80.4C99 94.3527 99 101.331 93.7846 105.664C88.5692 109.996 80.1809 110 63.4 110H45.6C28.819 110 20.4263 110 15.2154 105.664C10.0044 101.327 10 94.3527 10 80.4V54.315Z" fill="currentColor" />
+      <path d="M90 51C90 49.8956 89.978 49.2397 89.8901 48.6652C89.5106 46.2391 88.1924 43.9863 86.14 42.2563C84.0876 40.5262 81.4157 39.4155 78.5386 39.0964C77.6816 39 76.662 39 74.6185 39H46C46.5098 39.3854 47.0855 39.8672 48.0304 40.6677L50.4475 42.706C54.0336 45.7301 55.8266 47.2421 57.9712 48.2464C59.1514 48.8007 60.4033 49.2385 61.7024 49.551C64.0623 50.118 66.5981 50.118 71.6696 50.118H73.3088C81.1314 50.118 86.304 50.118 90 51Z" fill="currentColor" />
+      <path fillRule="evenodd" clipRule="evenodd" d="M56 65.5C56 64.837 56.3404 64.2011 56.9463 63.7322C57.5522 63.2634 58.3739 63 59.2308 63H80.7692C81.6261 63 82.4478 63.2634 83.0537 63.7322C83.6596 64.2011 84 64.837 84 65.5C84 66.163 83.6596 66.7989 83.0537 67.2678C82.4478 67.7366 81.6261 68 80.7692 68H59.2308C58.3739 68 57.5522 67.7366 56.9463 67.2678C56.3404 66.7989 56 66.163 56 65.5Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+// Sent folder SVG icon
+function SentSVG({ size = 36, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="8 33 93 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <path opacity="0.5" d="M10 54.315C10 51.0479 10 49.4162 10.3115 48.0546C10.9755 45.131 12.684 42.4417 15.2138 40.3375C17.7437 38.2334 20.9776 36.812 24.4936 36.259C26.1357 36 28.1026 36 32.0275 36C33.7452 36 34.6085 36 35.4362 36.0629C39.0009 36.3413 42.3817 37.5069 45.1372 39.4077C45.778 39.848 46.3832 40.3512 47.6025 41.365L50.05 43.4C53.6812 46.4192 55.4968 47.9288 57.6684 48.9315C58.862 49.4846 60.1282 49.9216 61.442 50.2339C63.8361 50.8 66.4037 50.8 71.5346 50.8H73.1989C84.9113 50.8 90.7719 50.8 94.5767 53.649C94.9297 53.908 95.262 54.1843 95.5735 54.4778C99 57.6413 99 62.5142 99 72.2526V80.4C99 94.3527 99 101.331 93.7846 105.664C88.5692 109.996 80.1809 110 63.4 110H45.6C28.819 110 20.4263 110 15.2154 105.664C10.0044 101.327 10 94.3527 10 80.4V54.315Z" fill="currentColor" />
+      <path d="M90 51C90 49.8956 89.978 49.2397 89.8901 48.6652C89.5106 46.2391 88.1924 43.9863 86.14 42.2563C84.0876 40.5262 81.4157 39.4155 78.5386 39.0964C77.6816 39 76.662 39 74.6185 39H46C46.5098 39.3854 47.0855 39.8672 48.0304 40.6677L50.4475 42.706C54.0336 45.7301 55.8266 47.2421 57.9712 48.2464C59.1514 48.8007 60.4033 49.2385 61.7024 49.551C64.0623 50.118 66.5981 50.118 71.6696 50.118H73.3088C81.1314 50.118 86.304 50.118 90 51Z" fill="currentColor" />
+      <path opacity="0.5" fillRule="evenodd" clipRule="evenodd" d="M65.6801 76.3428L63.1771 83.8522C61.4122 89.147 60.5297 91.7943 59.2356 92.5465C58.0046 93.2623 56.4842 93.2623 55.2532 92.5465C53.9591 91.7943 53.0766 89.147 51.3118 83.8522C51.0284 83.0022 50.8867 82.5771 50.6488 82.2218C50.4183 81.8775 50.1226 81.5816 49.7782 81.3512C49.4229 81.1133 48.9979 80.9716 48.1477 80.6882C42.853 78.9234 40.2057 78.0409 39.4534 76.7468C38.7377 75.5158 38.7377 73.9954 39.4534 72.7643C40.2057 71.4703 42.853 70.5879 48.1477 68.823L55.6572 66.3198C62.2173 64.1331 65.4974 63.0398 67.2287 64.7712C68.9602 66.5026 67.8669 69.7827 65.6801 76.3428Z" fill="currentColor" />
+      <path d="M55.0251 76.8993C54.6005 76.4699 54.6043 75.7774 55.0337 75.3526L61.174 69.28C61.6037 68.8552 62.2961 68.859 62.7209 69.2885C63.1457 69.718 63.1418 70.4105 62.7123 70.8353L56.572 76.9079C56.1425 77.3328 55.4499 77.3288 55.0251 76.8993Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+// Starred folder SVG icon
+function StarredSVG({ size = 36, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="8 33 93 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <path opacity="0.5" d="M10 54.315C10 51.0479 10 49.4162 10.3115 48.0546C10.9755 45.131 12.684 42.4417 15.2138 40.3375C17.7437 38.2334 20.9776 36.812 24.4936 36.259C26.1357 36 28.1026 36 32.0275 36C33.7452 36 34.6085 36 35.4362 36.0629C39.0009 36.3413 42.3817 37.5069 45.1372 39.4077C45.778 39.848 46.3832 40.3512 47.6025 41.365L50.05 43.4C53.6812 46.4192 55.4968 47.9288 57.6684 48.9315C58.862 49.4846 60.1282 49.9216 61.442 50.2339C63.8361 50.8 66.4037 50.8 71.5346 50.8H73.1989C84.9113 50.8 90.7719 50.8 94.5767 53.649C94.9297 53.908 95.262 54.1843 95.5735 54.4778C99 57.6413 99 62.5142 99 72.2526V80.4C99 94.3527 99 101.331 93.7846 105.664C88.5692 109.996 80.1809 110 63.4 110H45.6C28.819 110 20.4263 110 15.2154 105.664C10.0044 101.327 10 94.3527 10 80.4V54.315Z" fill="currentColor" />
+      <path d="M90 51C90 49.8956 89.978 49.2397 89.8901 48.6652C89.5106 46.2391 88.1924 43.9863 86.14 42.2563C84.0876 40.5262 81.4157 39.4155 78.5386 39.0964C77.6816 39 76.662 39 74.6185 39H46C46.5098 39.3854 47.0855 39.8672 48.0304 40.6677L50.4475 42.706C54.0336 45.7301 55.8266 47.2421 57.9712 48.2464C59.1514 48.8007 60.4033 49.2385 61.7024 49.551C64.0623 50.118 66.5981 50.118 71.6696 50.118H73.3088C81.1314 50.118 86.304 50.118 90 51Z" fill="currentColor" />
+      <path d="M59.127 68.1952L58.701 67.4308C57.0544 64.4768 56.231 63 54.9999 63C53.7688 63 52.9455 64.4768 51.2988 67.4308L50.8729 68.1952C50.4053 69.0346 50.1713 69.4541 49.8065 69.731C49.4416 70.0079 48.9875 70.111 48.0788 70.3164L47.2515 70.5036C44.0538 71.2273 42.455 71.5887 42.0747 72.812C41.6943 74.0352 42.7842 75.3097 44.9641 77.859L45.5281 78.5185C46.1475 79.2426 46.4572 79.6049 46.5968 80.0529C46.7359 80.501 46.6891 80.9842 46.5955 81.9509L46.5101 82.8306C46.1806 86.2318 46.0158 87.9322 47.0115 88.6884C48.0077 89.4441 49.5044 88.7551 52.4983 87.3767L53.2727 87.0201C54.1237 86.6283 54.5488 86.4325 54.9999 86.4325C55.451 86.4325 55.8761 86.6283 56.7272 87.0201L57.5016 87.3767C60.4954 88.7551 61.9922 89.4441 62.9884 88.6884C63.9842 87.9322 63.8191 86.2318 63.4898 82.8306L63.4044 81.9509C63.3108 80.9842 63.264 80.501 63.4031 80.0529C63.5426 79.6049 63.8525 79.2426 64.4717 78.5185L65.0359 77.859C67.2155 75.3097 68.3058 74.0352 67.9253 72.812C67.5449 71.5887 65.9459 71.2273 62.7483 70.5036L61.9211 70.3164C61.0124 70.111 60.5583 70.0079 60.1934 69.731C59.8285 69.4541 59.5945 69.0346 59.127 68.1952Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+// Trash folder SVG icon
+function TrashSVG({ size = 36, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="8 33 93 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <path opacity="0.5" d="M10 54.315C10 51.0479 10 49.4162 10.3115 48.0546C10.9755 45.131 12.684 42.4417 15.2138 40.3375C17.7437 38.2334 20.9776 36.812 24.4936 36.259C26.1357 36 28.1026 36 32.0275 36C33.7452 36 34.6085 36 35.4362 36.0629C39.0009 36.3413 42.3817 37.5069 45.1372 39.4077C45.778 39.848 46.3832 40.3512 47.6025 41.365L50.05 43.4C53.6812 46.4192 55.4968 47.9288 57.6684 48.9315C58.862 49.4846 60.1282 49.9216 61.442 50.2339C63.8361 50.8 66.4037 50.8 71.5346 50.8H73.1989C84.9113 50.8 90.7719 50.8 94.5767 53.649C94.9297 53.908 95.262 54.1843 95.5735 54.4778C99 57.6413 99 62.5142 99 72.2526V80.4C99 94.3527 99 101.331 93.7846 105.664C88.5692 109.996 80.1809 110 63.4 110H45.6C28.819 110 20.4263 110 15.2154 105.664C10.0044 101.327 10 94.3527 10 80.4V54.315Z" fill="currentColor" />
+      <path d="M90 51C90 49.8956 89.978 49.2397 89.8901 48.6652C89.5106 46.2391 88.1924 43.9863 86.14 42.2563C84.0876 40.5262 81.4157 39.4155 78.5386 39.0964C77.6816 39 76.662 39 74.6185 39H46C46.5098 39.3854 47.0855 39.8672 48.0304 40.6677L50.4475 42.706C54.0336 45.7301 55.8266 47.2421 57.9712 48.2464C59.1514 48.8007 60.4033 49.2385 61.7024 49.551C64.0623 50.118 66.5981 50.118 71.6696 50.118H73.3088C81.1314 50.118 86.304 50.118 90 51Z" fill="currentColor" />
+      <path opacity="0.5" d="M51.9266 89.083H53.0741C57.0226 89.083 58.9967 89.083 60.2803 87.8242C61.564 86.5654 61.6954 84.5005 61.958 80.3707L62.3364 74.4198C62.4789 72.1791 62.5502 71.0586 61.9062 70.3486C61.2622 69.6386 60.1749 69.6386 57.9999 69.6386H47.0007C44.8258 69.6386 43.7384 69.6386 43.0944 70.3486C42.4505 71.0586 42.5217 72.1791 42.6642 74.4198L43.0427 80.3707C43.3053 84.5005 43.4367 86.5654 44.7203 87.8242C46.0039 89.083 47.9781 89.083 51.9266 89.083Z" fill="currentColor" />
+      <path d="M39.0104 65.9931C39.0104 65.3219 39.5141 64.7778 40.1354 64.7778L44.0208 64.7772C44.7927 64.756 45.4738 64.2258 45.7364 63.4413C45.7434 63.4207 45.7513 63.3953 45.7798 63.303L45.9472 62.7603C46.0496 62.4276 46.1389 62.1378 46.2638 61.8787C46.7572 60.8551 47.6701 60.1443 48.7251 59.9623C48.9921 59.9163 49.2749 59.9165 49.5995 59.9167H54.6716C54.9962 59.9165 55.279 59.9163 55.546 59.9623C56.601 60.1443 57.5139 60.8551 58.0072 61.8787C58.1322 62.1378 58.2215 62.4276 58.3238 62.7603L58.4913 63.303C58.5198 63.3953 58.5277 63.4207 58.5346 63.4413C58.7974 64.2258 59.6134 64.7567 60.3853 64.7778H64.1354C64.7567 64.7778 65.2604 65.3219 65.2604 65.9931C65.2604 66.6643 64.7567 67.2083 64.1354 67.2083H40.1354C39.5141 67.2083 39.0104 66.6643 39.0104 65.9931Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+const FOLDER_META: { id: Folder; label: string; icon: (props: { size?: number; className?: string }) => React.ReactElement }[] = [
+  { id: "inbox", label: "Inbox", icon: FolderSVG },
+  { id: "sent", label: "Sent", icon: SentSVG },
+  { id: "starred", label: "Starred", icon: StarredSVG },
+  { id: "trash", label: "Trash", icon: TrashSVG },
+]
 
 function getInitials(name: string) {
   const parts = name.split(" ").filter(Boolean)
@@ -153,11 +198,9 @@ function getSenderDisplay(from: string) {
   return from
 }
 
-// Create a separate component for the drag handle
+// Drag handle for sorting rows in email table
 function DragHandle({ id }: { id: string }) {
-  const { attributes, listeners } = useSortable({
-    id,
-  })
+  const { attributes, listeners } = useSortable({ id })
 
   return (
     <Button
@@ -166,6 +209,7 @@ function DragHandle({ id }: { id: string }) {
       variant="ghost"
       size="icon"
       className="size-7 text-muted-foreground hover:bg-transparent cursor-grab active:cursor-grabbing"
+      onClick={(e) => e.stopPropagation()}
     >
       <GripVertical className="size-3 text-muted-foreground" />
       <span className="sr-only">Drag to reorder</span>
@@ -175,9 +219,11 @@ function DragHandle({ id }: { id: string }) {
 
 function DraggableRow({
   row,
+  isSelected,
   onSelectRow,
 }: {
   row: Row<Email>
+  isSelected: boolean
   onSelectRow: (email: Email) => void
 }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
@@ -192,8 +238,9 @@ function DraggableRow({
       data-dragging={isDragging}
       ref={setNodeRef}
       className={cn(
-        "relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80 transition-colors hover:bg-muted/40",
-        !email.isRead && "bg-rose-500/[0.03] font-medium"
+        "relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80 cursor-pointer transition-colors hover:bg-muted/40",
+        !email.isRead && "bg-rose-500/[0.02]",
+        isSelected && "bg-primary/5 ring-1 ring-primary/30 border-primary"
       )}
       style={{
         transform: CSS.Transform.toString(transform),
@@ -238,14 +285,14 @@ function TableCellViewer({
         >
           <span
             className={cn(
-              "text-xs truncate max-w-[280px] sm:max-w-[380px] block font-semibold text-foreground",
+              "text-xs truncate max-w-[140px] sm:max-w-[240px] block font-medium text-foreground",
               !item.isRead && "font-bold text-foreground"
             )}
           >
             {item.subject || "(no subject)"}
           </span>
-          <span className="text-[11px] text-muted-foreground truncate max-w-[280px] sm:max-w-[380px] block font-normal">
-            {item.bodyText?.slice(0, 80) || "—"}
+          <span className="text-[11px] text-muted-foreground truncate max-w-[140px] sm:max-w-[240px] block font-normal">
+            {item.bodyText?.slice(0, 70) || "—"}
           </span>
         </Button>
       </DrawerTrigger>
@@ -279,7 +326,6 @@ function TableCellViewer({
         </DrawerHeader>
 
         <div className="flex flex-col gap-4 overflow-y-auto p-4 text-sm flex-1">
-          {/* Sender & Recipient info box */}
           <div className="rounded-lg border p-3 bg-muted/20 space-y-2">
             <div className="flex items-center gap-3">
               <Avatar className="h-9 w-9 rounded-lg">
@@ -300,7 +346,6 @@ function TableCellViewer({
 
           <Separator />
 
-          {/* Email Content */}
           <div className="space-y-2">
             <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Message Content
@@ -377,6 +422,7 @@ export default function TeacherEmailClient() {
   const [emails, setEmails] = React.useState<Email[]>([])
   const [address, setAddress] = React.useState<string>("")
   const [loading, setLoading] = React.useState(true)
+  const [selectedEmail, setSelectedEmail] = React.useState<Email | null>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
 
   // Compose Modal State
@@ -385,23 +431,6 @@ export default function TeacherEmailClient() {
   const [composeSubject, setComposeSubject] = React.useState("")
   const [composeBody, setComposeBody] = React.useState("")
   const [sending, setSending] = React.useState(false)
-
-  // TanStack Table states
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
-
-  const sortableId = React.useId()
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
-  )
 
   const fetchEmails = React.useCallback(async (f: Folder) => {
     setLoading(true)
@@ -428,6 +457,7 @@ export default function TeacherEmailClient() {
 
   React.useEffect(() => {
     fetchEmails(folder)
+    setSelectedEmail(null)
   }, [folder, fetchEmails])
 
   const handleMarkRead = React.useCallback(async (email: Email) => {
@@ -445,6 +475,7 @@ export default function TeacherEmailClient() {
         console.error("Failed to mark read", e)
       }
     }
+    setSelectedEmail(email)
   }, [])
 
   const handleToggleStar = React.useCallback(
@@ -460,6 +491,7 @@ export default function TeacherEmailClient() {
         setEmails((prev) =>
           prev.map((item) => (item.id === id ? { ...item, isStarred: nextVal } : item))
         )
+        setSelectedEmail((prev) => (prev?.id === id ? { ...prev, isStarred: nextVal } : prev))
         toast.success(nextVal ? "Starred" : "Unstarred")
       } catch (err) {
         toast.error("Failed to update star")
@@ -478,22 +510,14 @@ export default function TeacherEmailClient() {
         })
         if (!res.ok) throw new Error("Delete failed")
         setEmails((prev) => prev.filter((e) => e.id !== id))
+        if (selectedEmail?.id === id) setSelectedEmail(null)
         toast.success(folder === "trash" ? "Permanently deleted" : "Moved to Trash")
       } catch (err) {
         toast.error("Failed to delete email")
       }
     },
-    [folder]
+    [folder, selectedEmail]
   )
-
-  const handleReply = React.useCallback((email: Email) => {
-    setComposeTo(email.fromAddress)
-    setComposeSubject(`Re: ${email.subject}`)
-    setComposeBody(
-      `\n\n--- Original Message ---\nFrom: ${email.fromAddress}\n${email.bodyText}`
-    )
-    setIsComposeOpen(true)
-  }, [])
 
   const handleSendEmail = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -527,15 +551,24 @@ export default function TeacherEmailClient() {
     }
   }
 
+  const handleReply = React.useCallback((email: Email) => {
+    setComposeTo(email.fromAddress)
+    setComposeSubject(`Re: ${email.subject}`)
+    setComposeBody(
+      `\n\n--- Original Message ---\nFrom: ${email.fromAddress}\n${email.bodyText}`
+    )
+    setIsComposeOpen(true)
+  }, [])
+
   const filteredEmails = React.useMemo(() => {
     if (!searchQuery.trim()) return emails
-    const q = searchQuery.toLowerCase()
+    const query = searchQuery.toLowerCase()
     return emails.filter(
       (e) =>
-        e.subject.toLowerCase().includes(q) ||
-        e.fromAddress.toLowerCase().includes(q) ||
-        e.toAddress.toLowerCase().includes(q) ||
-        e.bodyText.toLowerCase().includes(q)
+        e.subject.toLowerCase().includes(query) ||
+        e.fromAddress.toLowerCase().includes(query) ||
+        e.toAddress.toLowerCase().includes(query) ||
+        e.bodyText.toLowerCase().includes(query)
     )
   }, [emails, searchQuery])
 
@@ -543,9 +576,24 @@ export default function TeacherEmailClient() {
     () => emails.filter((e) => !e.isRead).length,
     [emails]
   )
-  const starredCount = React.useMemo(
-    () => emails.filter((e) => e.isStarred).length,
-    [emails]
+
+  const activeFolderMeta = FOLDER_META.find((f) => f.id === folder)!
+
+  // TanStack Table states
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = React.useState({})
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+  })
+
+  const sortableId = React.useId()
+  const sensors = useSensors(
+    useSensor(MouseSensor, {}),
+    useSensor(TouchSensor, {}),
+    useSensor(KeyboardSensor, {})
   )
 
   const columns = React.useMemo<ColumnDef<Email>[]>(
@@ -560,34 +608,32 @@ export default function TeacherEmailClient() {
       {
         id: "select",
         header: ({ table }) => (
-          <div className="flex items-center justify-center">
-            <Checkbox
-              checked={
-                table.getIsAllPageRowsSelected() ||
-                (table.getIsSomePageRowsSelected() && "indeterminate")
-              }
-              onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-              aria-label="Select all"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && "indeterminate")
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Select all"
+            className="translate-y-[2px]"
+            onClick={(e) => e.stopPropagation()}
+          />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center justify-center">
-            <Checkbox
-              checked={row.getIsSelected()}
-              onCheckedChange={(value) => row.toggleSelected(!!value)}
-              aria-label="Select row"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Select row"
+            className="translate-y-[2px]"
+          />
         ),
         enableSorting: false,
         enableHiding: false,
       },
       {
         id: "star",
-        header: () => null,
+        header: "",
         cell: ({ row }) => {
           const email = row.original
           return (
@@ -595,9 +641,7 @@ export default function TeacherEmailClient() {
               onClick={(e) => handleToggleStar(email.id, email.isStarred, e)}
               className={cn(
                 "h-5 w-5 flex items-center justify-center rounded transition-colors shrink-0 cursor-pointer",
-                email.isStarred
-                  ? "text-amber-500"
-                  : "text-muted-foreground/40 hover:text-amber-400"
+                email.isStarred ? "text-amber-500" : "text-muted-foreground/40 hover:text-amber-400"
               )}
             >
               <Star className="h-3.5 w-3.5" fill={email.isStarred ? "currentColor" : "none"} />
@@ -616,7 +660,7 @@ export default function TeacherEmailClient() {
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="h-8 -ml-3 text-xs font-semibold hover:bg-transparent"
           >
-            Sender
+            From
             <ArrowUpDown className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
           </Button>
         ),
@@ -631,12 +675,10 @@ export default function TeacherEmailClient() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0">
-                <span
-                  className={cn(
-                    "text-xs truncate max-w-[130px]",
-                    !email.isRead ? "font-bold text-foreground" : "text-foreground/80"
-                  )}
-                >
+                <span className={cn(
+                  "text-xs truncate max-w-[120px]",
+                  !email.isRead ? "font-bold text-foreground" : "text-foreground/75"
+                )}>
                   {senderDisplay}
                 </span>
                 {!email.isRead && (
@@ -658,7 +700,7 @@ export default function TeacherEmailClient() {
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="h-8 -ml-3 text-xs font-semibold hover:bg-transparent"
           >
-            Subject & Preview
+            Subject
             <ArrowUpDown className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
           </Button>
         ),
@@ -688,7 +730,7 @@ export default function TeacherEmailClient() {
       {
         accessorKey: "createdAt",
         header: ({ column }) => (
-          <div className="w-full text-right">
+          <div className="text-right">
             <Button
               variant="ghost"
               size="sm"
@@ -704,13 +746,14 @@ export default function TeacherEmailClient() {
           const email = row.original
           return (
             <div className="text-right text-[10px] text-muted-foreground font-medium whitespace-nowrap">
-              {formatDistanceToNow(new Date(email.createdAt), { addSuffix: true })}
+              {formatDistanceToNow(new Date(email.createdAt), { addSuffix: false })} ago
             </div>
           )
         },
       },
       {
         id: "actions",
+        enableHiding: false,
         cell: ({ row }) => {
           const email = row.original
           return (
@@ -718,28 +761,27 @@ export default function TeacherEmailClient() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
                   size="icon"
+                  className="h-7 w-7 rounded-lg cursor-pointer text-muted-foreground hover:text-foreground"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreVertical className="size-4" />
                   <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem
-                  onClick={() => {
-                    handleMarkRead(email)
-                  }}
-                >
-                  Mark as Read
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleReply(email)}>
-                  Reply
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => handleToggleStar(email.id, email.isStarred, e)}>
-                  {email.isStarred ? "Unstar Email" : "Star Email"}
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-[11px]">Actions</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleMarkRead(email)}>
+                    Open Email
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => handleToggleStar(email.id, email.isStarred, e)}>
+                    {email.isStarred ? "Unstar Email" : "Star Email"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleReply(email)}>
+                    Reply
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive focus:bg-destructive/10"
@@ -753,7 +795,7 @@ export default function TeacherEmailClient() {
         },
       },
     ],
-    [handleToggleStar, handleMarkRead, handleReply, handleDelete, folder]
+    [selectedEmail, handleToggleStar, handleMarkRead, handleReply, handleDelete, folder]
   )
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(
@@ -766,9 +808,9 @@ export default function TeacherEmailClient() {
     columns,
     state: {
       sorting,
+      columnFilters,
       columnVisibility,
       rowSelection,
-      columnFilters,
       pagination,
     },
     getRowId: (row) => row.id,
@@ -798,366 +840,445 @@ export default function TeacherEmailClient() {
   }
 
   return (
-    <div className="flex flex-col gap-6 py-6 px-4 lg:px-8 w-full max-w-7xl mx-auto font-sans">
-      {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
-        <div>
-          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Mail className="size-5 text-primary" /> School Email Inbox
-          </h1>
-          {address && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Logged in as <span className="font-semibold text-foreground font-mono">{address}</span>
-            </p>
-          )}
+    <TooltipProvider>
+      <div className="flex flex-col gap-4 py-6 px-6 lg:px-8 flex-1 min-h-[calc(100vh-4rem)] bg-background font-sans">
+        {/* Address pill — top, minimal */}
+        {address && (
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="font-mono text-[11px] text-muted-foreground bg-muted px-2.5 py-1 rounded-md border border-border">
+              {address}
+            </span>
+          </div>
+        )}
+
+        {/* Folder Cards — 4 horizontal cards */}
+        <div className="flex flex-wrap gap-6 mb-4 shrink-0">
+          {FOLDER_META.map((f) => {
+            const isActive = folder === f.id
+            const count = f.id === "inbox" ? unreadCount : 0
+            return (
+              <button
+                key={f.id}
+                onClick={() => setFolder(f.id)}
+                className={cn(
+                  "relative flex flex-row items-center gap-4 rounded-xl px-9 py-5 text-left transition-all duration-150 cursor-pointer min-w-[220px]",
+                  isActive
+                    ? "bg-primary/5 shadow-sm ring-1 ring-primary/20"
+                    : "bg-card hover:bg-muted/40"
+                )}
+              >
+                <f.icon
+                  className={cn("shrink-0", isActive ? "text-primary" : "text-muted-foreground")}
+                  size={60}
+                />
+                <div className="flex-1 flex items-center">
+                  <span className={cn(
+                    "text-sm font-semibold leading-none",
+                    isActive ? "text-primary" : "text-foreground"
+                  )}>
+                    {f.label}
+                    {f.id === "inbox" && count > 0 && (
+                      <span className="ml-1.5 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
+                        {count}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+        {/* Action buttons row */}
+        <div className="flex items-center gap-2 mb-3 shrink-0">
           <Button
+            onClick={() => fetchEmails(folder)}
             variant="outline"
             size="sm"
-            onClick={() => fetchEmails(folder)}
+            className="rounded-lg cursor-pointer flex items-center gap-1.5"
             disabled={loading}
-            className="gap-1.5 rounded-lg cursor-pointer"
           >
-            <RefreshCw className={cn("size-3.5", loading && "animate-spin")} />
-            <span>Refresh</span>
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
           </Button>
           <Button
-            size="sm"
             onClick={() => {
               setComposeTo("")
               setComposeSubject("")
               setComposeBody("")
               setIsComposeOpen(true)
             }}
-            className="gap-1.5 rounded-lg cursor-pointer shadow-sm"
+            size="sm"
+            className="rounded-lg cursor-pointer flex items-center gap-1.5 shadow-sm"
           >
-            <Plus className="size-4" />
-            <span>Compose</span>
+            <Plus className="h-4 w-4" />
+            Compose
           </Button>
         </div>
-      </div>
 
-      <Tabs
-        value={folder}
-        onValueChange={(val) => setFolder(val as Folder)}
-        className="w-full flex flex-col gap-4"
-      >
-        <div className="flex items-center justify-between gap-3 px-1">
-          {/* Mobile view selector */}
-          <Select value={folder} onValueChange={(val) => setFolder(val as Folder)}>
-            <SelectTrigger className="flex w-full sm:w-48 lg:hidden" size="sm">
-              <SelectValue placeholder="Select folder" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="inbox">Inbox</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="starred">Starred</SelectItem>
-              <SelectItem value="trash">Trash</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Desktop TabsList */}
-          <TabsList className="hidden lg:flex **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1">
-            <TabsTrigger value="inbox" className="gap-2 cursor-pointer">
-              Inbox
-              {unreadCount > 0 && (
-                <Badge variant="secondary" className="bg-rose-500 text-white font-bold text-[10px]">
-                  {unreadCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="sent" className="cursor-pointer">
-              Sent
-            </TabsTrigger>
-            <TabsTrigger value="starred" className="gap-2 cursor-pointer">
-              Starred
-              {starredCount > 0 && (
-                <Badge variant="secondary" className="text-amber-600 bg-amber-100 dark:bg-amber-950 font-bold text-[10px]">
-                  {starredCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="trash" className="cursor-pointer">
-              Trash
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Actions: Search Filter & Customize Columns */}
-          <div className="flex items-center gap-2">
-            <div className="relative w-40 sm:w-56">
-              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Filter emails..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-xs rounded-lg bg-muted/30"
-              />
+        {/* Split View Container: Table Left, Selected Email Detail Right */}
+        <div className="flex-1 flex gap-4 min-h-0 min-w-0">
+          {/* Email Table Card */}
+          <Card className={cn("border-border shadow-sm flex flex-col min-h-0 transition-all duration-200", selectedEmail ? "w-full lg:w-5/12 shrink-0" : "w-full")}>
+            {/* Table header bar */}
+            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border shrink-0">
+              <div className="flex items-center gap-2">
+                <activeFolderMeta.icon className="opacity-80 text-muted-foreground" size={20} />
+                <span className="text-sm font-semibold text-foreground capitalize">{activeFolderMeta.label}</span>
+                <Badge variant="outline" className="text-[10px] h-4 px-1.5">{filteredEmails.length}</Badge>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative w-40 sm:w-52">
+                  <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Filter emails..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 h-7 text-xs rounded-lg bg-muted/40 border-border"
+                  />
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-7 text-xs rounded-lg gap-1 px-2.5">
+                      <SlidersHorizontal className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Customize Columns</span>
+                      <span className="sm:hidden">Columns</span>
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuGroup>
+                      {table
+                        .getAllColumns()
+                        .filter(
+                          (column) =>
+                            typeof column.accessorFn !== "undefined" &&
+                            column.getCanHide()
+                        )
+                        .map((column) => {
+                          return (
+                            <DropdownMenuCheckboxItem
+                              key={column.id}
+                              className="capitalize text-xs"
+                              checked={column.getIsVisible()}
+                              onCheckedChange={(value) =>
+                                column.toggleVisibility(!!value)
+                              }
+                            >
+                              {column.id}
+                            </DropdownMenuCheckboxItem>
+                          )
+                        })}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs rounded-lg">
-                  <Columns3 className="size-3.5" />
-                  <span className="hidden lg:inline">Customize Columns</span>
-                  <span className="lg:hidden">Columns</span>
-                  <ChevronDown className="size-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuGroup>
-                  {table
-                    .getAllColumns()
-                    .filter(
-                      (column) =>
-                        typeof column.accessorFn !== "undefined" &&
-                        column.getCanHide()
-                    )
-                    .map((column) => {
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          className="capitalize text-xs"
-                          checked={column.getIsVisible()}
-                          onCheckedChange={(value) =>
-                            column.toggleVisibility(!!value)
-                          }
+            <CardContent className="p-0 flex-1 overflow-auto min-h-0">
+              {loading ? (
+                <div className="h-full min-h-[200px] flex flex-col items-center justify-center gap-2">
+                  <Spinner size="md" />
+                  <span className="text-xs text-muted-foreground font-medium">Fetching emails...</span>
+                </div>
+              ) : (
+                <DndContext
+                  collisionDetection={closestCenter}
+                  modifiers={[restrictToVerticalAxis]}
+                  onDragEnd={handleDragEnd}
+                  sensors={sensors}
+                  id={sortableId}
+                >
+                  <Table>
+                    <TableHeader className="bg-muted/50 sticky top-0 z-10 border-b border-border">
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                          {headerGroup.headers.map((header) => (
+                            <TableHead key={header.id} className="text-xs font-semibold h-9 py-1 text-foreground">
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(header.column.columnDef.header, header.getContext())}
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableHeader>
+                    <TableBody>
+                      {table.getRowModel().rows.length > 0 ? (
+                        <SortableContext
+                          items={dataIds}
+                          strategy={verticalListSortingStrategy}
                         >
-                          {column.id}
-                        </DropdownMenuCheckboxItem>
-                      )
-                    })}
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                          {table.getRowModel().rows.map((row) => (
+                            <DraggableRow
+                              key={row.id}
+                              row={row}
+                              isSelected={selectedEmail?.id === row.original.id}
+                              onSelectRow={handleMarkRead}
+                            />
+                          ))}
+                        </SortableContext>
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={columns.length} className="h-40 text-center text-xs text-muted-foreground">
+                            No emails found in {folder}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </DndContext>
+              )}
+            </CardContent>
+
+            {/* Pagination Footer Bar */}
+            <div className="flex items-center justify-between px-4 py-2.5 border-t border-border bg-muted/10 shrink-0 text-xs text-muted-foreground">
+              <div className="hidden sm:block">
+                {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                {table.getFilteredRowModel().rows.length} row(s) selected.
+              </div>
+              <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-4">
+                <div className="hidden lg:flex items-center gap-2">
+                  <Label htmlFor="rows-per-page" className="text-xs text-muted-foreground">
+                    Rows per page
+                  </Label>
+                  <Select
+                    value={`${table.getState().pagination.pageSize}`}
+                    onValueChange={(value) => table.setPageSize(Number(value))}
+                  >
+                    <SelectTrigger size="sm" className="w-16 h-7 text-xs" id="rows-per-page">
+                      <SelectValue placeholder={table.getState().pagination.pageSize} />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      {[10, 20, 30, 40, 50].map((pageSize) => (
+                        <SelectItem key={pageSize} value={`${pageSize}`} className="text-xs">
+                          {pageSize}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-xs font-medium">
+                  Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hidden h-7 w-7 p-0 lg:flex"
+                    onClick={() => table.setPageIndex(0)}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    <ChevronsLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hidden h-7 w-7 p-0 lg:flex"
+                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    <ChevronsRight className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Right Side Email Detail Pane */}
+          {selectedEmail && (
+            <Card className="border-border shadow-sm flex-1 flex flex-col min-h-0 bg-card overflow-hidden transition-all duration-200">
+              {/* Detail Header */}
+              <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border shrink-0 bg-muted/10">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-base font-bold text-foreground leading-snug truncate">
+                    {selectedEmail.subject || "(no subject)"}
+                  </h2>
+                  <div className="flex items-center gap-2.5 mt-2">
+                    <Avatar className="h-7 w-7 rounded-lg shrink-0">
+                      <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-bold text-[10px]">
+                        {getInitials(selectedEmail.fromAddress)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-semibold text-foreground truncate">{selectedEmail.fromAddress}</span>
+                      <span className="text-[11px] text-muted-foreground truncate">
+                        To: {selectedEmail.toAddress}
+                        {selectedEmail.ccAddress ? ` · CC: ${selectedEmail.ccAddress}` : ""}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[10px] text-muted-foreground">
+                    {format(new Date(selectedEmail.createdAt), "MMM d, h:mm a")}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 rounded-lg cursor-pointer text-muted-foreground hover:text-foreground"
+                    onClick={() => setSelectedEmail(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Toolbar */}
+              <div className="flex items-center gap-1 px-5 py-2 border-b border-border bg-muted/20 shrink-0">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost" size="sm"
+                      className="h-7 px-2.5 text-xs cursor-pointer flex items-center gap-1.5"
+                      onClick={() => handleReply(selectedEmail)}
+                    >
+                      <Reply className="h-3.5 w-3.5" /> Reply
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Reply</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost" size="sm"
+                      className={cn(
+                        "h-7 px-2.5 text-xs cursor-pointer flex items-center gap-1.5",
+                        selectedEmail.isStarred ? "text-amber-500" : "text-muted-foreground"
+                      )}
+                      onClick={(e) => handleToggleStar(selectedEmail.id, selectedEmail.isStarred, e)}
+                    >
+                      <Star className="h-3.5 w-3.5" fill={selectedEmail.isStarred ? "currentColor" : "none"} />
+                      {selectedEmail.isStarred ? "Unstar" : "Star"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{selectedEmail.isStarred ? "Unstar" : "Star"}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost" size="sm"
+                      className="h-7 px-2.5 text-xs cursor-pointer flex items-center gap-1.5 text-destructive hover:bg-destructive/10"
+                      onClick={() => handleDelete(selectedEmail.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {folder === "trash" ? "Delete" : "Trash"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{folder === "trash" ? "Permanently delete" : "Move to trash"}</TooltipContent>
+                </Tooltip>
+              </div>
+
+              {/* Email Body */}
+              <div className="flex-1 overflow-y-auto px-6 py-5">
+                {selectedEmail.bodyHtml ? (
+                  <div
+                    className="prose prose-sm dark:prose-invert max-w-none text-foreground/90 leading-relaxed overflow-auto"
+                    style={{ wordBreak: "break-word" }}
+                    dangerouslySetInnerHTML={{ __html: selectedEmail.bodyHtml }}
+                  />
+                ) : selectedEmail.bodyText ? (
+                  <pre className="whitespace-pre-wrap font-sans text-sm text-foreground/90 leading-relaxed break-words">
+                    {selectedEmail.bodyText}
+                  </pre>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic">No content in this email.</p>
+                )}
+              </div>
+            </Card>
+          )}
         </div>
 
-        <TabsContent
-          value={folder}
-          className="relative flex flex-col gap-4 overflow-auto mt-0"
-        >
-          <div className="overflow-hidden rounded-xl border border-border shadow-sm bg-card">
-            <DndContext
-              collisionDetection={closestCenter}
-              modifiers={[restrictToVerticalAxis]}
-              onDragEnd={handleDragEnd}
-              sensors={sensors}
-              id={sortableId}
-            >
-              <Table>
-                <TableHeader className="sticky top-0 z-10 bg-muted/60 backdrop-blur-sm">
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => {
-                        return (
-                          <TableHead key={header.id} colSpan={header.colSpan} className="text-xs font-semibold">
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                          </TableHead>
-                        )
-                      })}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody className="**:data-[slot=table-cell]:first:w-8">
-                  {loading ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-32 text-center"
-                      >
-                        <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                          <Spinner size="md" />
-                          <span className="text-xs">Loading emails...</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : table.getRowModel().rows?.length ? (
-                    <SortableContext
-                      items={dataIds}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      {table.getRowModel().rows.map((row) => (
-                        <DraggableRow
-                          key={row.id}
-                          row={row}
-                          onSelectRow={handleMarkRead}
-                        />
-                      ))}
-                    </SortableContext>
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-32 text-center text-xs text-muted-foreground"
-                      >
-                        No emails found in {folder}.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </DndContext>
-          </div>
+        {/* Compose Dialog */}
+        <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
+          <DialogContent className="sm:max-w-xl">
+            <form onSubmit={handleSendEmail} className="flex flex-col gap-4">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-base font-bold">
+                  <Send className="h-4 w-4 text-primary" /> New Message
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  Sending from <span className="font-semibold text-foreground">{address}</span>
+                </DialogDescription>
+              </DialogHeader>
 
-          {/* Table Footer with Pagination Controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between px-2 gap-4">
-            <div className="hidden sm:flex flex-1 text-xs text-muted-foreground">
-              {table.getFilteredSelectedRowModel().rows.length} of{" "}
-              {table.getFilteredRowModel().rows.length} row(s) selected.
-            </div>
-            <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-6">
-              <div className="hidden items-center gap-2 lg:flex">
-                <Label htmlFor="rows-per-page" className="text-xs font-medium text-muted-foreground">
-                  Rows per page
-                </Label>
-                <Select
-                  value={`${table.getState().pagination.pageSize}`}
-                  onValueChange={(value) => {
-                    table.setPageSize(Number(value))
-                  }}
-                >
-                  <SelectTrigger size="sm" className="w-20 h-8 text-xs" id="rows-per-page">
-                    <SelectValue
-                      placeholder={table.getState().pagination.pageSize}
-                    />
-                  </SelectTrigger>
-                  <SelectContent side="top">
-                    {[10, 20, 30, 40, 50].map((pageSize) => (
-                      <SelectItem key={pageSize} value={`${pageSize}`} className="text-xs">
-                        {pageSize}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-foreground">Recipient (To)</Label>
+                  <Input
+                    type="email"
+                    placeholder="e.g. principal@blazeneuro.com"
+                    value={composeTo}
+                    onChange={(e) => setComposeTo(e.target.value)}
+                    className="h-9 text-xs rounded-lg"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-foreground">Subject</Label>
+                  <Input
+                    placeholder="Enter email subject..."
+                    value={composeSubject}
+                    onChange={(e) => setComposeSubject(e.target.value)}
+                    className="h-9 text-xs rounded-lg"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-foreground">Message Body</Label>
+                  <Textarea
+                    rows={6}
+                    placeholder="Write your email here..."
+                    value={composeBody}
+                    onChange={(e) => setComposeBody(e.target.value)}
+                    className="text-xs rounded-lg resize-none"
+                    required
+                  />
+                </div>
               </div>
-              <div className="flex w-fit items-center justify-center text-xs font-medium text-muted-foreground">
-                Page {table.getState().pagination.pageIndex + 1} of{" "}
-                {table.getPageCount() || 1}
-              </div>
-              <div className="flex items-center gap-1.5">
+
+              <DialogFooter className="flex justify-end gap-2 pt-2">
                 <Button
+                  type="button"
                   variant="outline"
-                  className="hidden h-8 w-8 p-0 lg:flex"
-                  onClick={() => table.setPageIndex(0)}
-                  disabled={!table.getCanPreviousPage()}
+                  size="sm"
+                  onClick={() => setIsComposeOpen(false)}
+                  className="rounded-lg cursor-pointer"
                 >
-                  <span className="sr-only">Go to first page</span>
-                  <ChevronsLeft className="size-4" />
+                  Cancel
                 </Button>
                 <Button
-                  variant="outline"
-                  className="size-8 p-0"
-                  size="icon"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
+                  type="submit"
+                  size="sm"
+                  disabled={sending}
+                  className="rounded-lg cursor-pointer flex items-center gap-1.5"
                 >
-                  <span className="sr-only">Go to previous page</span>
-                  <ChevronLeft className="size-4" />
+                  {sending ? <Spinner size="sm" /> : <Send className="h-3.5 w-3.5" />}
+                  {sending ? "Sending..." : "Send Email"}
                 </Button>
-                <Button
-                  variant="outline"
-                  className="size-8 p-0"
-                  size="icon"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
-                  <span className="sr-only">Go to next page</span>
-                  <ChevronRight className="size-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="hidden size-8 p-0 lg:flex"
-                  size="icon"
-                  onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                  disabled={!table.getCanNextPage()}
-                >
-                  <span className="sr-only">Go to last page</span>
-                  <ChevronsRight className="size-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      {/* Compose Email Dialog */}
-      <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <form onSubmit={handleSendEmail} className="flex flex-col gap-4">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-base font-bold">
-                <Send className="size-4 text-primary" /> New Message
-              </DialogTitle>
-              <DialogDescription className="text-xs">
-                Sending from <span className="font-semibold text-foreground font-mono">{address}</span>
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-foreground">Recipient (To)</Label>
-                <Input
-                  type="email"
-                  placeholder="e.g. principal@blazeneuro.com"
-                  value={composeTo}
-                  onChange={(e) => setComposeTo(e.target.value)}
-                  className="h-9 text-xs rounded-lg"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-foreground">Subject</Label>
-                <Input
-                  placeholder="Enter email subject..."
-                  value={composeSubject}
-                  onChange={(e) => setComposeSubject(e.target.value)}
-                  className="h-9 text-xs rounded-lg"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold text-foreground">Message Body</Label>
-                <Textarea
-                  rows={6}
-                  placeholder="Write your email here..."
-                  value={composeBody}
-                  onChange={(e) => setComposeBody(e.target.value)}
-                  className="text-xs rounded-lg resize-none"
-                  required
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsComposeOpen(false)}
-                className="rounded-lg cursor-pointer"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={sending}
-                className="rounded-lg cursor-pointer flex items-center gap-1.5"
-              >
-                {sending ? <Spinner size="sm" /> : <Send className="size-3.5" />}
-                {sending ? "Sending..." : "Send Email"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   )
 }
