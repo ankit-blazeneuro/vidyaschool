@@ -113,7 +113,7 @@ export interface Email {
 type Folder = "inbox" | "sent" | "starred" | "trash"
 
 // Custom folder SVG icon
-function FolderSVG({ size = 36, className = "" }: { size?: number; className?: string }) {
+function FolderSVG({ size = 32, className = "" }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="8 33 93 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
       <path opacity="0.5" d="M10 54.315C10 51.0479 10 49.4162 10.3115 48.0546C10.9755 45.131 12.684 42.4417 15.2138 40.3375C17.7437 38.2334 20.9776 36.812 24.4936 36.259C26.1357 36 28.1026 36 32.0275 36C33.7452 36 34.6085 36 35.4362 36.0629C39.0009 36.3413 42.3817 37.5069 45.1372 39.4077C45.778 39.848 46.3832 40.3512 47.6025 41.365L50.05 43.4C53.6812 46.4192 55.4968 47.9288 57.6684 48.9315C58.862 49.4846 60.1282 49.9216 61.442 50.2339C63.8361 50.8 66.4037 50.8 71.5346 50.8H73.1989C84.9113 50.8 90.7719 50.8 94.5767 53.649C94.9297 53.908 95.262 54.1843 95.5735 54.4778C99 57.6413 99 62.5142 99 72.2526V80.4C99 94.3527 99 101.331 93.7846 105.664C88.5692 109.996 80.1809 110 63.4 110H45.6C28.819 110 20.4263 110 15.2154 105.664C10.0044 101.327 10 94.3527 10 80.4V54.315Z" fill="currentColor" />
@@ -124,7 +124,7 @@ function FolderSVG({ size = 36, className = "" }: { size?: number; className?: s
 }
 
 // Sent folder SVG icon
-function SentSVG({ size = 36, className = "" }: { size?: number; className?: string }) {
+function SentSVG({ size = 32, className = "" }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="8 33 93 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
       <path opacity="0.5" d="M10 54.315C10 51.0479 10 49.4162 10.3115 48.0546C10.9755 45.131 12.684 42.4417 15.2138 40.3375C17.7437 38.2334 20.9776 36.812 24.4936 36.259C26.1357 36 28.1026 36 32.0275 36C33.7452 36 34.6085 36 35.4362 36.0629C39.0009 36.3413 42.3817 37.5069 45.1372 39.4077C45.778 39.848 46.3832 40.3512 47.6025 41.365L50.05 43.4C53.6812 46.4192 55.4968 47.9288 57.6684 48.9315C58.862 49.4846 60.1282 49.9216 61.442 50.2339C63.8361 50.8 66.4037 50.8 71.5346 50.8H73.1989C84.9113 50.8 90.7719 50.8 94.5767 53.649C94.9297 53.908 95.262 54.1843 95.5735 54.4778C99 57.6413 99 62.5142 99 72.2526V80.4C99 94.3527 99 101.331 93.7846 105.664C88.5692 109.996 80.1809 110 63.4 110H45.6C28.819 110 20.4263 110 15.2154 105.664C10.0044 101.327 10 94.3527 10 80.4V54.315Z" fill="currentColor" />
@@ -136,7 +136,7 @@ function SentSVG({ size = 36, className = "" }: { size?: number; className?: str
 }
 
 // Starred folder SVG icon
-function StarredSVG({ size = 36, className = "" }: { size?: number; className?: string }) {
+function StarredSVG({ size = 32, className = "" }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="8 33 93 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
       <path opacity="0.5" d="M10 54.315C10 51.0479 10 49.4162 10.3115 48.0546C10.9755 45.131 12.684 42.4417 15.2138 40.3375C17.7437 38.2334 20.9776 36.812 24.4936 36.259C26.1357 36 28.1026 36 32.0275 36C33.7452 36 34.6085 36 35.4362 36.0629C39.0009 36.3413 42.3817 37.5069 45.1372 39.4077C45.778 39.848 46.3832 40.3512 47.6025 41.365L50.05 43.4C53.6812 46.4192 55.4968 47.9288 57.6684 48.9315C58.862 49.4846 60.1282 49.9216 61.442 50.2339C63.8361 50.8 66.4037 50.8 71.5346 50.8H73.1989C84.9113 50.8 90.7719 50.8 94.5767 53.649C94.9297 53.908 95.262 54.1843 95.5735 54.4778C99 57.6413 99 62.5142 99 72.2526V80.4C99 94.3527 99 101.331 93.7846 105.664C88.5692 109.996 80.1809 110 63.4 110H45.6C28.819 110 20.4263 110 15.2154 105.664C10.0044 101.327 10 94.3527 10 80.4V54.315Z" fill="currentColor" />
@@ -147,7 +147,7 @@ function StarredSVG({ size = 36, className = "" }: { size?: number; className?: 
 }
 
 // Trash folder SVG icon
-function TrashSVG({ size = 36, className = "" }: { size?: number; className?: string }) {
+function TrashSVG({ size = 32, className = "" }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox="8 33 93 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
       <path opacity="0.5" d="M10 54.315C10 51.0479 10 49.4162 10.3115 48.0546C10.9755 45.131 12.684 42.4417 15.2138 40.3375C17.7437 38.2334 20.9776 36.812 24.4936 36.259C26.1357 36 28.1026 36 32.0275 36C33.7452 36 34.6085 36 35.4362 36.0629C39.0009 36.3413 42.3817 37.5069 45.1372 39.4077C45.778 39.848 46.3832 40.3512 47.6025 41.365L50.05 43.4C53.6812 46.4192 55.4968 47.9288 57.6684 48.9315C58.862 49.4846 60.1282 49.9216 61.442 50.2339C63.8361 50.8 66.4037 50.8 71.5346 50.8H73.1989C84.9113 50.8 90.7719 50.8 94.5767 53.649C94.9297 53.908 95.262 54.1843 95.5735 54.4778C99 57.6413 99 62.5142 99 72.2526V80.4C99 94.3527 99 101.331 93.7846 105.664C88.5692 109.996 80.1809 110 63.4 110H45.6C28.819 110 20.4263 110 15.2154 105.664C10.0044 101.327 10 94.3527 10 80.4V54.315Z" fill="currentColor" />
@@ -248,7 +248,7 @@ function TableCellViewer({
           </span>
         </Button>
       </DrawerTrigger>
-      <DrawerContent className={cn(isMobile ? "max-h-[85vh]" : "sm:max-w-xl sm:h-full")}>
+      <DrawerContent className={cn(isMobile ? "max-h-[85vh] rounded-t-2xl" : "sm:max-w-xl sm:h-full")}>
         <DrawerHeader className="gap-1 border-b pb-4">
           <div className="flex items-center gap-2 mb-1">
             <Badge variant="outline" className="capitalize text-[10px]">
@@ -269,7 +269,7 @@ function TableCellViewer({
               </Badge>
             )}
           </div>
-          <DrawerTitle className="text-lg font-bold leading-tight">
+          <DrawerTitle className="text-base sm:text-lg font-bold leading-tight">
             {item.subject || "(no subject)"}
           </DrawerTitle>
           <DrawerDescription className="text-xs text-muted-foreground">
@@ -280,7 +280,7 @@ function TableCellViewer({
         <div className="flex flex-col gap-4 overflow-y-auto p-4 text-sm flex-1">
           <div className="rounded-lg border p-3 bg-muted/20 space-y-2">
             <div className="flex items-center gap-3">
-              <Avatar className="h-9 w-9 rounded-lg">
+              <Avatar className="h-9 w-9 rounded-lg shrink-0">
                 <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-bold text-xs">
                   {getInitials(getSenderDisplay(item.fromAddress))}
                 </AvatarFallback>
@@ -305,7 +305,7 @@ function TableCellViewer({
             <div className="rounded-lg border p-4 bg-card min-h-[180px] overflow-auto">
               {item.bodyHtml ? (
                 <div
-                  className="prose prose-sm dark:prose-invert max-w-none text-foreground leading-relaxed"
+                  className="prose prose-sm dark:prose-invert max-w-none text-foreground leading-relaxed overflow-auto"
                   dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                 />
               ) : item.bodyText ? (
@@ -319,14 +319,14 @@ function TableCellViewer({
           </div>
         </div>
 
-        <DrawerFooter className="border-t flex-row items-center justify-between gap-2">
+        <DrawerFooter className="border-t flex-row items-center justify-between gap-2 p-4">
           <div className="flex items-center gap-2">
             {onReply && (
               <DrawerClose asChild>
                 <Button
                   size="sm"
                   onClick={() => onReply(item)}
-                  className="gap-1.5 cursor-pointer"
+                  className="gap-1.5 cursor-pointer text-xs"
                 >
                   <Reply className="size-3.5" />
                   Reply
@@ -338,7 +338,7 @@ function TableCellViewer({
                 variant="outline"
                 size="sm"
                 onClick={(e) => onToggleStar(item.id, item.isStarred, e)}
-                className={cn("gap-1.5 cursor-pointer", item.isStarred && "text-amber-500 border-amber-300")}
+                className={cn("gap-1.5 cursor-pointer text-xs", item.isStarred && "text-amber-500 border-amber-300")}
               >
                 <Star className="size-3.5" fill={item.isStarred ? "currentColor" : "none"} />
                 {item.isStarred ? "Starred" : "Star"}
@@ -350,7 +350,7 @@ function TableCellViewer({
                   variant="outline"
                   size="sm"
                   onClick={() => onDelete(item.id)}
-                  className="gap-1.5 text-destructive hover:bg-destructive/10 cursor-pointer"
+                  className="gap-1.5 text-destructive hover:bg-destructive/10 cursor-pointer text-xs"
                 >
                   <Trash2 className="size-3.5" />
                   Delete
@@ -359,7 +359,7 @@ function TableCellViewer({
             )}
           </div>
           <DrawerClose asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="text-xs">
               Close
             </Button>
           </DrawerClose>
@@ -370,11 +370,13 @@ function TableCellViewer({
 }
 
 export default function TeacherEmailClient() {
+  const isMobile = useIsMobile()
   const [folder, setFolder] = React.useState<Folder>("inbox")
   const [emails, setEmails] = React.useState<Email[]>([])
   const [address, setAddress] = React.useState<string>("")
   const [loading, setLoading] = React.useState(true)
   const [selectedEmail, setSelectedEmail] = React.useState<Email | null>(null)
+  const [mobileDrawerEmail, setMobileDrawerEmail] = React.useState<Email | null>(null)
   const [searchQuery, setSearchQuery] = React.useState("")
 
   // Compose Modal State
@@ -423,6 +425,7 @@ export default function TeacherEmailClient() {
   React.useEffect(() => {
     fetchEmails(folder)
     setSelectedEmail(null)
+    setMobileDrawerEmail(null)
   }, [folder, fetchEmails])
 
   // Context Menu Event Listeners for Dismissal
@@ -503,23 +506,30 @@ export default function TeacherEmailClient() {
     runAiQuery(p)
   }
 
-  const handleMarkRead = React.useCallback(async (email: Email) => {
-    if (!email.isRead) {
-      try {
-        await fetch("/api/backend/api/teacher/email", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: email.id, isRead: true }),
-        })
-        setEmails((prev) =>
-          prev.map((e) => (e.id === email.id ? { ...e, isRead: true } : e))
-        )
-      } catch (e) {
-        console.error("Failed to mark read", e)
+  const handleMarkRead = React.useCallback(
+    async (email: Email) => {
+      if (!email.isRead) {
+        try {
+          await fetch("/api/backend/api/teacher/email", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: email.id, isRead: true }),
+          })
+          setEmails((prev) =>
+            prev.map((e) => (e.id === email.id ? { ...e, isRead: true } : e))
+          )
+        } catch (e) {
+          console.error("Failed to mark read", e)
+        }
       }
-    }
-    setSelectedEmail(email)
-  }, [])
+      if (isMobile) {
+        setMobileDrawerEmail(email)
+      } else {
+        setSelectedEmail(email)
+      }
+    },
+    [isMobile]
+  )
 
   const handleToggleStar = React.useCallback(
     async (id: string, currentStarred: boolean, e?: React.MouseEvent) => {
@@ -535,6 +545,7 @@ export default function TeacherEmailClient() {
           prev.map((item) => (item.id === id ? { ...item, isStarred: nextVal } : item))
         )
         setSelectedEmail((prev) => (prev?.id === id ? { ...prev, isStarred: nextVal } : prev))
+        setMobileDrawerEmail((prev) => (prev?.id === id ? { ...prev, isStarred: nextVal } : prev))
         toast.success(nextVal ? "Starred" : "Unstarred")
       } catch (err) {
         toast.error("Failed to update star")
@@ -554,12 +565,13 @@ export default function TeacherEmailClient() {
         if (!res.ok) throw new Error("Delete failed")
         setEmails((prev) => prev.filter((e) => e.id !== id))
         if (selectedEmail?.id === id) setSelectedEmail(null)
+        if (mobileDrawerEmail?.id === id) setMobileDrawerEmail(null)
         toast.success(folder === "trash" ? "Permanently deleted" : "Moved to Trash")
       } catch (err) {
         toast.error("Failed to delete email")
       }
     },
-    [folder, selectedEmail]
+    [folder, selectedEmail, mobileDrawerEmail]
   )
 
   const handleSendEmail = async (e: React.FormEvent) => {
@@ -669,7 +681,7 @@ export default function TeacherEmailClient() {
               </Avatar>
               <div className="flex flex-col min-w-0">
                 <span className={cn(
-                  "text-xs truncate max-w-[120px]",
+                  "text-xs truncate max-w-[100px] sm:max-w-[120px]",
                   !email.isRead ? "font-bold text-foreground" : "text-foreground/75"
                 )}>
                   {senderDisplay}
@@ -798,10 +810,10 @@ export default function TeacherEmailClient() {
     <TooltipProvider>
       <div
         onContextMenu={handleContextMenu}
-        className="flex flex-col gap-4 pt-4 pb-0 px-6 lg:px-8 flex-1 min-h-[calc(100vh-4rem)] bg-background font-sans relative"
+        className="flex flex-col gap-3 sm:gap-4 pt-3 sm:pt-4 pb-0 px-3 sm:px-6 lg:px-8 flex-1 min-h-[calc(100vh-4rem)] bg-background font-sans relative"
       >
-        {/* Folder Cards — 4 horizontal cards */}
-        <div className="flex flex-wrap gap-6 mb-4 shrink-0 pt-2">
+        {/* Folder Cards — Responsive Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-2 sm:mb-4 shrink-0 pt-1">
           {FOLDER_META.map((f) => {
             const isActive = folder === f.id
             const count = f.id === "inbox" ? unreadCount : 0
@@ -810,7 +822,7 @@ export default function TeacherEmailClient() {
                 key={f.id}
                 onClick={() => setFolder(f.id)}
                 className={cn(
-                  "relative flex flex-row items-center gap-4 rounded-xl px-9 py-5 text-left transition-all duration-150 cursor-pointer min-w-[220px]",
+                  "relative flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-start gap-2 sm:gap-4 rounded-xl p-3.5 sm:px-6 sm:py-4 text-center sm:text-left transition-all duration-150 cursor-pointer w-full",
                   isActive
                     ? "bg-primary/5 shadow-sm ring-1 ring-primary/20"
                     : "bg-card hover:bg-muted/40"
@@ -818,11 +830,11 @@ export default function TeacherEmailClient() {
               >
                 <f.icon
                   className={cn("shrink-0", isActive ? "text-primary" : "text-muted-foreground")}
-                  size={60}
+                  size={isMobile ? 32 : 44}
                 />
-                <div className="flex-1 flex items-center">
+                <div className="flex-1 flex items-center justify-center sm:justify-start">
                   <span className={cn(
-                    "text-sm font-semibold leading-none",
+                    "text-xs sm:text-sm font-semibold leading-none",
                     isActive ? "text-primary" : "text-foreground"
                   )}>
                     {f.label}
@@ -839,45 +851,47 @@ export default function TeacherEmailClient() {
         </div>
 
         {/* Action buttons row */}
-        <div className="flex items-center gap-2 mb-3 shrink-0">
-          <Button
-            onClick={() => fetchEmails(folder)}
-            variant="outline"
-            size="sm"
-            className="rounded-lg cursor-pointer flex items-center gap-1.5"
-            disabled={loading}
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-          <Button
-            onClick={() => {
-              setComposeTo("")
-              setComposeSubject("")
-              setComposeBody("")
-              setIsComposeOpen(true)
-            }}
-            size="sm"
-            className="rounded-lg cursor-pointer flex items-center gap-1.5 shadow-sm"
-          >
-            <Plus className="h-4 w-4" />
-            Compose
-          </Button>
+        <div className="flex items-center justify-between sm:justify-start gap-2 mb-2 sm:mb-3 shrink-0">
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => fetchEmails(folder)}
+              variant="outline"
+              size="sm"
+              className="rounded-lg cursor-pointer flex items-center gap-1.5 text-xs h-8"
+              disabled={loading}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+            <Button
+              onClick={() => {
+                setComposeTo("")
+                setComposeSubject("")
+                setComposeBody("")
+                setIsComposeOpen(true)
+              }}
+              size="sm"
+              className="rounded-lg cursor-pointer flex items-center gap-1.5 shadow-sm text-xs h-8"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Compose
+            </Button>
+          </div>
         </div>
 
         {/* Split View Container: Table Left, Selected Email Detail Right */}
         <div className="flex-1 flex gap-4 min-h-0 min-w-0">
           {/* Email Table Card */}
-          <Card className={cn("border-border shadow-sm flex flex-col min-h-0 pt-0 transition-all duration-200", selectedEmail ? "w-full lg:w-5/12 shrink-0" : "w-full")}>
+          <Card className={cn("border-border shadow-sm flex flex-col min-h-0 pt-0 transition-all duration-200", selectedEmail && !isMobile ? "w-full lg:w-5/12 shrink-0" : "w-full")}>
             {/* Table header bar */}
-            <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-border shrink-0">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 px-3 sm:px-4 py-2.5 border-b border-border shrink-0">
               <div className="flex items-center gap-2">
-                <activeFolderMeta.icon className="opacity-80 text-muted-foreground" size={20} />
-                <span className="text-sm font-semibold text-foreground capitalize">{activeFolderMeta.label}</span>
+                <activeFolderMeta.icon className="opacity-80 text-muted-foreground" size={18} />
+                <span className="text-xs sm:text-sm font-semibold text-foreground capitalize">{activeFolderMeta.label}</span>
                 <Badge variant="outline" className="text-[10px] h-4 px-1.5">{filteredEmails.length}</Badge>
               </div>
               <div className="flex items-center gap-2">
-                <div className="relative w-40 sm:w-52">
+                <div className="relative flex-1 sm:w-52">
                   <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
                     placeholder="Filter emails..."
@@ -932,7 +946,7 @@ export default function TeacherEmailClient() {
                 </div>
               ) : (
                 <ScrollArea className="w-full h-full" viewportClassName="w-full">
-                  <Table className="w-full min-w-[500px]">
+                  <Table className="w-full min-w-[440px]">
                     <TableBody>
                       {table.getRowModel().rows.length > 0 ? (
                         table.getRowModel().rows.map((row) => (
@@ -958,11 +972,11 @@ export default function TeacherEmailClient() {
             </CardContent>
 
             {/* Pagination Footer Bar */}
-            <div className="flex items-center justify-between px-4 py-2.5 border-t border-border bg-muted/10 shrink-0 text-xs text-muted-foreground">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-t border-border bg-muted/10 shrink-0 text-xs text-muted-foreground">
               <div className="text-xs font-medium">
                 Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <div className="hidden lg:flex items-center gap-2">
                   <Label htmlFor="rows-per-page" className="text-xs text-muted-foreground">
                     Rows per page
@@ -1025,8 +1039,8 @@ export default function TeacherEmailClient() {
             </div>
           </Card>
 
-          {/* Right Side Email Detail Pane */}
-          {selectedEmail && (
+          {/* Right Side Email Detail Pane (Desktop only) */}
+          {selectedEmail && !isMobile && (
             <Card className="border-border shadow-sm flex-1 flex flex-col min-h-0 bg-card overflow-hidden pt-0 transition-all duration-200">
               {/* Detail Header */}
               <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border shrink-0 bg-muted/10">
@@ -1128,6 +1142,133 @@ export default function TeacherEmailClient() {
             </Card>
           )}
         </div>
+
+        {/* Dedicated Mobile Drawer Sheet when row is clicked on Mobile */}
+        <Drawer
+          open={!!mobileDrawerEmail && isMobile}
+          onOpenChange={(open) => {
+            if (!open) setMobileDrawerEmail(null)
+          }}
+          direction="bottom"
+        >
+          <DrawerContent className="max-h-[85vh] rounded-t-2xl">
+            {mobileDrawerEmail && (
+              <>
+                <DrawerHeader className="gap-1 border-b pb-4 text-left">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="capitalize text-[10px]">
+                      {mobileDrawerEmail.folder}
+                    </Badge>
+                    {!mobileDrawerEmail.isRead ? (
+                      <Badge className="bg-rose-500 text-white text-[10px]">
+                        Unread
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Read
+                      </Badge>
+                    )}
+                    {mobileDrawerEmail.isStarred && (
+                      <Badge variant="secondary" className="text-amber-500 border-amber-200 text-[10px] gap-1">
+                        <Star className="size-3 fill-amber-500" /> Starred
+                      </Badge>
+                    )}
+                  </div>
+                  <DrawerTitle className="text-base font-bold leading-snug">
+                    {mobileDrawerEmail.subject || "(no subject)"}
+                  </DrawerTitle>
+                  <DrawerDescription className="text-xs text-muted-foreground">
+                    Received {format(new Date(mobileDrawerEmail.createdAt), "PPP 'at' p")}
+                  </DrawerDescription>
+                </DrawerHeader>
+
+                <div className="flex flex-col gap-4 overflow-y-auto p-4 text-sm flex-1">
+                  <div className="rounded-lg border p-3 bg-muted/20 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8 rounded-lg shrink-0">
+                        <AvatarFallback className="rounded-lg bg-primary/10 text-primary font-bold text-xs">
+                          {getInitials(getSenderDisplay(mobileDrawerEmail.fromAddress))}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-semibold text-xs text-foreground truncate">
+                          {mobileDrawerEmail.fromAddress}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground truncate">
+                          To: {mobileDrawerEmail.toAddress} {mobileDrawerEmail.ccAddress ? `| CC: ${mobileDrawerEmail.ccAddress}` : ""}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Message Content
+                    </Label>
+                    <div className="rounded-lg border p-4 bg-card min-h-[160px] overflow-auto">
+                      {mobileDrawerEmail.bodyHtml ? (
+                        <div
+                          className="prose prose-sm dark:prose-invert max-w-none text-foreground leading-relaxed overflow-auto"
+                          dangerouslySetInnerHTML={{ __html: mobileDrawerEmail.bodyHtml }}
+                        />
+                      ) : mobileDrawerEmail.bodyText ? (
+                        <p className="whitespace-pre-wrap text-sm text-foreground/90 leading-relaxed font-sans">
+                          {mobileDrawerEmail.bodyText}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">No message content.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <DrawerFooter className="border-t flex-row items-center justify-between gap-2 p-4">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        handleReply(mobileDrawerEmail)
+                        setMobileDrawerEmail(null)
+                      }}
+                      className="gap-1.5 cursor-pointer text-xs h-8"
+                    >
+                      <Reply className="size-3.5" />
+                      Reply
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleToggleStar(mobileDrawerEmail.id, mobileDrawerEmail.isStarred, e)}
+                      className={cn("gap-1.5 cursor-pointer text-xs h-8", mobileDrawerEmail.isStarred && "text-amber-500 border-amber-300")}
+                    >
+                      <Star className="size-3.5" fill={mobileDrawerEmail.isStarred ? "currentColor" : "none"} />
+                      {mobileDrawerEmail.isStarred ? "Starred" : "Star"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        handleDelete(mobileDrawerEmail.id)
+                        setMobileDrawerEmail(null)
+                      }}
+                      className="gap-1.5 text-destructive hover:bg-destructive/10 cursor-pointer text-xs h-8"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Delete
+                    </Button>
+                  </div>
+                  <DrawerClose asChild>
+                    <Button variant="outline" size="sm" className="text-xs h-8">
+                      Close
+                    </Button>
+                  </DrawerClose>
+                </DrawerFooter>
+              </>
+            )}
+          </DrawerContent>
+        </Drawer>
 
         {/* Compose Dialog */}
         <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
