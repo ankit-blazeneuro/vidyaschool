@@ -2,32 +2,12 @@
 
 import * as React from "react"
 import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type UniqueIdentifier,
-} from "@dnd-kit/core"
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
-import {
   ArrowUpDown,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  GripVertical,
   MoreHorizontal,
   Plus,
   RefreshCw,
@@ -56,7 +36,6 @@ import {
 } from "@tanstack/react-table"
 import { format, formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
-import { z } from "zod"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -64,7 +43,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -108,8 +86,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
@@ -198,26 +174,7 @@ function getSenderDisplay(from: string) {
   return from
 }
 
-// Drag handle for sorting rows in email table
-function DragHandle({ id }: { id: string }) {
-  const { attributes, listeners } = useSortable({ id })
-
-  return (
-    <Button
-      {...attributes}
-      {...listeners}
-      variant="ghost"
-      size="icon"
-      className="size-7 text-muted-foreground hover:bg-transparent cursor-grab active:cursor-grabbing"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <GripVertical className="size-3 text-muted-foreground" />
-      <span className="sr-only">Drag to reorder</span>
-    </Button>
-  )
-}
-
-function DraggableRow({
+function TableRowItem({
   row,
   isSelected,
   onSelectRow,
@@ -226,26 +183,16 @@ function DraggableRow({
   isSelected: boolean
   onSelectRow: (email: Email) => void
 }) {
-  const { transform, transition, setNodeRef, isDragging } = useSortable({
-    id: row.original.id,
-  })
-
   const email = row.original
 
   return (
     <TableRow
       data-state={row.getIsSelected() && "selected"}
-      data-dragging={isDragging}
-      ref={setNodeRef}
       className={cn(
-        "relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80 cursor-pointer transition-colors hover:bg-muted/40",
+        "cursor-pointer transition-colors hover:bg-muted/40",
         !email.isRead && "bg-rose-500/[0.02]",
         isSelected && "bg-primary/5 ring-1 ring-primary/30 border-primary"
       )}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition: transition,
-      }}
       onClick={() => onSelectRow(email)}
     >
       {row.getVisibleCells().map((cell) => (
@@ -589,48 +536,8 @@ export default function TeacherEmailClient() {
     pageSize: 10,
   })
 
-  const sortableId = React.useId()
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
-  )
-
   const columns = React.useMemo<ColumnDef<Email>[]>(
     () => [
-      {
-        id: "drag",
-        header: () => null,
-        cell: ({ row }) => <DragHandle id={row.original.id} />,
-        enableSorting: false,
-        enableHiding: false,
-      },
-      {
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && "indeterminate")
-            }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Select all"
-            className="translate-y-[2px]"
-            onClick={(e) => e.stopPropagation()}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Select row"
-            className="translate-y-[2px]"
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-      },
       {
         id: "star",
         header: "",
@@ -653,17 +560,7 @@ export default function TeacherEmailClient() {
       },
       {
         accessorKey: "fromAddress",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8 -ml-3 text-xs font-semibold hover:bg-transparent"
-          >
-            From
-            <ArrowUpDown className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
-          </Button>
-        ),
+        header: "",
         cell: ({ row }) => {
           const email = row.original
           const senderDisplay = getSenderDisplay(email.fromAddress)
@@ -693,17 +590,7 @@ export default function TeacherEmailClient() {
       },
       {
         accessorKey: "subject",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8 -ml-3 text-xs font-semibold hover:bg-transparent"
-          >
-            Subject
-            <ArrowUpDown className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
-          </Button>
-        ),
+        header: "",
         cell: ({ row }) => {
           const email = row.original
           return (
@@ -720,7 +607,7 @@ export default function TeacherEmailClient() {
       },
       {
         accessorKey: "folder",
-        header: "Folder",
+        header: "",
         cell: ({ row }) => (
           <Badge variant="outline" className="px-1.5 text-muted-foreground text-[10px] capitalize">
             {row.original.folder}
@@ -729,19 +616,7 @@ export default function TeacherEmailClient() {
       },
       {
         accessorKey: "createdAt",
-        header: ({ column }) => (
-          <div className="text-right">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="h-8 -mr-3 text-xs font-semibold hover:bg-transparent"
-            >
-              Date
-              <ArrowUpDown className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
-            </Button>
-          </div>
-        ),
+        header: "",
         cell: ({ row }) => {
           const email = row.original
           return (
@@ -798,11 +673,6 @@ export default function TeacherEmailClient() {
     [selectedEmail, handleToggleStar, handleMarkRead, handleReply, handleDelete, folder]
   )
 
-  const dataIds = React.useMemo<UniqueIdentifier[]>(
-    () => filteredEmails.map(({ id }) => id),
-    [filteredEmails]
-  )
-
   const table = useReactTable({
     data: filteredEmails,
     columns,
@@ -828,31 +698,11 @@ export default function TeacherEmailClient() {
     getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (active && over && active.id !== over.id) {
-      setEmails((data) => {
-        const oldIndex = dataIds.indexOf(active.id)
-        const newIndex = dataIds.indexOf(over.id)
-        return arrayMove(data, oldIndex, newIndex)
-      })
-    }
-  }
-
   return (
     <TooltipProvider>
-      <div className="flex flex-col gap-4 py-6 px-6 lg:px-8 flex-1 min-h-[calc(100vh-4rem)] bg-background font-sans">
-        {/* Address pill — top, minimal */}
-        {address && (
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="font-mono text-[11px] text-muted-foreground bg-muted px-2.5 py-1 rounded-md border border-border">
-              {address}
-            </span>
-          </div>
-        )}
-
+      <div className="flex flex-col gap-4 pt-0 pb-6 px-6 lg:px-8 flex-1 min-h-[calc(100vh-4rem)] bg-background font-sans">
         {/* Folder Cards — 4 horizontal cards */}
-        <div className="flex flex-wrap gap-6 mb-4 shrink-0">
+        <div className="flex flex-wrap gap-6 mb-4 shrink-0 pt-0">
           {FOLDER_META.map((f) => {
             const isActive = folder === f.id
             const count = f.id === "inbox" ? unreadCount : 0
@@ -919,9 +769,9 @@ export default function TeacherEmailClient() {
         {/* Split View Container: Table Left, Selected Email Detail Right */}
         <div className="flex-1 flex gap-4 min-h-0 min-w-0">
           {/* Email Table Card */}
-          <Card className={cn("border-border shadow-sm flex flex-col min-h-0 transition-all duration-200", selectedEmail ? "w-full lg:w-5/12 shrink-0" : "w-full")}>
+          <Card className={cn("border-border shadow-sm flex flex-col min-h-0 pt-0 transition-all duration-200", selectedEmail ? "w-full lg:w-5/12 shrink-0" : "w-full")}>
             {/* Table header bar */}
-            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border shrink-0">
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-border shrink-0">
               <div className="flex items-center gap-2">
                 <activeFolderMeta.icon className="opacity-80 text-muted-foreground" size={20} />
                 <span className="text-sm font-semibold text-foreground capitalize">{activeFolderMeta.label}</span>
@@ -975,69 +825,42 @@ export default function TeacherEmailClient() {
               </div>
             </div>
 
-            <CardContent className="p-0 flex-1 overflow-auto min-h-0">
+            <CardContent className="p-0 pt-0 flex-1 overflow-auto min-h-0">
               {loading ? (
                 <div className="h-full min-h-[200px] flex flex-col items-center justify-center gap-2">
                   <Spinner size="md" />
                   <span className="text-xs text-muted-foreground font-medium">Fetching emails...</span>
                 </div>
               ) : (
-                <DndContext
-                  collisionDetection={closestCenter}
-                  modifiers={[restrictToVerticalAxis]}
-                  onDragEnd={handleDragEnd}
-                  sensors={sensors}
-                  id={sortableId}
-                >
-                  <Table>
-                    <TableHeader className="bg-muted/50 sticky top-0 z-10 border-b border-border">
-                      {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id} className="hover:bg-transparent">
-                          {headerGroup.headers.map((header) => (
-                            <TableHead key={header.id} className="text-xs font-semibold h-9 py-1 text-foreground">
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(header.column.columnDef.header, header.getContext())}
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableHeader>
-                    <TableBody>
-                      {table.getRowModel().rows.length > 0 ? (
-                        <SortableContext
-                          items={dataIds}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          {table.getRowModel().rows.map((row) => (
-                            <DraggableRow
-                              key={row.id}
-                              row={row}
-                              isSelected={selectedEmail?.id === row.original.id}
-                              onSelectRow={handleMarkRead}
-                            />
-                          ))}
-                        </SortableContext>
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={columns.length} className="h-40 text-center text-xs text-muted-foreground">
-                            No emails found in {folder}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </DndContext>
+                <Table>
+                  <TableBody>
+                    {table.getRowModel().rows.length > 0 ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRowItem
+                          key={row.id}
+                          row={row}
+                          isSelected={selectedEmail?.id === row.original.id}
+                          onSelectRow={handleMarkRead}
+                        />
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className="h-40 text-center text-xs text-muted-foreground">
+                          No emails found in {folder}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
               )}
             </CardContent>
 
             {/* Pagination Footer Bar */}
             <div className="flex items-center justify-between px-4 py-2.5 border-t border-border bg-muted/10 shrink-0 text-xs text-muted-foreground">
-              <div className="hidden sm:block">
-                {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                {table.getFilteredRowModel().rows.length} row(s) selected.
+              <div className="text-xs font-medium">
+                Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
               </div>
-              <div className="flex w-full sm:w-auto items-center justify-between sm:justify-end gap-4">
+              <div className="flex items-center gap-4">
                 <div className="hidden lg:flex items-center gap-2">
                   <Label htmlFor="rows-per-page" className="text-xs text-muted-foreground">
                     Rows per page
@@ -1057,9 +880,6 @@ export default function TeacherEmailClient() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="text-xs font-medium">
-                  Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
@@ -1105,7 +925,7 @@ export default function TeacherEmailClient() {
 
           {/* Right Side Email Detail Pane */}
           {selectedEmail && (
-            <Card className="border-border shadow-sm flex-1 flex flex-col min-h-0 bg-card overflow-hidden transition-all duration-200">
+            <Card className="border-border shadow-sm flex-1 flex flex-col min-h-0 bg-card overflow-hidden pt-0 transition-all duration-200">
               {/* Detail Header */}
               <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border shrink-0 bg-muted/10">
                 <div className="flex-1 min-w-0">
