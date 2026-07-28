@@ -3,13 +3,19 @@ name: Mobile Apps Build & Release
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   # ─────────────────────────────────────────────────────────────
-  # JOB 1 — iOS IPA  (macos — slower, 10× minutes)
+  # JOB 1 — iOS IPA  (macos-14 runner)
   # ─────────────────────────────────────────────────────────────
   build-ios:
     name: 🍎 Build iOS IPA
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[app-build]') ||
+      contains(github.event.head_commit.message, '[ios-build]') ||
+      contains(github.event.head_commit.message, '[app-update]')
     runs-on: macos-14
     concurrency:
       group: build-ios-${{ github.ref }}
@@ -63,7 +69,7 @@ jobs:
               -scheme iosApp \
               -destination "generic/platform=iOS"
           else
-            echo "⚠️  Xcode project not found yet — skipping iOS build"
+            echo "⚠️  Xcode project not found — skipping iOS build"
             exit 1
           fi
 
@@ -100,7 +106,6 @@ jobs:
             exit 1
           fi
           
-          # Create unsigned IPA by zipping Payload containing the .app bundle
           mkdir -p $RUNNER_TEMP/Payload
           cp -R "$RUNNER_TEMP/VidyaSchool.xcarchive/Products/Applications/iosApp.app" $RUNNER_TEMP/Payload/
           
@@ -118,10 +123,15 @@ jobs:
           retention-days: 7
 
   # ─────────────────────────────────────────────────────────────
-  # JOB 2 — Android APK  (ubuntu — fast, cheap)
+  # JOB 2 — Android APK  (ubuntu runner)
   # ─────────────────────────────────────────────────────────────
   build-android:
     name: 🤖 Build Android APK
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[app-build]') ||
+      contains(github.event.head_commit.message, '[android-build]') ||
+      contains(github.event.head_commit.message, '[app-update]')
     runs-on: ubuntu-latest
     concurrency:
       group: build-android-${{ github.ref }}
@@ -129,13 +139,9 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write
-    needs: build-ios            # run after iOS; reuse version from Job 1
-    env:
-      TAG_NAME: ${{ needs.build-ios.outputs.tag_name }}
-      VERSION_NAME: ${{ needs.build-ios.outputs.version_name }}
     outputs:
-      tag_name: ${{ needs.build-ios.outputs.tag_name }}
-      version_name: ${{ needs.build-ios.outputs.version_name }}
+      tag_name: ${{ steps.version.outputs.TAG_NAME }}
+      version_name: ${{ steps.version.outputs.VERSION_NAME }}
 
     steps:
       - name: Checkout code
@@ -147,6 +153,17 @@ jobs:
           distribution: zulu
           java-version: '17'
           cache: gradle
+
+      - name: Extract version name & tag
+        id: version
+        run: |
+          RAW=$(grep 'versionName\s*=' mobile-app/kotlin/app/build.gradle.kts | head -1 | awk -F'"' '{print $2}')
+          VERSION_NAME="${RAW}.${{ github.run_number }}"
+          TAG_NAME="v${VERSION_NAME}"
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME"         >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "TAG_NAME=$TAG_NAME"         >> $GITHUB_OUTPUT
 
       - name: Grant gradlew permission
         run: chmod +x mobile-app/kotlin/gradlew
@@ -175,37 +192,49 @@ jobs:
           retention-days: 7
 
   # ─────────────────────────────────────────────────────────────
-  # JOB 3 — GitHub Release  (attach both APK + IPA)
+  # JOB 3 — GitHub Release  (attach APK and/or IPA)
   # ─────────────────────────────────────────────────────────────
   create-release:
     name: 🚀 Create GitHub Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [ build-android, build-ios ]
+    needs: [ build-ios, build-android ]
+    if: |
+      always() &&
+      !cancelled() &&
+      !failure() &&
+      (needs.build-ios.result == 'success' || needs.build-android.result == 'success')
     permissions:
       contents: write
-    env:
-      TAG_NAME: ${{ needs.build-android.outputs.tag_name }}
-      VERSION_NAME: ${{ needs.build-android.outputs.version_name }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Extract release tag name
+        run: |
+          RAW=$(grep 'versionName\s*=' mobile-app/kotlin/app/build.gradle.kts | head -1 | awk -F'"' '{print $2}')
+          VERSION_NAME="${RAW}.${{ github.run_number }}"
+          TAG_NAME="v${VERSION_NAME}"
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "TAG_NAME=$TAG_NAME"         >> $GITHUB_ENV
+
       - name: Download Android APK
+        if: needs.build-android.result == 'success'
         uses: actions/download-artifact@v4
         with:
           name: android-apk
           path: release-assets/
 
       - name: Download iOS IPA
+        if: needs.build-ios.result == 'success'
         uses: actions/download-artifact@v4
         with:
           name: ios-ipa
           path: release-assets/
 
       - name: List release assets
-        run: ls -lh release-assets/
+        run: ls -lh release-assets/ || true
 
       - name: Create GitHub Release
         env:
@@ -232,17 +261,26 @@ jobs:
           3. Tap the APK to install
 
           ### iOS Install
-          - **TestFlight**: Join the beta program (link in README)
+          - **TestFlight**: Join the beta program
           - **AltStore**: Sideload the IPA using AltStore on your Mac/PC
 
           ---
           *The app will automatically detect this release and prompt users to update.*"
 
-          # Create the release with all assets
-          gh release create "$TAG_NAME" \
-            release-assets/VidyaSchool-$TAG_NAME.apk \
-            $(ls release-assets/*.ipa 2>/dev/null || true) \
-            $(ls release-assets/*.txt 2>/dev/null || true) \
-            --title "VidyaSchool $TAG_NAME" \
-            --notes "$NOTES" \
-            --target main
+          # Collect assets
+          ASSETS=()
+          for f in release-assets/*; do
+            if [ -f "$f" ]; then
+              ASSETS+=("$f")
+            fi
+          done
+
+          if [ ${#ASSETS[@]} -gt 0 ]; then
+            gh release create "$TAG_NAME" "${ASSETS[@]}" \
+              --title "VidyaSchool $TAG_NAME" \
+              --notes "$NOTES" \
+              --target main
+          else
+            echo "⚠️ No release assets found to publish."
+          fi
+
