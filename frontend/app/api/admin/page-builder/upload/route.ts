@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
-import { uploadBufferToS3, isS3Configured } from "@/lib/s3"
+import { uploadBufferToS3, generatePresignedUploadUrl, isS3Configured } from "@/lib/s3"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import crypto from "crypto"
 
 // ── Route Segment Config ──────────────────────────────────────────────────────
-// Increase body size limit beyond the default 1MB so large PDFs and images
-// (up to 25 MB) can be uploaded without triggering a 413 response.
 export const maxDuration = 60 // seconds — allow time for S3 upload on slow connections
 export const dynamic = "force-dynamic"
 
@@ -31,6 +29,53 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const contentType = req.headers.get("content-type") || ""
+
+    // Mode 1: Presigned URL Request (JSON) - Direct S3 client-side upload
+    if (contentType.includes("application/json")) {
+      const body = await req.json()
+      const { action, fileName, fileType } = body
+
+      if (action === "get_presigned_url") {
+        if (!fileName || !fileType) {
+          return NextResponse.json({ error: "fileName and fileType are required" }, { status: 400 })
+        }
+
+        if (!ALLOWED_MIME_TYPES.includes(fileType.toLowerCase())) {
+          return NextResponse.json(
+            { error: `Invalid file format (${fileType}). Allowed: PDF, PNG, JPG, WEBP, SVG` },
+            { status: 400 }
+          )
+        }
+
+        if (!isS3Configured()) {
+          return NextResponse.json({
+            configured: false,
+            message: "AWS S3 credentials not set.",
+          })
+        }
+
+        const folder = fileType.includes("pdf") ? "page-builder/pdfs" : "page-builder/images"
+        const presignedData = await generatePresignedUploadUrl({
+          fileName,
+          fileType,
+          folder,
+        })
+
+        if (!presignedData) {
+          return NextResponse.json({ error: "Failed to generate S3 presigned URL" }, { status: 500 })
+        }
+
+        return NextResponse.json({
+          configured: true,
+          presignedUrl: presignedData.presignedUrl,
+          fileUrl: presignedData.fileUrl,
+          fileKey: presignedData.fileKey,
+        })
+      }
+    }
+
+    // Mode 2: FormData direct file upload fallback
     const formData = await req.formData()
     const file = formData.get("file") as File | null
 

@@ -73,11 +73,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
         'content-type': contentType, // must include boundary=... for FastAPI to parse
         ...(authHeader && { 'authorization': authHeader }),
       }
-      console.log(`PROXY [POST] Multipart upload to ${url} (${rawBody.byteLength} bytes)`)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`PROXY [POST] Multipart upload to ${url} (${rawBody.byteLength} bytes)`)
+      }
     } else {
       // ── JSON body (default) ──
       const body = await req.json()
-      console.log(`PROXY [POST] Request to ${url} with body:`, JSON.stringify(body))
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`PROXY [POST] Request to ${url} with body:`, JSON.stringify(body))
+      }
       fetchBody = JSON.stringify(body)
       fetchHeaders = {
         'cookie': cookieHeader,
@@ -98,7 +102,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
 
     if (!res.ok) {
       const errorText = await res.text()
-      console.error(`PROXY [POST] Error response from ${url} (status: ${res.status}):`, errorText)
+      if (process.env.NODE_ENV !== 'production') {
+        console.error(`PROXY [POST] Error response from ${url} (status: ${res.status}):`, errorText)
+      }
       let parsedError = errorText
       try {
         const jsonError = JSON.parse(errorText)

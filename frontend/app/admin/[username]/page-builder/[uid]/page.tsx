@@ -969,21 +969,61 @@ export default function ElementorPageBuilderPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const formData = new FormData()
-    formData.append("file", file)
-
     setIsUploading(true)
-    const toastId = toast.loading(`Uploading ${file.name} to S3...`)
+    const toastId = toast.loading(`Uploading ${file.name}...`)
 
     try {
-      const res = await fetch("/api/admin/page-builder/upload", {
-        method: "POST",
-        body: formData,
-      })
+      let fileUrl = ""
+      let uploadSource = "aws-s3"
 
-      const data = await res.json()
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Upload failed")
+      // 1. Try Direct S3 Presigned URL upload (Bypasses server body limit)
+      try {
+        const presignedRes = await fetch("/api/admin/page-builder/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "get_presigned_url",
+            fileName: file.name,
+            fileType: file.type,
+          }),
+        })
+
+        if (presignedRes.ok) {
+          const presignedData = await presignedRes.json()
+          if (presignedData.configured && presignedData.presignedUrl) {
+            const uploadToS3Res = await fetch(presignedData.presignedUrl, {
+              method: "PUT",
+              headers: { "Content-Type": file.type },
+              body: file,
+            })
+
+            if (uploadToS3Res.ok) {
+              fileUrl = presignedData.fileUrl
+              uploadSource = "aws-s3"
+            }
+          }
+        }
+      } catch (presignedErr) {
+        console.warn("Presigned S3 upload skipped, falling back to direct POST:", presignedErr)
+      }
+
+      // 2. Fallback to direct POST server endpoint if presigned S3 upload was not used or failed
+      if (!fileUrl) {
+        const formData = new FormData()
+        formData.append("file", file)
+
+        const res = await fetch("/api/admin/page-builder/upload", {
+          method: "POST",
+          body: formData,
+        })
+
+        const data = await res.json()
+        if (!res.ok || data.error) {
+          throw new Error(data.error || "Upload failed")
+        }
+
+        fileUrl = data.url
+        uploadSource = data.source || "storage"
       }
 
       if (subWidgetContext) {
@@ -994,27 +1034,27 @@ export default function ElementorPageBuilderPage() {
           subWidgetContext.subWidgetId,
           {
             ...(selectedSubWidget?.subWidget.props || {}),
-            [targetProp]: data.url,
-            ...(targetProp === "url" && { title: data.filename || file.name }),
+            [targetProp]: fileUrl,
+            ...(targetProp === "url" && { title: file.name }),
           }
         )
       } else if (selectedWidgetId) {
         // Update top-level widget property
         handleUpdateWidgetProps(selectedWidgetId, {
           ...selectedWidget?.props,
-          [targetProp]: data.url,
-          ...(targetProp === "url" && { title: data.filename || file.name }),
+          [targetProp]: fileUrl,
+          ...(targetProp === "url" && { title: file.name }),
         })
       }
 
       toast.success(
-        data.source === "aws-s3"
+        uploadSource === "aws-s3"
           ? `File successfully uploaded to AWS S3 bucket!`
-          : `File saved to local storage!`,
+          : `File successfully saved!`,
         { id: toastId }
       )
     } catch (err: any) {
-      toast.error(err.message || "Failed to upload file to S3", { id: toastId })
+      toast.error(err.message || "Failed to upload file", { id: toastId })
     } finally {
       setIsUploading(false)
     }
