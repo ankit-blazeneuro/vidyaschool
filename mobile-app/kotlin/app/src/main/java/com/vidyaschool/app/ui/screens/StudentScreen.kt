@@ -1,7 +1,12 @@
 package com.vidyaschool.app.ui.screens
 
 import android.graphics.Paint
-import android.graphics.Typeface
+ import android.graphics.Typeface
+import android.graphics.Bitmap
+import android.graphics.BitmapShader
+import android.graphics.Shader
+import android.graphics.PorterDuff
+import androidx.compose.ui.graphics.Paint as ComposePaint
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
@@ -36,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vidyaschool.app.api.RetrofitClient
+import com.vidyaschool.app.api.TopPerformerItem
 import com.vidyaschool.app.ui.components.SliderSkeleton
 import com.vidyaschool.app.api.SliderImage
 import coil.compose.AsyncImage
@@ -177,6 +183,10 @@ fun StudentScreen(
                             Spacer(modifier = Modifier.height(24.dp))
                         }
                     }
+                    
+                    TopPerformersBanner()
+                    
+                    Spacer(modifier = Modifier.height(20.dp))
                     
                     AcademicPerformanceCard()
                     
@@ -1013,6 +1023,286 @@ fun AcademicPerformanceChart(
             labels.forEachIndexed { i, label ->
                 val x = pL + cW * (i.toFloat() / (labels.size - 1))
                 canvas.nativeCanvas.drawText(label, x, h - 10f, paint)
+            }
+        }
+    }
+}
+
+@Composable
+fun TopPerformersBanner(
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    var topPerformers by remember { mutableStateOf<List<TopPerformerItem>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    val defaultPerformers = remember {
+        listOf(
+            TopPerformerItem(id = "1", name = "Aarav Sharma", studentClass = "10", section = "A", percentage = 98.6, rank = 1, avatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed=Aarav"),
+            TopPerformerItem(id = "2", name = "Ananya Roy",   studentClass = "12", section = "B", percentage = 97.4, rank = 2, avatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed=Ananya"),
+            TopPerformerItem(id = "3", name = "Rohan Verma",  studentClass = "9",  section = "C", percentage = 96.8, rank = 3, avatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan")
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        try {
+            val token = sessionManager.getSessionToken()
+            if (token.isNullOrEmpty()) {
+                topPerformers = defaultPerformers
+                isLoading = false
+                return@LaunchedEffect
+            }
+            val response = RetrofitClient.authApi.getTopPerformers("Bearer $token")
+            val fetched = response.body()?.leaderboard
+            if (response.isSuccessful && !fetched.isNullOrEmpty()) {
+                topPerformers = fetched
+            } else {
+                android.util.Log.w("TopPerformersBanner", "API returned empty/error: ${response.code()} ${response.message()}")
+                topPerformers = defaultPerformers
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("TopPerformersBanner", "Failed to fetch top performers: ${e.message}")
+            topPerformers = defaultPerformers
+        } finally {
+            isLoading = false
+        }
+    }
+
+    val displayList = if (topPerformers.isNotEmpty()) topPerformers.take(3) else defaultPerformers
+    val rank1 = displayList.find { it.rank == 1 } ?: displayList.getOrNull(0)
+    val rank2 = displayList.find { it.rank == 2 } ?: displayList.getOrNull(1)
+    val rank3 = displayList.find { it.rank == 3 } ?: displayList.getOrNull(2)
+
+    val podiumOrdered = listOfNotNull(rank2, rank1, rank3)
+
+    val sideAvatarOverflow  = 18.dp
+    val middleAvatarOverflow = 36.dp // rank-1 pops out further above the card
+    val cardHeight = 90.dp
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(cardHeight + middleAvatarOverflow) // sized to the tallest overflow
+    ) {
+        // ── Grainy gradient background ───────────────────────────────
+        val gradStart  = Color(0xFF6C3DE0) // deep violet
+        val gradMid    = Color(0xFF3B82F6) // blue
+        val gradEnd    = Color(0xFF06B6D4) // cyan
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(cardHeight)
+                .align(Alignment.BottomCenter)
+                .clip(RoundedCornerShape(18.dp))
+                .drawBehind {
+                    // 1. gradient sweep
+                    drawRect(
+                        brush = Brush.linearGradient(
+                            colors = listOf(gradStart, gradMid, gradEnd),
+                            start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                            end   = androidx.compose.ui.geometry.Offset(size.width, size.height)
+                        )
+                    )
+                    // 2. noise overlay via bitmap shader
+                    val bw = size.width.toInt().coerceAtLeast(1)
+                    val bh = size.height.toInt().coerceAtLeast(1)
+                    val noiseBitmap = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888)
+                    val rng = java.util.Random(42)
+                    val pixels = IntArray(bw * bh) { _ ->
+                        val v = rng.nextInt(255)
+                        android.graphics.Color.argb(28, v, v, v)
+                    }
+                    noiseBitmap.setPixels(pixels, 0, bw, 0, 0, bw, bh)
+                    val noiseShader = BitmapShader(
+                        noiseBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP
+                    )
+                    val noisePaint = android.graphics.Paint().apply { shader = noiseShader }
+                    drawIntoCanvas { canvas ->
+                        canvas.nativeCanvas.drawRect(
+                            0f, 0f, size.width, size.height, noisePaint
+                        )
+                    }
+                }
+        )
+
+        // ── Cards row (overflow allowed, no clip) ────────────────────
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(cardHeight + middleAvatarOverflow)
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            if (isLoading) {
+                repeat(3) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(cardHeight)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color.White.copy(alpha = 0.15f))
+                    )
+                }
+            } else {
+                podiumOrdered.forEach { item ->
+                    val isMiddle = item.rank == 1
+                    // middle card gets a larger overflow so the avatar pops out above the banner
+                    val overflow = if (isMiddle) middleAvatarOverflow else sideAvatarOverflow
+                    TopPerformerCard(
+                        item = item,
+                        isMiddle = isMiddle,
+                        avatarOverflow = overflow,
+                        cardHeight = cardHeight,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TopPerformerCard(
+    item: TopPerformerItem,
+    isMiddle: Boolean,
+    avatarOverflow: androidx.compose.ui.unit.Dp = 18.dp,
+    cardHeight: androidx.compose.ui.unit.Dp = 90.dp,
+    modifier: Modifier = Modifier
+) {
+    val rank = item.rank ?: 1
+    val medalTint = when (rank) {
+        1 -> Color(0xFFFFD700) // gold
+        2 -> Color(0xFFB0BEC5) // silver
+        3 -> Color(0xFFFFAB76) // bronze
+        else -> Color(0xFF93C5FD)
+    }
+    val avatarSize = if (isMiddle) 56.dp else 38.dp  // middle is noticeably bigger
+    val ringSize   = avatarSize + 5.dp
+    val equalGap   = 6.dp
+
+    Box(
+        modifier = modifier
+            .height(avatarOverflow + cardHeight)
+            .zIndex(if (isMiddle) 2f else 0f)  // ensure middle renders on top
+    ) {
+        // Content column — padding top equals avatarOverflow so content starts inside card zone
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(avatarOverflow + cardHeight)
+                .padding(top = avatarOverflow + equalGap, bottom = equalGap),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Avatar ring — middle floats out with a gold glow shadow
+            Box(
+                modifier = Modifier
+                    .size(ringSize)
+                    .then(
+                        if (isMiddle) Modifier.drawBehind {
+                            // multi-layer gold glow to make rank-1 pop
+                            val glowPaint = android.graphics.Paint().apply {
+                                isAntiAlias = true
+                                style = android.graphics.Paint.Style.FILL
+                                color = android.graphics.Color.TRANSPARENT
+                                setShadowLayer(
+                                    ringSize.toPx() * 0.45f,
+                                    0f, 2f,
+                                    android.graphics.Color.argb(160, 255, 210, 0)
+                                )
+                            }
+                            drawIntoCanvas { canvas ->
+                                canvas.nativeCanvas.drawCircle(
+                                    size.width / 2f, size.height / 2f,
+                                    ringSize.toPx() / 2f, glowPaint
+                                )
+                            }
+                        } else Modifier
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                // White ring
+                Box(
+                    modifier = Modifier
+                        .size(ringSize)
+                        .clip(CircleShape)
+                        .background(
+                            if (isMiddle) Color(0xFFFFD700).copy(alpha = 0.85f)
+                            else Color.White.copy(alpha = 0.55f)
+                        )
+                )
+                // Avatar circle
+                Box(
+                    modifier = Modifier
+                        .size(avatarSize)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val avatar = item.avatarUrl
+                    if (!avatar.isNullOrEmpty()) {
+                        AsyncImage(
+                            model = avatar,
+                            contentDescription = item.name,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = (item.name?.take(1) ?: "S").uppercase(),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = if (isMiddle) 20.sp else 14.sp,
+                            color = Color.White
+                        )
+                    }
+                }
+                // Medal badge
+                Box(
+                    modifier = Modifier
+                        .size(if (isMiddle) 18.dp else 13.dp)
+                        .align(Alignment.BottomEnd)
+                        .clip(CircleShape)
+                        .background(medalTint)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_medal_star),
+                        contentDescription = "Rank $rank",
+                        tint = Color.White,
+                        modifier = Modifier.fillMaxSize().padding(2.dp)
+                    )
+                }
+            }
+
+            // Name
+            Text(
+                text = item.name ?: "Student",
+                fontSize = if (isMiddle) 11.sp else 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+
+            // Score pill
+            Box(
+                modifier = Modifier
+                    .wrapContentSize()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(medalTint.copy(alpha = if (isMiddle) 0.45f else 0.30f))
+                    .padding(horizontal = 8.dp, vertical = 1.dp)
+            ) {
+                Text(
+                    text = String.format("%.1f%%", item.percentage ?: 0.0),
+                    fontSize = if (isMiddle) 10.sp else 9.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
             }
         }
     }

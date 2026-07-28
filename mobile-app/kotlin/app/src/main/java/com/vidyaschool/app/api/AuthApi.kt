@@ -262,13 +262,40 @@ interface AuthApi {
         @Header("Authorization") authHeader: String,
         @Query("days") days: Int = 30
     ): Response<List<NotificationHistoryItem>>
+
+    @GET("api/student/leaderboard")
+    suspend fun getTopPerformers(
+        @Header("Authorization") authHeader: String
+    ): Response<LeaderboardResponse>
 }
 
 data class NotificationHistoryItem(
-    val id: String,
-    val title: String,
-    val body: String,
-    @SerializedName("created_at") val createdAt: String
+    val id: String? = null,
+    val title: String? = null,
+    val body: String? = null,
+    @SerializedName(value = "created_at", alternate = ["createdAt"]) val createdAt: String? = null
+)
+
+data class LeaderboardResponse(
+    @SerializedName("class") val className: String? = null,
+    val section: String? = null,
+    val leaderboard: List<TopPerformerItem>? = null,
+    @SerializedName("current_student_rank") val currentStudentRank: Int? = null
+)
+
+data class TopPerformerItem(
+    val id: String? = null,
+    val name: String? = null,
+    // API returns "image" field
+    @SerializedName(value = "image", alternate = ["avatarUrl", "avatar_url"]) val avatarUrl: String? = null,
+    // API returns "class" and "section" separately
+    @SerializedName("class") val studentClass: String? = null,
+    val section: String? = null,
+    // API returns "average" (percentage score)
+    @SerializedName(value = "average", alternate = ["percentage"]) val percentage: Double? = null,
+    val rank: Int? = null,
+    val username: String? = null,
+    val examsCount: Int? = null
 )
 
 data class SearchUserResponse(
