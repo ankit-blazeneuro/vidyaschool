@@ -51,7 +51,7 @@ final class AuthViewModel: ObservableObject {
             return
         }
         Task {
-            let initialState = sharedViewModel.authState.value
+            let initialState = sharedViewModel.authState.value as? SharedAuthState
             sharedViewModel.checkSession()
             await waitForStateChange(from: initialState)
             syncStateFromShared()
@@ -70,7 +70,7 @@ final class AuthViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        let initialState = sharedViewModel.authState.value
+        let initialState = sharedViewModel.authState.value as? SharedAuthState
         sharedViewModel.loginWithEmail(email: email, password: password)
         await waitForStateChange(from: initialState)
 
@@ -91,7 +91,7 @@ final class AuthViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
 
-        let initialState = sharedViewModel.authState.value
+        let initialState = sharedViewModel.authState.value as? SharedAuthState
         sharedViewModel.createSocialSession(
             email: email,
             name: name,
@@ -134,7 +134,10 @@ final class AuthViewModel: ObservableObject {
     // -----------------------------------------------------------------------
 
     private func syncStateFromShared() {
-        let state = sharedViewModel.authState.value
+        guard let state = sharedViewModel.authState.value as? SharedAuthState else {
+            sessionState = .loggedOut
+            return
+        }
         switch state {
         case is SharedAuthState.LoggedIn:
             if let loggedIn = state as? SharedAuthState.LoggedIn {
@@ -165,14 +168,19 @@ final class AuthViewModel: ObservableObject {
 
     /// Waits for the authState to change from the initial state (ensuring the KMP coroutine has
     /// been dispatched and started execution), and then waits for the loading state to complete.
-    private func waitForStateChange(from initialState: SharedAuthState) async {
+    private func waitForStateChange(from initialState: SharedAuthState?) async {
         let deadline = Date().addingTimeInterval(10)
         let dispatchDeadline = Date().addingTimeInterval(0.2) // 200 ms timeout for the coroutine to start
         
         var stateChanged = false
         while Date() < dispatchDeadline {
-            let state = sharedViewModel.authState.value
-            if !isSameState(state, initialState) {
+            let state = sharedViewModel.authState.value as? SharedAuthState
+            if let state = state, let initialState = initialState {
+                if !isSameState(state, initialState) {
+                    stateChanged = true
+                    break
+                }
+            } else if state != nil {
                 stateChanged = true
                 break
             }
@@ -180,8 +188,8 @@ final class AuthViewModel: ObservableObject {
         }
         
         if stateChanged {
-            let state = sharedViewModel.authState.value
-            if !(state is SharedAuthState.Loading) {
+            let state = sharedViewModel.authState.value as? SharedAuthState
+            if let state = state, !(state is SharedAuthState.Loading) {
                 // If it already transitioned directly to a terminal state (e.g. LoggedOut synchronously)
                 return
             }
@@ -189,8 +197,8 @@ final class AuthViewModel: ObservableObject {
         
         // Wait until the state is no longer Loading
         while Date() < deadline {
-            let state = sharedViewModel.authState.value
-            if !(state is SharedAuthState.Loading) {
+            let state = sharedViewModel.authState.value as? SharedAuthState
+            if let state = state, !(state is SharedAuthState.Loading) {
                 return
             }
             try? await Task.sleep(nanoseconds: 50_000_000) // 50 ms

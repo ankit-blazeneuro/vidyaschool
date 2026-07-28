@@ -660,7 +660,12 @@ function SortableWidgetWrapper({
                   widget.props.level === "h2" && (viewport === "mobile" ? "text-xl" : "text-xl sm:text-3xl"),
                   widget.props.level === "h3" && "text-lg sm:text-2xl"
                 )}
-                style={{ textAlign: widget.props.align || "left", color: widget.props.color }}
+                style={{
+                  textAlign: widget.props.align || "left",
+                  color: (!widget.props.color || widget.props.color === "#000000" || widget.props.color === "#000" || widget.props.color === "#111827")
+                    ? undefined
+                    : widget.props.color,
+                }}
               >
                 {widget.props.text || "Untitled Heading"}
               </h1>
@@ -669,7 +674,12 @@ function SortableWidgetWrapper({
             {widget.type === "paragraph" && (
               <p
                 className="text-xs sm:text-base text-foreground/80 leading-relaxed max-w-3xl break-words"
-                style={{ textAlign: widget.props.align || "left", color: widget.props.color }}
+                style={{
+                  textAlign: widget.props.align || "left",
+                  color: (!widget.props.color || widget.props.color === "#000000" || widget.props.color === "#000" || widget.props.color === "#111827")
+                    ? undefined
+                    : widget.props.color,
+                }}
               >
                 {widget.props.text || "Empty paragraph text"}
               </p>

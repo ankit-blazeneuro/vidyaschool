@@ -58,7 +58,6 @@ function PublicSubWidgetRenderer({ subW }: { subW: ElementorWidget }) {
               title="PDF"
               className="w-full border-0"
               style={{ height: subW.props.height || "280px" }}
-              sandbox="allow-scripts allow-same-origin"
               referrerPolicy="no-referrer"
             />
           ) : (
@@ -156,6 +155,7 @@ function PublicWidgetRenderer({ widget }: { widget: ElementorWidget }) {
   }
 
   if (widget.type === "heading") {
+    const isDarkDefault = !widget.props.color || widget.props.color === "#000000" || widget.props.color === "#000" || widget.props.color === "#111827"
     return (
       <h1
         className={cn(
@@ -164,7 +164,7 @@ function PublicWidgetRenderer({ widget }: { widget: ElementorWidget }) {
           widget.props.level === "h2" && "text-2xl sm:text-4xl",
           widget.props.level === "h3" && "text-xl sm:text-3xl"
         )}
-        style={{ textAlign: widget.props.align || "left", color: widget.props.color }}
+        style={{ textAlign: widget.props.align || "left", color: isDarkDefault ? undefined : widget.props.color }}
       >
         {widget.props.text}
       </h1>
@@ -172,10 +172,11 @@ function PublicWidgetRenderer({ widget }: { widget: ElementorWidget }) {
   }
 
   if (widget.type === "paragraph") {
+    const isDarkDefault = !widget.props.color || widget.props.color === "#000000" || widget.props.color === "#000" || widget.props.color === "#111827"
     return (
       <p
         className="text-sm sm:text-lg text-foreground/80 leading-relaxed max-w-4xl break-words my-3"
-        style={{ textAlign: widget.props.align || "left", color: widget.props.color }}
+        style={{ textAlign: widget.props.align || "left", color: isDarkDefault ? undefined : widget.props.color }}
       >
         {widget.props.text}
       </p>
@@ -203,7 +204,6 @@ function PublicWidgetRenderer({ widget }: { widget: ElementorWidget }) {
               title={widget.props.title || "PDF Viewer"}
               className="w-full border-0"
               style={{ height: widget.props.height || "480px" }}
-              sandbox="allow-scripts allow-same-origin"
               referrerPolicy="no-referrer"
             />
           ) : (
