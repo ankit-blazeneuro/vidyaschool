@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-navigation-menu'],
+    serverActions: {
+      // Raise the body size limit to 30MB so that large PDF/image uploads
+      // via Server Actions and API routes don't return 413 errors.
+      bodySizeLimit: '30mb',
+    },
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',

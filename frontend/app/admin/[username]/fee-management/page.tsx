@@ -15,7 +15,8 @@ export default async function AdminFeeManagementPage({ params }: PageProps) {
 
   let installments: any[] = []
   try {
-    const res = await fetch("http://localhost:8000/api/admin/fee-management", {
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:8000"
+    const res = await fetch(`${backendUrl}/api/admin/fee-management`, {
       headers: {
         "cookie": cookieHeader,
       },

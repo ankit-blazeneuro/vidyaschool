@@ -24,6 +24,8 @@ import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
 
 export interface ElementorWidget {
   id: string
@@ -36,18 +38,34 @@ export interface ElementorWidget {
 
 function PublicSubWidgetRenderer({ subW }: { subW: ElementorWidget }) {
   if (subW.type === "pdf") {
+    const hasUrl = Boolean(subW.props.url)
     return (
       <div className="rounded-2xl border border-border/80 bg-card p-3 space-y-2 shadow-xs w-full max-w-full overflow-hidden">
         <div className="flex items-center justify-between text-xs font-bold border-b border-border/40 pb-1.5">
           <span className="flex items-center gap-1.5 text-rose-500 truncate">
             <FileText className="size-3.5 shrink-0" /> {subW.props.title || "PDF Document"}
           </span>
-          <a href={subW.props.url} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1 shrink-0 font-semibold">
-            <Download className="size-3" /> Download
-          </a>
+          {hasUrl && (
+            <a href={subW.props.url} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1 shrink-0 font-semibold">
+              <Download className="size-3" /> Download
+            </a>
+          )}
         </div>
         <div className="w-full overflow-hidden rounded-xl bg-muted/30 border border-border/50">
-          <iframe src={subW.props.url} title="PDF" className="w-full border-0" style={{ height: subW.props.height || "280px" }} />
+          {hasUrl ? (
+            <iframe
+              src={subW.props.url}
+              title="PDF"
+              className="w-full border-0"
+              style={{ height: subW.props.height || "280px" }}
+              sandbox="allow-scripts allow-same-origin"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="flex items-center justify-center text-xs text-muted-foreground py-10">
+              <FileText className="size-4 mr-2 opacity-40" /> No PDF uploaded yet
+            </div>
+          )}
         </div>
       </div>
     )
@@ -165,18 +183,34 @@ function PublicWidgetRenderer({ widget }: { widget: ElementorWidget }) {
   }
 
   if (widget.type === "pdf") {
+    const hasUrl = Boolean(widget.props.url)
     return (
       <div className="rounded-3xl border border-border/80 bg-card overflow-hidden shadow-sm space-y-3 p-5 my-4 w-full max-w-full">
         <div className="flex items-center justify-between border-b border-border/40 pb-3">
           <span className="text-sm font-bold text-foreground flex items-center gap-2 truncate">
             <FileText className="size-4 text-rose-500 shrink-0" /> {widget.props.title || "PDF Document Viewer"}
           </span>
-          <a href={widget.props.url} target="_blank" rel="noreferrer" className="text-xs text-primary font-bold flex items-center gap-1 hover:underline shrink-0">
-            <Download className="size-3.5" /> Download PDF
-          </a>
+          {hasUrl && (
+            <a href={widget.props.url} target="_blank" rel="noreferrer" className="text-xs text-primary font-bold flex items-center gap-1 hover:underline shrink-0">
+              <Download className="size-3.5" /> Download PDF
+            </a>
+          )}
         </div>
         <div className="w-full overflow-hidden rounded-2xl bg-muted/40 border border-border/50">
-          <iframe src={widget.props.url} title={widget.props.title || "PDF Viewer"} className="w-full border-0" style={{ height: widget.props.height || "480px" }} />
+          {hasUrl ? (
+            <iframe
+              src={widget.props.url}
+              title={widget.props.title || "PDF Viewer"}
+              className="w-full border-0"
+              style={{ height: widget.props.height || "480px" }}
+              sandbox="allow-scripts allow-same-origin"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="flex items-center justify-center text-sm text-muted-foreground py-16">
+              <FileText className="size-5 mr-2 opacity-40" /> No PDF has been uploaded for this widget
+            </div>
+          )}
         </div>
       </div>
     )
@@ -361,31 +395,30 @@ export default function PublicLivePage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground">
-      {/* Public Page Header */}
-      <header className="border-b border-border/60 bg-card/80 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Globe className="size-4 text-primary" />
-            <span className="text-sm font-black tracking-tight">{page.title}</span>
-          </div>
-          <Badge variant="outline" className="text-[10px] uppercase font-mono bg-primary/5 text-primary border-primary/20">
-            Public Web Page
+    <div className="min-h-screen w-full bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground flex flex-col">
+      {/* Shared site-wide Header */}
+      <Header />
+
+      {/* Page title badge strip */}
+      <div className="border-b border-border/50 bg-muted/30 px-4 py-2">
+        <div className="max-w-6xl mx-auto flex items-center gap-2">
+          <Globe className="size-3.5 text-primary shrink-0" />
+          <span className="text-xs font-semibold text-foreground truncate">{page.title}</span>
+          <Badge variant="outline" className="ml-auto text-[10px] uppercase font-mono bg-primary/5 text-primary border-primary/20 shrink-0">
+            Public Page
           </Badge>
         </div>
-      </header>
+      </div>
 
       {/* Main Public Page Content Container */}
-      <main className="max-w-6xl mx-auto px-4 py-8 sm:py-12 space-y-4">
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 sm:py-12 space-y-4">
         {page.widgets.map((widget) => (
           <PublicWidgetRenderer key={widget.id} widget={widget} />
         ))}
       </main>
 
-      {/* Public Page Footer */}
-      <footer className="border-t border-border/40 py-8 text-center text-xs text-muted-foreground">
-        <p>© 2026 Vidya School • Built with Elementor Web Designer</p>
-      </footer>
+      {/* Shared site-wide Footer */}
+      <Footer />
     </div>
   )
 }

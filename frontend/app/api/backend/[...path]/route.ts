@@ -43,7 +43,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ path
     const data = await res.json()
     return NextResponse.json(data)
   } catch (error: any) {
-    return NextResponse.json({ detail: error.message }, { status: 500 })
+    const isNetworkError = error?.cause?.code === 'ECONNREFUSED' || error?.cause?.code === 'ETIMEDOUT' || error?.message?.includes('fetch failed')
+    return NextResponse.json(
+      { detail: isNetworkError ? 'Backend service is unavailable. Please try again later.' : error.message },
+      { status: isNetworkError ? 503 : 500 }
+    )
   }
 }
 
@@ -117,10 +121,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pat
     const data = await res.json()
     return NextResponse.json(data)
   } catch (error: any) {
-    return NextResponse.json({ detail: error.message }, { status: 500 })
+    const isNetworkError = error?.cause?.code === 'ECONNREFUSED' || error?.cause?.code === 'ETIMEDOUT' || error?.message?.includes('fetch failed')
+    return NextResponse.json(
+      { detail: isNetworkError ? 'Backend service is unavailable. Please try again later.' : error.message },
+      { status: isNetworkError ? 503 : 500 }
+    )
   }
 }
-
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
@@ -155,7 +162,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ pa
     const data = await res.json()
     return NextResponse.json(data)
   } catch (error: any) {
-    return NextResponse.json({ detail: error.message }, { status: 500 })
+    const isNetworkError = error?.cause?.code === 'ECONNREFUSED' || error?.cause?.code === 'ETIMEDOUT' || error?.message?.includes('fetch failed')
+    return NextResponse.json(
+      { detail: isNetworkError ? 'Backend service is unavailable. Please try again later.' : error.message },
+      { status: isNetworkError ? 503 : 500 }
+    )
   }
 }
 
@@ -192,7 +203,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ path
     const data = await res.json()
     return NextResponse.json(data)
   } catch (error: any) {
-    return NextResponse.json({ detail: error.message }, { status: 500 })
+    const isNetworkError = error?.cause?.code === 'ECONNREFUSED' || error?.cause?.code === 'ETIMEDOUT' || error?.message?.includes('fetch failed')
+    return NextResponse.json(
+      { detail: isNetworkError ? 'Backend service is unavailable. Please try again later.' : error.message },
+      { status: isNetworkError ? 503 : 500 }
+    )
   }
 }
 
@@ -225,6 +240,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ p
     const data = await res.json()
     return NextResponse.json(data)
   } catch (error: any) {
-    return NextResponse.json({ detail: error.message }, { status: 500 })
+    const isNetworkError = error?.cause?.code === 'ECONNREFUSED' || error?.cause?.code === 'ETIMEDOUT' || error?.message?.includes('fetch failed')
+    return NextResponse.json(
+      { detail: isNetworkError ? 'Backend service is unavailable. Please try again later.' : error.message },
+      { status: isNetworkError ? 503 : 500 }
+    )
   }
 }

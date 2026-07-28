@@ -162,7 +162,7 @@ function createDefaultWidget(type: WidgetType): ElementorWidget {
           hideOnTablet: false,
           stackOnMobile: true,
           col1Widgets: [
-            { id: `sub-pdf-${Date.now()}`, type: "pdf", name: "PDF Document", props: { url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", title: "Physics Syllabus PDF", height: "300px" } }
+            { id: `sub-pdf-${Date.now()}`, type: "pdf", name: "PDF Document", props: { url: "", title: "Physics Syllabus PDF", height: "300px" } }
           ],
           col2Widgets: [
             { id: `sub-head-${Date.now()}`, type: "heading", name: "Column Heading", props: { text: "Interactive Curriculum", level: "h3" } },
@@ -180,7 +180,7 @@ function createDefaultWidget(type: WidgetType): ElementorWidget {
     case "paragraph":
       return { id, type, name: "Text Editor", props: { text: "Access live syllabus tracking, teacher lecture notes, and board exam preparatory materials.", align: "center", color: "#475569" } }
     case "pdf":
-      return { id, type, name: "PDF Viewer", props: { url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", title: "Class XII Physics Syllabus & Question Bank PDF", height: "420px" } }
+      return { id, type, name: "PDF Viewer", props: { url: "", title: "Class XII Physics Syllabus & Question Bank PDF", height: "420px" } }
     case "button":
       return { id, type, name: "Button", props: { label: "Download Syllabus PDF", link: "#", variant: "default", size: "lg", align: "center" } }
     case "image":

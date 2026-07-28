@@ -6,6 +6,12 @@ import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import crypto from "crypto"
 
+// ── Route Segment Config ──────────────────────────────────────────────────────
+// Increase body size limit beyond the default 1MB so large PDFs and images
+// (up to 25 MB) can be uploaded without triggering a 413 response.
+export const maxDuration = 60 // seconds — allow time for S3 upload on slow connections
+export const dynamic = "force-dynamic"
+
 const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "image/jpeg",

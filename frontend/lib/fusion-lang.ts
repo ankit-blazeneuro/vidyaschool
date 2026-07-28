@@ -141,7 +141,7 @@ const DEFAULT_PROPS: Record<BlockType, Record<string, string>> = {
   heading: { text: "New Heading", level: "h2", align: "left" },
   paragraph: { text: "Start writing here...", align: "left" },
   button: { label: "Click Me", variant: "default", align: "left" },
-  pdf: { url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf", title: "Document.pdf" },
+  pdf: { url: "", title: "Document.pdf" },
   badge: { label: "NEW FEATURE 2026", variant: "default" },
   input: { placeholder: "Enter your email address...", label: "Email Address" },
   avatar: { name: "Ankit Kumar", role: "Principal Architect" },
