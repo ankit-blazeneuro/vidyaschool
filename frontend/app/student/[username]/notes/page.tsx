@@ -32,6 +32,8 @@ interface NoteItem {
   className?: string
   sectionName?: string
   color?: string
+  pdf_url?: string
+  pdfUrl?: string | null
 }
 
 const COLOR_MAP: Record<string, { cardBg: string; border: string }> = {

@@ -1815,7 +1815,7 @@ export default function NoteEditorPage() {
     const contentPayload = JSON.stringify({ version: 1, pages: currentPages })
 
     let uploadedPdfUrl: string | null = null
-    const hasPenStrokes = currentPages.some(p => p.lines && p.lines.length > 0)
+    const hasPenStrokes = currentPages.some(p => p.drawings && p.drawings.length > 0)
     if (hasPenStrokes) {
       try {
         const doc = new jsPDF({

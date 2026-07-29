@@ -21,6 +21,7 @@ import {
   FileTextIcon,
   Share2Icon,
   ClockIcon,
+  DownloadIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -39,6 +40,8 @@ interface NoteDetail {
   teacher_name?: string
   created_at?: string
   updated_at?: string
+  pdf_url?: string
+  pdfUrl?: string
 }
 
 function getInitials(name: string) {

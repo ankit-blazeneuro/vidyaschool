@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { NotebookPen, Calendar, User, BookOpen, ArrowRight, Tag } from "lucide-react"
+import { NotebookPen, Calendar, User, BookOpen, ArrowRight, Tag, FileText } from "lucide-react"
 
 interface NoteItem {
   id: string
@@ -28,6 +28,8 @@ interface NoteItem {
   className?: string
   sectionName?: string
   color?: string
+  pdf_url?: string
+  pdfUrl?: string | null
 }
 
 const COLOR_MAP: Record<string, { cardBg: string; border: string }> = {

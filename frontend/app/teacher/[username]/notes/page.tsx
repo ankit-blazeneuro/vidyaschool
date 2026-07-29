@@ -14,6 +14,8 @@ interface Note {
   content: string
   color: string
   updated_at: string
+  pdf_url?: string
+  pdfUrl?: string
 }
 
 const COLOR_MAP: Record<string, { bg: string; border: string }> = {
