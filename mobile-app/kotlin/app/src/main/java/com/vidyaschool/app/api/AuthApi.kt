@@ -336,6 +336,7 @@ interface AuthApi {
     suspend fun getTeacherCalendar(
         @Header("Authorization") authHeader: String
     ): Response<TeacherCalendarResponse>
+    // Note: called on authApi (api.blazeneuro.com) which is the Python FastAPI backend
 }
 
 data class NotificationHistoryItem(
