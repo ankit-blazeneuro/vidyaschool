@@ -1,6 +1,7 @@
 package com.vidyaschool.app.api
 
 import com.google.gson.annotations.SerializedName
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
@@ -9,6 +10,7 @@ import retrofit2.http.PATCH
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Header
+import retrofit2.http.Streaming
 import retrofit2.http.DELETE
 
 data class StudentNote(
@@ -332,12 +334,67 @@ interface AuthApi {
         @Header("Authorization") authHeader: String
     ): Response<StudentNotesResponse>
 
-    @GET("api/teacher/calendar")
+    @GET("teacher/calendar")
     suspend fun getTeacherCalendar(
         @Header("Authorization") authHeader: String
     ): Response<TeacherCalendarResponse>
-    // Note: called on authApi (api.blazeneuro.com) which is the Python FastAPI backend
+    // Note: called on authApi (api.blazeneuro.com) — teacher router prefix is /teacher (no /api prefix)
+
+    @GET("api/chats")
+    suspend fun getUserChats(
+        @Header("Authorization") authHeader: String
+    ): Response<List<ChatItem>>
+
+    @GET("api/chats/{chatId}")
+    suspend fun getChatDetails(
+        @Header("Authorization") authHeader: String,
+        @Path("chatId") chatId: String
+    ): Response<ChatDetailsResponse>
+
+    @Streaming
+    @POST("api/chats")
+    suspend fun initChat(
+        @Header("Authorization") authHeader: String,
+        @Body request: InitChatRequest
+    ): Response<ResponseBody>
+
+    @Streaming
+    @POST("api/chats/{chatId}")
+    suspend fun sendChatMessage(
+        @Header("Authorization") authHeader: String,
+        @Path("chatId") chatId: String,
+        @Body request: SendChatMessageRequest
+    ): Response<ResponseBody>
 }
+
+data class InitChatRequest(
+    val uuid: String,
+    val message: String,
+    val title: String = "AI Teaching Assistant"
+)
+
+data class SendChatMessageRequest(
+    val message: String,
+    val title: String = "AI Teaching Assistant"
+)
+
+data class ChatItem(
+    val id: String,
+    val title: String? = null,
+    val createdAt: String? = null
+)
+
+data class BackendChatMessage(
+    val role: String? = null,
+    val content: String? = null,
+    val createdAt: String? = null
+)
+
+data class ChatDetailsResponse(
+    val id: String? = null,
+    val title: String? = null,
+    val messages: List<BackendChatMessage>? = null
+)
 
 data class NotificationHistoryItem(
     val id: String? = null,

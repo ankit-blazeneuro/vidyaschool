@@ -11,7 +11,7 @@ interface CalendarEventItem {
 }
 
 export function TeacherCalendarWidget() {
-  const [todayDate, setTodayDate] = React.useState<string>("FRIDAY, FEB 27")
+  const [todayDate, setTodayDate] = React.useState<string>("")
   const [todayEvents, setTodayEvents] = React.useState<CalendarEventItem[]>([])
   const [tomorrowEvents, setTomorrowEvents] = React.useState<CalendarEventItem[]>([])
   const [loading, setLoading] = React.useState<boolean>(true)
@@ -33,23 +33,12 @@ export function TeacherCalendarWidget() {
       })
   }, [])
 
-  // Default / fallback items matching exact design specifications if no DB items found
-  const activeTodayEvent: CalendarEventItem = todayEvents.length > 0
-    ? todayEvents[0]
-    : { title: "Meeting with Jeremy", time: "10:00 AM" }
-
-  const activeTomorrowEvent1: CalendarEventItem = tomorrowEvents.length > 0
-    ? tomorrowEvents[0]
-    : { title: "Physics Study Group", time: "11:30 AM" }
-
-  const activeTomorrowEvent2: CalendarEventItem = tomorrowEvents.length > 1
-    ? tomorrowEvents[1]
-    : { title: "Faculty Department Review", time: "02:00 PM" }
+  const tomorrowAccents = ["#9D38FF", "#FF7A5A", "#D7D842", "#9D38FF"]
 
   return (
     <section className="mx-4 lg:mx-6 my-4 select-none">
       <div className="w-full bg-[#1A1A1A] rounded-[24px] border border-white/[0.06] p-5 shadow-2xl shadow-black/60 transition-all duration-300">
-        
+
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-1 mb-1">
           <div className="flex items-center gap-1.5 cursor-pointer group">
@@ -63,60 +52,94 @@ export function TeacherCalendarWidget() {
           </button>
         </div>
 
-        {/* ── First Date Section ── */}
-        <div className="mt-3">
-          <div className="text-[#FF5A52] text-[12px] font-bold tracking-wider uppercase mb-2.5 px-1">
-            {todayDate}
+        {loading ? (
+          /* ── Skeleton ── */
+          <div className="mt-3 space-y-3 animate-pulse">
+            <div className="h-3 w-32 rounded bg-white/[0.07]" />
+            <div className="h-[42px] rounded-[14px] bg-white/[0.05]" />
+            <div className="h-3 w-24 rounded bg-white/[0.07] mt-4" />
+            <div className="h-[40px] rounded-[12px] bg-white/[0.04]" />
+            <div className="h-[40px] rounded-[12px] bg-white/[0.04]" />
           </div>
-
-          {/* Highlighted Event Card */}
-          <div className="h-[42px] px-3.5 rounded-[14px] bg-[#242416] border border-[#D7D842]/20 flex items-center justify-between transition-all duration-200 hover:bg-[#2a2a19]">
-            <div className="flex items-center min-w-0 pr-2">
-              <div className="w-[3.5px] h-4 rounded-full bg-[#D7D842] mr-2.5 shrink-0" />
-              <span className="text-[#D7D842] font-medium text-xs sm:text-sm truncate">
-                {activeTodayEvent.title}
-              </span>
-            </div>
-            <span className="text-[#D7D842] text-xs font-semibold tracking-tight shrink-0 ml-2">
-              {activeTodayEvent.time}
-            </span>
-          </div>
-        </div>
-
-        {/* ── Second Date Section ── */}
-        <div className="mt-4">
-          <div className="text-[#8A8A8A] text-[12px] font-bold tracking-wider uppercase mb-2 px-1">
-            TOMORROW
-          </div>
-
-          <div className="space-y-1">
-            {/* Event Row 1: Purple Accent */}
-            <div className="h-[40px] px-2.5 rounded-[12px] bg-transparent flex items-center justify-between hover:bg-white/[0.03] transition-colors">
-              <div className="flex items-center min-w-0 pr-2">
-                <div className="w-[3.5px] h-4 rounded-full bg-[#9D38FF] mr-2.5 shrink-0" />
-                <span className="text-[#9D38FF] font-medium text-xs sm:text-sm truncate">
-                  {activeTomorrowEvent1.title}
-                </span>
+        ) : (
+          <>
+            {/* ── TODAY section ── */}
+            <div className="mt-3">
+              <div className="text-[#FF5A52] text-[12px] font-bold tracking-wider uppercase mb-2.5 px-1">
+                {todayDate || "TODAY"}
               </div>
-              <span className="text-[#9D38FF] text-xs font-semibold tracking-tight shrink-0 ml-2">
-                {activeTomorrowEvent1.time}
-              </span>
+
+              {todayEvents.length === 0 ? (
+                <div className="h-[42px] px-3.5 rounded-[14px] bg-white/[0.03] flex items-center">
+                  <span className="text-zinc-600 text-xs">No classes scheduled today</span>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {todayEvents.map((ev, i) => (
+                    <div
+                      key={ev.id ?? i}
+                      className="h-[42px] px-3.5 rounded-[14px] bg-[#242416] border border-[#D7D842]/20 flex items-center justify-between transition-all duration-200 hover:bg-[#2a2a19]"
+                    >
+                      <div className="flex items-center min-w-0 pr-2">
+                        <div className="w-[3.5px] h-4 rounded-full bg-[#D7D842] mr-2.5 shrink-0" />
+                        <span className="text-[#D7D842] font-medium text-xs sm:text-sm truncate">
+                          {ev.title}
+                        </span>
+                      </div>
+                      <span className="text-[#D7D842] text-xs font-semibold tracking-tight shrink-0 ml-2">
+                        {ev.time}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Event Row 2: Orange Accent */}
-            <div className="h-[40px] px-2.5 rounded-[12px] bg-transparent flex items-center justify-between hover:bg-white/[0.03] transition-colors">
-              <div className="flex items-center min-w-0 pr-2">
-                <div className="w-[3.5px] h-4 rounded-full bg-[#FF7A5A] mr-2.5 shrink-0" />
-                <span className="text-[#FF7A5A] font-medium text-xs sm:text-sm truncate">
-                  {activeTomorrowEvent2.title}
-                </span>
+            {/* ── TOMORROW section ── */}
+            <div className="mt-4">
+              <div className="text-[#8A8A8A] text-[12px] font-bold tracking-wider uppercase mb-2 px-1">
+                TOMORROW
               </div>
-              <span className="text-[#FF7A5A] text-xs font-semibold tracking-tight shrink-0 ml-2">
-                {activeTomorrowEvent2.time}
-              </span>
+
+              {tomorrowEvents.length === 0 ? (
+                <div className="h-[40px] px-2.5 rounded-[12px] bg-transparent flex items-center">
+                  <span className="text-zinc-600 text-xs">No classes scheduled tomorrow</span>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {tomorrowEvents.map((ev, i) => {
+                    const color = tomorrowAccents[i % tomorrowAccents.length]
+                    return (
+                      <div
+                        key={ev.id ?? i}
+                        className="h-[40px] px-2.5 rounded-[12px] bg-transparent flex items-center justify-between hover:bg-white/[0.03] transition-colors"
+                      >
+                        <div className="flex items-center min-w-0 pr-2">
+                          <div
+                            className="w-[3.5px] h-4 rounded-full mr-2.5 shrink-0"
+                            style={{ backgroundColor: color }}
+                          />
+                          <span
+                            className="font-medium text-xs sm:text-sm truncate"
+                            style={{ color }}
+                          >
+                            {ev.title}
+                          </span>
+                        </div>
+                        <span
+                          className="text-xs font-semibold tracking-tight shrink-0 ml-2"
+                          style={{ color }}
+                        >
+                          {ev.time}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        </div>
+          </>
+        )}
 
       </div>
     </section>

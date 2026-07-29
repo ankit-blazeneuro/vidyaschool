@@ -4,13 +4,14 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
     private const val BASE_URL = "https://api.blazeneuro.com/"
     private const val FRONTEND_URL = "https://vidyaschool.vercel.app/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        level = HttpLoggingInterceptor.Level.HEADERS
     }
 
     val okHttpClient = OkHttpClient.Builder()
@@ -37,9 +38,29 @@ object RetrofitClient {
         }
         .build()
 
+    val streamingOkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(180, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
+        .addInterceptor(socketLoggingInterceptor)
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .header("User-Agent", "Android App")
+                .header("Accept", "text/event-stream")
+                .build()
+            chain.proceed(request)
+        }
+        .build()
+
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .client(okHttpClient)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    private val streamingRetrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .client(streamingOkHttpClient)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
@@ -50,5 +71,6 @@ object RetrofitClient {
         .build()
 
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
+    val streamingAuthApi: AuthApi = streamingRetrofit.create(AuthApi::class.java)
     val frontendApi: AuthApi = frontendRetrofit.create(AuthApi::class.java)
 }

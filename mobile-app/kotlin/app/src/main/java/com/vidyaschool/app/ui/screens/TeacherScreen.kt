@@ -182,14 +182,6 @@ fun TeacherCalendarWidget(
     todayEvents: List<TeacherCalendarEvent>,
     tomorrowEvents: List<TeacherCalendarEvent>
 ) {
-    // Fallback events when API returns nothing
-    val activeTodayEvent      = todayEvents.getOrNull(0)
-        ?: TeacherCalendarEvent(title = "Meeting with Jeremy", time = "10:00 AM")
-    val activeTomorrowEvent1  = tomorrowEvents.getOrNull(0)
-        ?: TeacherCalendarEvent(title = "Physics Study Group",     time = "11:30 AM")
-    val activeTomorrowEvent2  = tomorrowEvents.getOrNull(1)
-        ?: TeacherCalendarEvent(title = "Faculty Department Review", time = "02:00 PM")
-
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -239,33 +231,31 @@ fun TeacherCalendarWidget(
                 letterSpacing = 1.2.sp
             )
             Spacer(modifier = Modifier.height(10.dp))
-            EventRow(
-                title        = activeTodayEvent.title,
-                time         = activeTodayEvent.time,
-                accentColor  = TodayAccent,
-                rowBg        = TodayBg,
-                rowBorder    = TodayBorder,
-                cornerRadius = 14,
-                height       = 42,
-                horizontalPadding = 14
-            )
 
-            // Extra today events (if any)
-            todayEvents.drop(1).take(3).forEach { ev ->
-                Spacer(modifier = Modifier.height(4.dp))
-                EventRow(
-                    title        = ev.title,
-                    time         = ev.time,
-                    accentColor  = TodayAccent,
-                    rowBg        = TodayBg,
-                    rowBorder    = TodayBorder,
-                    cornerRadius = 14,
-                    height       = 40,
-                    horizontalPadding = 14
+            if (todayEvents.isEmpty()) {
+                Text(
+                    text = "No classes scheduled today",
+                    color = Color(0xFF8A8A8A),
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
+            } else {
+                todayEvents.take(4).forEach { ev ->
+                    EventRow(
+                        title        = ev.title,
+                        time         = ev.time,
+                        accentColor  = TodayAccent,
+                        rowBg        = TodayBg,
+                        rowBorder    = TodayBorder,
+                        cornerRadius = 14,
+                        height       = 42,
+                        horizontalPadding = 14
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // ── TOMORROW section ─────────────────────────────────────────────
             Text(
@@ -277,28 +267,24 @@ fun TeacherCalendarWidget(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                EventRow(
-                    title       = activeTomorrowEvent1.title,
-                    time        = activeTomorrowEvent1.time,
-                    accentColor = Purple,
-                    rowBg       = Color.Transparent
+            if (tomorrowEvents.isEmpty()) {
+                Text(
+                    text = "No classes scheduled tomorrow",
+                    color = Color(0xFF8A8A8A),
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
-                EventRow(
-                    title       = activeTomorrowEvent2.title,
-                    time        = activeTomorrowEvent2.time,
-                    accentColor = OrangeRed,
-                    rowBg       = Color.Transparent
-                )
-                // Extra tomorrow events
-                tomorrowEvents.drop(2).take(2).forEachIndexed { idx, ev ->
-                    val color = if (idx % 2 == 0) Purple else OrangeRed
-                    EventRow(
-                        title       = ev.title,
-                        time        = ev.time,
-                        accentColor = color,
-                        rowBg       = Color.Transparent
-                    )
+            } else {
+                val accentColors = listOf(Purple, OrangeRed, TodayAccent, Purple)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    tomorrowEvents.take(4).forEachIndexed { idx, ev ->
+                        EventRow(
+                            title       = ev.title,
+                            time        = ev.time,
+                            accentColor = accentColors[idx % accentColors.size],
+                            rowBg       = Color.Transparent
+                        )
+                    }
                 }
             }
         }
@@ -349,11 +335,12 @@ fun TeacherScreen(
     }
 
     LaunchedEffect(sessionToken) {
-        // Fetch calendar events from the frontend API
+        // Fetch calendar events directly from Python backend (api.blazeneuro.com)
+        // using Bearer token — same auth as all other API calls
         calendarLoading = true
         try {
             if (!sessionToken.isNullOrEmpty()) {
-                val res = RetrofitClient.frontendApi.getTeacherCalendar("Bearer $sessionToken")
+                val res = RetrofitClient.authApi.getTeacherCalendar("Bearer $sessionToken")
                 if (res.isSuccessful) {
                     val data = res.body()
                     data?.todayDateStr?.let { todayDateStr = it }

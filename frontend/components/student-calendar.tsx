@@ -34,41 +34,6 @@ const HOURS = Array.from({ length: TOTAL_HOURS }, (_, i) => {
   return `${h - 12} pm`
 })
 
-const defaultEvents: CalendarEvent[] = [
-  {
-    hour: 2, // 10 am
-    title: "Meeting with Jeremy",
-    time: "10:00 AM",
-    color: {
-      bg:     "bg-amber-50/60 dark:bg-amber-500/5",
-      border: "border-amber-200/50 dark:border-amber-500/20 border-l-amber-500 dark:border-l-amber-500 border-l-4",
-      title:  "text-amber-900 dark:text-amber-200",
-      time:   "text-amber-700/80 dark:text-amber-400/80",
-    },
-  },
-  {
-    hour: 5, // 1 pm
-    title: "Physics Study Group",
-    time: "1:00 PM",
-    color: {
-      bg:     "bg-violet-50/60 dark:bg-violet-500/5",
-      border: "border-violet-200/50 dark:border-violet-500/20 border-l-violet-500 dark:border-l-violet-500 border-l-4",
-      title:  "text-violet-900 dark:text-violet-200",
-      time:   "text-violet-700/80 dark:text-violet-400/80",
-    },
-  },
-  {
-    hour: 0, // 8 am
-    title: "Morning Assembly",
-    time: "8:00 AM",
-    color: {
-      bg:     "bg-sky-50/60 dark:bg-sky-500/5",
-      border: "border-sky-200/50 dark:border-sky-500/20 border-l-sky-500 dark:border-l-sky-500 border-l-4",
-      title:  "text-sky-900 dark:text-sky-200",
-      time:   "text-sky-700/80 dark:text-sky-400/80",
-    },
-  },
-]
 
 interface StudentCalendarProps {
   apiUrl?: string
@@ -132,8 +97,8 @@ export function StudentCalendar({
     return () => clearInterval(interval)
   }, [])
 
-  // Use default events as fallback when no live data and loading is done
-  const displayEvents = !loading && events.length === 0 ? defaultEvents : events
+  // Show real events from API only — empty grid is correct when no timetable set up
+  const displayEvents = events
 
   return (
     <section className="mx-4 lg:mx-6 rounded-2xl bg-zinc-100 dark:bg-[#121212] overflow-hidden">
@@ -237,7 +202,7 @@ export function StudentCalendar({
         </div>
 
         {/* ── Empty state when no events & not loading ── */}
-        {!loading && displayEvents.length === 0 && (
+        {!loading && events.length === 0 && (
           <p className="text-xs text-muted-foreground/60 text-center mt-4 pb-1">
             No classes scheduled for today
           </p>

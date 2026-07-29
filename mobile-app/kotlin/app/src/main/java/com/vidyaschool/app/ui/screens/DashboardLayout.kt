@@ -311,6 +311,10 @@ fun DashboardLayout(
     var showNotifications by remember { mutableStateOf(false) }
     var hasUnreadNotifications by remember { mutableStateOf(false) }
     var showComplaintDialog by remember { mutableStateOf(false) }
+    var showAiDialog by remember { mutableStateOf(false) }
+    var showAgentScreen by remember { mutableStateOf(false) }
+    var selectedChatId by remember { mutableStateOf<String?>(null) }
+    var userChats by remember { mutableStateOf<List<com.vidyaschool.app.api.ChatItem>>(emptyList()) }
     var sidebarNotes by remember { mutableStateOf<List<ParsedNote>>(emptyList()) }
     var sidebarNotesLoading by remember { mutableStateOf(false) }
     var selectedSidebarNote by remember { mutableStateOf<ParsedNote?>(null) }
@@ -331,12 +335,31 @@ fun DashboardLayout(
         } catch (e: Exception) { }
     }
 
+    // Fetch user recent chats when sidebar opens
+    LaunchedEffect(drawerState.isOpen) {
+        if (drawerState.isOpen) {
+            try {
+                val token = sessionManager.getSessionToken()
+                if (!token.isNullOrEmpty()) {
+                    val res = RetrofitClient.authApi.getUserChats("Bearer $token")
+                    if (res.isSuccessful && res.body() != null) {
+                        userChats = res.body()!!
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("Sidebar", "Fetch user chats failed: ${e.message}")
+            }
+        }
+    }
+
     // Handle system Back button press: go 1 step back instead of exiting app
     val isBackEnabled = selectedSidebarNote != null ||
             drawerState.isOpen ||
             activeDocPath != null ||
             showNotifications ||
             showComplaintDialog ||
+            showAiDialog ||
+            showAgentScreen ||
             selectedTab != "home"
 
     BackHandler(enabled = isBackEnabled) {
@@ -346,6 +369,8 @@ fun DashboardLayout(
             activeDocPath != null -> activeDocPath = null
             showNotifications -> showNotifications = false
             showComplaintDialog -> showComplaintDialog = false
+            showAiDialog -> showAiDialog = false
+            showAgentScreen -> showAgentScreen = false
             selectedTab != "home" -> selectedTab = "home"
         }
     }
@@ -945,6 +970,16 @@ fun DashboardLayout(
                     }
                     // ─────────────────────────────────────────────────────────────
 
+                    if (!currentRole.value.equals("student", ignoreCase = true)) {
+                        DrawerLink(
+                            label = "Agent",
+                            iconRes = R.drawable.ic_custom_ai
+                        ) {
+                            scope.launch { drawerState.close() }
+                            showAgentScreen = true
+                        }
+                    }
+
                     DrawerLink(
                         label = "File a Complaint",
                         iconRes = R.drawable.ic_custom_complaint
@@ -958,6 +993,35 @@ fun DashboardLayout(
                         tab = "sessions",
                         badge = sidebarSessionsCount?.toString()
                     )
+
+                    // ── Recent Agent Chats from Backend ────────────────────────────
+                    if (userChats.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)
+                        )
+
+                        Text(
+                            text = "RECENT CHATS",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                        )
+
+                        userChats.take(5).forEach { chat ->
+                            DrawerLink(
+                                label = chat.title?.ifEmpty { "Previous Chat" } ?: "Previous Chat",
+                                iconRes = R.drawable.ic_custom_chat_round
+                            ) {
+                                scope.launch { drawerState.close() }
+                                selectedChatId = chat.id
+                                showAgentScreen = true
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -1309,6 +1373,22 @@ fun DashboardLayout(
         NotificationDrawer(
             sessionManager = sessionManager,
             onDismiss = { showNotifications = false }
+        )
+    }
+
+    if (showAiDialog) {
+        TeacherAIDialog(onDismiss = { showAiDialog = false })
+    }
+
+    if (showAgentScreen) {
+        AgentScreen(
+            teacherName = currentName.value.ifEmpty { "Teacher" },
+            chatId = selectedChatId,
+            sessionToken = sessionManager.getSessionToken(),
+            onBack = {
+                showAgentScreen = false
+                selectedChatId = null
+            }
         )
     }
 
@@ -3261,6 +3341,161 @@ fun parseIsoTimestamp(isoString: String): Long {
     } catch (e: Exception) {
         0L
     }
+}
+
+@Composable
+fun TeacherAIDialog(
+    onDismiss: () -> Unit
+) {
+    var promptText by remember { mutableStateOf("") }
+    var aiResponse by remember { mutableStateOf<String?>(null) }
+    var isGenerating by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val quickPrompts = listOf(
+        "Generate 5 Math Quiz Questions",
+        "Create Lesson Plan for Physics",
+        "Draft Announcement for Parents",
+        "Class Activity Ideas for Tomorrow"
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_custom_ai),
+                    contentDescription = "Agent Assistant",
+                    tint = Color(0xFF8B5CF6),
+                    modifier = Modifier.size(26.dp)
+                )
+                Text(
+                    text = "AI Teaching Agent",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Ask your AI Agent to help prepare lesson plans, draft announcements, or create quiz questions.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+
+                // Quick Prompt Chips
+                Text(
+                    text = "Quick Prompts:",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(quickPrompts) { prompt ->
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                            modifier = Modifier.clickable {
+                                promptText = prompt
+                            }
+                        ) {
+                            Text(
+                                text = prompt,
+                                fontSize = 11.sp,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                // Prompt Input
+                com.vidyaschool.app.ui.shadcn.Input(
+                    value = promptText,
+                    onValueChange = { promptText = it },
+                    placeholder = "Type your prompt here...",
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                if (isGenerating) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = Color(0xFF8B5CF6)
+                        )
+                        Text(
+                            text = "Agent is thinking...",
+                            fontSize = 13.sp,
+                            color = Color(0xFF8B5CF6)
+                        )
+                    }
+                }
+
+                if (aiResponse != null) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFF1E1E24),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF8B5CF6).copy(alpha = 0.3f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 180.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            Text(
+                                text = aiResponse!!,
+                                fontSize = 13.sp,
+                                color = Color.White,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (promptText.isNotBlank()) {
+                        isGenerating = true
+                        aiResponse = null
+                        scope.launch {
+                            delay(1200)
+                            isGenerating = false
+                            aiResponse = "🤖 Agent Response for: \"${promptText}\"\n\n1. Overview: Key learning objectives for your class.\n2. Key Topics: Core concepts and practical exercises.\n3. Summary Note: Ready for students."
+                        }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6))
+            ) {
+                Text("Ask Agent", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

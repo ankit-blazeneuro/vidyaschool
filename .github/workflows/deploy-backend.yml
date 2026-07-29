@@ -1,0 +1,45 @@
+name: Deploy Backend to AWS Lightsail
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"          # only runs when backend files change
+
+jobs:
+  deploy:
+    name: SSH Deploy to Lightsail
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout code ────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. SSH into Lightsail and deploy ────────────────────────────────────
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+
+            echo "📦 Pulling latest code..."
+            cd /home/ubuntu/vidyaschool/backend
+            git pull origin main
+
+            echo "🔧 Activating virtualenv..."
+            source .venv/bin/activate
+
+            echo "📥 Installing/updating dependencies..."
+            pip install -q -r requirements.txt
+
+            echo "🔄 Restarting backend service..."
+            sudo systemctl restart vidyaschool-backend
+
+            echo "✅ Deployment complete!"
+            sudo systemctl status vidyaschool-backend --no-pager

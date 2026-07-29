@@ -792,7 +792,10 @@ async def run_agent_loop(messages_payload: list, room_id: str, current_user: Use
             break
 
     tool_keywords = [
-        "mark", "marks", "score", "grade", "exam", "roster", "student", "leaderboard",
+        "mark", "marks", "score", "scores", "grade", "grades", "exam", "exams",
+        "roster", "student", "students", "leaderboard", "top", "performer", "performers",
+        "rank", "ranking", "topper", "toppers", "best", "highest", "average", "class",
+        "result", "results", "who", "which", "list", "show",
         "notice", "publish", "announce", "timetable", "schedule", "slot", "note", "planner",
         "push", "notification", "send", "yes", "confirm"
     ]
@@ -876,6 +879,46 @@ async def run_agent_loop(messages_payload: list, room_id: str, current_user: Use
 
 
 
+def generate_ai_chat_title(user_message: str) -> str:
+    """Generate a short 3-6 word title using AI model or smart summarizer."""
+    if not user_message or not user_message.strip():
+        return "New AI Chat"
+    
+    clean_msg = user_message.strip()
+    
+    payload = {
+        "model": CHAT_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You generate short 3-6 word titles for chat sessions based on the user's initial prompt. Output ONLY the title, no quotes, no period."
+            },
+            {
+                "role": "user",
+                "content": f"Title for: {clean_msg[:150]}"
+            }
+        ],
+        "max_tokens": 15,
+        "temperature": 0.3
+    }
+    headers = {
+        "Authorization": f"Bearer {NVIDIA_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    try:
+        resp = pyrequests.post(NVIDIA_BASE_URL, headers=headers, json=payload, timeout=2.5)
+        if resp.status_code == 200:
+            title = resp.json()["choices"][0]["message"]["content"].strip().strip('"').strip("'")
+            if title and len(title) > 2:
+                return title[:60]
+    except Exception:
+        pass
+        
+    words = clean_msg.split()
+    fallback_title = " ".join(words[:5]).capitalize()
+    return fallback_title[:50]
+
+
 @router.post("/api/chats")
 async def start_chat(
     req: ChatInitRequest,
@@ -884,14 +927,19 @@ async def start_chat(
 ):
     # 1. Check if chat room already exists and prevent hijacked direct object spoofing (IdOR)
     room = db.query(ChatRoom).filter(ChatRoom.id == req.uuid).first()
+    ai_title = generate_ai_chat_title(req.message)
+
     if room:
         if room.user_id != current_user.id:
             raise HTTPException(status_code=403, detail="Not authorized to write to this room")
+        if room.title in ["AI Chat Assistant", "AI Teaching Assistant", "New AI Chat", ""]:
+            room.title = ai_title
+            db.commit()
     else:
         room = ChatRoom(
             id=req.uuid,
             user_id=current_user.id,
-            title=req.title,
+            title=ai_title,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
@@ -1034,12 +1082,12 @@ async def send_chat_message(
     db: Session = Depends(get_db)
 ):
     # Upsert room — create if missing so this never 404s on a race condition
-    room = db.query(ChatRoom).filter(ChatRoom.id == uuid_val).first()
     if not room:
+        ai_title = generate_ai_chat_title(req.message)
         room = ChatRoom(
             id=uuid_val,
             user_id=current_user.id,
-            title=req.title or "AI Chat Assistant",
+            title=ai_title,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
@@ -1059,9 +1107,9 @@ async def send_chat_message(
     )
     db.add(user_msg)
 
-    # Update title dynamically if provided
-    if req.title and room.title != req.title:
-        room.title = req.title
+    # Auto-generate AI title if room has a generic/placeholder title
+    if room.title in ["AI Chat Assistant", "AI Teaching Assistant", "New AI Chat", ""]:
+        room.title = generate_ai_chat_title(req.message)
 
     db.commit()
 
