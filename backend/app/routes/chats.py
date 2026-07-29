@@ -828,7 +828,10 @@ async def run_agent_loop(messages_payload: list, room_id: str, current_user: Use
                     "content": f"Yes, confirmed. Please send this exact message:\n\n{drafted_content}"
                 }]
 
-    if needs_tool_check and (not is_draft_first or is_confirmation):
+    greetings = ["hi", "hello", "hey", "good morning", "good evening", "greetings", "hi there"]
+    needs_tool_check = last_user_msg.strip() not in greetings and (not is_draft_first or is_confirmation)
+
+    if needs_tool_check:
         tool_payload = {
             "model": TOOL_MODEL,
             "messages": full_history,
@@ -841,7 +844,7 @@ async def run_agent_loop(messages_payload: list, room_id: str, current_user: Use
 
         try:
             async with httpx.AsyncClient() as client:
-                tool_res = await client.post(NVIDIA_BASE_URL, headers=headers, json=tool_payload, timeout=3.0)
+                tool_res = await client.post(NVIDIA_BASE_URL, headers=headers, json=tool_payload, timeout=15.0)
 
             if tool_res.status_code == 200:
                 tool_data = tool_res.json()
@@ -868,8 +871,8 @@ async def run_agent_loop(messages_payload: list, room_id: str, current_user: Use
                         media_type="text/event-stream"
                     )
 
-        except Exception:
-            pass  # Fall through to direct streaming response
+        except Exception as err:
+            print(f"[Agent Tool Execution Error]: {err}")
 
     # Stream response directly with system context included
     return StreamingResponse(
