@@ -123,6 +123,19 @@ data class SliderImage(
     @SerializedName("target_classes") val targetClasses: String = "all"
 )
 
+data class TeacherCalendarEvent(
+    val id: String? = null,
+    val title: String,
+    val time: String,
+    val room: String? = null
+)
+
+data class TeacherCalendarResponse(
+    @SerializedName("todayDateStr") val todayDateStr: String? = null,
+    @SerializedName("todayEvents") val todayEvents: List<TeacherCalendarEvent>? = null,
+    @SerializedName("tomorrowEvents") val tomorrowEvents: List<TeacherCalendarEvent>? = null
+)
+
 data class FeeInstallment(
     val id: String,
     @SerializedName("user_id") val userId: String,
@@ -318,6 +331,11 @@ interface AuthApi {
     suspend fun getStudentNotes(
         @Header("Authorization") authHeader: String
     ): Response<StudentNotesResponse>
+
+    @GET("api/teacher/calendar")
+    suspend fun getTeacherCalendar(
+        @Header("Authorization") authHeader: String
+    ): Response<TeacherCalendarResponse>
 }
 
 data class NotificationHistoryItem(
