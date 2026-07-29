@@ -5,6 +5,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -51,6 +54,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.isSystemInDarkTheme
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.viewinterop.AndroidView
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.auth.SessionManager
 import com.vidyaschool.app.api.UpdateChecker
@@ -103,6 +112,7 @@ fun DashboardHeader(
     title: String,
     subtitle: String,
     onNotificationClick: () -> Unit,
+    hasUnreadNotifications: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val menuClick = LocalMenuClickHandler.current
@@ -162,12 +172,25 @@ fun DashboardHeader(
                 )
                 .clip(CircleShape)
         ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_custom_notification),
-                contentDescription = "Notifications",
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.onBackground
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_custom_notification),
+                    contentDescription = "Notifications",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onBackground
+                )
+                if (hasUnreadNotifications) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .offset(x = 3.dp, y = (-2).dp)
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF3B82F6))
+                            .border(1.5.dp, MaterialTheme.colorScheme.background, CircleShape)
+                    )
+                }
+            }
         }
     }
 }
@@ -178,6 +201,7 @@ fun DashboardStickyHeader(
     headerAlpha: Float,
     headerSlide: Float,
     onNotificationClick: () -> Unit,
+    hasUnreadNotifications: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val menuClick = LocalMenuClickHandler.current
@@ -212,7 +236,20 @@ fun DashboardStickyHeader(
                     .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
                     .clip(CircleShape)
             ) {
-                Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(painter = painterResource(id = R.drawable.ic_custom_notification), contentDescription = "Notifications", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onBackground)
+                    if (hasUnreadNotifications) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = 3.dp, y = (-2).dp)
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF3B82F6))
+                                .border(1.5.dp, MaterialTheme.colorScheme.background, CircleShape)
+                        )
+                    }
+                }
             }
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f))
@@ -231,7 +268,7 @@ fun DashboardLayout(
     onThemeChange: (String) -> Unit,
     onLogout: () -> Unit,
     onShowLibrary: (() -> Unit)? = null,
-    homeContent: @Composable (onNotificationClick: () -> Unit) -> Unit
+    homeContent: @Composable (onNotificationClick: () -> Unit, hasUnreadNotifications: Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -251,9 +288,47 @@ fun DashboardLayout(
     var activeDocFallback by remember { mutableStateOf<String?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
     var showNotifications by remember { mutableStateOf(false) }
+    var hasUnreadNotifications by remember { mutableStateOf(false) }
     var showComplaintDialog by remember { mutableStateOf(false) }
+    var sidebarNotes by remember { mutableStateOf<List<ParsedNote>>(emptyList()) }
+    var sidebarNotesLoading by remember { mutableStateOf(false) }
+    var selectedSidebarNote by remember { mutableStateOf<ParsedNote?>(null) }
+    var sidebarNotesSubject by remember { mutableStateOf("All") }
+    var sidebarSessionsCount by remember { mutableStateOf<Int?>(null) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     
+    // Check initial notification history on launch to set unread badge dot
+    LaunchedEffect(Unit) {
+        try {
+            val token = sessionManager.getSessionToken()
+            if (!token.isNullOrEmpty()) {
+                val res = RetrofitClient.authApi.getNotificationHistory("Bearer $token", 30)
+                if (res.isSuccessful && !res.body().isNullOrEmpty()) {
+                    hasUnreadNotifications = true
+                }
+            }
+        } catch (e: Exception) { }
+    }
+
+    // Handle system Back button press: go 1 step back instead of exiting app
+    val isBackEnabled = selectedSidebarNote != null ||
+            drawerState.isOpen ||
+            activeDocPath != null ||
+            showNotifications ||
+            showComplaintDialog ||
+            selectedTab != "home"
+
+    BackHandler(enabled = isBackEnabled) {
+        when {
+            selectedSidebarNote != null -> selectedSidebarNote = null
+            drawerState.isOpen -> scope.launch { drawerState.close() }
+            activeDocPath != null -> activeDocPath = null
+            showNotifications -> showNotifications = false
+            showComplaintDialog -> showComplaintDialog = false
+            selectedTab != "home" -> selectedTab = "home"
+        }
+    }
+
     val triggerRefresh: () -> Unit = {
         isRefreshing = true
         scope.launch {
@@ -340,7 +415,36 @@ fun DashboardLayout(
         }
     }
 
-    // Global Socket for receiving push notifications when online
+    // Fetch notes and active sessions for sidebar whenever drawer opens
+    LaunchedEffect(drawerState.currentValue) {
+        if (drawerState.currentValue == DrawerValue.Open) {
+            val token = sessionManager.getSessionToken()
+            if (!token.isNullOrEmpty()) {
+                if (currentRole.value.equals("student", ignoreCase = true) && sidebarNotes.isEmpty() && !sidebarNotesLoading) {
+                    sidebarNotesLoading = true
+                    try {
+                        val res = RetrofitClient.authApi.getStudentNotes("Bearer $token")
+                        if (res.isSuccessful) {
+                            sidebarNotes = (res.body()?.notes ?: emptyList()).map { parseNoteContent(it) }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("Sidebar", "Notes fetch failed: ${e.message}")
+                    } finally {
+                        sidebarNotesLoading = false
+                    }
+                }
+                try {
+                    val sRes = RetrofitClient.authApi.getActiveSessions("Bearer $token")
+                    if (sRes.isSuccessful && sRes.body() != null) {
+                        sidebarSessionsCount = sRes.body()!!.size
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("Sidebar", "Sessions count fetch failed: ${e.message}")
+                }
+            }
+        }
+    }
+
     LaunchedEffect(currentUserId.value) {
         val userId = currentUserId.value
         if (userId.isEmpty()) return@LaunchedEffect
@@ -368,6 +472,7 @@ fun DashboardLayout(
             }
             
             globalSocket.on("notification") { args ->
+                hasUnreadNotifications = true
                 if (args.isNotEmpty()) {
                     val obj = args[0] as? org.json.JSONObject
                     if (obj != null) {
@@ -489,15 +594,14 @@ fun DashboardLayout(
                         }
                     } // end outer SpaceBetween Row
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Nav item helper
+                    // Nav item helper (defined here so it's in scope for both scroll section AND footer)
                     @Composable
                     fun DrawerLink(
                         label: String,
                         icon: ImageVector? = null,
                         iconRes: Int? = null,
                         tab: String? = null,
+                        badge: String? = null,
                         isDestructive: Boolean = false,
                         onClick: (() -> Unit)? = null
                     ) {
@@ -545,10 +649,280 @@ fun DashboardLayout(
                                 text = label,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = textColor
+                                color = textColor,
+                                modifier = Modifier.weight(1f)
                             )
+                            if (badge != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF3B82F6)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = badge,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        style = androidx.compose.ui.text.TextStyle(
+                                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                                includeFontPadding = false
+                                            ),
+                                            lineHeight = 10.sp
+                                        )
+                                    )
+                                }
+                            }
                         }
                     }
+
+                    // Scrollable middle section
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+
+
+
+                    // ── Inline Notes section (student only) ──────────────────────
+                    if (currentRole.value.equals("student", ignoreCase = true)) {
+                        val noteAccent: @Composable (String) -> Color = { tag ->
+                            when (tag) {
+                                "yellow" -> Color(0xFFF59E0B)
+                                "blue"   -> Color(0xFF38BDF8)
+                                "green"  -> Color(0xFF34D399)
+                                "pink"   -> Color(0xFFF472B6)
+                                "purple" -> Color(0xFFA78BFA)
+                                else     -> MaterialTheme.colorScheme.primary
+                            }
+                        }
+
+                        val sidebarSubjects = remember(sidebarNotes) {
+                            val s = linkedSetOf("All")
+                            sidebarNotes.forEach { s.add(it.subject) }
+                            s.toList()
+                        }
+                        val sidebarFiltered = remember(sidebarNotes, sidebarNotesSubject) {
+                            if (sidebarNotesSubject == "All") sidebarNotes
+                            else sidebarNotes.filter { it.subject.equals(sidebarNotesSubject, ignoreCase = true) }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Section header
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_custom_notes),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(15.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "Notes",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                                    letterSpacing = 0.5.sp
+                                )
+                            }
+                            if (sidebarNotes.isNotEmpty()) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(0xFF3B82F6)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "${sidebarNotes.size}",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        style = androidx.compose.ui.text.TextStyle(
+                                            platformStyle = androidx.compose.ui.text.PlatformTextStyle(
+                                                includeFontPadding = false
+                                            ),
+                                            lineHeight = 10.sp
+                                        )
+                                    )
+                                }
+                            }
+                        }
+
+                        // Subject filter pills (only if multiple subjects)
+                        if (!sidebarNotesLoading && sidebarSubjects.size > 1) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState())
+                                    .padding(start = 16.dp, end = 16.dp, bottom = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                sidebarSubjects.forEach { sub ->
+                                    val sel = sub == sidebarNotesSubject
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(
+                                                if (sel) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f)
+                                            )
+                                            .clickable(
+                                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                                indication = null
+                                            ) { sidebarNotesSubject = sub }
+                                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = sub,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (sel) MaterialTheme.colorScheme.onPrimary
+                                                    else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // Notes list
+                        when {
+                            sidebarNotesLoading -> {
+                                // Horizontal skeleton shimmer
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState())
+                                        .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    repeat(3) {
+                                        Box(
+                                            modifier = Modifier
+                                                .width(170.dp)
+                                                .height(124.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
+                                        )
+                                    }
+                                }
+                            }
+                            sidebarFiltered.isEmpty() -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "No notes yet",
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
+                                    )
+                                }
+                            }
+                            else -> {
+                                // Horizontal scrollable cards — no scrollbar
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(
+                                            state = rememberScrollState(),
+                                            enabled = true
+                                        )
+                                        .padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    sidebarFiltered.forEach { note ->
+                                        val accent = noteAccent(note.color)
+                                        Column(
+                                            modifier = Modifier
+                                                .width(170.dp)
+                                                .height(124.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
+                                                .clickable(
+                                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                                    indication = null
+                                                ) {
+                                                    scope.launch { drawerState.close() }
+                                                    selectedSidebarNote = note
+                                                }
+                                                .padding(10.dp)
+                                        ) {
+                                            // Subject badge + accent dot
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(6.dp)
+                                                        .clip(CircleShape)
+                                                        .background(accent)
+                                                )
+                                                Text(
+                                                    text = note.subject,
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = accent,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            // Title
+                                            Text(
+                                                text = note.title,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = MaterialTheme.colorScheme.onBackground,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                                lineHeight = 14.sp
+                                            )
+                                            Spacer(modifier = Modifier.weight(1f))
+                                            // Teacher + timestamp
+                                            Text(
+                                                text = note.teacherName,
+                                                fontSize = 9.sp,
+                                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = note.timestamp,
+                                                fontSize = 9.sp,
+                                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 2.dp),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)
+                        )
+                    }
+                    // ─────────────────────────────────────────────────────────────
 
                     DrawerLink(
                         label = "File a Complaint",
@@ -560,21 +934,70 @@ fun DashboardLayout(
                     DrawerLink(
                         label = "Manage Sessions",
                         iconRes = R.drawable.ic_custom_sessions,
-                        tab = "sessions"
+                        tab = "sessions",
+                        badge = sidebarSessionsCount?.toString()
                     )
 
-                    Spacer(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f)
-                    )
+                    } // end scrollable middle Column
 
-                    DrawerLink(
-                        label = "Log Out",
-                        icon = Icons.Default.Close,
-                        isDestructive = true
-                    ) { onLogout() }
+                    // Quick Search Bar in sidebar footer (placed in spot of removed Log Out button)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp)
+                            .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 14.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
+                            .clickable {
+                                scope.launch { drawerState.close() }
+                                selectedTab = "search"
+                            }
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_custom_search),
+                                    contentDescription = "Search",
+                                    modifier = Modifier.size(22.dp),
+                                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f)
+                                )
+                                Text(
+                                    text = "Quick Search",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .height(22.dp)
+                                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color.Transparent)
+                                    .padding(horizontal = 7.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "⌘F",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         ) {
@@ -786,7 +1209,7 @@ fun DashboardLayout(
                             onRefresh = triggerRefresh,
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            homeContent { showNotifications = true }
+                            homeContent({ showNotifications = true }, hasUnreadNotifications)
                         }
                     }
                     "notice" -> {
@@ -861,9 +1284,18 @@ fun DashboardLayout(
     }
 
     if (showNotifications) {
+        hasUnreadNotifications = false
         NotificationDrawer(
             sessionManager = sessionManager,
             onDismiss = { showNotifications = false }
+        )
+    }
+
+    // Note detail screen (opened in new full screen when note is clicked)
+    if (selectedSidebarNote != null) {
+        NoteDetailScreen(
+            note = selectedSidebarNote!!,
+            onBack = { selectedSidebarNote = null }
         )
     }
 
@@ -1400,35 +1832,92 @@ fun SearchTabContent(
                 .statusBarsPadding()
                 .imePadding()
         ) {
-            // Search Input styled like shadcn
-            Input(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = "Search pages, users, docs...",
+            // Search Header container matching Web App CustomSearchDialog UI
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 4.dp),
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        modifier = Modifier.size(18.dp)
-                    )
-                },
-                trailingIcon = {
+                    .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
+                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 14.dp, vertical = 11.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_custom_search),
+                            contentDescription = "Search",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f)
+                        )
+                        Box(modifier = Modifier.weight(1f)) {
+                            if (searchQuery.isEmpty()) {
+                                Text(
+                                    text = "Quick Search",
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f)
+                                )
+                            }
+                            androidx.compose.foundation.text.BasicTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                textStyle = androidx.compose.ui.text.TextStyle(
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                ),
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
                     if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
+                        IconButton(
+                            onClick = { searchQuery = "" },
+                            modifier = Modifier.size(20.dp)
+                        ) {
                             Icon(
-                                Icons.Default.Close,
+                                imageVector = Icons.Default.Close,
                                 contentDescription = "Clear",
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                            )
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "⌘F",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f)
                             )
                         }
                     }
                 }
-            )
+            }
+
+            if (isLoading) {
+                Text(
+                    text = "Searching in pages & docs...",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF3B82F6),
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -4061,6 +4550,907 @@ fun FeesTabContent(
         }
     } // end Box
   } // end PullToRefreshBox
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Notes Drawer  (Student sidebar → "Notes")
+// Mirrors the web frontend's StudentNotes component fetch pattern:
+//   1. Try /api/student/notes on the backend
+//   2. Display notes as horizontal scrollable cards with subject pills
+// ──────────────────────────────────────────────────────────────────
+
+private fun timeAgoNotes(dateStr: String?): String {
+    if (dateStr.isNullOrBlank()) return "recently"
+    return try {
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault())
+        sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        val date = sdf.parse(dateStr) ?: return "recently"
+        val diff = System.currentTimeMillis() - date.time
+        val m = (diff / 60000).toInt()
+        when {
+            m < 1  -> "just now"
+            m < 60 -> "${m}m ago"
+            m < 1440 -> "${m / 60}h ago"
+            m < 2880 -> "yesterday"
+            else -> "${m / 1440}d ago"
+        }
+    } catch (e: Exception) { "recently" }
+}
+
+private data class NotePageItem(
+    val pageNum: Int,
+    val content: String
+)
+
+private data class ParsedNote(
+    val id: String,
+    val subject: String,
+    val title: String,
+    val bullets: List<String>,
+    val body: String,
+    val pages: List<NotePageItem>,
+    val rawContent: String,
+    val teacherName: String,
+    val timestamp: String,
+    val color: String,
+    val className: String?,
+    val sectionName: String?,
+    val pdfUrl: String? = null
+)
+
+private fun parseNoteContent(note: com.vidyaschool.app.api.StudentNote): ParsedNote {
+    var bullets = mutableListOf<String>()
+    var body = ""
+    val content = note.content ?: ""
+    val pageItems = mutableListOf<NotePageItem>()
+
+    if (content.startsWith("{")) {
+        try {
+            val json = org.json.JSONObject(content)
+            val pagesArr = json.optJSONArray("pages")
+            val allTexts = mutableListOf<String>()
+            if (pagesArr != null && pagesArr.length() > 0) {
+                for (i in 0 until pagesArr.length()) {
+                    val pageObj = pagesArr.optJSONObject(i) ?: continue
+                    val textsArr = pageObj.optJSONArray("texts") ?: continue
+                    val pageLines = mutableListOf<String>()
+                    for (j in 0 until textsArr.length()) {
+                        val txt = textsArr.optJSONObject(j)?.optString("text") ?: continue
+                        txt.split("\n").filter { it.isNotBlank() }.forEach { 
+                            pageLines.add(it.trim()) 
+                            allTexts.add(it.trim())
+                        }
+                    }
+                    if (pageLines.isNotEmpty()) {
+                        pageItems.add(NotePageItem(pageNum = i + 1, content = pageLines.joinToString("\n")))
+                    }
+                }
+            }
+            val previewTexts = allTexts.filter { !it.startsWith("--- Page") }
+            val bulletLines = previewTexts.filter { it.startsWith("•") || it.startsWith("-") || it.startsWith("*") || it.matches(Regex("^\\d+\\..*")) }
+            if (bulletLines.isNotEmpty()) {
+                bullets = bulletLines.take(3).map { it.replace(Regex("^[•\\-*\\s]+|^\\d+\\.\\s*"), "").trim() }.toMutableList()
+                body = previewTexts.filter { it !in bulletLines }.joinToString(" ")
+            } else {
+                bullets = previewTexts.filter { it.length < 60 }.take(3).toMutableList()
+                body = previewTexts.filter { it !in bullets }.joinToString(" ")
+            }
+        } catch (e: Exception) { body = content }
+    } else if (content.isNotBlank()) {
+        val lines = content.split("\n").map { it.trim() }.filter { it.isNotBlank() }
+        val bulletLines = lines.filter { it.startsWith("•") || it.startsWith("-") || it.startsWith("*") || it.matches(Regex("^\\d+\\..*")) }
+        if (bulletLines.isNotEmpty()) {
+            bullets = bulletLines.take(3).map { it.replace(Regex("^[•\\-*\\s]+|^\\d+\\.\\s*"), "").trim() }.toMutableList()
+            body = lines.filter { it !in bulletLines }.joinToString(" ")
+        } else {
+            bullets = lines.take(2).toMutableList()
+            body = lines.drop(2).joinToString(" ")
+        }
+    }
+
+    if (pageItems.isEmpty()) {
+        val raw = if (content.isNotBlank()) content else body
+        pageItems.add(NotePageItem(pageNum = 1, content = raw))
+    }
+
+    if (bullets.isEmpty()) bullets = mutableListOf("No text highlights", "Tap to view full content")
+    if (body.isBlank()) body = "Tap to view note content."
+    if (body.length > 100) body = body.substring(0, 97) + "..."
+
+    return ParsedNote(
+        id = note.id,
+        subject = note.subject?.ifBlank { "General" } ?: "General",
+        title = note.title?.ifBlank { "Untitled Note" } ?: "Untitled Note",
+        bullets = bullets,
+        body = body,
+        pages = pageItems,
+        rawContent = content,
+        teacherName = note.teacherName?.ifBlank { "Unknown Teacher" } ?: "Unknown Teacher",
+        timestamp = timeAgoNotes(note.updatedAt ?: note.createdAt),
+        color = note.color ?: "default",
+        className = note.targetClass,
+        sectionName = note.section,
+        pdfUrl = note.pdfUrl
+    )
+}
+
+private @Composable
+fun NoteMarkdownMathView(
+    markdownContent: String,
+    modifier: Modifier = Modifier
+) {
+    val encodedContent = remember(markdownContent) {
+        try {
+            java.net.URLEncoder.encode(markdownContent, "UTF-8").replace("+", "%20")
+        } catch (e: Exception) { "" }
+    }
+
+    val htmlData = remember(encodedContent) {
+        """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <style>
+          * { box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 14px;
+            margin: 0;
+            color: #334155;
+            background-color: transparent;
+            font-size: 14px;
+            line-height: 1.6;
+          }
+          @media (prefers-color-scheme: dark) {
+            body {
+              color: #cbd5e1;
+            }
+          }
+          h1, h2, h3, h4 { margin-top: 1em; margin-bottom: 0.4em; font-weight: 700; color: inherit; }
+          h1 { font-size: 1.4em; }
+          h2 { font-size: 1.2em; }
+          p { margin-bottom: 0.8em; }
+          code { background: rgba(148, 163, 184, 0.2); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+          pre { background: rgba(148, 163, 184, 0.15); padding: 12px; border-radius: 8px; overflow-x: auto; }
+          blockquote { border-left: 4px solid #38bdf8; padding-left: 12px; margin-left: 0; opacity: 0.8; }
+          table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+          th, td { border: 1px solid rgba(148, 163, 184, 0.3); padding: 8px 10px; text-align: left; font-size: 0.9em; }
+          th { background: rgba(148, 163, 184, 0.15); }
+          ul, ol { padding-left: 20px; }
+          .mjx-chtml { overflow-x: auto; max-width: 100%; }
+        </style>
+        </head>
+        <body>
+        <div id="content"></div>
+        <script>
+          try {
+            const raw = decodeURIComponent("$encodedContent");
+            document.getElementById('content').innerHTML = typeof marked !== 'undefined' ? marked.parse(raw) : raw;
+            if (window.MathJax && MathJax.typesetPromise) {
+              MathJax.typesetPromise();
+            }
+          } catch(e) {
+            document.getElementById('content').innerText = "$encodedContent";
+          }
+        </script>
+        </body>
+        </html>
+        """.trimIndent()
+    }
+
+    AndroidView(
+        factory = { ctx ->
+            WebView(ctx).apply {
+                layoutParams = android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                setBackgroundColor(0)
+                webViewClient = WebViewClient()
+            }
+        },
+        update = { webView ->
+            webView.loadDataWithBaseURL("https://localhost", htmlData, "text/html", "UTF-8", null)
+        },
+        modifier = modifier
+    )
+}
+
+private @Composable
+fun NoteDetailScreen(
+    note: ParsedNote,
+    onBack: () -> Unit
+) {
+    var selectedPageIdx by remember { mutableIntStateOf(0) }
+    val accent = when (note.color) {
+        "yellow" -> Color(0xFFF59E0B)
+        "blue"   -> Color(0xFF38BDF8)
+        "green"  -> Color(0xFF34D399)
+        "pink"   -> Color(0xFFF472B6)
+        "purple" -> Color(0xFFA78BFA)
+        else     -> MaterialTheme.colorScheme.primary
+    }
+
+    val currentContent = remember(selectedPageIdx, note) {
+        if (note.pages.isNotEmpty() && selectedPageIdx in note.pages.indices) {
+            note.pages[selectedPageIdx].content
+        } else {
+            note.rawContent.ifBlank { note.body }
+        }
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+        ) {
+            // Full Screen Top Header Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
+                            .clip(CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    Text(
+                        text = "Note Details",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(accent.copy(alpha = 0.15f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = note.subject,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = accent
+                        )
+                    }
+                    if (!note.className.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "Class ${note.className}${if (!note.sectionName.isNullOrBlank()) "-${note.sectionName}" else ""}",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+
+            if (!note.pdfUrl.isNullOrBlank()) {
+                val ctx = LocalContext.current
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF3B82F6).copy(alpha = 0.12f))
+                        .border(1.dp, Color(0xFF3B82F6).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                        .clickable {
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(note.pdfUrl))
+                                ctx.startActivity(intent)
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(ctx, "Unable to open PDF", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        .padding(horizontal = 14.dp, vertical = 10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "PDF",
+                                modifier = Modifier.size(18.dp),
+                                tint = Color(0xFF3B82F6)
+                            )
+                            Text(
+                                text = "View Exported PDF Canvas",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF3B82F6)
+                            )
+                        }
+                        Text(
+                            text = "Open PDF ↗",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF3B82F6)
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                // Title
+                Text(
+                    text = note.title,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Author & date info
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(13.dp),
+                        tint = accent
+                    )
+                    Text(
+                        text = "Published by ${note.teacherName}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = " • ${note.timestamp}",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Page Selector Chips if multiple pages
+                if (note.pages.size > 1) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(bottom = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        note.pages.forEachIndexed { idx, page ->
+                            val isSel = idx == selectedPageIdx
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        if (isSel) accent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+                                    )
+                                    .clickable { selectedPageIdx = idx }
+                                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = "Page ${page.pageNum}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isSel) Color.White else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Full Screen Markdown + MathJax Renderer container
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.03f))
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
+                ) {
+                    NoteMarkdownMathView(
+                        markdownContent = currentContent,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NotesDrawer(
+    sessionManager: SessionManager,
+    onDismiss: () -> Unit
+) {
+
+    var notes by remember { mutableStateOf<List<ParsedNote>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var selectedSubject by remember { mutableStateOf("All") }
+    var selectedNote by remember { mutableStateOf<ParsedNote?>(null) }
+
+    // Color accent per note colour tag (mirrors web COLOR_MAP)
+    val accentColor: @Composable (String) -> Color = { tag ->
+        when (tag) {
+            "yellow" -> Color(0xFFF59E0B)
+            "blue"   -> Color(0xFF38BDF8)
+            "green"  -> Color(0xFF34D399)
+            "pink"   -> Color(0xFFF472B6)
+            "purple" -> Color(0xFFA78BFA)
+            else     -> MaterialTheme.colorScheme.primary
+        }
+    }
+
+    // Fetch notes from backend (same logic as web frontend)
+    LaunchedEffect(Unit) {
+        try {
+            val token = sessionManager.getSessionToken()
+            if (!token.isNullOrEmpty()) {
+                val res = RetrofitClient.authApi.getStudentNotes("Bearer $token")
+                if (res.isSuccessful) {
+                    val raw = res.body()?.notes ?: emptyList()
+                    notes = raw.map { parseNoteContent(it) }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("NotesDrawer", "Failed to load notes: ${e.message}")
+        } finally {
+            isLoading = false
+        }
+    }
+
+    val subjects = remember(notes) {
+        val set = linkedSetOf("All")
+        notes.forEach { set.add(it.subject) }
+        set.toList()
+    }
+    val filtered = remember(notes, selectedSubject) {
+        if (selectedSubject == "All") notes else notes.filter { it.subject.equals(selectedSubject, ignoreCase = true) }
+    }
+
+    // Overlay + bottom sheet
+    Box(
+        modifier = androidx.compose.ui.Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.52f))
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null
+            ) { onDismiss() }
+    ) {
+        Box(
+            modifier = androidx.compose.ui.Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .fillMaxHeight(0.82f)
+                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .background(MaterialTheme.colorScheme.background)
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null
+                ) { /* prevent dismiss */ }
+        ) {
+            Column(modifier = androidx.compose.ui.Modifier.fillMaxSize()) {
+                // Handle + Header
+                Box(
+                    modifier = androidx.compose.ui.Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = androidx.compose.ui.Modifier
+                            .width(40.dp)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.18f))
+                    )
+                }
+
+                Row(
+                    modifier = androidx.compose.ui.Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(
+                            imageVector = Icons.Default.Book,
+                            contentDescription = null,
+                            modifier = androidx.compose.ui.Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            "Notes",
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        if (notes.isNotEmpty()) {
+                            Text(
+                                "(${notes.size})",
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f)
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = androidx.compose.ui.Modifier
+                            .size(30.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
+                            .clip(CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            modifier = androidx.compose.ui.Modifier.size(15.dp),
+                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f))
+
+                // Subject filter pills
+                if (!isLoading && subjects.size > 1) {
+                    androidx.compose.foundation.lazy.LazyRow(
+                        modifier = androidx.compose.ui.Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(subjects.size) { idx ->
+                            val sub = subjects[idx]
+                            val selected = sub == selectedSubject
+                            Box(
+                                modifier = androidx.compose.ui.Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(
+                                        if (selected) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f)
+                                    )
+                                    .clickable(
+                                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                        indication = null
+                                    ) { selectedSubject = sub }
+                                    .padding(horizontal = 14.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = sub,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = if (selected) MaterialTheme.colorScheme.onPrimary
+                                            else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f))
+                }
+
+                // Content area
+                when {
+                    isLoading -> {
+                        // Shimmer skeleton — 3 cards
+                        androidx.compose.foundation.lazy.LazyRow(
+                            modifier = androidx.compose.ui.Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(3) {
+                                Box(
+                                    modifier = androidx.compose.ui.Modifier
+                                        .width(260.dp)
+                                        .height(170.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f))
+                                )
+                            }
+                        }
+                    }
+                    filtered.isEmpty() -> {
+                        Box(
+                            modifier = androidx.compose.ui.Modifier
+                                .fillMaxWidth()
+                                .padding(top = 48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = Icons.Default.Book,
+                                    contentDescription = null,
+                                    modifier = androidx.compose.ui.Modifier.size(40.dp),
+                                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
+                                )
+                                Spacer(modifier = androidx.compose.ui.Modifier.height(8.dp))
+                                Text(
+                                    "No notes found",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                Text(
+                                    "Your teachers haven't posted any notes yet.",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
+                                    modifier = androidx.compose.ui.Modifier.padding(top = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                    else -> {
+                        // Horizontal scrollable note cards (mirrors web horizontal card list)
+                        androidx.compose.foundation.lazy.LazyRow(
+                            modifier = androidx.compose.ui.Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(filtered.size) { idx ->
+                                val note = filtered[idx]
+                                val accent = accentColor(note.color)
+                                Box(
+                                    modifier = androidx.compose.ui.Modifier
+                                        .width(265.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                        .border(
+                                            width = 1.dp,
+                                            color = accent.copy(alpha = 0.25f),
+                                            shape = RoundedCornerShape(16.dp)
+                                        )
+                                        .clickable(
+                                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                            indication = null
+                                        ) { selectedNote = note }
+                                ) {
+                                    Column(
+                                        modifier = androidx.compose.ui.Modifier
+                                            .fillMaxWidth()
+                                            .padding(14.dp)
+                                    ) {
+                                        // Top: subject badge + timestamp
+                                        Row(
+                                            modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Box(
+                                                modifier = androidx.compose.ui.Modifier
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(accent.copy(alpha = 0.13f))
+                                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                                            ) {
+                                                Text(
+                                                    text = note.subject,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = accent,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                            Text(
+                                                text = note.timestamp,
+                                                fontSize = 10.sp,
+                                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f)
+                                            )
+                                        }
+
+                                        Spacer(modifier = androidx.compose.ui.Modifier.height(8.dp))
+
+                                        // Title
+                                        Text(
+                                            text = note.title,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+
+                                        Spacer(modifier = androidx.compose.ui.Modifier.height(8.dp))
+
+                                        // Bullet highlights
+                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            note.bullets.forEach { bullet ->
+                                                Row(
+                                                    verticalAlignment = Alignment.Top,
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = androidx.compose.ui.Modifier
+                                                            .padding(top = 5.dp)
+                                                            .size(5.dp)
+                                                            .clip(CircleShape)
+                                                            .background(accent.copy(alpha = 0.65f))
+                                                    )
+                                                    Text(
+                                                        text = bullet,
+                                                        fontSize = 11.sp,
+                                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
+                                                        maxLines = 2,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        Spacer(modifier = androidx.compose.ui.Modifier.height(10.dp))
+
+                                        HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+                                        Spacer(modifier = androidx.compose.ui.Modifier.height(8.dp))
+
+                                        // Footer: Teacher + Class badge
+                                        Row(
+                                            modifier = androidx.compose.ui.Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                modifier = androidx.compose.ui.Modifier.weight(1f)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Person,
+                                                    contentDescription = null,
+                                                    modifier = androidx.compose.ui.Modifier.size(11.dp),
+                                                    tint = accent
+                                                )
+                                                Text(
+                                                    text = note.teacherName,
+                                                    fontSize = 10.sp,
+                                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                            if (!note.className.isNullOrBlank()) {
+                                                Box(
+                                                    modifier = androidx.compose.ui.Modifier
+                                                        .clip(RoundedCornerShape(6.dp))
+                                                        .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f))
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Class ${note.className}${if (!note.sectionName.isNullOrBlank()) "-${note.sectionName}" else ""}",
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.SemiBold,
+                                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Note detail dialog
+    selectedNote?.let { note ->
+        val accent = accentColor(note.color)
+        AlertDialog(
+            onDismissRequest = { selectedNote = null },
+            title = {
+                Column {
+                    Box(
+                        modifier = androidx.compose.ui.Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(accent.copy(alpha = 0.13f))
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(note.subject, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = accent)
+                    }
+                    Spacer(modifier = androidx.compose.ui.Modifier.height(6.dp))
+                    Text(note.title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Spacer(modifier = androidx.compose.ui.Modifier.height(2.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Icon(imageVector = Icons.Default.Person, contentDescription = null, modifier = androidx.compose.ui.Modifier.size(12.dp), tint = accent)
+                        Text("By ${note.teacherName}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text("• ${note.timestamp}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f))
+                    }
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Key highlights
+                    Box(
+                        modifier = androidx.compose.ui.Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(accent.copy(alpha = 0.08f))
+                            .border(1.dp, accent.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                            .padding(12.dp)
+                    ) {
+                        Column {
+                            Text("KEY HIGHLIGHTS", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = accent,
+                                modifier = androidx.compose.ui.Modifier.padding(bottom = 6.dp))
+                            note.bullets.forEach { bullet ->
+                                Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = androidx.compose.ui.Modifier.padding(bottom = 4.dp)) {
+                                    Box(modifier = androidx.compose.ui.Modifier.padding(top = 5.dp).size(5.dp).clip(CircleShape).background(accent))
+                                    Text(bullet, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f))
+                                }
+                            }
+                        }
+                    }
+                    // Note body
+                    Box(
+                        modifier = androidx.compose.ui.Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f))
+                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(10.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text(note.body, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { selectedNote = null }) { Text("Close") }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)

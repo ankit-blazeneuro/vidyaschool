@@ -1703,6 +1703,7 @@ export default function NoteEditorPage() {
   const canvasRefs = React.useRef<Record<number, HTMLCanvasElement | null>>({})
   const fileInputRef = React.useRef<HTMLInputElement | null>(null)
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const existingPdfUrlRef = React.useRef<string | null>(null)
   const pendingFlushRef = React.useRef<{ t: string; currentPages: CanvasPage[]; col: string; meta: { className: string; section: string; subject: string } } | null>(null)
 
   // localStorage key unique per note
@@ -1715,6 +1716,7 @@ export default function NoteEditorPage() {
       .then(d => {
         setTitle(d.note?.title ?? "")
         setColor(d.note?.color ?? "default")
+        existingPdfUrlRef.current = d.note?.pdf_url || d.note?.pdfUrl || null
 
         const serverMeta = {
           className: d.note?.class || d.note?.class_ || "",
@@ -1808,27 +1810,88 @@ export default function NoteEditorPage() {
   }, [noteId])
 
   // Flush pending save to server (called by debounce & on unmount)
-  const flushToServer = React.useCallback((t: string, currentPages: CanvasPage[], col: string, meta: { className: string; section: string; subject: string }) => {
+  const flushToServer = React.useCallback(async (t: string, currentPages: CanvasPage[], col: string, meta: { className: string; section: string; subject: string }) => {
     setSaveState("saving")
     const contentPayload = JSON.stringify({ version: 1, pages: currentPages })
-    fetch(`/api/backend/teacher/notes/${noteId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+
+    let uploadedPdfUrl: string | null = null
+    const hasPenStrokes = currentPages.some(p => p.lines && p.lines.length > 0)
+    if (hasPenStrokes) {
+      try {
+        const doc = new jsPDF({
+          orientation: "portrait",
+          unit: "px",
+          format: [800, 1100]
+        })
+
+        let addedPages = 0
+        for (let i = 0; i < currentPages.length; i++) {
+          const canvas = canvasRefs.current[i]
+          if (!canvas) continue
+
+          if (addedPages > 0) {
+            doc.addPage([800, 1100])
+          }
+
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.90)
+          doc.addImage(dataUrl, "JPEG", 0, 0, 800, 1100)
+          addedPages++
+        }
+
+        if (addedPages > 0) {
+          const pdfBlob = doc.output("blob")
+          const formData = new FormData()
+          formData.append("file", pdfBlob, `${t || "Note"}.pdf`)
+          formData.append("noteId", noteId as string)
+          if (existingPdfUrlRef.current) {
+            formData.append("oldPdfUrl", existingPdfUrlRef.current)
+          }
+
+          const uploadRes = await fetch("/api/teacher/notes/upload-pdf", {
+            method: "POST",
+            body: formData,
+          })
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json()
+            if (uploadData.pdfUrl) {
+              uploadedPdfUrl = uploadData.pdfUrl
+              existingPdfUrlRef.current = uploadData.pdfUrl
+            }
+          }
+        }
+      } catch (err) {
+        console.error("PDF generation/upload error on save:", err)
+      }
+    }
+
+    try {
+      const patchBody: any = {
         title: t || "Untitled",
         content: contentPayload,
         color: col,
         class: meta.className || null,
         section: meta.section || null,
         subject: meta.subject || null
-      }),
-    })
-      .then(() => {
-        setSaveState("saved")
-        // Once server confirmed, clear local draft
-        if (typeof window !== "undefined") localStorage.removeItem(lsKey)
+      }
+      if (uploadedPdfUrl) {
+        patchBody.pdf_url = uploadedPdfUrl
+      }
+
+      const res = await fetch(`/api/backend/teacher/notes/${noteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patchBody),
       })
-      .catch(() => setSaveState("unsaved"))
+
+      if (res.ok) {
+        setSaveState("saved")
+        if (typeof window !== "undefined") localStorage.removeItem(lsKey)
+      } else {
+        setSaveState("unsaved")
+      }
+    } catch {
+      setSaveState("unsaved")
+    }
   }, [noteId, lsKey])
 
   // Unmount flush: send any queued data before leaving

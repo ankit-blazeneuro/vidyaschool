@@ -405,6 +405,16 @@ export default function StudentNoteDetailPage() {
         </Button>
 
         <div className="flex items-center gap-2">
+          {note?.pdf_url && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => window.open(note.pdf_url, "_blank")}
+              className="gap-1.5 text-xs rounded-xl bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+            >
+              <DownloadIcon className="size-3.5" /> View / Download PDF
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

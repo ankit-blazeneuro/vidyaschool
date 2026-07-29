@@ -129,7 +129,7 @@ fun StudentScreen(
         onThemeChange = onThemeChange,
         onLogout = onLogout,
         onShowLibrary = onShowLibrary
-    ) { onNotificationClick ->
+    ) { onNotificationClick, hasUnread ->
         val scrollState = rememberScrollState()
         val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
         val headerAlpha by animateFloatAsState(
@@ -154,7 +154,8 @@ fun StudentScreen(
                 DashboardHeader(
                     title = "Dashboard",
                     subtitle = "Welcome, ${name.ifEmpty { "Student" }}",
-                    onNotificationClick = onNotificationClick
+                    onNotificationClick = onNotificationClick,
+                    hasUnreadNotifications = hasUnread
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -202,7 +203,8 @@ fun StudentScreen(
                     title = "Dashboard",
                     headerAlpha = headerAlpha,
                     headerSlide = headerSlide,
-                    onNotificationClick = onNotificationClick
+                    onNotificationClick = onNotificationClick,
+                    hasUnreadNotifications = hasUnread
                 )
             }
         }

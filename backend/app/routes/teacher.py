@@ -20,6 +20,7 @@ class NoteCreate(BaseModel):
     class_: Optional[str] = Field(default=None, alias="class")
     section: Optional[str] = None
     subject: Optional[str] = None
+    pdf_url: Optional[str] = None
 
 class NoteUpdate(BaseModel):
     title: Optional[str] = None
@@ -28,6 +29,7 @@ class NoteUpdate(BaseModel):
     class_: Optional[str] = Field(default=None, alias="class")
     section: Optional[str] = None
     subject: Optional[str] = None
+    pdf_url: Optional[str] = None
 
 ALLOWED_NOTE_ROLES = ["teacher", "admin", "librarian"]
 
@@ -70,6 +72,7 @@ def create_note(
         class_=body.class_,
         section=body.section,
         subject=body.subject,
+        pdf_url=body.pdf_url,
     )
     db.add(note)
     db.commit()
@@ -101,6 +104,8 @@ def update_note(
         note.section = body.section
     if body.subject is not None:
         note.subject = body.subject
+    if body.pdf_url is not None:
+        note.pdf_url = body.pdf_url
     note.updated_at = datetime.utcnow()
     db.commit()
     return {"success": True}

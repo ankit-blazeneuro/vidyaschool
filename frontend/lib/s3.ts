@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import crypto from "crypto"
 
@@ -147,5 +147,37 @@ export async function generatePresignedDownloadUrl(
   } catch (err) {
     console.error("Failed to generate presigned download URL:", err)
     return null
+  }
+}
+
+/**
+ * Delete a file permanently from S3 bucket using fileKey or S3 URL
+ */
+export async function deleteFromS3(fileUrlOrKey: string): Promise<boolean> {
+  const s3 = getS3Client()
+  const bucket = getS3BucketName()
+
+  if (!s3 || !bucket || !fileUrlOrKey) {
+    return false
+  }
+
+  try {
+    let fileKey = fileUrlOrKey
+    if (fileUrlOrKey.includes(".amazonaws.com/")) {
+      fileKey = fileUrlOrKey.split(".amazonaws.com/")[1]
+    } else if (/^https?:\/\//i.test(fileUrlOrKey)) {
+      const parsed = new URL(fileUrlOrKey)
+      fileKey = parsed.pathname.replace(/^\/+/, "")
+    }
+
+    const command = new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: fileKey,
+    })
+    await s3.send(command)
+    return true
+  } catch (err) {
+    console.error("Failed to delete object from S3:", err)
+    return false
   }
 }

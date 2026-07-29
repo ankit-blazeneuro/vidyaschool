@@ -35,7 +35,7 @@ fun AccountsScreen(
         themeMode = themeMode,
         onThemeChange = onThemeChange,
         onLogout = onLogout
-    ) { onNotificationClick ->
+    ) { onNotificationClick, hasUnread ->
         val scrollState = rememberScrollState()
         val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
         val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
@@ -60,7 +60,8 @@ fun AccountsScreen(
                 DashboardHeader(
                     title = "Dashboard",
                     subtitle = "Welcome, ${name.ifEmpty { "Accounts officer" }}",
-                    onNotificationClick = onNotificationClick
+                    onNotificationClick = onNotificationClick,
+                    hasUnreadNotifications = hasUnread
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))

@@ -11,6 +11,25 @@ import retrofit2.http.Query
 import retrofit2.http.Header
 import retrofit2.http.DELETE
 
+data class StudentNote(
+    val id: String,
+    @SerializedName("teacher_id") val teacherId: String? = null,
+    val title: String? = null,
+    val content: String? = null,
+    val color: String? = null,
+    @SerializedName("class") val targetClass: String? = null,
+    val section: String? = null,
+    val subject: String? = null,
+    @SerializedName("created_at") val createdAt: String? = null,
+    @SerializedName("updated_at") val updatedAt: String? = null,
+    @SerializedName("teacher_name") val teacherName: String? = null,
+    @SerializedName("pdf_url") val pdfUrl: String? = null
+)
+
+data class StudentNotesResponse(
+    val notes: List<StudentNote>? = null
+)
+
 data class SessionItem(
     val id: String,
     val token: String,
@@ -294,6 +313,11 @@ interface AuthApi {
     suspend fun getTopPerformers(
         @Header("Authorization") authHeader: String
     ): Response<LeaderboardResponse>
+
+    @GET("api/student/notes")
+    suspend fun getStudentNotes(
+        @Header("Authorization") authHeader: String
+    ): Response<StudentNotesResponse>
 }
 
 data class NotificationHistoryItem(

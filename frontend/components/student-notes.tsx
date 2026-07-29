@@ -147,6 +147,7 @@ export function StudentNotes() {
         className: note.class || note.targetClass,
         sectionName: note.section || note.targetSection,
         color: note.color || "default",
+        pdfUrl: note.pdf_url || note.pdfUrl || null,
       }
     })
   }
@@ -362,6 +363,27 @@ export function StudentNotes() {
                   ))}
                 </ul>
               </div>
+
+              {/* PDF Download Section if pen-drawn PDF exists */}
+              {selectedNote.pdfUrl && (
+                <div className="rounded-xl bg-blue-500/10 p-3.5 border border-blue-500/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="size-5 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground">Exported PDF Canvas Note</h4>
+                      <p className="text-[11px] text-muted-foreground">Original handwriting and pen drawing preserved in PDF format.</p>
+                    </div>
+                  </div>
+                  <a
+                    href={selectedNote.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors shrink-0"
+                  >
+                    View PDF
+                  </a>
+                </div>
+              )}
 
               {/* Full Content Section */}
               <div className="space-y-2">

@@ -228,6 +228,7 @@ class TeacherNote(SQLModel, table=True):
     class_: Optional[str] = Field(default=None, alias="class", sa_column_kwargs={"name": "class"})
     section: Optional[str] = Field(default=None)
     subject: Optional[str] = Field(default=None)
+    pdf_url: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
