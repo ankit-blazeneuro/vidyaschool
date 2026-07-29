@@ -9,6 +9,17 @@ import retrofit2.http.PATCH
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Header
+import retrofit2.http.DELETE
+
+data class SessionItem(
+    val id: String,
+    val token: String,
+    @SerializedName("ip_address") val ipAddress: String? = null,
+    @SerializedName("user_agent") val userAgent: String? = null,
+    @SerializedName("created_at") val createdAt: String? = null,
+    @SerializedName("expires_at") val expiresAt: String? = null,
+    @SerializedName("is_current") val isCurrent: Boolean = false
+)
 
 data class LoginRequest(
     val email: String,
@@ -223,6 +234,22 @@ interface AuthApi {
     suspend fun getProfile(
         @Header("Authorization") authHeader: String
     ): Response<ProfileResponse>
+
+    @GET("api/sessions/active")
+    suspend fun getActiveSessions(
+        @Header("Authorization") authHeader: String
+    ): Response<List<SessionItem>>
+
+    @DELETE("api/sessions/revoke/{sessionId}")
+    suspend fun revokeSession(
+        @Header("Authorization") authHeader: String,
+        @Path("sessionId") sessionId: String
+    ): Response<Map<String, Any?>>
+
+    @POST("api/sessions/revoke-others")
+    suspend fun revokeOtherSessions(
+        @Header("Authorization") authHeader: String
+    ): Response<Map<String, Any?>>
 
     @GET("api/onboarding/status")
     suspend fun getOnboardingStatus(

@@ -12,8 +12,8 @@ android {
         applicationId = "com.vidyaschool.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 31
-        versionName = "1.1"
+        versionCode = 130
+        versionName = "1.1.130"
         
         // AppAuth redirect scheme
         manifestPlaceholders["appAuthRedirectScheme"] = "com.vidyaschool.app"

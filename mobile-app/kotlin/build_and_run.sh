@@ -49,7 +49,7 @@ echo "📦 Found APK: $APK_PATH"
 
 echo ""
 echo "📲 Installing APK on device..."
-adb install -r "$APK_PATH"
+adb install -r -d "$APK_PATH"
 
 # Auto-detect package name from APK if not set
 if [ -z "$PACKAGE_NAME" ]; then

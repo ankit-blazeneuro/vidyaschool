@@ -68,6 +68,7 @@ import com.vidyaschool.app.api.PayFeesResponse
 import com.vidyaschool.app.api.SearchUserResponse
 import com.vidyaschool.app.api.SearchBackendResponse
 import com.vidyaschool.app.api.UserProfileData
+import com.vidyaschool.app.api.SessionItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.painterResource
@@ -83,6 +84,17 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.AccountBalance
 
 val LocalMenuClickHandler = staticCompositionLocalOf<(() -> Unit)?> { null }
 
@@ -383,94 +395,186 @@ fun DashboardLayout(
             drawerContent = {
                 ModalDrawerSheet(
                     drawerContainerColor = MaterialTheme.colorScheme.background,
-                    modifier = Modifier.width(300.dp)
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Spacer(modifier = Modifier.height(24.dp))
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Box(
+                        Row(
                             modifier = Modifier
-                                .size(50.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable {
+                                    scope.launch { drawerState.close() }
+                                    selectedTab = "profile"
+                                }
+                                .padding(horizontal = 4.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (!avatarUrl.isNullOrEmpty()) {
-                                AsyncImage(
-                                    model = avatarUrl,
-                                    contentDescription = "Avatar",
-                                    modifier = Modifier.fillMaxSize().clip(CircleShape)
+                        // Avatar with green online dot
+                        Box(modifier = Modifier.size(38.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(9.dp))
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (!avatarUrl.isNullOrEmpty()) {
+                                    AsyncImage(
+                                        model = avatarUrl,
+                                        contentDescription = "Avatar",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(RoundedCornerShape(9.dp))
+                                    )
+                                } else {
+                                    Text(
+                                        text = (name.takeIf { it.isNotBlank() } ?: "U").take(1).uppercase(),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            // Green online indicator dot
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .align(Alignment.BottomEnd)
+                                    .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF22C55E))
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(9.dp))
+
+                        Text(
+                            text = name.ifEmpty { "User" },
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 160.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Icon(
+                            imageVector = Icons.Default.UnfoldMore,
+                            contentDescription = "Go to profile",
+                            modifier = Modifier.size(15.dp),
+                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+                        )
+                        } // end inner user card Row
+
+                        IconButton(
+                            onClick = { scope.launch { drawerState.close() } },
+                            modifier = Modifier
+                                .size(32.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), CircleShape)
+                                .clip(CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close Menu",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    } // end outer SpaceBetween Row
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Nav item helper
+                    @Composable
+                    fun DrawerLink(
+                        label: String,
+                        icon: ImageVector? = null,
+                        iconRes: Int? = null,
+                        tab: String? = null,
+                        isDestructive: Boolean = false,
+                        onClick: (() -> Unit)? = null
+                    ) {
+                        val isSelected = tab != null && selectedTab == tab
+                        val textColor = when {
+                            isDestructive -> MaterialTheme.colorScheme.error
+                            isSelected -> MaterialTheme.colorScheme.onBackground
+                            else -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 3.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f)
+                                    else Color.Transparent
                                 )
-                            } else {
-                                Text(
-                                    text = (name.takeIf { it.isNotBlank() } ?: "U").take(1).uppercase(),
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
+                                .clickable {
+                                    scope.launch { drawerState.close() }
+                                    if (tab != null) selectedTab = tab
+                                    onClick?.invoke()
+                                }
+                                .padding(horizontal = 12.dp)
+                                .height(42.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            if (iconRes != null) {
+                                Icon(
+                                    painter = painterResource(id = iconRes),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = textColor
+                                )
+                            } else if (icon != null) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = textColor
                                 )
                             }
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
                             Text(
-                                text = name.ifEmpty { "User" },
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Text(
-                                text = email,
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                                text = label,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = textColor
                             )
                         }
                     }
 
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
+                    DrawerLink(
+                        label = "File a Complaint",
+                        iconRes = R.drawable.ic_custom_complaint
+                    ) {
+                        showComplaintDialog = true
+                    }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    NavigationDrawerItem(
-                        label = { Text("File a Complaint") },
-                        selected = false,
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            showComplaintDialog = true
-                        },
-                        icon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                    )
-
-                    NavigationDrawerItem(
-                        label = { Text("Manage Sessions") },
-                        selected = selectedTab == "sessions",
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            selectedTab = "sessions"
-                        },
-                        icon = { Icon(Icons.Default.Person, contentDescription = null) },
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                    DrawerLink(
+                        label = "Manage Sessions",
+                        iconRes = R.drawable.ic_custom_sessions,
+                        tab = "sessions"
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    NavigationDrawerItem(
-                        label = { Text("Log Out", color = MaterialTheme.colorScheme.error) },
-                        selected = false,
-                        onClick = {
-                            scope.launch { drawerState.close() }
-                            onLogout()
-                        },
-                        icon = { Icon(Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 20.dp)
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.07f)
                     )
+
+                    DrawerLink(
+                        label = "Log Out",
+                        icon = Icons.Default.Close,
+                        isDestructive = true
+                    ) { onLogout() }
                 }
             }
         ) {
@@ -857,6 +961,7 @@ fun SessionsTabContent(
     onNotificationClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
     val headerCollapsed by remember { derivedStateOf { scrollState.value > 100 } }
     val headerAlpha by androidx.compose.animation.core.animateFloatAsState(
@@ -873,6 +978,84 @@ fun SessionsTabContent(
     val currentProvider = remember { sessionManager.getProvider() ?: "Email Login" }
     val currentEmail = remember { sessionManager.getEmail() ?: "unknown" }
     val currentUsername = remember { sessionManager.getUsername() ?: "unknown" }
+
+    var sessionsList by remember { mutableStateOf<List<SessionItem>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
+    var isRevokingAll by remember { mutableStateOf(false) }
+    var revokingSessionId by remember { mutableStateOf<String?>(null) }
+
+    fun loadSessions() {
+        scope.launch {
+            isLoading = true
+            errorMsg = null
+            try {
+                val token = sessionManager.getSessionToken()
+                if (!token.isNullOrEmpty()) {
+                    val response = RetrofitClient.authApi.getActiveSessions("Bearer $token")
+                    if (response.isSuccessful && response.body() != null) {
+                        sessionsList = response.body()!!
+                    } else {
+                        errorMsg = "Failed to load sessions from server"
+                    }
+                } else {
+                    errorMsg = "No active session token"
+                }
+            } catch (e: Exception) {
+                errorMsg = e.message ?: "Could not connect to backend"
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    fun revokeSingleSession(sessionId: String) {
+        scope.launch {
+            revokingSessionId = sessionId
+            try {
+                val token = sessionManager.getSessionToken()
+                if (!token.isNullOrEmpty()) {
+                    val response = RetrofitClient.authApi.revokeSession("Bearer $token", sessionId)
+                    if (response.isSuccessful) {
+                        android.widget.Toast.makeText(context, "Session revoked successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                        loadSessions()
+                    } else {
+                        android.widget.Toast.makeText(context, "Failed to revoke session", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+            } finally {
+                revokingSessionId = null
+            }
+        }
+    }
+
+    fun revokeAllOthers() {
+        scope.launch {
+            isRevokingAll = true
+            try {
+                val token = sessionManager.getSessionToken()
+                if (!token.isNullOrEmpty()) {
+                    val response = RetrofitClient.authApi.revokeOtherSessions("Bearer $token")
+                    if (response.isSuccessful) {
+                        android.widget.Toast.makeText(context, "All other sessions revoked!", android.widget.Toast.LENGTH_SHORT).show()
+                        loadSessions()
+                    } else {
+                        android.widget.Toast.makeText(context, "Failed to revoke other sessions", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+            } finally {
+                isRevokingAll = false
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        loadSessions()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -902,7 +1085,29 @@ fun SessionsTabContent(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
 
-                // Current active device card
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+                    }
+                } else if (errorMsg != null) {
+                    Text(
+                        text = errorMsg!!,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                // If DB sessions list is available:
+                val currentSession = sessionsList.find { it.isCurrent }
+                val otherSessions = sessionsList.filter { !it.isCurrent }
+
+                // 1. Current Active Device Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -919,7 +1124,7 @@ fun SessionsTabContent(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Current Device (Android App)",
+                                text = "Current Device",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -936,75 +1141,118 @@ fun SessionsTabContent(
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
                         )
+                        if (currentSession != null) {
+                            if (!currentSession.ipAddress.isNullOrEmpty()) {
+                                Text(
+                                    text = "IP: ${currentSession.ipAddress}",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            }
+                            if (!currentSession.userAgent.isNullOrEmpty()) {
+                                Text(
+                                    text = "Device / Agent: ${currentSession.userAgent}",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
                     }
                 }
 
-                // Mock web session 1
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                // 2. Other Active Sessions (real database session instances)
+                if (otherSessions.isNotEmpty()) {
+                    Text(
+                        text = "Other Devices & Sessions (${otherSessions.size})",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Chrome / Windows 11",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Location: New Delhi, India",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                        Text(
-                            text = "Last active: 2 hours ago",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    }
-                }
 
-                // Mock mobile session 2
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Safari / iPhone 15",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Location: Mumbai, India",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                        Text(
-                            text = "Last active: 1 day ago",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
+                    otherSessions.forEach { session ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = session.userAgent ?: "Web / App Session",
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "IP: ${session.ipAddress ?: "Unknown"}",
+                                        fontSize = 12.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                    if (!session.createdAt.isNullOrEmpty()) {
+                                        Text(
+                                            text = "Created: ${session.createdAt.take(10)}",
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Button(
+                                    onClick = { revokeSingleSession(session.id) },
+                                    enabled = revokingSessionId != session.id,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                    ),
+                                    shape = RoundedCornerShape(8.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    if (revokingSessionId == session.id) {
+                                        CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
+                                    } else {
+                                        Text("Revoke", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
                     }
+                } else if (!isLoading && errorMsg == null) {
+                    Text(
+                        text = "No other active sessions found on server.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
-                    onClick = {
-                        android.widget.Toast.makeText(context, "All other sessions revoked successfully!", android.widget.Toast.LENGTH_SHORT).show()
-                    },
+                    onClick = { revokeAllOthers() },
+                    enabled = otherSessions.isNotEmpty() && !isRevokingAll,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Revoke All Other Sessions", fontWeight = FontWeight.Bold)
+                    if (isRevokingAll) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                    } else {
+                        Text("Revoke All Other Sessions", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -3936,21 +4184,24 @@ fun NotificationDrawer(
                 else -> {
                     items(notifications.size) { idx ->
                         val notif = notifications[idx]
+                        val rawDate = notif.createdAt ?: ""
                         val dateLabel = try {
-                            val datePart = notif.createdAt.split("T").firstOrNull() ?: notif.createdAt
-                            val parts = datePart.split("-")
-                            if (parts.size >= 3) {
-                                val monthNum = parts[1].toIntOrNull() ?: 0
-                                val day = parts[2].toIntOrNull() ?: 0
-                                val monthStr = when (monthNum) {
-                                    1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
-                                    5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
-                                    9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
-                                    else -> ""
-                                }
-                                if (monthStr.isNotEmpty()) "$monthStr $day, ${parts[0]}" else datePart
-                            } else datePart
-                        } catch (e: Exception) { notif.createdAt.take(10) }
+                            if (rawDate.isNotEmpty()) {
+                                val datePart = rawDate.split("T").firstOrNull() ?: rawDate
+                                val parts = datePart.split("-")
+                                if (parts.size >= 3) {
+                                    val monthNum = parts[1].toIntOrNull() ?: 0
+                                    val day = parts[2].toIntOrNull() ?: 0
+                                    val monthStr = when (monthNum) {
+                                        1 -> "Jan"; 2 -> "Feb"; 3 -> "Mar"; 4 -> "Apr"
+                                        5 -> "May"; 6 -> "Jun"; 7 -> "Jul"; 8 -> "Aug"
+                                        9 -> "Sep"; 10 -> "Oct"; 11 -> "Nov"; 12 -> "Dec"
+                                        else -> ""
+                                    }
+                                    if (monthStr.isNotEmpty()) "$monthStr $day, ${parts[0]}" else datePart
+                                } else datePart
+                            } else ""
+                        } catch (e: Exception) { rawDate.take(10) }
 
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),

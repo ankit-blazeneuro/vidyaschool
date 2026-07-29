@@ -8,6 +8,7 @@ import android.graphics.Shader
 import android.graphics.PorterDuff
 import androidx.compose.ui.graphics.Paint as ComposePaint
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.border
@@ -1027,15 +1028,18 @@ fun AcademicPerformanceChart(
         }
     }
 }
-
 @Composable
 fun TopPerformersBanner(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
-    var topPerformers by remember { mutableStateOf<List<TopPerformerItem>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
+    val isDark = isSystemInDarkTheme()
+
+    // 1. Initialize state with cached data if available
+    val cachedPerformers = remember { sessionManager.getCachedTopPerformers() }
+    var topPerformers by remember { mutableStateOf<List<TopPerformerItem>>(cachedPerformers) }
+    var isLoading by remember { mutableStateOf(cachedPerformers.isEmpty()) }
 
     val defaultPerformers = remember {
         listOf(
@@ -1049,21 +1053,29 @@ fun TopPerformersBanner(
         try {
             val token = sessionManager.getSessionToken()
             if (token.isNullOrEmpty()) {
-                topPerformers = defaultPerformers
+                if (topPerformers.isEmpty()) {
+                    topPerformers = defaultPerformers
+                }
                 isLoading = false
                 return@LaunchedEffect
             }
             val response = RetrofitClient.authApi.getTopPerformers("Bearer $token")
             val fetched = response.body()?.leaderboard
             if (response.isSuccessful && !fetched.isNullOrEmpty()) {
+                // Save new leaderboard update to cache
+                sessionManager.saveTopPerformers(fetched)
                 topPerformers = fetched
             } else {
                 android.util.Log.w("TopPerformersBanner", "API returned empty/error: ${response.code()} ${response.message()}")
-                topPerformers = defaultPerformers
+                if (topPerformers.isEmpty()) {
+                    topPerformers = defaultPerformers
+                }
             }
         } catch (e: Exception) {
             android.util.Log.e("TopPerformersBanner", "Failed to fetch top performers: ${e.message}")
-            topPerformers = defaultPerformers
+            if (topPerformers.isEmpty()) {
+                topPerformers = defaultPerformers
+            }
         } finally {
             isLoading = false
         }
@@ -1076,88 +1088,413 @@ fun TopPerformersBanner(
 
     val podiumOrdered = listOfNotNull(rank2, rank1, rank3)
 
-    val sideAvatarOverflow  = 18.dp
-    val middleAvatarOverflow = 36.dp // rank-1 pops out further above the card
-    val cardHeight = 90.dp
+    // Outer Container Colors (Dark vs Light mode)
+    val outerBgBrush = if (isDark) {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFF0F172A),
+                Color(0xFF161E36),
+                Color(0xFF0B0F19)
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFFFFFFFF),
+                Color(0xFFF8FAFC),
+                Color(0xFFF1F5F9)
+            )
+        )
+    }
 
-    Box(
+    val outerBorderBrush = if (isDark) {
+        Brush.linearGradient(
+            colors = listOf(
+                Color.White.copy(alpha = 0.16f),
+                Color.White.copy(alpha = 0.05f),
+                Color.White.copy(alpha = 0.12f)
+            )
+        )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(
+                Color(0xFFE2E8F0),
+                Color(0xFFCBD5E1),
+                Color(0xFFE2E8F0)
+            )
+        )
+    }
+
+    val headerTextColor = if (isDark) Color.White.copy(alpha = 0.9f) else Color(0xFF0F172A)
+
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(cardHeight + middleAvatarOverflow) // sized to the tallest overflow
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            brush = outerBorderBrush
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 0.dp else 2.dp)
     ) {
-        // ── Grainy gradient background ───────────────────────────────
-        val gradStart  = Color(0xFF6C3DE0) // deep violet
-        val gradMid    = Color(0xFF3B82F6) // blue
-        val gradEnd    = Color(0xFF06B6D4) // cyan
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(cardHeight)
-                .align(Alignment.BottomCenter)
-                .clip(RoundedCornerShape(18.dp))
+                .background(brush = outerBgBrush)
                 .drawBehind {
-                    // 1. gradient sweep
-                    drawRect(
-                        brush = Brush.linearGradient(
-                            colors = listOf(gradStart, gradMid, gradEnd),
-                            start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                            end   = androidx.compose.ui.geometry.Offset(size.width, size.height)
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                (if (isDark) Color(0xFF6366F1) else Color(0xFF818CF8)).copy(alpha = if (isDark) 0.22f else 0.15f),
+                                (if (isDark) Color(0xFFA855F7) else Color(0xFFC084FC)).copy(alpha = if (isDark) 0.10f else 0.08f),
+                                Color.Transparent
+                            ),
+                            center = androidx.compose.ui.geometry.Offset(size.width * 0.5f, size.height * 0.45f),
+                            radius = size.width * 0.45f
                         )
                     )
-                    // 2. noise overlay via bitmap shader
-                    val bw = size.width.toInt().coerceAtLeast(1)
-                    val bh = size.height.toInt().coerceAtLeast(1)
-                    val noiseBitmap = Bitmap.createBitmap(bw, bh, Bitmap.Config.ARGB_8888)
-                    val rng = java.util.Random(42)
-                    val pixels = IntArray(bw * bh) { _ ->
-                        val v = rng.nextInt(255)
-                        android.graphics.Color.argb(28, v, v, v)
-                    }
-                    noiseBitmap.setPixels(pixels, 0, bw, 0, 0, bw, bh)
-                    val noiseShader = BitmapShader(
-                        noiseBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP
-                    )
-                    val noisePaint = android.graphics.Paint().apply { shader = noiseShader }
-                    drawIntoCanvas { canvas ->
-                        canvas.nativeCanvas.drawRect(
-                            0f, 0f, size.width, size.height, noisePaint
+                }
+                .padding(top = 16.dp, bottom = 18.dp, start = 14.dp, end = 14.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Minimal Header Bar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(26.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(Color(0xFFFFD700), Color(0xFFFF9900))
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_medal_star),
+                                contentDescription = null,
+                                tint = Color(0xFF1E1000),
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
+
+                        Text(
+                            text = "Leaderboard",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = headerTextColor
                         )
                     }
                 }
-        )
 
-        // ── Cards row (overflow allowed, no clip) ────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(cardHeight + middleAvatarOverflow)
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.Bottom
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Podium Row
+                if (isLoading) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(170.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        repeat(3) { index ->
+                            val heightFraction = when (index) {
+                                1 -> 1.0f
+                                0 -> 0.85f
+                                else -> 0.78f
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight(heightFraction)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(
+                                        if (isDark) Color.White.copy(alpha = 0.06f)
+                                        else Color(0xFF64748B).copy(alpha = 0.08f)
+                                    )
+                            )
+                        }
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        podiumOrdered.forEach { item ->
+                            TopPerformerPodiumCard(
+                                item = item,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TopPerformerPodiumCard(
+    item: TopPerformerItem,
+    modifier: Modifier = Modifier
+) {
+    val isDark = isSystemInDarkTheme()
+    val rank = item.rank ?: 1
+    val isFirst = rank == 1
+    val isSecond = rank == 2
+
+    val cardHeight = when {
+        isFirst -> 176.dp
+        isSecond -> 156.dp
+        else -> 146.dp
+    }
+
+    val avatarSize = if (isFirst) 52.dp else 42.dp
+    val ringSize = avatarSize + 6.dp
+
+    val rankGradient = when {
+        isFirst -> listOf(Color(0xFFFFD700), Color(0xFFFFA500))
+        isSecond -> if (isDark) listOf(Color(0xFFE2E8F0), Color(0xFF94A3B8)) else listOf(Color(0xFF64748B), Color(0xFF94A3B8))
+        else -> listOf(Color(0xFFFDBA74), Color(0xFFEA580C))
+    }
+
+    val borderBrush = if (isDark) {
+        when {
+            isFirst -> Brush.verticalGradient(
+                colors = listOf(Color(0xFFFFD700).copy(alpha = 0.85f), Color(0xFFFF8C00).copy(alpha = 0.35f))
+            )
+            isSecond -> Brush.verticalGradient(
+                colors = listOf(Color(0xFFE2E8F0).copy(alpha = 0.55f), Color(0xFF64748B).copy(alpha = 0.25f))
+            )
+            else -> Brush.verticalGradient(
+                colors = listOf(Color(0xFFFDBA74).copy(alpha = 0.55f), Color(0xFF9A3412).copy(alpha = 0.25f))
+            )
+        }
+    } else {
+        when {
+            isFirst -> Brush.verticalGradient(
+                colors = listOf(Color(0xFFF59E0B), Color(0xFFD97706).copy(alpha = 0.6f))
+            )
+            isSecond -> Brush.verticalGradient(
+                colors = listOf(Color(0xFF94A3B8), Color(0xFFCBD5E1))
+            )
+            else -> Brush.verticalGradient(
+                colors = listOf(Color(0xFFEA580C), Color(0xFFFDBA74).copy(alpha = 0.6f))
+            )
+        }
+    }
+
+    val backgroundBrush = if (isDark) {
+        when {
+            isFirst -> Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFF261E38).copy(alpha = 0.8f),
+                    Color(0xFF181326).copy(alpha = 0.9f)
+                )
+            )
+            isSecond -> Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFF1E293B).copy(alpha = 0.65f),
+                    Color(0xFF0F172A).copy(alpha = 0.75f)
+                )
+            )
+            else -> Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFF271C19).copy(alpha = 0.65f),
+                    Color(0xFF150F14).copy(alpha = 0.75f)
+                )
+            )
+        }
+    } else {
+        when {
+            isFirst -> Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFFFFFBEB),
+                    Color(0xFFFEF3C7)
+                )
+            )
+            isSecond -> Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFFFFFFFF),
+                    Color(0xFFF1F5F9)
+                )
+            )
+            else -> Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFFFFF7ED),
+                    Color(0xFFFFEDD5)
+                )
+            )
+        }
+    }
+
+    val badgeBgColor = when {
+        isFirst -> Color(0xFFFFD700)
+        isSecond -> if (isDark) Color(0xFFE2E8F0) else Color(0xFF475569)
+        else -> if (isDark) Color(0xFFFFAB76) else Color(0xFFD97706)
+    }
+
+    val badgeTextColor = when {
+        isFirst -> Color(0xFF1A1000)
+        isSecond -> if (isDark) Color(0xFF0F172A) else Color.White
+        else -> if (isDark) Color(0xFF2A0C00) else Color.White
+    }
+
+    val nameColor = if (isDark) Color.White else Color(0xFF0F172A)
+    val classColor = if (isDark) Color.White.copy(alpha = 0.55f) else Color(0xFF64748B)
+
+    Box(
+        modifier = modifier
+            .height(cardHeight)
+            .zIndex(if (isFirst) 2f else 1f)
+            .clip(RoundedCornerShape(20.dp))
+            .background(backgroundBrush)
+            .border(
+                width = if (isFirst) 1.5.dp else 1.dp,
+                brush = borderBrush,
+                shape = RoundedCornerShape(20.dp)
+            )
+            .padding(horizontal = 6.dp, vertical = 10.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            if (isLoading) {
-                repeat(3) {
+            // Top Section: Avatar with Ring
+            Box(
+                modifier = Modifier.padding(top = 2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isFirst) {
                     Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .height(cardHeight)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color.White.copy(alpha = 0.15f))
+                            .size(ringSize + 8.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFFD700).copy(alpha = if (isDark) 0.15f else 0.25f))
                     )
                 }
-            } else {
-                podiumOrdered.forEach { item ->
-                    val isMiddle = item.rank == 1
-                    // middle card gets a larger overflow so the avatar pops out above the banner
-                    val overflow = if (isMiddle) middleAvatarOverflow else sideAvatarOverflow
-                    TopPerformerCard(
-                        item = item,
-                        isMiddle = isMiddle,
-                        avatarOverflow = overflow,
-                        cardHeight = cardHeight,
-                        modifier = Modifier.weight(1f)
+
+                Box(
+                    modifier = Modifier
+                        .size(ringSize)
+                        .clip(CircleShape)
+                        .background(Brush.linearGradient(rankGradient)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(avatarSize)
+                            .clip(CircleShape)
+                            .background(if (isDark) Color(0xFF0F172A) else Color.White),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val avatar = item.avatarUrl
+                        if (!avatar.isNullOrEmpty()) {
+                            AsyncImage(
+                                model = avatar,
+                                contentDescription = item.name,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        } else {
+                            Text(
+                                text = (item.name?.take(1) ?: "S").uppercase(),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = if (isFirst) 18.sp else 14.sp,
+                                color = if (isDark) Color.White else Color(0xFF0F172A)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Middle Section: Name & Class/Section
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = item.name ?: "Student",
+                    fontSize = if (isFirst) 12.sp else 11.sp,
+                    fontWeight = if (isFirst) FontWeight.Bold else FontWeight.SemiBold,
+                    color = nameColor,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                val classSec = buildString {
+                    if (!item.studentClass.isNullOrEmpty()) append("Class ${item.studentClass}")
+                    if (!item.section.isNullOrEmpty()) append("-${item.section}")
+                }
+                if (classSec.isNotEmpty()) {
+                    Text(
+                        text = classSec,
+                        fontSize = 9.sp,
+                        color = classColor,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Bottom Section: Score Percentage Badge
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        if (isFirst) {
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFFFFD700), Color(0xFFFF9900))
+                            )
+                        } else {
+                            Brush.horizontalGradient(
+                                listOf(
+                                    badgeBgColor.copy(alpha = if (isDark) 0.20f else 0.85f),
+                                    badgeBgColor.copy(alpha = if (isDark) 0.12f else 0.95f)
+                                )
+                            )
+                        }
+                    )
+                    .padding(vertical = 5.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = String.format("%.1f%%", item.percentage ?: 0.0),
+                    fontSize = if (isFirst) 11.sp else 10.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = badgeTextColor,
+                    lineHeight = 12.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
             }
         }
     }
@@ -1166,144 +1503,11 @@ fun TopPerformersBanner(
 @Composable
 fun TopPerformerCard(
     item: TopPerformerItem,
-    isMiddle: Boolean,
-    avatarOverflow: androidx.compose.ui.unit.Dp = 18.dp,
-    cardHeight: androidx.compose.ui.unit.Dp = 90.dp,
+    isMiddle: Boolean = false,
+    avatarOverflow: androidx.compose.ui.unit.Dp = 0.dp,
+    bannerAvatarOverflow: androidx.compose.ui.unit.Dp = 32.dp,
+    cardHeight: androidx.compose.ui.unit.Dp = 108.dp,
     modifier: Modifier = Modifier
 ) {
-    val rank = item.rank ?: 1
-    val medalTint = when (rank) {
-        1 -> Color(0xFFFFD700) // gold
-        2 -> Color(0xFFB0BEC5) // silver
-        3 -> Color(0xFFFFAB76) // bronze
-        else -> Color(0xFF93C5FD)
-    }
-    val avatarSize = if (isMiddle) 56.dp else 38.dp  // middle is noticeably bigger
-    val ringSize   = avatarSize + 5.dp
-    val equalGap   = 6.dp
-
-    Box(
-        modifier = modifier
-            .height(avatarOverflow + cardHeight)
-            .zIndex(if (isMiddle) 2f else 0f)  // ensure middle renders on top
-    ) {
-        // Content column — padding top equals avatarOverflow so content starts inside card zone
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(avatarOverflow + cardHeight)
-                .padding(top = avatarOverflow + equalGap, bottom = equalGap),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Avatar ring — middle floats out with a gold glow shadow
-            Box(
-                modifier = Modifier
-                    .size(ringSize)
-                    .then(
-                        if (isMiddle) Modifier.drawBehind {
-                            // multi-layer gold glow to make rank-1 pop
-                            val glowPaint = android.graphics.Paint().apply {
-                                isAntiAlias = true
-                                style = android.graphics.Paint.Style.FILL
-                                color = android.graphics.Color.TRANSPARENT
-                                setShadowLayer(
-                                    ringSize.toPx() * 0.45f,
-                                    0f, 2f,
-                                    android.graphics.Color.argb(160, 255, 210, 0)
-                                )
-                            }
-                            drawIntoCanvas { canvas ->
-                                canvas.nativeCanvas.drawCircle(
-                                    size.width / 2f, size.height / 2f,
-                                    ringSize.toPx() / 2f, glowPaint
-                                )
-                            }
-                        } else Modifier
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                // White ring
-                Box(
-                    modifier = Modifier
-                        .size(ringSize)
-                        .clip(CircleShape)
-                        .background(
-                            if (isMiddle) Color(0xFFFFD700).copy(alpha = 0.85f)
-                            else Color.White.copy(alpha = 0.55f)
-                        )
-                )
-                // Avatar circle
-                Box(
-                    modifier = Modifier
-                        .size(avatarSize)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.18f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    val avatar = item.avatarUrl
-                    if (!avatar.isNullOrEmpty()) {
-                        AsyncImage(
-                            model = avatar,
-                            contentDescription = item.name,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                        )
-                    } else {
-                        Text(
-                            text = (item.name?.take(1) ?: "S").uppercase(),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = if (isMiddle) 20.sp else 14.sp,
-                            color = Color.White
-                        )
-                    }
-                }
-                // Medal badge
-                Box(
-                    modifier = Modifier
-                        .size(if (isMiddle) 18.dp else 13.dp)
-                        .align(Alignment.BottomEnd)
-                        .clip(CircleShape)
-                        .background(medalTint)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_medal_star),
-                        contentDescription = "Rank $rank",
-                        tint = Color.White,
-                        modifier = Modifier.fillMaxSize().padding(2.dp)
-                    )
-                }
-            }
-
-            // Name
-            Text(
-                text = item.name ?: "Student",
-                fontSize = if (isMiddle) 11.sp else 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White,
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-
-            // Score pill
-            Box(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(medalTint.copy(alpha = if (isMiddle) 0.45f else 0.30f))
-                    .padding(horizontal = 8.dp, vertical = 1.dp)
-            ) {
-                Text(
-                    text = String.format("%.1f%%", item.percentage ?: 0.0),
-                    fontSize = if (isMiddle) 10.sp else 9.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
-                )
-            }
-        }
-    }
+    TopPerformerPodiumCard(item = item, modifier = modifier)
 }
