@@ -13,6 +13,8 @@ sentry_sdk.init(
 )
 
 from dotenv import load_dotenv
+load_dotenv(override=False)
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel, create_engine, Session, select
@@ -33,9 +35,6 @@ from app.routes.page_builder_ai import router as page_builder_ai_router
 from app.routes.email import router as email_router
 from app.routes.sessions import router as sessions_router
 from models import User
-
-# Load env variables from .env (local dev only — on Render, system env vars take precedence)
-load_dotenv(override=False)
 
 # Load database URL and adjust for SQLAlchemy PostgreSQL driver
 db_url = os.getenv("DATABASE_URL")

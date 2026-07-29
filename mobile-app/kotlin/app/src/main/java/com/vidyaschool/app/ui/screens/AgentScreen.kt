@@ -32,11 +32,61 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.animation.core.*
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Offset
 import com.vidyaschool.app.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+@Composable
+fun ShimmerThinkingText(
+    text: String = "Thinking...",
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "shimmerTransition")
+    val alphaAnim by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shimmerAlpha"
+    )
+
+    val translateAnim by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 600f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerTranslate"
+    )
+
+    val shimmerColors = listOf(
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.95f),
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+    )
+
+    val brush = Brush.linearGradient(
+        colors = shimmerColors,
+        start = Offset(translateAnim - 200f, 0f),
+        end = Offset(translateAnim, 0f)
+    )
+
+    Text(
+        text = text,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Medium,
+        style = TextStyle(brush = brush),
+        modifier = modifier.graphicsLayer(alpha = alphaAnim)
+    )
+}
 
 data class AgentChatMessage(
     val id: String = java.util.UUID.randomUUID().toString(),
@@ -211,20 +261,10 @@ fun AgentScreen(
                 } catch (e: Exception) {
                     android.util.Log.e("AgentScreen", "Real AI API stream error: ${e.message}")
                     if (accumulatedText.isEmpty()) {
-                        val fallbackResponse = when {
-                            trimmedPrompt.contains("Lesson Plan", ignoreCase = true) -> {
-                                "🎯 **Lesson Plan Overview**\n\n**Topic:** Introduction to Forces & Motion\n**Duration:** 45 minutes\n\n1. **Warm-up (10m):** Interactive demonstration of friction.\n2. **Core Concept (20m):** Newton's First & Second Laws (\$F = ma\$) with real-life examples.\n3. **Group Task (10m):** Calculate net force on given objects.\n4. **Wrap-up (5m):** Exit ticket quiz."
-                            }
-                            trimmedPrompt.contains("Quiz", ignoreCase = true) -> {
-                                "📝 **Physics Quiz Questions (5 Marks)**\n\n1. State Newton's Second Law of Motion (\$F = ma\$).\n2. What is the SI unit of Force? (Answer: Newton)\n3. Calculate force required to accelerate a 5kg mass at 2 m/s².\n4. Differentiate between mass and weight.\n5. Explain why seatbelts are necessary using inertia."
-                            }
-                            else -> {
-                                "✨ **AI Agent Assistant**\n\nI've received your request regarding \"$trimmedPrompt\".\n\n• Key Objective: Enhance student comprehension through structured visual guidance.\n• Action Step: Assign practice worksheet 3 before Friday.\n• Formula: \$E = mc^2\$ and \$F = ma\$."
-                            }
-                        }
+                        val errorMessage = "⚠️ Unable to connect to AI Agent. ${e.message ?: "Please check network connection."}"
                         withContext(Dispatchers.Main) {
                             isThinking = false
-                            messages.add(AgentChatMessage(sender = MessageSender.AGENT, text = fallbackResponse))
+                            messages.add(AgentChatMessage(sender = MessageSender.AGENT, text = errorMessage))
                             listState.animateScrollToItem(messages.size - 1)
                         }
                     }
@@ -427,24 +467,14 @@ fun AgentScreen(
                     }
                 }
 
-                // Thinking Indicator when Agent is processing
+                // Thinking Indicator with Shimmer Effect
                 if (isThinking) {
                     item {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier.padding(vertical = 4.dp)
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = "Agent is reasoning...",
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Medium
-                            )
+                            ShimmerThinkingText(text = "Thinking...")
                         }
                     }
                 }

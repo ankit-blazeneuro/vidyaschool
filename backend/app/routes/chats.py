@@ -40,13 +40,17 @@ class ChatMessageRequest(BaseModel):
     message: str
     title: str = None
 
-# Get API Key from environment or fallback to user provided key
-NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "")
+from dotenv import load_dotenv
+load_dotenv(override=False)
+
+def get_nvidia_api_key() -> str:
+    return os.getenv("NVIDIA_API_KEY", "").strip()
+
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 
 # ── Model config ──
-# gpt-oss-20b: fast first-token latency, good quality for school assistant
-CHAT_MODEL = "openai/gpt-oss-20b"
+# meta/llama-3.1-70b-instruct: High accuracy reasoning model on NVIDIA NIM
+CHAT_MODEL = "meta/llama-3.1-70b-instruct"
 CHAT_MAX_TOKENS = 1024
 
 # ── Tool-check model (smaller, faster, no streaming) ──
@@ -526,7 +530,7 @@ def extract_image_content_via_nvidia(image_bytes: bytes, mime_type: str) -> str:
         "stream": False
     }
     headers = {
-        "Authorization": f"Bearer {NVIDIA_API_KEY}",
+        "Authorization": f"Bearer {get_nvidia_api_key()}",
         "Accept": "application/json",
         "Content-Type": "application/json"
     }
@@ -622,7 +626,7 @@ def _strip_think_blocks(text: str) -> str:
 async def response_stream_generator(messages_payload: list, room_id: str, db: Session):
     """Stream response from the primary chat model."""
     headers = {
-        "Authorization": f"Bearer {NVIDIA_API_KEY}",
+        "Authorization": f"Bearer {get_nvidia_api_key()}",
         "Accept": "text/event-stream",
         "Content-Type": "application/json"
     }
@@ -780,7 +784,7 @@ async def run_agent_loop(messages_payload: list, room_id: str, current_user: Use
     full_history = [system_msg] + clean_history
 
     headers = {
-        "Authorization": f"Bearer {NVIDIA_API_KEY}",
+        "Authorization": f"Bearer {get_nvidia_api_key()}",
         "Content-Type": "application/json"
     }
 
@@ -905,7 +909,7 @@ def generate_ai_chat_title(user_message: str) -> str:
         "temperature": 0.3
     }
     headers = {
-        "Authorization": f"Bearer {NVIDIA_API_KEY}",
+        "Authorization": f"Bearer {get_nvidia_api_key()}",
         "Content-Type": "application/json"
     }
     try:
