@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.core.auth import get_current_user, require_role
 from app.core.database import get_db
-from models import User, UserProfile, FeeInstallment, SubjectClassRequest, SubjectClassAssignment, Exam, StudentSubjectMarks, TeacherNote
+from models import User, UserProfile, FeeInstallment, SubjectClassRequest, SubjectClassAssignment, Exam, StudentSubjectMarks, TeacherNote, Timetable
 
 router = APIRouter(prefix="/teacher", tags=["teacher"])
 
@@ -712,3 +712,67 @@ def save_marks(
         print(f"[Marks] Notification error (non-fatal): {_e}")
 
     return {"status": "success"}
+
+# ── Teacher Calendar Agenda Endpoint ──────────────────────────────────────────
+
+@router.get("/calendar")
+def get_teacher_calendar(
+    current_user: User = Depends(require_role(["teacher", "admin", "librarian"])),
+    db: Session = Depends(get_db)
+):
+    days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    now = datetime.now()
+    # Python weekday(): Monday is 0, Sunday is 6.
+    # Map to days list where Sunday is index 0.
+    today_idx = (now.weekday() + 1) % 7
+    today_day = days[today_idx]
+    tomorrow_day = days[(today_idx + 1) % 7]
+
+    months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    today_date_str = f"{today_day.upper()}, {months[now.month - 1]} {now.day}"
+
+    today_slots = db.query(Timetable).filter(
+        Timetable.teacher_id == current_user.id,
+        Timetable.day_of_week == today_day
+    ).order_by(Timetable.start_time).all()
+
+    tomorrow_slots = db.query(Timetable).filter(
+        Timetable.teacher_id == current_user.id,
+        Timetable.day_of_week == tomorrow_day
+    ).order_by(Timetable.start_time).all()
+
+    def format_time(t_str: str) -> str:
+        if not t_str or ":" not in t_str:
+            return t_str
+        try:
+            parts = t_str.split(":")
+            h = int(parts[0])
+            m = parts[1]
+            ampm = "PM" if h >= 12 else "AM"
+            h_12 = h % 12 or 12
+            return f"{h_12}:{m} {ampm}"
+        except Exception:
+            return t_str
+
+    return {
+        "todayDateStr": today_date_str,
+        "todayEvents": [
+            {
+                "id": s.id,
+                "title": f"{s.subject} (Class {s.class_}-{s.section})",
+                "time": format_time(s.start_time),
+                "room": s.room or ""
+            }
+            for s in today_slots
+        ],
+        "tomorrowEvents": [
+            {
+                "id": s.id,
+                "title": f"{s.subject} (Class {s.class_}-{s.section})",
+                "time": format_time(s.start_time),
+                "room": s.room or ""
+            }
+            for s in tomorrow_slots
+        ]
+    }
+

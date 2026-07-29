@@ -10,22 +10,14 @@ interface CalendarEventItem {
   room?: string
 }
 
-interface StudentCalendarProps {
-  apiUrl?: string
-  title?: string
-}
-
-export function StudentCalendar({
-  apiUrl = "/api/teacher/calendar",
-  title = "Calendar",
-}: StudentCalendarProps = {}) {
+export function TeacherCalendarWidget() {
   const [todayDate, setTodayDate] = React.useState<string>("FRIDAY, FEB 27")
   const [todayEvents, setTodayEvents] = React.useState<CalendarEventItem[]>([])
   const [tomorrowEvents, setTomorrowEvents] = React.useState<CalendarEventItem[]>([])
   const [loading, setLoading] = React.useState<boolean>(true)
 
   React.useEffect(() => {
-    fetch(apiUrl)
+    fetch("/api/teacher/calendar")
       .then((res) => {
         if (!res.ok) throw new Error("Failed")
         return res.json()
@@ -39,7 +31,7 @@ export function StudentCalendar({
       .catch(() => {
         setLoading(false)
       })
-  }, [apiUrl])
+  }, [])
 
   // Default / fallback items matching exact design specifications if no DB items found
   const activeTodayEvent: CalendarEventItem = todayEvents.length > 0
@@ -62,7 +54,7 @@ export function StudentCalendar({
         <div className="flex items-center justify-between px-1 mb-1">
           <div className="flex items-center gap-1.5 cursor-pointer group">
             <h2 className="text-white font-bold text-base tracking-tight font-sans">
-              {title}
+              Calendar
             </h2>
             <ChevronRight className="size-4 text-zinc-400 stroke-[2.5] group-hover:text-white transition-colors" />
           </div>

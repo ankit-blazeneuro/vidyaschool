@@ -1,5 +1,6 @@
 package com.vidyaschool.app.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -51,6 +52,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import android.content.Context
+import android.app.DownloadManager
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.foundation.isSystemInDarkTheme
 import android.content.Intent
 import android.net.Uri
@@ -60,6 +71,16 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.viewinterop.AndroidView
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.graphics.Bitmap
+import android.graphics.pdf.PdfRenderer
+import android.os.ParcelFileDescriptor
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.draw.shadow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.auth.SessionManager
 import com.vidyaschool.app.api.UpdateChecker
@@ -4761,12 +4782,337 @@ fun NoteMarkdownMathView(
     )
 }
 
+@Composable
+private fun PdfPageItem(
+    imageBitmap: ImageBitmap,
+    pageIndex: Int,
+    onZoomChanged: (Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+
+    val transformState = rememberTransformableState { zoomChange, panChange, _ ->
+        val newScale = (scale * zoomChange).coerceIn(1f, 4f)
+        scale = newScale
+        if (newScale > 1f) {
+            offset += panChange
+        } else {
+            offset = Offset.Zero
+        }
+        onZoomChanged(newScale)
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .transformable(state = transformState)
+            .then(
+                if (scale > 1f) {
+                    Modifier.pointerInput(pageIndex, scale) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            val newScale = (scale * zoom).coerceIn(1f, 4f)
+                            scale = newScale
+                            if (newScale > 1f) {
+                                offset += pan
+                            } else {
+                                offset = Offset.Zero
+                            }
+                            onZoomChanged(newScale)
+                        }
+                    }
+                } else Modifier
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            bitmap = imageBitmap,
+            contentDescription = "Page ${pageIndex + 1}",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = offset.x
+                    translationY = offset.y
+                }
+                .fillMaxSize()
+        )
+    }
+}
+
+private @Composable
+fun NativePdfViewer(
+    pdfUrl: String,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var pdfBitmaps by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(pdfUrl) {
+        isLoading = true
+        errorMessage = null
+        withContext(Dispatchers.IO) {
+            try {
+                val url = java.net.URL(pdfUrl)
+                val connection = url.openConnection() as java.net.HttpURLConnection
+                connection.connectTimeout = 15000
+                connection.readTimeout = 15000
+                connection.connect()
+
+                if (connection.responseCode != 200) {
+                    throw Exception("Server returned HTTP ${connection.responseCode}")
+                }
+
+                val cacheFile = File(context.cacheDir, "pdf_note_${Math.abs(pdfUrl.hashCode())}.pdf")
+                connection.inputStream.use { input ->
+                    FileOutputStream(cacheFile).use { output ->
+                        input.copyTo(output)
+                    }
+                }
+
+                val pfd = ParcelFileDescriptor.open(cacheFile, ParcelFileDescriptor.MODE_READ_ONLY)
+                val renderer = android.graphics.pdf.PdfRenderer(pfd)
+                val bitmaps = mutableListOf<Bitmap>()
+
+                for (i in 0 until renderer.pageCount) {
+                    val page = renderer.openPage(i)
+                    val width = page.width * 2
+                    val height = page.height * 2
+
+                    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                    val canvas = android.graphics.Canvas(bitmap)
+                    canvas.drawColor(android.graphics.Color.WHITE)
+                    page.render(bitmap, null, null, android.graphics.pdf.PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    bitmaps.add(bitmap)
+                    page.close()
+                }
+
+                renderer.close()
+                pfd.close()
+
+                withContext(Dispatchers.Main) {
+                    pdfBitmaps = bitmaps
+                    isLoading = false
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    errorMessage = e.message ?: "Failed to load PDF"
+                    isLoading = false
+                }
+            }
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        if (isLoading) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.size(36.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Rendering Native PDF Pages...",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                )
+            }
+        } else if (errorMessage != null || pdfBitmaps.isEmpty()) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Unable to load PDF pages",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = errorMessage ?: "No rendered pages found",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(pdfUrl))
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            android.widget.Toast.makeText(context, "No PDF viewer app available", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.onBackground,
+                        contentColor = MaterialTheme.colorScheme.background
+                    )
+                ) {
+                    Text("Open PDF Externally")
+                }
+            }
+        } else {
+            val firstVisibleIndex by remember {
+                derivedStateOf { listState.firstVisibleItemIndex }
+            }
+
+            val imageBitmaps = remember(pdfBitmaps) {
+                pdfBitmaps.map { it.asImageBitmap() }
+            }
+
+            val pageZoomMap = remember(pdfBitmaps.size) {
+                mutableStateMapOf<Int, Float>()
+            }
+            val activeZoom = pageZoomMap[firstVisibleIndex] ?: 1.0f
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                LazyRow(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    items(imageBitmaps.size) { index ->
+                        Box(
+                            modifier = Modifier
+                                .fillParentMaxWidth()
+                                .fillMaxHeight(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            PdfPageItem(
+                                imageBitmap = imageBitmaps[index],
+                                pageIndex = index,
+                                onZoomChanged = { pageZoomMap[index] = it }
+                            )
+                        }
+                    }
+                }
+
+                val coroutineScope = rememberCoroutineScope()
+
+                // Floating Controls Bar (Theme Matched: Black & White)
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 20.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+                        .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f), RoundedCornerShape(24.dp))
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    if (imageBitmaps.size > 1) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Prev Page Button
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                                    .clickable(enabled = firstVisibleIndex > 0) {
+                                        coroutineScope.launch {
+                                            listState.animateScrollToItem(firstVisibleIndex - 1)
+                                        }
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "‹",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (firstVisibleIndex > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                )
+                            }
+
+                            Text(
+                                text = "Page ${firstVisibleIndex + 1} / ${imageBitmaps.size}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+
+                            // Next Page Button
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                                    .clickable(enabled = firstVisibleIndex < imageBitmaps.size - 1) {
+                                        coroutineScope.launch {
+                                            listState.animateScrollToItem(firstVisibleIndex + 1)
+                                        }
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "›",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (firstVisibleIndex < imageBitmaps.size - 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(14.dp)
+                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f))
+                        )
+                    }
+
+                    // Active Zoom Indicator
+                    Box(
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${(activeZoom * 100).toInt()}%",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 private @Composable
 fun NoteDetailScreen(
     note: ParsedNote,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
+    val rawPdfUrl = note.pdfUrl
+    val fullPdfUrl = remember(rawPdfUrl) {
+        if (rawPdfUrl.isNullOrBlank()) ""
+        else if (rawPdfUrl.startsWith("http://") || rawPdfUrl.startsWith("https://")) rawPdfUrl
+        else "https://vidyaschool.vercel.app${if (rawPdfUrl.startsWith("/")) "" else "/"}$rawPdfUrl"
+    }
+
     var selectedPageIdx by remember { mutableIntStateOf(0) }
+
     val accent = when (note.color) {
         "yellow" -> Color(0xFFF59E0B)
         "blue"   -> Color(0xFF38BDF8)
@@ -4831,18 +5177,68 @@ fun NoteDetailScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(accent.copy(alpha = 0.15f))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = note.subject,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = accent
-                        )
+                    if (fullPdfUrl.isNotBlank()) {
+                        Button(
+                            onClick = {
+                                try {
+                                    val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                                    val request = DownloadManager.Request(Uri.parse(fullPdfUrl))
+                                        .setTitle("${note.title}.pdf")
+                                        .setDescription("Downloading note PDF...")
+                                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                                        .setAllowedOverMetered(true)
+                                        .setAllowedOverRoaming(true)
+                                    downloadManager.enqueue(request)
+                                    android.widget.Toast.makeText(context, "Downloading PDF...", android.widget.Toast.LENGTH_SHORT).show()
+                                } catch (e: Exception) {
+                                    try {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(fullPdfUrl))
+                                        context.startActivity(intent)
+                                    } catch (ex: Exception) {
+                                        android.widget.Toast.makeText(context, "Unable to download PDF", android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.onBackground,
+                                contentColor = MaterialTheme.colorScheme.background
+                            ),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.height(32.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Download PDF",
+                                    modifier = Modifier.size(13.dp),
+                                    tint = MaterialTheme.colorScheme.background
+                                )
+                                Text(
+                                    text = "Download PDF",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.background
+                                )
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(accent.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = note.subject,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = accent
+                            )
+                        }
                     }
                     if (!note.className.isNullOrBlank()) {
                         Box(
@@ -4864,142 +5260,98 @@ fun NoteDetailScreen(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
 
-            if (!note.pdfUrl.isNullOrBlank()) {
-                val ctx = LocalContext.current
-                Box(
+            if (fullPdfUrl.isNotBlank()) {
+                NativePdfViewer(
+                    pdfUrl = fullPdfUrl,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 4.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF3B82F6).copy(alpha = 0.12f))
-                        .border(1.dp, Color(0xFF3B82F6).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-                        .clickable {
-                            try {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(note.pdfUrl))
-                                ctx.startActivity(intent)
-                            } catch (e: Exception) {
-                                android.widget.Toast.makeText(ctx, "Unable to open PDF", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                        .padding(horizontal = 14.dp, vertical = 10.dp)
+                        .fillMaxSize()
+                        .padding(16.dp)
                 ) {
+                    // Title
+                    Text(
+                        text = note.title,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Author & date info
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = "PDF",
-                                modifier = Modifier.size(18.dp),
-                                tint = Color(0xFF3B82F6)
-                            )
-                            Text(
-                                text = "View Exported PDF Canvas",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF3B82F6)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(13.dp),
+                            tint = accent
+                        )
                         Text(
-                            text = "Open PDF ↗",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF3B82F6)
+                            text = "Published by ${note.teacherName}",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = " • ${note.timestamp}",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                         )
                     }
-                }
-            }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                // Title
-                Text(
-                    text = note.title,
-                    fontSize = 19.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Author & date info
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        modifier = Modifier.size(13.dp),
-                        tint = accent
-                    )
-                    Text(
-                        text = "Published by ${note.teacherName}",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                    )
-                    Text(
-                        text = " • ${note.timestamp}",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Page Selector Chips if multiple pages
-                if (note.pages.size > 1) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(bottom = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        note.pages.forEachIndexed { idx, page ->
-                            val isSel = idx == selectedPageIdx
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(
-                                        if (isSel) accent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+                    // Page Selector Chips if multiple pages
+                    if (note.pages.size > 1) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(bottom = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            note.pages.forEachIndexed { idx, page ->
+                                val isSel = idx == selectedPageIdx
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(
+                                            if (isSel) accent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+                                        )
+                                        .clickable { selectedPageIdx = idx }
+                                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "Page ${page.pageNum}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSel) Color.White else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                                     )
-                                    .clickable { selectedPageIdx = idx }
-                                    .padding(horizontal = 14.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    text = "Page ${page.pageNum}",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isSel) Color.White else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
-                                )
+                                }
                             }
                         }
                     }
-                }
 
-                // Full Screen Markdown + MathJax Renderer container
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.03f))
-                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
-                ) {
-                    NoteMarkdownMathView(
-                        markdownContent = currentContent,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    // Full Screen Markdown + MathJax Renderer container
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.03f))
+                            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
+                    ) {
+                        NoteMarkdownMathView(
+                            markdownContent = currentContent,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
         }
