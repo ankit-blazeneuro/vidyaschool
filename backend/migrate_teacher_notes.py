@@ -23,6 +23,7 @@ with Session(engine) as session:
         session.execute(text('ALTER TABLE teacher_note ADD COLUMN IF NOT EXISTS "class" VARCHAR(50);'))
         session.execute(text("ALTER TABLE teacher_note ADD COLUMN IF NOT EXISTS section VARCHAR(50);"))
         session.execute(text("ALTER TABLE teacher_note ADD COLUMN IF NOT EXISTS subject VARCHAR(100);"))
+        session.execute(text("ALTER TABLE teacher_note ADD COLUMN IF NOT EXISTS pdf_url TEXT;"))
         session.commit()
         print("✅ Migration completed successfully!")
     except Exception as e:

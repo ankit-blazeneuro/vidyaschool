@@ -222,6 +222,7 @@ export const teacherNote = pgTable('teacher_note', {
   class: text('class'),
   section: text('section'),
   subject: text('subject'),
+  pdfUrl: text('pdf_url'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
