@@ -367,8 +367,12 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://localhost:8000",
         "https://vidyaschool.vercel.app",
+        "https://blazeneuro.com",
+        "https://www.blazeneuro.com",
     ],
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.blazeneuro\.com|http://localhost:.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -68,6 +68,18 @@ interface ClassStructure {
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
 
+async function apiRequest(path: string, options: RequestInit = {}) {
+  try {
+    return await fetch(`/api/backend${path}`, options)
+  } catch (e) {
+    console.warn(`Proxy fetch to /api/backend${path} failed, trying direct backend...`, e)
+    return fetch(`${BACKEND_URL}${path}`, {
+      ...options,
+      credentials: "include",
+    })
+  }
+}
+
 function formatCurrency(value?: number) {
   return `₹${(value ?? 0).toLocaleString("en-IN")}`
 }
@@ -116,7 +128,7 @@ export function FeeStructuresClient({ username }: { username: string }) {
   const loadStructures = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${BACKEND_URL}/api/admin/fee-structures`, { credentials: "include" })
+      const res = await apiRequest("/api/admin/fee-structures")
       if (!res.ok) throw new Error("Failed to fetch fee structures")
       const data: ClassStructure[] = await res.json()
       setStructures(data.map((s) => ({ ...s, dirty: false })))
@@ -153,9 +165,8 @@ export function FeeStructuresClient({ username }: { username: string }) {
     if (!activeStructure) return
     setSaving(true)
     try {
-      const res = await fetch(`${BACKEND_URL}/api/admin/fee-structures/${activeClassNum}`, {
+      const res = await apiRequest(`/api/admin/fee-structures/${activeClassNum}`, {
         method: "PUT",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           components: activeStructure.components,
@@ -182,9 +193,8 @@ export function FeeStructuresClient({ username }: { username: string }) {
     setApplying(true)
     try {
       const classNums = applyScope === "current" ? [activeClassNum] : []
-      const res = await fetch(`${BACKEND_URL}/api/admin/fee-structures/apply`, {
+      const res = await apiRequest("/api/admin/fee-structures/apply", {
         method: "POST",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ classNums, year: applyYear }),
       })
