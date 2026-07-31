@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "backend/**"          # only runs when backend files change
+      - ".github/workflows/deploy-backend.yml"
 
 jobs:
   deploy:
@@ -29,10 +30,12 @@ jobs:
             set -e
 
             echo "📦 Pulling latest code..."
-            cd /home/ubuntu/vidyaschool/backend
+            cd /home/ubuntu/vidyaschool
+            git reset --hard origin/main
             git pull origin main
 
             echo "🔧 Activating virtualenv..."
+            cd /home/ubuntu/vidyaschool/backend
             source .venv/bin/activate
 
             echo "📥 Installing/updating dependencies..."
@@ -43,3 +46,4 @@ jobs:
 
             echo "✅ Deployment complete!"
             sudo systemctl status vidyaschool-backend --no-pager
+
