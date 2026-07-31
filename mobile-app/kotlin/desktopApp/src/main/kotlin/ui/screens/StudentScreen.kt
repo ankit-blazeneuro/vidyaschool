@@ -548,6 +548,7 @@ fun AcademicPerformanceCard() {
     }
 }
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun ImageSlider(
     images: List<SliderImage>,

@@ -22,6 +22,7 @@ import com.vidyaschool.shared.models.SliderImage
 import ui.shadcn.Input
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminScreen(
     provider: String = "",
@@ -232,13 +233,13 @@ fun AdminScreen(
                                         }
                                     }
                                 }
-                                if (index < sliderImages.size - 1) {
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-                                }
-                            }
-                            
-                            Spacer(modifier = Modifier.height(24.dp))
-                            HorizontalDivider(thickness = 2.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
+                                 if (index < sliderImages.size - 1) {
+                                     Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                                 }
+                             }
+                             
+                             Spacer(modifier = Modifier.height(24.dp))
+                             Divider(thickness = 2.dp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
                             Spacer(modifier = Modifier.height(16.dp))
                             
                             Text(
