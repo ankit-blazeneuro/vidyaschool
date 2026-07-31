@@ -21,7 +21,7 @@ export const auth = betterAuth({
     resetPasswordTokenExpiresIn: 300,
     sendResetPassword: async ({ user, url }) => {
       await resend.emails.send({
-        from: 'VidyaSchool <onboarding@resend.dev>',
+        from: 'VidyaSchool <noreply@blazeneuro.com>',
         to: user.email,
         subject: 'Reset your password',
         html: `<p>Click <a href="${url}">here</a> to reset your password. This link expires in 5 minutes.</p>`,
@@ -31,7 +31,7 @@ export const auth = betterAuth({
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
       await resend.emails.send({
-        from: 'VidyaSchool <onboarding@resend.dev>',
+        from: 'VidyaSchool <noreply@blazeneuro.com>',
         to: user.email,
         subject: 'Verify your email',
         html: `<p>Click <a href="${url}">here</a> to verify your email.</p>`,
