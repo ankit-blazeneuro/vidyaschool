@@ -2,11 +2,6 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -271,42 +266,8 @@ export default function StudentNotesPage() {
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="h-56 bg-zinc-100 dark:bg-[#18181b] rounded-2xl p-5 flex flex-col gap-3 border border-border/40 overflow-hidden"
-            >
-              {/* Badge + timestamp row */}
-              <div className="flex items-center justify-between">
-                <div className="h-5 w-20 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-                <div className="h-3 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-              </div>
-
-              {/* Title */}
-              <div className="flex flex-col gap-1.5">
-                <div className="h-4 w-full rounded-md bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-                <div className="h-4 w-3/4 rounded-md bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-              </div>
-
-              {/* Bullets */}
-              <div className="flex flex-col gap-2 flex-1">
-                {[...Array(3)].map((_, j) => (
-                  <div key={j} className="flex items-center gap-2">
-                    <div className="size-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600 shrink-0 animate-pulse" />
-                    <div
-                      className="h-3 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse"
-                      style={{ width: `${75 - j * 12}%` }}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Footer */}
-              <div className="pt-2.5 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <div className="size-3.5 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-                  <div className="h-3 w-24 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-                </div>
-                <div className="size-3.5 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
-              </div>
-            </div>
+              className="h-56 bg-zinc-100 dark:bg-[#18181b] rounded-2xl p-5 flex flex-col gap-3 animate-pulse border border-border/40"
+            />
           ))}
         </div>
       ) : filteredNotes.length === 0 ? (
@@ -324,47 +285,46 @@ export default function StudentNotesPage() {
           {filteredNotes.map(note => {
             const colorStyle = COLOR_MAP[note.color || "default"] || COLOR_MAP.default
             return (
-              <Card
+              <div
                 key={note.id}
                 onClick={() => router.push(`/student/${username}/notes/${note.id}`)}
-                className={`relative ${colorStyle.cardBg} ${colorStyle.border}
-                           rounded-2xl shadow-xs hover:shadow-lg flex flex-col transition-all duration-200 cursor-pointer active:scale-98 overflow-hidden group min-h-[220px]`}
+                className={`h-56 ${colorStyle.cardBg} ${colorStyle.border} border
+                           rounded-2xl p-5 flex flex-col gap-3
+                           transition-all duration-200 cursor-pointer hover:shadow-lg hover:-translate-y-0.5
+                           active:scale-[0.98] group overflow-hidden`}
               >
-                <CardHeader className="pb-2 pt-5 px-5 relative z-10">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-bold truncate max-w-[140px]">
-                      {note.notebook}
-                    </span>
-                    <span className="text-[10px] font-medium text-muted-foreground/70">{note.timestamp}</span>
-                  </div>
+                {/* Badge + timestamp */}
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-bold truncate max-w-[150px]">
+                    {note.notebook}
+                  </span>
+                  <span className="text-[10px] font-medium text-muted-foreground/70 shrink-0">{note.timestamp}</span>
+                </div>
 
-                  <h3 className="text-base font-bold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-                    {note.title}
-                  </h3>
-                </CardHeader>
+                {/* Title */}
+                <h3 className="text-sm font-bold text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                  {note.title}
+                </h3>
 
-                <CardContent className="px-5 pb-5 flex flex-col gap-2 flex-1 relative z-10">
-                  <ul className="space-y-1.5 flex-1">
-                    {note.bullets.map((b, j) => (
-                      <li key={j} className="flex items-start gap-2 text-xs text-foreground/80 leading-relaxed">
-                        <span className="mt-[6px] size-1.5 rounded-full bg-primary shrink-0" />
-                        <span className="line-clamp-2">{b}</span>
-                      </li>
-                    ))}
-                  </ul>
+                {/* Bullets */}
+                <ul className="flex flex-col gap-1.5 flex-1 overflow-hidden">
+                  {note.bullets.map((b, j) => (
+                    <li key={j} className="flex items-start gap-2 text-xs text-foreground/70 leading-relaxed">
+                      <span className="mt-[5px] size-1.5 rounded-full bg-primary shrink-0" />
+                      <span className="line-clamp-1">{b}</span>
+                    </li>
+                  ))}
+                </ul>
 
-                  <div className="mt-4 pt-2.5 border-t border-muted/30 flex items-center justify-between text-xs text-muted-foreground relative z-10">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <UserIcon className="size-3.5 text-primary shrink-0" />
-                      <span className="truncate font-medium">{note.teacherName}</span>
-                    </span>
-                    <ExternalLinkIcon className="size-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
-                  </div>
-                </CardContent>
-
-                {/* Dark Linear Gradient Overlay at Bottom */}
-                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none rounded-b-2xl z-0 transition-opacity opacity-75 group-hover:opacity-90" />
-              </Card>
+                {/* Footer */}
+                <div className="pt-2.5 border-t border-muted/30 flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <UserIcon className="size-3.5 text-primary shrink-0" />
+                    <span className="truncate font-medium">{note.teacherName}</span>
+                  </span>
+                  <ExternalLinkIcon className="size-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0" />
+                </div>
+              </div>
             )
           })}
         </div>

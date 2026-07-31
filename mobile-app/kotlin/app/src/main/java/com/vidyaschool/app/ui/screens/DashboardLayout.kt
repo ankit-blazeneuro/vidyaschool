@@ -66,6 +66,9 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.viewinterop.AndroidView
@@ -307,6 +310,7 @@ fun DashboardLayout(
     var selectedTab by remember { mutableStateOf("home") }
     var activeDocPath by remember { mutableStateOf<String?>(null) }
     var activeDocFallback by remember { mutableStateOf<String?>(null) }
+    var showSearchDialog by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
     var showNotifications by remember { mutableStateOf(false) }
     var hasUnreadNotifications by remember { mutableStateOf(false) }
@@ -320,6 +324,7 @@ fun DashboardLayout(
     var selectedSidebarNote by remember { mutableStateOf<ParsedNote?>(null) }
     var sidebarNotesSubject by remember { mutableStateOf("All") }
     var sidebarSessionsCount by remember { mutableStateOf<Int?>(null) }
+    var paymentSuccessInstallment by remember { mutableStateOf<FeeInstallment?>(null) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     
     // Check initial notification history on launch to set unread badge dot
@@ -360,10 +365,12 @@ fun DashboardLayout(
             showComplaintDialog ||
             showAiDialog ||
             showAgentScreen ||
+            showSearchDialog ||
             selectedTab != "home"
 
     BackHandler(enabled = isBackEnabled) {
         when {
+            showSearchDialog -> showSearchDialog = false
             selectedSidebarNote != null -> selectedSidebarNote = null
             drawerState.isOpen -> scope.launch { drawerState.close() }
             activeDocPath != null -> activeDocPath = null
@@ -372,6 +379,7 @@ fun DashboardLayout(
             showAiDialog -> showAiDialog = false
             showAgentScreen -> showAgentScreen = false
             selectedTab != "home" -> selectedTab = "home"
+            else -> {}
         }
     }
 
@@ -1038,7 +1046,7 @@ fun DashboardLayout(
                             .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
                             .clickable {
                                 scope.launch { drawerState.close() }
-                                selectedTab = "search"
+                                showSearchDialog = true
                             }
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.Center
@@ -1046,7 +1054,7 @@ fun DashboardLayout(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.Start
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1063,22 +1071,6 @@ fun DashboardLayout(
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Normal,
                                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                                )
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .height(22.dp)
-                                    .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Color.Transparent)
-                                    .padding(horizontal = 7.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "⌘F",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                                 )
                             }
                         }
@@ -1318,7 +1310,10 @@ fun DashboardLayout(
                         FeesTabContent(
                             sessionManager = sessionManager,
                             isRefreshing = isRefreshing,
-                            onRefresh = triggerRefresh
+                            onRefresh = triggerRefresh,
+                            onPaymentSuccess = { inst ->
+                                paymentSuccessInstallment = inst
+                            }
                         )
                     }
                     "search" -> {
@@ -1397,6 +1392,19 @@ fun DashboardLayout(
         NoteDetailScreen(
             note = selectedSidebarNote!!,
             onBack = { selectedSidebarNote = null }
+        )
+    }
+
+    if (paymentSuccessInstallment != null) {
+        PaymentSuccessScreen(
+            installment = paymentSuccessInstallment!!,
+            studentName = currentName.value.ifEmpty { currentUsername.value },
+            admissionNo = "",
+            onDone = { paymentSuccessInstallment = null },
+            onGoHome = {
+                paymentSuccessInstallment = null
+                selectedTab = "home"
+            }
         )
     }
 
@@ -1482,6 +1490,22 @@ fun DashboardLayout(
                     Text("Cancel")
                 }
             }
+        )
+    }
+
+    if (showSearchDialog) {
+        QuickSearchDialog(
+            sessionManager = sessionManager,
+            onTabSelect = { tab ->
+                selectedTab = tab
+                showSearchDialog = false
+            },
+            onDocSelect = { docPath, fallback ->
+                activeDocPath = docPath
+                activeDocFallback = fallback
+                showSearchDialog = false
+            },
+            onDismiss = { showSearchDialog = false }
         )
     }
 
@@ -1974,6 +1998,7 @@ fun SearchTabContent(
                                     fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onBackground
                                 ),
+                                cursorBrush = androidx.compose.ui.graphics.SolidColor(if (isSystemInDarkTheme()) Color.White else Color.Black),
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -2386,8 +2411,10 @@ fun ProfileTabContent(
     var isEditing by remember { mutableStateOf(false) }
     var tempUsername by remember { mutableStateOf(username) }
 
+    var activeSection by remember { mutableStateOf<String?>(null) }
     var userProfile by remember { mutableStateOf<UserProfileData?>(null) }
     var isLoadingProfile by remember { mutableStateOf(false) }
+    var isLoadingSection by remember { mutableStateOf(false) }
 
     // Editable state fields
     var editPhoneNumber by remember { mutableStateOf("") }
@@ -2410,98 +2437,92 @@ fun ProfileTabContent(
         tempUsername = username
     }
 
-    fun fetchProfile() {
+    fun fetchSectionProfile(sec: String) {
         coroutineScope.launch {
-            isLoadingProfile = true
+            isLoadingSection = true
             try {
                 val token = sessionManager.getSessionToken() ?: ""
-                val res = RetrofitClient.authApi.getProfile("Bearer $token")
+                val res = RetrofitClient.authApi.getProfile("Bearer $token", section = sec)
                 if (res.isSuccessful && res.body() != null) {
                     val profileData = res.body()?.profile
                     userProfile = profileData
                     if (profileData != null) {
-                        editPhoneNumber = profileData.phoneNumber ?: ""
-                        editAddress = profileData.address ?: ""
-                        editCity = profileData.city ?: ""
-                        editState = profileData.state ?: ""
-                        editPincode = profileData.pincode ?: ""
-                        editParentName = profileData.parentName ?: ""
-                        editParentPhone = profileData.parentPhone ?: ""
-                        editParentEmail = profileData.parentEmail ?: ""
-                        editClass = profileData.`class` ?: ""
-                        editSection = profileData.section ?: ""
-                        
-                        val fetchedUsername = profileData.username ?: ""
-                        if (fetchedUsername.isNotEmpty() && fetchedUsername != username) {
-                            onUpdateUsername(fetchedUsername)
+                        when (sec) {
+                            "personal" -> {
+                                tempUsername = profileData.username ?: username
+                                editPhoneNumber = profileData.phoneNumber ?: ""
+                                editClass = profileData.`class` ?: ""
+                                editSection = profileData.section ?: ""
+                            }
+                            "parent" -> {
+                                editParentName = profileData.parentName ?: ""
+                                editParentPhone = profileData.parentPhone ?: ""
+                                editParentEmail = profileData.parentEmail ?: ""
+                            }
+                            "address" -> {
+                                editAddress = profileData.address ?: ""
+                                editCity = profileData.city ?: ""
+                                editState = profileData.state ?: ""
+                                editPincode = profileData.pincode ?: ""
+                            }
                         }
                     }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("ProfileTab", "Error fetching profile: ${e.message}")
+                android.util.Log.e("ProfileTab", "Error fetching section profile: ${e.message}")
             } finally {
-                isLoadingProfile = false
+                isLoadingSection = false
             }
         }
     }
 
-    LaunchedEffect(Unit) {
-        fetchProfile()
-    }
-
-    LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            fetchProfile()
-        }
-    }
-
-    fun saveProfileSettings() {
+    fun saveSectionSettings(sec: String) {
         coroutineScope.launch {
             try {
                 val token = sessionManager.getSessionToken() ?: ""
                 val req = com.vidyaschool.app.api.ProfileUpdateRequest(
-                    username = tempUsername,
-                    phoneNumber = editPhoneNumber,
-                    address = editAddress,
-                    city = editCity,
-                    state = editState,
-                    pincode = editPincode,
-                    parentName = if (role.equals("student", ignoreCase = true)) editParentName else null,
-                    parentPhone = if (role.equals("student", ignoreCase = true)) editParentPhone else null,
-                    parentEmail = if (role.equals("student", ignoreCase = true)) editParentEmail else null,
-                    class_ = editClass.takeIf { it.isNotEmpty() && it != "none" },
-                    section = editSection.takeIf { it.isNotEmpty() && it != "none" }
+                    username = if (sec == "personal") tempUsername else null,
+                    phoneNumber = if (sec == "personal") editPhoneNumber else null,
+                    address = if (sec == "address") editAddress else null,
+                    city = if (sec == "address") editCity else null,
+                    state = if (sec == "address") editState else null,
+                    pincode = if (sec == "address") editPincode else null,
+                    parentName = if (sec == "parent" && role.equals("student", ignoreCase = true)) editParentName else null,
+                    parentPhone = if (sec == "parent" && role.equals("student", ignoreCase = true)) editParentPhone else null,
+                    parentEmail = if (sec == "parent" && role.equals("student", ignoreCase = true)) editParentEmail else null,
+                    class_ = if (sec == "personal") editClass.takeIf { it.isNotEmpty() && it != "none" } else null,
+                    section = if (sec == "personal") editSection.takeIf { it.isNotEmpty() && it != "none" } else null
                 )
                 val res = RetrofitClient.authApi.updateProfile("Bearer $token", req)
                 if (res.isSuccessful) {
-                    android.widget.Toast.makeText(context, "Settings updated successfully", android.widget.Toast.LENGTH_SHORT).show()
-                    isEditing = false
-                    onUpdateUsername(tempUsername)
-                    
-                    val currentClass = if (role.equals("student", ignoreCase = true)) editClass else sessionManager.getStudentClass()
-                    sessionManager.saveSession(
-                        provider = provider,
-                        email = email,
-                        name = name,
-                        role = role,
-                        avatarUrl = avatarUrl,
-                        sessionToken = token,
-                        studentClass = currentClass,
-                        username = tempUsername
-                    )
-                    fetchProfile()
+                    android.widget.Toast.makeText(context, "Saved successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                    if (sec == "personal" && tempUsername.isNotEmpty()) {
+                        onUpdateUsername(tempUsername)
+                    }
+                    activeSection = null
                 } else {
-                    val errorBody = res.errorBody()?.string() ?: ""
-                    var errMsg = "Failed to update settings"
-                    try {
-                        val json = org.json.JSONObject(errorBody)
-                        errMsg = json.optString("detail", errMsg)
-                    } catch (e: Exception) {}
-                    android.widget.Toast.makeText(context, errMsg, android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(context, "Failed to update section", android.widget.Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    fun openSection(sec: String) {
+        activeSection = sec
+        if (sec in listOf("personal", "parent", "address", "documents")) {
+            fetchSectionProfile(sec)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        fetchSectionProfile("personal")
+    }
+
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            fetchSectionProfile("personal")
         }
     }
 
@@ -2543,438 +2564,417 @@ fun ProfileTabContent(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                        .padding(horizontal = 20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Profile Card (Shadcn style with thin border)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f),
-                        RoundedCornerShape(12.dp)
-                    ),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Double ring avatar style
-                    Box(
-                        modifier = Modifier
-                            .size(90.dp)
-                            .border(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f), CircleShape)
-                            .padding(4.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (!avatarUrl.isNullOrEmpty()) {
-                            AsyncImage(
-                                model = avatarUrl,
-                                contentDescription = "Profile Picture",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape)
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = name.firstOrNull()?.uppercase() ?: "?",
-                                    fontSize = 32.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                            }
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(14.dp))
-                    
-                    Text(
-                        text = name,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    
-                    Text(
-                        text = email,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = if (username.isNotEmpty()) "@$username" else "@Not set",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Pill Badge for Role
-                    Box(
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(100.dp))
-                            .padding(horizontal = 14.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            text = role.uppercase(),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            letterSpacing = 0.5.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    ProfileDetailRow(label = "Username", value = if (username.isNotEmpty()) username else "Not set")
-                    ProfileDetailRow(label = "Auth Provider", value = provider.uppercase())
-                    ProfileDetailRow(label = "Session Status", value = "ACTIVE")
-                }
-            }
-            
-            // App Theme Card (Shadcn Tab Selector)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(
-                        1.dp,
-                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f),
-                        RoundedCornerShape(12.dp)
-                    ),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp)
-                ) {
-                    Text(
-                        text = "App Appearance",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    
-                    // Shadcn Tab control segment
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f), RoundedCornerShape(8.dp))
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEach { (value, label) ->
-                            val isSelected = themeMode == value
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(
-                                        if (isSelected) MaterialTheme.colorScheme.surface
-                                        else Color.Transparent
-                                    )
-                                    .clickable { onThemeChange(value) }
-                                    .padding(vertical = 8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = label,
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if (isLoadingProfile) {
-                    Box(modifier = Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else {
-                    // Personal Information Card
+                    // Top Profile Card: Left Avatar, Right Name & Role
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(12.dp)),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
+                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
-                        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("Personal Information", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f))
-                            ProfileDetailRow(label = "User ID", value = userProfile?.userId ?: "N/A")
-                            ProfileDetailRow(label = "Role", value = role.uppercase())
-                        }
-                    }
-
-                    // Detailed Settings Card (Teacher Details or Student Details)
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(12.dp)),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
-                    ) {
-                        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            val detailTitle = if (role.equals("student", ignoreCase = true)) "Student Details" else "Teacher Details"
-                            Text(detailTitle, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f))
-
-                            if (isEditing) {
-                                Input(
-                                    value = tempUsername,
-                                    onValueChange = { tempUsername = it.toLowerCase().replace(Regex("[^a-z0-9_]"), "") },
-                                    label = "Username",
-                                    placeholder = "e.g. student_name",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Input(
-                                    value = editPhoneNumber,
-                                    onValueChange = { editPhoneNumber = it },
-                                    label = "Phone Number",
-                                    placeholder = "e.g. 9876543210",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Select(
-                                    selectedValue = editClass.ifBlank { "none" },
-                                    onValueChange = { editClass = it },
-                                    options = listOf(SelectOption("none", "Not assigned")) +
-                                        listOf("Nursery", "KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12").map { c ->
-                                            SelectOption(
-                                                value = c,
-                                                label = if (c == "Nursery" || c == "KG") c else "Class $c"
-                                            )
-                                        },
-                                    label = "Assigned Class",
-                                    placeholder = "e.g. Class 10",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Select(
-                                    selectedValue = editSection.ifBlank { "none" },
-                                    onValueChange = { editSection = it },
-                                    options = listOf(SelectOption("none", "Not assigned")) +
-                                        listOf("A", "B", "C", "D", "E", "F").map { SelectOption(it, it) },
-                                    label = "Assigned Section",
-                                    placeholder = "e.g. A",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            } else {
-                                ProfileDetailRow(label = "ID / Admission No", value = userProfile?.admissionNumber ?: "N/A")
-                                ProfileDetailRow(label = "Username", value = if (tempUsername.isNotEmpty()) "@$tempUsername" else "Not set")
-                                ProfileDetailRow(label = "Phone Number", value = if (editPhoneNumber.isNotEmpty()) editPhoneNumber else "Not set")
-                                ProfileDetailRow(
-                                    label = "Class",
-                                    value = if (editClass.isEmpty() || editClass == "none") "Not assigned" else if (editClass == "Nursery" || editClass == "KG") editClass else "Class $editClass"
-                                )
-                                ProfileDetailRow(
-                                    label = "Section",
-                                    value = if (editSection.isEmpty() || editSection == "none") "Not assigned" else editSection
-                                )
-                            }
-                        }
-                    }
-
-                    // Parent/Guardian details (if student)
-                    if (role.equals("student", ignoreCase = true)) {
-                        Card(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(12.dp)),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
+                                .padding(20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Text("Parent/Guardian Details", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f))
-
-                                if (isEditing) {
-                                    Input(
-                                        value = editParentName,
-                                        onValueChange = { editParentName = it },
-                                        label = "Parent Name",
-                                        placeholder = "e.g. Rajesh Kumar",
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                    Input(
-                                        value = editParentPhone,
-                                        onValueChange = { editParentPhone = it },
-                                        label = "Parent Phone",
-                                        placeholder = "e.g. 9876543210",
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                    Input(
-                                        value = editParentEmail,
-                                        onValueChange = { editParentEmail = it },
-                                        label = "Parent Email",
-                                        placeholder = "e.g. parent@email.com",
-                                        modifier = Modifier.fillMaxWidth()
+                            // Left Avatar
+                            Box(
+                                modifier = Modifier
+                                    .size(68.dp)
+                                    .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), CircleShape)
+                                    .padding(3.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (!avatarUrl.isNullOrEmpty()) {
+                                    AsyncImage(
+                                        model = avatarUrl,
+                                        contentDescription = "Avatar",
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape)
                                     )
                                 } else {
-                                    ProfileDetailRow(label = "Parent Name", value = if (editParentName.isNotEmpty()) editParentName else "Not set")
-                                    ProfileDetailRow(label = "Parent Phone", value = if (editParentPhone.isNotEmpty()) editParentPhone else "Not set")
-                                    ProfileDetailRow(label = "Parent Email", value = if (editParentEmail.isNotEmpty()) editParentEmail else "Not set")
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primary),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = name.firstOrNull()?.uppercase() ?: "?",
+                                            fontSize = 24.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Right User Details
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = name,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = if (username.isNotEmpty()) "@$username" else email,
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(100.dp))
+                                        .padding(horizontal = 10.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = role.uppercase(),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        letterSpacing = 0.5.sp
+                                    )
                                 }
                             }
                         }
                     }
 
-                    // Address details Card
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(12.dp)),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
-                    ) {
-                        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("Address", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                            HorizontalDivider(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f))
+                    Text(
+                        text = "ACCOUNT & DETAILS",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                    )
 
-                            if (isEditing) {
-                                Input(
-                                    value = editAddress,
-                                    onValueChange = { editAddress = it },
-                                    label = "Street Address",
-                                    placeholder = "e.g. 42 MG Road, Block B",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                Input(
-                                    value = editCity,
-                                    onValueChange = { editCity = it },
-                                    label = "City",
-                                    placeholder = "e.g. Delhi",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                Input(
-                                    value = editState,
-                                    onValueChange = { editState = it },
-                                    label = "State",
-                                    placeholder = "e.g. Delhi",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                Input(
-                                    value = editPincode,
-                                    onValueChange = { editPincode = it },
-                                    label = "Pincode",
-                                    placeholder = "e.g. 110001",
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            } else {
-                                ProfileDetailRow(label = "Street Address", value = if (editAddress.isNotEmpty()) editAddress else "Not set")
-                                ProfileDetailRow(label = "City", value = if (editCity.isNotEmpty()) editCity else "Not set")
-                                ProfileDetailRow(label = "State", value = if (editState.isNotEmpty()) editState else "Not set")
-                                ProfileDetailRow(label = "Pincode", value = if (editPincode.isNotEmpty()) editPincode else "Not set")
-                            }
-                        }
+                    // Option Buttons List
+                    ProfileOptionRow(
+                        icon = Icons.Default.Person,
+                        title = "Personal Details",
+                        subtitle = "Name, Phone, Class & Section",
+                        onClick = { openSection("personal") }
+                    )
+
+                    if (role.equals("student", ignoreCase = true)) {
+                        ProfileOptionRow(
+                            icon = Icons.Default.Person,
+                            title = "Parent / Guardian Details",
+                            subtitle = "Guardian contact details & email",
+                            onClick = { openSection("parent") }
+                        )
                     }
 
-                    // Save / Edit Actions
-                    if (isEditing) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Button(
-                                onClick = { saveProfileSettings() },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text("Save Changes", fontSize = 13.sp)
-                            }
-                            OutlinedButton(
-                                onClick = {
-                                    isEditing = false
-                                    tempUsername = username
-                                    if (userProfile != null) {
-                                        editPhoneNumber = userProfile?.phoneNumber ?: ""
-                                        editAddress = userProfile?.address ?: ""
-                                        editCity = userProfile?.city ?: ""
-                                        editState = userProfile?.state ?: ""
-                                        editPincode = userProfile?.pincode ?: ""
-                                        editParentName = userProfile?.parentName ?: ""
-                                        editParentPhone = userProfile?.parentPhone ?: ""
-                                        editParentEmail = userProfile?.parentEmail ?: ""
-                                        editClass = userProfile?.`class` ?: ""
-                                        editSection = userProfile?.section ?: ""
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text("Cancel", fontSize = 13.sp)
+                    ProfileOptionRow(
+                        icon = Icons.Default.Home,
+                        title = "Address Details",
+                        subtitle = "Street address, City, State & Pincode",
+                        onClick = { openSection("address") }
+                    )
+
+                    ProfileOptionRow(
+                        icon = Icons.Default.Info,
+                        title = "Documents & Status",
+                        subtitle = "Admission ID & Verification status",
+                        onClick = { openSection("documents") }
+                    )
+
+                    ProfileOptionRow(
+                        icon = Icons.Default.Info,
+                        title = "Appearance",
+                        subtitle = "App theme preferences",
+                        badgeText = themeMode.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.ROOT) else it.toString() },
+                        onClick = { openSection("appearance") }
+                    )
+
+                    ProfileOptionRow(
+                        icon = Icons.Default.Delete,
+                        title = "Clear App Cache",
+                        subtitle = "Clear temporary cache files",
+                        onClick = {
+                            try {
+                                context.cacheDir.deleteRecursively()
+                                android.widget.Toast.makeText(context, "App cache cleared successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(context, "Cache cleared", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
-                    } else {
-                        OutlinedButton(
-                            onClick = { isEditing = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Text("Edit Settings", fontSize = 13.sp)
-                        }
-                    }
-                }
-            
-            Spacer(modifier = Modifier.height(10.dp))
-            
-            // Logout Destructive Action (Shadcn style outline)
-            Button(
-                onClick = onLogout,
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .height(44.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.error, RoundedCornerShape(8.dp)),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text(
-                    text = "Log Out of Session",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+                    )
+
+                    ProfileOptionRow(
+                        icon = Icons.Default.Info,
+                        title = "Version & Build",
+                        subtitle = "v2.4.0 (Build 42)",
+                        onClick = { openSection("version") }
+                    )
+
+                    ProfileOptionRow(
+                        icon = Icons.Default.Lock,
+                        title = "Log Out",
+                        subtitle = "Sign out of your account session",
+                        isDanger = true,
+                        onClick = onLogout
+                    )
                 }
             }
         }
 
-        if (headerAlpha > 0f) {
-            DashboardStickyHeader(
-                title = "My Profile",
-                headerAlpha = headerAlpha,
-                headerSlide = headerSlide,
-                onNotificationClick = onNotificationClick
-            )
+    // Separate Screen Modal for Details
+    if (activeSection != null) {
+        val sec = activeSection!!
+        Dialog(
+            onDismissRequest = { activeSection = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .padding(20.dp)
+                ) {
+                    // Sub-screen Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            IconButton(onClick = { activeSection = null }) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
+                            }
+                            Text(
+                                text = when (sec) {
+                                    "personal" -> "Personal Details"
+                                    "parent" -> "Parent Details"
+                                    "address" -> "Address Details"
+                                    "documents" -> "Documents & Status"
+                                    "appearance" -> "Appearance"
+                                    "version" -> "App Version & Info"
+                                    else -> "Details"
+                                },
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        if (sec in listOf("personal", "parent", "address")) {
+                            Button(
+                                onClick = { saveSectionSettings(sec) },
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Text("Save", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (isLoadingSection) {
+                        Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            when (sec) {
+                                "personal" -> {
+                                    Input(value = tempUsername, onValueChange = { tempUsername = it }, label = "Username", placeholder = "e.g. jondoe")
+                                    Input(value = editPhoneNumber, onValueChange = { editPhoneNumber = it }, label = "Phone Number", placeholder = "e.g. 9876543210")
+                                    Select(
+                                        selectedValue = editClass.ifBlank { "none" },
+                                        onValueChange = { editClass = it },
+                                        options = listOf(SelectOption("none", "Not assigned")) +
+                                                listOf("Nursery", "KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12").map { c ->
+                                                    SelectOption(value = c, label = if (c == "Nursery" || c == "KG") c else "Class $c")
+                                                },
+                                        label = "Class", placeholder = "Select class"
+                                    )
+                                    Select(
+                                        selectedValue = editSection.ifBlank { "none" },
+                                        onValueChange = { editSection = it },
+                                        options = listOf(SelectOption("none", "Not assigned")) + listOf("A", "B", "C", "D", "E", "F").map { SelectOption(it, it) },
+                                        label = "Section", placeholder = "Select section"
+                                    )
+                                }
+                                "parent" -> {
+                                    Input(value = editParentName, onValueChange = { editParentName = it }, label = "Parent Name", placeholder = "e.g. Rajesh Kumar")
+                                    Input(value = editParentPhone, onValueChange = { editParentPhone = it }, label = "Parent Phone", placeholder = "e.g. 9876543210")
+                                    Input(value = editParentEmail, onValueChange = { editParentEmail = it }, label = "Parent Email", placeholder = "e.g. parent@email.com")
+                                }
+                                "address" -> {
+                                    Input(value = editAddress, onValueChange = { editAddress = it }, label = "Street Address", placeholder = "e.g. 42 MG Road")
+                                    Input(value = editCity, onValueChange = { editCity = it }, label = "City", placeholder = "e.g. Delhi")
+                                    Input(value = editState, onValueChange = { editState = it }, label = "State", placeholder = "e.g. Delhi")
+                                    Input(value = editPincode, onValueChange = { editPincode = it }, label = "Pincode", placeholder = "e.g. 110001")
+                                }
+                                "documents" -> {
+                                    ProfileDetailRow(label = "Admission No", value = userProfile?.admissionNumber ?: "2024/STU/102")
+                                    ProfileDetailRow(label = "Verification", value = if (userProfile?.onboardingCompleted == true) "VERIFIED ✓" else "PENDING")
+                                    ProfileDetailRow(label = "Commute Mode", value = userProfile?.transportMode ?: "Walking")
+                                }
+                                "appearance" -> {
+                                    Text("Select Theme", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                    listOf("system" to "System Default", "light" to "Light Mode", "dark" to "Dark Mode").forEach { (valKey, label) ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(if (themeMode == valKey) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface)
+                                                .border(1.dp, if (themeMode == valKey) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                                                .clickable { onThemeChange(valKey) }
+                                                .padding(16.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                                            if (themeMode == valKey) {
+                                                Icon(Icons.Default.Info, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary)
+                                            }
+                                        }
+                                    }
+                                }
+                                "version" -> {
+                                    ProfileDetailRow(label = "App Name", value = "VidyaSchool Portal")
+                                    ProfileDetailRow(label = "Version", value = "2.4.0")
+                                    ProfileDetailRow(label = "Build Number", value = "42")
+                                    ProfileDetailRow(label = "Environment", value = "Production")
+                                    ProfileDetailRow(label = "Status", value = "Up to date ✓")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
+
+    if (headerAlpha > 0f) {
+        DashboardStickyHeader(
+            title = "My Profile",
+            headerAlpha = headerAlpha,
+            headerSlide = headerSlide,
+            onNotificationClick = onNotificationClick
+        )
+    }
 }
+}
+
+@Composable
+fun ProfileOptionRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    badgeText: String? = null,
+    isDanger: Boolean = false,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() },
+        color = MaterialTheme.colorScheme.surface,
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(
+                            if (isDanger) MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
+                            else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = title,
+                        modifier = Modifier.size(20.dp),
+                        tint = if (isDanger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = title,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isDanger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = subtitle,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (badgeText != null) {
+                    Box(
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = badgeText,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = "Open",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+                )
+            }
+        }
+    }
 }
 
 // Search local page item model
@@ -4434,7 +4434,8 @@ fun CommunityMessageItem(
 fun FeesTabContent(
     sessionManager: SessionManager,
     isRefreshing: Boolean,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onPaymentSuccess: (FeeInstallment) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -4442,6 +4443,7 @@ fun FeesTabContent(
     var isLoading by remember { mutableStateOf(false) }
     var isProcessingPayment by remember { mutableStateOf<String?>(null) }
     var paymentError by remember { mutableStateOf<String?>(null) }
+    val studentName = remember { sessionManager.getUsername() ?: "Student" }
 
     val fetchFees: () -> Unit = {
         isLoading = true
@@ -4495,6 +4497,7 @@ fun FeesTabContent(
                     if (payResp.isSuccessful && payResp.body()?.success == true) {
                         android.widget.Toast.makeText(context, "Mock payment successful!", android.widget.Toast.LENGTH_SHORT).show()
                         fetchFees()
+                        onPaymentSuccess(inst.copy(status = "paid", paidDate = payResp.body()?.paidDate ?: "Today", receiptNo = payResp.body()?.receiptNo ?: "RCP-MOCK"))
                     } else {
                         android.widget.Toast.makeText(context, "Mock payment failed", android.widget.Toast.LENGTH_SHORT).show()
                     }
@@ -4506,9 +4509,16 @@ fun FeesTabContent(
                 activity.pendingInstallmentId = inst.id
                 activity.pendingOrderId = order.orderId ?: ""
                 activity.pendingIsMock = order.mockPayment == true
+                val paidInst = inst
                 activity.onPaymentDone = {
                     isProcessingPayment = null
-                    fetchFees()
+                    // Refresh fees then notify parent to show full-screen success screen
+                    scope.launch {
+                        fetchFees()
+                        kotlinx.coroutines.delay(600)
+                        val updated = installments.find { it.id == paidInst.id } ?: paidInst
+                        onPaymentSuccess(updated)
+                    }
                 }
                 activity.onPaymentFailed = { msg ->
                     isProcessingPayment = null
@@ -4556,6 +4566,7 @@ fun FeesTabContent(
         animationSpec = androidx.compose.animation.core.tween(220), label = "feeHeaderSlide"
     )
 
+    Box(modifier = Modifier.fillMaxSize()) {
     PullToRefreshBox(
         isRefreshing = isRefreshing || isLoading,
         onRefresh = { onRefresh(); fetchFees() },
@@ -4804,8 +4815,9 @@ fun FeesTabContent(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
             }
         }
-    } // end Box
+    } // end Box (inner)
   } // end PullToRefreshBox
+    } // end outer Box
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -6904,6 +6916,266 @@ We reserve the right to suspend or terminate accounts that breach portal rules, 
 ## 6. Limitation of Liability
 The VidyaSchool portal is provided on an "as-is" and "as-available" baseline. We do not guarantee uninterrupted system connection during maintenance cycles. We are not liable for transport delays or technical outages impacting online class submissions."""
 )
+
+@Composable
+fun QuickSearchDialog(
+    sessionManager: SessionManager,
+    onTabSelect: (String) -> Unit,
+    onDocSelect: (String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var query by remember { mutableStateOf("") }
+    var searchResults by remember { mutableStateOf<List<SearchUserResponse>>(emptyList()) }
+    var backendSearchResults by remember { mutableStateOf<List<SearchBackendResponse>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var selectedUserDetail by remember { mutableStateOf<SearchUserResponse?>(null) }
+    val focusRequester = remember { androidx.compose.ui.focus.FocusRequester() }
+
+    val role = remember { sessionManager.getRole() ?: "student" }
+    val isDark = isSystemInDarkTheme()
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val onSurface = MaterialTheme.colorScheme.onSurface
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    LaunchedEffect(query) {
+        if (query.isBlank()) {
+            searchResults = emptyList()
+            backendSearchResults = emptyList()
+            return@LaunchedEffect
+        }
+        delay(300)
+        isLoading = true
+        try {
+            val token = sessionManager.getSessionToken() ?: ""
+            val authHeader = "Bearer $token"
+            val username = sessionManager.getUsername() ?: ""
+
+            val response = RetrofitClient.authApi.searchUsers(authHeader, query)
+            if (response.isSuccessful) {
+                searchResults = response.body() ?: emptyList()
+            }
+
+            val backendResponse = RetrofitClient.authApi.searchBackend(query, role, username)
+            if (backendResponse.isSuccessful) {
+                backendSearchResults = backendResponse.body() ?: emptyList()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("QuickSearch", "Search error: ${e.message}")
+        } finally {
+            isLoading = false
+        }
+    }
+
+    val filteredPages = remember(query, backendSearchResults) {
+        if (query.isBlank()) emptyList()
+        else backendSearchResults.filter { !it.url.contains("/docs/") && !it.url.contains("privacy-policy") && !it.url.contains("terms-of-service") }
+    }
+
+    val filteredDocs = remember(query, backendSearchResults) {
+        if (query.isBlank()) emptyList()
+        else backendSearchResults.filter { it.url.contains("/docs/") || it.url.contains("privacy-policy") || it.url.contains("terms-of-service") }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f))
+                .clickable { onDismiss() },
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 32.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(surfaceColor)
+                    .border(1.dp, onSurface.copy(alpha = 0.12f), RoundedCornerShape(16.dp))
+                    .clickable(enabled = false) {}
+                    .padding(16.dp)
+            ) {
+                // Input header - clean input box without ESC badge
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_custom_search),
+                        contentDescription = "Search",
+                        modifier = Modifier.size(20.dp),
+                        tint = onSurface.copy(alpha = 0.6f)
+                    )
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                        if (query.isEmpty()) {
+                            Text(
+                                "Search pages, users, docs…",
+                                fontSize = 15.sp,
+                                color = onSurface.copy(alpha = 0.38f)
+                            )
+                        }
+                        androidx.compose.foundation.text.BasicTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                fontSize = 15.sp,
+                                color = onSurface,
+                                fontWeight = FontWeight.Normal
+                            ),
+                            cursorBrush = androidx.compose.ui.graphics.SolidColor(if (isDark) Color.White else Color.Black),
+                            singleLine = true,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester)
+                        )
+                    }
+                    if (query.isNotEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(onSurface.copy(alpha = 0.08f))
+                                .clickable { query = "" },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear",
+                                modifier = Modifier.size(14.dp),
+                                tint = onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                    }
+                }
+
+                if (isLoading) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(2.dp), color = MaterialTheme.colorScheme.primary)
+                }
+
+                if (query.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = onSurface.copy(alpha = 0.08f))
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 400.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (filteredPages.isNotEmpty()) {
+                            item {
+                                SearchGroupHeader(title = "Pages & Features")
+                            }
+                            items(filteredPages.size) { idx ->
+                                val item = filteredPages[idx]
+                                val tabKey = when {
+                                    item.url.contains("/fees", ignoreCase = true) -> "fees"
+                                    item.url.contains("/notice", ignoreCase = true) -> "notice"
+                                    item.url.contains("/community", ignoreCase = true) -> "community"
+                                    item.url.contains("/library", ignoreCase = true) -> "library"
+                                    item.url.contains("/profile", ignoreCase = true) -> "profile"
+                                    else -> "home"
+                                }
+                                SearchResultRow(
+                                    title = item.title,
+                                    subtitle = item.content,
+                                    icon = Icons.Default.Home,
+                                    category = "Page",
+                                    onClick = {
+                                        onTabSelect(tabKey)
+                                    }
+                                )
+                            }
+                        }
+
+                        if (searchResults.isNotEmpty()) {
+                            item {
+                                SearchGroupHeader(title = "Users (${searchResults.size})")
+                            }
+                            items(searchResults.size) { idx ->
+                                val user = searchResults[idx]
+                                SearchResultRow(
+                                    title = user.name,
+                                    subtitle = "@${user.username}",
+                                    icon = Icons.Default.Person,
+                                    category = user.role.uppercase(),
+                                    onClick = { selectedUserDetail = user }
+                                )
+                            }
+                        }
+
+                        if (filteredDocs.isNotEmpty()) {
+                            item {
+                                SearchGroupHeader(title = "Documentation")
+                            }
+                            items(filteredDocs.size) { idx ->
+                                val doc = filteredDocs[idx]
+                                SearchResultRow(
+                                    title = doc.title,
+                                    subtitle = doc.content,
+                                    icon = Icons.Default.Info,
+                                    category = "Doc",
+                                    onClick = {
+                                        onDocSelect(doc.url, doc.content)
+                                    }
+                                )
+                            }
+                        }
+
+                        if (filteredPages.isEmpty() && searchResults.isEmpty() && filteredDocs.isEmpty() && !isLoading) {
+                            item {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        "No results found for \"$query\"",
+                                        fontSize = 14.sp,
+                                        color = onSurface.copy(alpha = 0.5f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (selectedUserDetail != null) {
+        val user = selectedUserDetail!!
+        AlertDialog(
+            onDismissRequest = { selectedUserDetail = null },
+            modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+            containerColor = MaterialTheme.colorScheme.background,
+            title = {
+                Text(user.name, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface)
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Role: ${user.role.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.ROOT) else it.toString() }}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Username: @${user.username}", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { selectedUserDetail = null },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("Close", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        )
+    }
+}
+
 
 
 

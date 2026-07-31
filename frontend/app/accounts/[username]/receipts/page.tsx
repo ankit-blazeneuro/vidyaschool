@@ -1,11 +1,6 @@
-import { Suspense } from "react"
-import { ReceiptsClient } from "./receipts-client"
+import { LockedFeatureScreen } from "../_components/locked-feature"
 
 export default async function ReceiptsPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params
-  return (
-    <Suspense fallback={<div className="p-8">Loading Receipts...</div>}>
-      <ReceiptsClient username={username} />
-    </Suspense>
-  )
+  return <LockedFeatureScreen title="Receipts" username={username} />
 }

@@ -367,11 +367,10 @@ class ProfileResponse(BaseModel):
 
 @router.get("/profile", response_model=ProfileResponse)
 async def get_profile(
+    section: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
-    
     user_data = {
         "id": current_user.id,
         "name": current_user.name,
@@ -380,29 +379,66 @@ async def get_profile(
         "image": current_user.image
     }
     
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
     profile_data = None
+    
     if profile:
-        profile_data = {
-            "id": profile.id,
-            "user_id": profile.user_id,
-            "admissionNumber": profile.admission_number,
-            "username": profile.username,
-            "phoneNumber": profile.phone_number,
-            "parentName": profile.parent_name,
-            "parentPhone": profile.parent_phone,
-            "parentEmail": profile.parent_email,
-            "address": profile.address,
-            "city": profile.city,
-            "state": profile.state,
-            "pincode": profile.pincode,
-            "class": profile.class_,
-            "section": profile.section,
-            "secondaryRole": profile.secondary_role,
-            "transportMode": profile.transport_mode,
-            "onboardingCompleted": profile.onboarding_completed,
-            "classSectionLastUpdated": profile.class_section_last_updated.isoformat() + "Z" if profile.class_section_last_updated else None,
-            "classSectionChanges": profile.class_section_changes
-        }
+        if section == "personal":
+            profile_data = {
+                "id": profile.id,
+                "user_id": profile.user_id,
+                "username": profile.username,
+                "phoneNumber": profile.phone_number,
+                "class": profile.class_,
+                "section": profile.section
+            }
+        elif section == "parent":
+            profile_data = {
+                "id": profile.id,
+                "user_id": profile.user_id,
+                "parentName": profile.parent_name,
+                "parentPhone": profile.parent_phone,
+                "parentEmail": profile.parent_email
+            }
+        elif section == "address":
+            profile_data = {
+                "id": profile.id,
+                "user_id": profile.user_id,
+                "address": profile.address,
+                "city": profile.city,
+                "state": profile.state,
+                "pincode": profile.pincode
+            }
+        elif section == "documents":
+            profile_data = {
+                "id": profile.id,
+                "user_id": profile.user_id,
+                "admissionNumber": profile.admission_number,
+                "onboardingCompleted": profile.onboarding_completed,
+                "transportMode": profile.transport_mode
+            }
+        else:
+            profile_data = {
+                "id": profile.id,
+                "user_id": profile.user_id,
+                "admissionNumber": profile.admission_number,
+                "username": profile.username,
+                "phoneNumber": profile.phone_number,
+                "parentName": profile.parent_name,
+                "parentPhone": profile.parent_phone,
+                "parentEmail": profile.parent_email,
+                "address": profile.address,
+                "city": profile.city,
+                "state": profile.state,
+                "pincode": profile.pincode,
+                "class": profile.class_,
+                "section": profile.section,
+                "secondaryRole": profile.secondary_role,
+                "transportMode": profile.transport_mode,
+                "onboardingCompleted": profile.onboarding_completed,
+                "classSectionLastUpdated": profile.class_section_last_updated.isoformat() + "Z" if profile.class_section_last_updated else None,
+                "classSectionChanges": profile.class_section_changes
+            }
         
     return {"user": user_data, "profile": profile_data}
 

@@ -55,6 +55,12 @@ import com.vidyaschool.app.auth.SessionManager
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.painterResource
 import com.vidyaschool.app.R
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.LoadAdError
 
 @Composable
 fun StudentScreen(
@@ -223,6 +229,105 @@ fun StudentScreen(
                 }
             )
         }
+    }
+}
+
+// ── AdMob Banner Ad Composable ──────────────────────────────────────────────
+@Composable
+fun AdmobBannerAd() {
+    val context = LocalContext.current
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+
+    // Sponsor chip colours from theme
+    val sponsoredBg = if (isDark)
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    else
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
+    val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+
+    // Pre-compute ad width in dp (screen width minus 32dp horizontal padding)
+    val dm = context.resources.displayMetrics
+    val adWidthDp = ((dm.widthPixels - 2 * 16 * dm.density) / dm.density).toInt()
+
+    // Resolve theme colours to native Android ints before entering AndroidView
+    val bgColor  = if (isDark) android.graphics.Color.parseColor("#1C1C1E")
+                   else        android.graphics.Color.parseColor("#F2F2F7")
+    val strokeColor = if (isDark) android.graphics.Color.argb(40, 255, 255, 255)
+                      else        android.graphics.Color.argb(40, 0, 0, 0)
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.End
+    ) {
+        // "Sponsored" label
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .background(sponsoredBg)
+                .padding(horizontal = 8.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text = "Sponsored",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Medium,
+                color = labelColor
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Single native AndroidView — FrameLayout wraps AdView so that
+        // rounded corners + border are applied natively (Compose clip does
+        // NOT clip child AndroidViews, but a native GradientDrawable does).
+        AndroidView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+            factory = { ctx ->
+                // Outer container with rounded background + stroke border
+                val cornerPx  = (16 * dm.density + 0.5f)
+                val strokePx  = (1  * dm.density + 0.5f)
+
+                val bgDrawable = android.graphics.drawable.GradientDrawable().apply {
+                    shape         = android.graphics.drawable.GradientDrawable.RECTANGLE
+                    cornerRadius  = cornerPx
+                    setColor(bgColor)
+                    setStroke(strokePx.toInt(), strokeColor)
+                }
+
+                val container = android.widget.FrameLayout(ctx).apply {
+                    background = bgDrawable
+                    clipToOutline = true          // clips child AdView to rounded rect
+                    outlineProvider = android.view.ViewOutlineProvider.BACKGROUND
+                }
+
+                val adView = AdView(ctx).apply {
+                    setAdSize(
+                        AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
+                            ctx, adWidthDp
+                        )
+                    )
+                    adUnitId = "ca-app-pub-3830257435719634/8526041010"
+                    adListener = object : AdListener() {
+                        override fun onAdLoaded() {
+                            android.util.Log.d("AdmobBanner", "✅ Ad loaded successfully")
+                        }
+                        override fun onAdFailedToLoad(err: LoadAdError) {
+                            android.util.Log.e("AdmobBanner", "❌ Ad failed: code=${err.code} msg=${err.message}")
+                        }
+                    }
+                    loadAd(AdRequest.Builder().build())
+                }
+
+                container.addView(
+                    adView,
+                    android.widget.FrameLayout.LayoutParams(
+                        android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                        android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
+                    )
+                )
+                container
+            }
+        )
     }
 }
 
@@ -603,8 +708,53 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
 
 @Composable
 fun AcademicPerformanceCard() {
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
     val tabs = listOf("Performance", "Subject", "Attendance")
     var selectedTab by remember { mutableStateOf(0) }
+
+    var realData by remember { mutableStateOf<List<Float>>(emptyList()) }
+    var realLabels by remember { mutableStateOf<List<String>>(emptyList()) }
+    var isLoadingMarks by remember { mutableStateOf(false) }
+
+    // Fetch real marks from FastAPI backend for Performance tab
+    LaunchedEffect(Unit) {
+        val token = sessionManager.getSessionToken()
+        if (!token.isNullOrEmpty()) {
+            isLoadingMarks = true
+            try {
+                val response = RetrofitClient.authApi.getStudentMarks("Bearer $token")
+                if (response.isSuccessful && response.body() != null) {
+                    val examMap = response.body()!!
+                    val dataList = mutableListOf<Float>()
+                    val labelList = mutableListOf<String>()
+
+                    examMap.values.forEach { examResult ->
+                        val subjects = examResult.subjects ?: emptyList()
+                        if (subjects.isNotEmpty()) {
+                            val totalPct = subjects.map { s ->
+                                val sc = s.score ?: 0f
+                                val mx = if ((s.maxScore ?: 100f) > 0f) s.maxScore!! else 100f
+                                (sc / mx) * 100f
+                            }.sum()
+                            val avgPct = totalPct / subjects.size
+                            dataList.add(avgPct)
+                            labelList.add(examResult.termName ?: "Exam")
+                        }
+                    }
+
+                    if (dataList.isNotEmpty()) {
+                        realData = dataList
+                        realLabels = labelList
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("AcademicPerformance", "Failed to fetch student marks: ${e.message}")
+            } finally {
+                isLoadingMarks = false
+            }
+        }
+    }
 
     // Auto-slide every 10 seconds
     LaunchedEffect(Unit) {
@@ -639,11 +789,15 @@ fun AcademicPerformanceCard() {
 
             // Graph content
             when (selectedTab) {
-                0 -> AcademicPerformanceChart(
-                    data = listOf(65f, 80f, 75f, 90f, 85f, 95f),
-                    labels = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun"),
-                    modifier = Modifier.fillMaxWidth().height(180.dp)
-                )
+                0 -> {
+                    val chartData = if (realData.isNotEmpty()) realData else listOf(65f, 80f, 75f, 90f, 85f, 95f)
+                    val chartLabels = if (realLabels.isNotEmpty()) realLabels else listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun")
+                    AcademicPerformanceChart(
+                        data = chartData,
+                        labels = chartLabels,
+                        modifier = Modifier.fillMaxWidth().height(180.dp)
+                    )
+                }
                 1 -> SubjectBarChart(
                     data = listOf(72f, 68f, 85f, 78f, 91f, 88f),
                     labels = listOf("Math", "Sci", "Eng", "His", "Geo", "Art"),
@@ -947,41 +1101,47 @@ fun AcademicPerformanceChart(
     val primaryColor = MaterialTheme.colorScheme.primary
     val secondaryColor = MaterialTheme.colorScheme.secondary
     val gridColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.07f)
-    val textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+    val textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+    val valueColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
     val surfaceColor = MaterialTheme.colorScheme.surface
 
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
-        val pL = 8f; val pR = 8f; val pT = 16f; val pB = 28f
+        val pL = 24f; val pR = 24f; val pT = 28f; val pB = 32f
         val cW = w - pL - pR
         val cH = h - pT - pB
 
-        // Dashed-style subtle grid
+        // Grid lines
         for (i in 0..4) {
             val y = pT + cH * (i.toFloat() / 4)
-            drawLine(gridColor, androidx.compose.ui.geometry.Offset(pL, y),
-                androidx.compose.ui.geometry.Offset(w - pR, y), strokeWidth = 1f)
+            drawLine(
+                gridColor,
+                androidx.compose.ui.geometry.Offset(pL, y),
+                androidx.compose.ui.geometry.Offset(w - pR, y),
+                strokeWidth = 1f
+            )
         }
 
-        if (data.size > 1) {
+        if (data.isNotEmpty()) {
             val points = data.indices.map { i ->
-                val x = pL + cW * (i.toFloat() / (data.size - 1))
-                val y = pT + cH * (1f - data[i] / 100f)
+                val x = if (data.size > 1) pL + cW * (i.toFloat() / (data.size - 1)) else w / 2f
+                val clampedVal = data[i].coerceIn(0f, 100f)
+                val y = pT + cH * (1f - clampedVal / 100f)
                 androidx.compose.ui.geometry.Offset(x, y)
             }
 
-            val strokePath = Path().apply {
-                moveTo(points.first().x, points.first().y)
-                for (i in 1 until points.size) {
-                    val p = points[i - 1]; val c = points[i]
-                    val cx1 = p.x + (c.x - p.x) / 2f
-                    cubicTo(cx1, p.y, cx1, c.y, c.x, c.y)
+            if (points.size > 1) {
+                val strokePath = Path().apply {
+                    moveTo(points.first().x, points.first().y)
+                    for (i in 1 until points.size) {
+                        val p = points[i - 1]; val c = points[i]
+                        val cx1 = p.x + (c.x - p.x) / 2f
+                        cubicTo(cx1, p.y, cx1, c.y, c.x, c.y)
+                    }
                 }
-            }
 
-            // Multi-layer glow fill
-            listOf(0.18f, 0.10f, 0.05f).forEachIndexed { idx, alpha ->
+                // Gradient fill below path
                 val fillPath = Path().apply {
                     addPath(strokePath)
                     lineTo(points.last().x, pT + cH)
@@ -991,41 +1151,46 @@ fun AcademicPerformanceChart(
                 drawPath(
                     fillPath,
                     brush = Brush.verticalGradient(
-                        colors = listOf(primaryColor.copy(alpha = alpha + idx * 0.04f), Color.Transparent),
+                        colors = listOf(primaryColor.copy(alpha = 0.22f), Color.Transparent),
                         startY = points.minOf { it.y }, endY = pT + cH
                     )
                 )
+
+                // Line stroke
+                drawPath(
+                    strokePath,
+                    brush = Brush.linearGradient(
+                        colors = listOf(secondaryColor.copy(alpha = 0.8f), primaryColor),
+                        start = androidx.compose.ui.geometry.Offset(pL, 0f),
+                        end = androidx.compose.ui.geometry.Offset(w - pR, 0f)
+                    ),
+                    style = Stroke(width = 2.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
+                )
             }
 
-            // Stroke with sweep gradient for color shift
-            drawPath(
-                strokePath,
-                brush = Brush.linearGradient(
-                    colors = listOf(secondaryColor.copy(alpha = 0.8f), primaryColor),
-                    start = androidx.compose.ui.geometry.Offset(pL, 0f),
-                    end = androidx.compose.ui.geometry.Offset(w - pR, 0f)
-                ),
-                style = Stroke(width = 2.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
-            )
-
-            // Dots with glow
-            points.forEach { pt ->
-                drawCircle(primaryColor.copy(alpha = 0.2f), radius = 9.dp.toPx(), center = pt)
-                drawCircle(primaryColor, radius = 4.dp.toPx(), center = pt)
-                drawCircle(surfaceColor, radius = 2.dp.toPx(), center = pt)
+            // Label text paint
+            val labelPaint = Paint().apply {
+                color = textColor.toArgb()
+                textSize = 10.sp.toPx()
+                textAlign = Paint.Align.CENTER
+                typeface = Typeface.DEFAULT_BOLD
             }
-        }
 
-        val paint = Paint().apply {
-            color = textColor.toArgb()
-            textSize = 10.sp.toPx()
-            textAlign = Paint.Align.CENTER
-            typeface = Typeface.DEFAULT_BOLD
-        }
-        drawIntoCanvas { canvas ->
-            labels.forEachIndexed { i, label ->
-                val x = pL + cW * (i.toFloat() / (labels.size - 1))
-                canvas.nativeCanvas.drawText(label, x, h - 10f, paint)
+            drawIntoCanvas { canvas ->
+                points.forEachIndexed { i, pt ->
+                    // Draw outer glow and inner point circle
+                    drawCircle(primaryColor.copy(alpha = 0.25f), radius = 8.dp.toPx(), center = pt)
+                    drawCircle(primaryColor, radius = 4.dp.toPx(), center = pt)
+                    drawCircle(surfaceColor, radius = 2.dp.toPx(), center = pt)
+
+                    // Formatted label below node (smart truncation to prevent overlap)
+                    val rawLabel = labels.getOrNull(i) ?: "P${i + 1}"
+                    val cleanLabel = if (rawLabel.length > 7) {
+                        rawLabel.take(6) + "…"
+                    } else rawLabel
+
+                    canvas.nativeCanvas.drawText(cleanLabel, pt.x, h - 6f, labelPaint)
+                }
             }
         }
     }

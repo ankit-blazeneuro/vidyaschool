@@ -65,6 +65,11 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/ic_launcher_background" />
 
+        <!-- AdMob App ID -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3830257435719634~2866520226" />
+
         <service
             android:name=".MyFirebaseMessagingService"
             android:exported="false">

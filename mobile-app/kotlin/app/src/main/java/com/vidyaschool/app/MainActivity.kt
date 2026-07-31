@@ -47,6 +47,7 @@ import com.vidyaschool.app.api.UpdateChecker
 import com.vidyaschool.app.api.UpdateInfo
 import android.net.Uri
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.ads.MobileAds
 
 class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
     private lateinit var viewModel: AuthViewModel
@@ -86,6 +87,14 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
         
         intent?.let { handleIntent(it) }
         com.razorpay.Checkout.preload(applicationContext)
+
+        // Initialize Google Mobile Ads SDK with test device registered
+        val testDeviceIds = listOf("A29A804BA4F321157D8E1B3D5661D8AC")
+        val configuration = com.google.android.gms.ads.RequestConfiguration.Builder()
+            .setTestDeviceIds(testDeviceIds)
+            .build()
+        MobileAds.setRequestConfiguration(configuration)
+        MobileAds.initialize(this) {}
 
         // Request POST_NOTIFICATIONS permission for Android 13+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {

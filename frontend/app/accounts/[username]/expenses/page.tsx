@@ -1,11 +1,6 @@
-import { Suspense } from "react"
-import { ExpensesClient } from "./expenses-client"
+import { LockedFeatureScreen } from "../_components/locked-feature"
 
 export default async function ExpensesPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params
-  return (
-    <Suspense fallback={<div className="p-8">Loading School Expenses...</div>}>
-      <ExpensesClient username={username} />
-    </Suspense>
-  )
+  return <LockedFeatureScreen title="Expenses" username={username} />
 }

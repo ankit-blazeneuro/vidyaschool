@@ -974,7 +974,7 @@ def save_fee_structure(
     admin: User = Depends(require_role(["admin", "account"])),
     db: Session = Depends(get_db),
 ):
-    """Save (overwrite) the fee structure for a specific class."""
+    """Save (overwrite) the fee structure for a specific class and auto-update student fee installments."""
     if class_num < 1 or class_num > 12:
         raise HTTPException(status_code=400, detail="class_num must be between 1 and 12")
     import json
@@ -988,6 +988,14 @@ def save_fee_structure(
     db.add(row)
     db.commit()
     db.refresh(row)
+
+    # Auto-apply updated fee structure to all students in this class
+    try:
+        apply_req = ApplyFeeStructureRequest(classNums=[class_num])
+        apply_fee_structures(body=apply_req, admin=admin, db=db)
+    except Exception as exc:
+        print(f"Auto-apply fee structure failed for class {class_num}: {exc}")
+
     return _serialize_structure(row)
 
 
@@ -1121,6 +1129,143 @@ def apply_fee_structures(
         "studentsProcessed": len(results),
         "installmentsCreated": created_count,
         "installmentsUpdated": updated_count,
+    }
+
+
+@router.get("/api/student/fee-breakdown")
+def get_student_fee_breakdown(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Return itemized fee breakdown for the logged-in student (class, components, transport, net fee, installments)."""
+    from models import UserProfile, FeeStructure, FeeInstallment
+    import json
+
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    class_str = profile.class_ if (profile and profile.class_ and profile.class_ != "none") else "10"
+
+    try:
+        class_num = int(class_str)
+    except (ValueError, TypeError):
+        class_num = 10
+
+    structure_row = _get_or_init_structure(class_num, db)
+    components = json.loads(structure_row.components)
+    uses_transport = bool(profile and profile.transport_mode and profile.transport_mode not in ("none", ""))
+    transport_fee = structure_row.transport_fee if uses_transport else 0
+
+    base_monthly = 0
+    for comp in components:
+        amt = int(comp.get("amount", 0))
+        period = comp.get("billingPeriod", "Monthly")
+        if period == "Monthly":
+            base_monthly += amt
+        elif period == "Quarterly":
+            base_monthly += round(amt / 3)
+        elif period == "Annually":
+            base_monthly += round(amt / 12)
+
+    net_monthly = base_monthly + transport_fee
+
+    installments = (
+        db.query(FeeInstallment)
+        .filter(FeeInstallment.user_id == current_user.id)
+        .order_by(FeeInstallment.due_date)
+        .all()
+    )
+
+    if not installments:
+        from app.core.fees import build_default_fee_installments
+        installments = build_default_fee_installments(current_user.id, academic_year="25-26")
+        db.add_all(installments)
+        db.commit()
+
+    return {
+        "student": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "username": profile.username if profile else None,
+            "class": class_str,
+            "section": profile.section if profile else "A",
+            "admission_number": profile.admission_number if profile else None,
+            "transport_mode": profile.transport_mode if profile else "none",
+            "uses_transport": uses_transport,
+        },
+        "classNum": class_num,
+        "components": components,
+        "transportFee": structure_row.transport_fee,
+        "transportFeeApplied": transport_fee,
+        "baseMonthlyTotal": base_monthly,
+        "netMonthlyTotal": net_monthly,
+        "installments": [_serialize_installment(inst) for inst in installments],
+    }
+
+
+@router.get("/api/admin/fees/{target_user_id}/breakdown")
+def get_admin_student_fee_breakdown(
+    target_user_id: str,
+    admin: User = Depends(require_role(["admin", "account"])),
+    db: Session = Depends(get_db)
+):
+    """Return itemized fee breakdown for a specific student for accounts clerk/admin audit."""
+    from models import UserProfile, FeeStructure, FeeInstallment, User as UserModel
+    import json
+
+    target_user = db.query(UserModel).filter(UserModel.id == target_user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Student user not found")
+
+    profile = db.query(UserProfile).filter(UserProfile.user_id == target_user_id).first()
+    class_str = profile.class_ if (profile and profile.class_ and profile.class_ != "none") else "10"
+
+    try:
+        class_num = int(class_str)
+    except (ValueError, TypeError):
+        class_num = 10
+
+    structure_row = _get_or_init_structure(class_num, db)
+    components = json.loads(structure_row.components)
+    uses_transport = bool(profile and profile.transport_mode and profile.transport_mode not in ("none", ""))
+    transport_fee = structure_row.transport_fee if uses_transport else 0
+
+    base_monthly = 0
+    for comp in components:
+        amt = int(comp.get("amount", 0))
+        period = comp.get("billingPeriod", "Monthly")
+        if period == "Monthly":
+            base_monthly += amt
+        elif period == "Quarterly":
+            base_monthly += round(amt / 3)
+        elif period == "Annually":
+            base_monthly += round(amt / 12)
+
+    net_monthly = base_monthly + transport_fee
+
+    installments = (
+        db.query(FeeInstallment)
+        .filter(FeeInstallment.user_id == target_user_id)
+        .order_by(FeeInstallment.due_date)
+        .all()
+    )
+
+    return {
+        "student": {
+            "id": target_user.id,
+            "name": target_user.name,
+            "username": profile.username if profile else None,
+            "class": class_str,
+            "section": profile.section if profile else "A",
+            "admission_number": profile.admission_number if profile else None,
+            "transport_mode": profile.transport_mode if profile else "none",
+            "uses_transport": uses_transport,
+        },
+        "classNum": class_num,
+        "components": components,
+        "transportFee": structure_row.transport_fee,
+        "transportFeeApplied": transport_fee,
+        "baseMonthlyTotal": base_monthly,
+        "netMonthlyTotal": net_monthly,
+        "installments": [_serialize_installment(inst) for inst in installments],
     }
 
 

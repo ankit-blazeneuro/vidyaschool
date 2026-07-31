@@ -240,6 +240,11 @@ interface AuthApi {
         @Body request: VerifyPaymentRequest
     ): Response<PayFeesResponse>
 
+    @GET("api/student/marks")
+    suspend fun getStudentMarks(
+        @Header("Authorization") authHeader: String
+    ): Response<Map<String, StudentExamResult>>
+
     @GET("api/users/search")
     suspend fun searchUsers(
         @Header("Authorization") authHeader: String,
@@ -266,7 +271,8 @@ interface AuthApi {
 
     @GET("api/profile")
     suspend fun getProfile(
-        @Header("Authorization") authHeader: String
+        @Header("Authorization") authHeader: String,
+        @Query("section") section: String? = null
     ): Response<ProfileResponse>
 
     @GET("api/sessions/active")
@@ -533,4 +539,21 @@ data class SearchBackendResponse(
 data class DocMarkdownResponse(
     val title: String,
     val markdown: String
+)
+
+data class StudentSubjectMark(
+    val code: String? = null,
+    val subject: String? = null,
+    val teacher: String? = null,
+    val score: Float? = 0f,
+    val maxScore: Float? = 100f,
+    val classAverage: Float? = 0f,
+    val grade: String? = null,
+    val status: String? = null
+)
+
+data class StudentExamResult(
+    val termName: String? = null,
+    val gpa: String? = null,
+    val subjects: List<StudentSubjectMark>? = null
 )

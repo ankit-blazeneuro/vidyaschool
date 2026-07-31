@@ -57,6 +57,8 @@ import {
   Printer,
   Download,
   ReceiptText,
+  Bus,
+  Layers,
 } from "lucide-react"
 
 interface Student {
@@ -118,6 +120,7 @@ export function StudentFeesClient({ username }: { username: string }) {
   // Installments state
   const [installments, setInstallments] = useState<Installment[]>([])
   const [loadingInstallments, setLoadingInstallments] = useState(false)
+  const [breakdown, setBreakdown] = useState<any>(null)
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState("")
@@ -146,16 +149,25 @@ export function StudentFeesClient({ username }: { username: string }) {
     }
   }
 
-  // Fetch installments for selected student
+  // Fetch installments for selected student with full breakdown
   const fetchInstallments = async (studentId: string) => {
     setLoadingInstallments(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/api/admin/fees/${studentId}`)
-      if (!res.ok) throw new Error("Failed to load fee installments")
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/api/admin/fees/${studentId}/breakdown`)
+      if (!res.ok) throw new Error("Failed to load fee breakdown")
       const data = await res.json()
       
-      // Map API camelCase or snake_case values correctly
-      const mappedData: Installment[] = data.map((inst: any) => ({
+      setBreakdown({
+        student: data.student,
+        classNum: data.classNum,
+        components: data.components || [],
+        transportFee: data.transportFee || 0,
+        transportFeeApplied: data.transportFeeApplied || 0,
+        baseMonthlyTotal: data.baseMonthlyTotal || 0,
+        netMonthlyTotal: data.netMonthlyTotal || 0,
+      })
+
+      const mappedData: Installment[] = (data.installments || []).map((inst: any) => ({
         id: inst.id,
         month: inst.month,
         year: inst.year,
@@ -170,7 +182,26 @@ export function StudentFeesClient({ username }: { username: string }) {
       setInstallments(mappedData)
     } catch (error) {
       console.error(error)
-      toast.error("Failed to load fee schedule for the student")
+      // Fallback to legacy endpoint if breakdown API fails
+      try {
+        const fallbackRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/api/admin/fees/${studentId}`)
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json()
+          setInstallments(fallbackData.map((inst: any) => ({
+            id: inst.id,
+            month: inst.month,
+            year: inst.year,
+            amount: inst.amount,
+            due_date: inst.dueDate || inst.due_date,
+            status: inst.status,
+            paid_date: inst.paidDate || inst.paid_date,
+            receipt_no: inst.receiptNo || inst.receipt_no,
+            payment_method: inst.paymentMethod || inst.payment_method,
+          })))
+        }
+      } catch (e) {
+        toast.error("Failed to load fee schedule for student")
+      }
     } finally {
       setLoadingInstallments(false)
     }
@@ -415,8 +446,51 @@ export function StudentFeesClient({ username }: { username: string }) {
                     ))}
                   </div>
                 ) : installments.length ? (
-                  <div className="overflow-x-auto">
-                    <Table>
+                  <div className="flex flex-col">
+                    {/* Itemized Fee Breakdown Card */}
+                    {breakdown && (
+                      <div className="m-4 p-4 rounded-xl border bg-muted/20 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                            <Layers className="size-3.5 text-primary" /> Class {breakdown.classNum} Fee Breakdown
+                          </span>
+                          {breakdown.student?.uses_transport ? (
+                            <Badge variant="outline" className="bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 text-[11px] font-semibold gap-1">
+                              <Bus className="size-3" /> School Transport Opted (+{formatCurrency(breakdown.transportFeeApplied)}/mo)
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[11px] font-medium text-muted-foreground">
+                              Self Transport
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Components tags */}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {breakdown.components.map((comp: any) => (
+                            <div key={comp.id || comp.name} className="text-xs border px-2.5 py-1 rounded-lg bg-background flex items-center gap-2">
+                              <span className="font-medium text-foreground">{comp.name}</span>
+                              <span className="text-muted-foreground font-mono text-[11px]">{formatCurrency(comp.amount)}/{comp.billingPeriod ? comp.billingPeriod[0] : "mo"}</span>
+                            </div>
+                          ))}
+                          {breakdown.student?.uses_transport && (
+                            <div className="text-xs border border-blue-500/30 px-2.5 py-1 rounded-lg bg-blue-500/5 text-blue-700 dark:text-blue-400 flex items-center gap-2 font-semibold">
+                              <Bus className="size-3" /> Transport Surcharge
+                              <span className="font-mono text-[11px]">{formatCurrency(breakdown.transportFeeApplied)}/mo</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Totals Summary */}
+                        <div className="pt-2 border-t flex items-center justify-between text-xs font-semibold">
+                          <span className="text-muted-foreground">Calculated Monthly Installment Amount:</span>
+                          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(breakdown.netMonthlyTotal)} / month</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="overflow-x-auto">
+                      <Table>
                       <TableHeader className="bg-muted/30">
                         <TableRow>
                           <TableHead className="font-semibold text-xs py-3 pl-6">Fee Month</TableHead>
@@ -485,7 +559,8 @@ export function StudentFeesClient({ username }: { username: string }) {
                       </TableBody>
                     </Table>
                   </div>
-                ) : (
+                </div>
+              ) : (
                   <div className="p-8 text-center">
                     <EmptyState
                       title="No installments generated"
