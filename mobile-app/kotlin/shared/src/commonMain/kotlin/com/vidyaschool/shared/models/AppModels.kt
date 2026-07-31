@@ -27,6 +27,41 @@ sealed class AuthResult {
 }
 
 // ---------------------------------------------------------------------------
+// Device Code Auth (Browser Login)
+// ---------------------------------------------------------------------------
+
+@Serializable
+data class DeviceCodeResponse(
+    @SerialName("user_code") val userCode: String,
+    @SerialName("device_token") val deviceToken: String,
+    @SerialName("verification_uri") val verificationUri: String,
+    @SerialName("expires_in") val expiresIn: Int = 600,
+    val interval: Int = 3
+)
+
+@Serializable
+data class DevicePollRequest(
+    @SerialName("device_token") val deviceToken: String
+)
+
+@Serializable
+data class DevicePollUser(
+    val email: String? = null,
+    val name: String? = null,
+    val role: String? = null,
+    val image: String? = null,
+    val `class`: String? = null
+)
+
+@Serializable
+data class DevicePollResponse(
+    val status: String,
+    @SerialName("session_token") val sessionToken: String? = null,
+    val user: DevicePollUser? = null,
+    val message: String? = null
+)
+
+// ---------------------------------------------------------------------------
 // Requests
 // ---------------------------------------------------------------------------
 

@@ -299,7 +299,7 @@ fun DashboardLayout(
                             }
                         }
                     } catch (e: Exception) {
-                        println("ERROR: " + "DashboardLayout", "Verify session failed: ${e.message}")
+                        println("ERROR: " + "DashboardLayout" + " - " + "Verify session failed: ${e.message}")
                     }
                 }
                 
@@ -331,7 +331,7 @@ fun DashboardLayout(
                     }
                 }
             } catch (e: Exception) {
-                println("ERROR: " + "DashboardLayout", "Refresh failed: ${e.message}")
+                println("ERROR: " + "DashboardLayout" + " - " + "Refresh failed: ${e.message}")
             } finally {
                 isRefreshing = false
             }
@@ -379,7 +379,7 @@ fun DashboardLayout(
                     put("role", userRole)
                 }
                 globalSocket?.emit("join", joinData)
-                println("DEBUG: " + "NotificationSocket", "Joined with userId: $userId")
+                println("DEBUG: " + "NotificationSocket" + " - " + "Joined with userId: $userId")
             }
             
             globalSocket.on("notification") { args ->
@@ -1108,7 +1108,7 @@ fun SearchTabContent(
                 backendSearchResults = backendResponse.body() ?: emptyList()
             }
         } catch (e: Exception) {
-            println("ERROR: " + "SearchTab", "Backend search error: ${e.message}")
+            println("ERROR: " + "SearchTab" + " - " + "Backend search error: ${e.message}")
         } finally {
             isLoading = false
         }
@@ -1627,7 +1627,7 @@ fun ProfileTabContent(
                     }
                 }
             } catch (e: Exception) {
-                println("ERROR: " + "ProfileTab", "Error fetching profile: ${e.message}")
+                println("ERROR: " + "ProfileTab" + " - " + "Error fetching profile: ${e.message}")
             } finally {
                 isLoadingProfile = false
             }
@@ -2271,7 +2271,7 @@ fun NoticeTabContent(
                     loadError = "Please sign in to view notices"
                 }
             } catch (e: Exception) {
-                println("ERROR: " + "NoticeTabContent", "Error: ${e.message}")
+                println("ERROR: " + "NoticeTabContent" + " - " + "Error: ${e.message}")
                 loadError = e.message ?: "Failed to load notices"
             } finally {
                 isLoading = false
@@ -2612,7 +2612,7 @@ fun CommunityTabContent(
                     currentUser = res.body()?.user
                 }
             } catch (e: Exception) {
-                println("ERROR: " + "CommunityTab", "Fetch profile failed: ${e.message}")
+                println("ERROR: " + "CommunityTab" + " - " + "Fetch profile failed: ${e.message}")
             }
         }
     }
@@ -2630,7 +2630,7 @@ fun CommunityTabContent(
             socketInstance = IO.socket("https://api.blazeneuro.com", opts)
 
             socketInstance.on(Socket.EVENT_CONNECT) {
-                println("DEBUG: " + "CommunityTab", "Socket connected successfully!")
+                println("DEBUG: " + "CommunityTab" + " - " + "Socket connected successfully!")
                 coroutineScope.launch {
                     isConnected = true
                 }
@@ -2644,11 +2644,11 @@ fun CommunityTabContent(
             }
 
             socketInstance.on(Socket.EVENT_CONNECT_ERROR) { args ->
-                println("ERROR: " + "CommunityTab", "Socket connection error event: ${args.getOrNull(0)}")
+                println("ERROR: " + "CommunityTab" + " - " + "Socket connection error event: ${args.getOrNull(0)}")
             }
 
             socketInstance.on(Socket.EVENT_DISCONNECT) {
-                println("DEBUG: " + "CommunityTab", "Socket disconnected!")
+                println("DEBUG: " + "CommunityTab" + " - " + "Socket disconnected!")
                 coroutineScope.launch {
                     isConnected = false
                     typingUsers.clear()
@@ -2699,7 +2699,7 @@ fun CommunityTabContent(
             }
 
             socketInstance.on("recent_messages") { args ->
-                println("DEBUG: " + "CommunityTab", "recent_messages event received, args size = ${args?.size}")
+                println("DEBUG: " + "CommunityTab" + " - " + "recent_messages event received + " - " + args size = ${args?.size}")
                 if (args != null && args.isNotEmpty()) {
                     val data = args[0] as? org.json.JSONObject
                     if (data != null) {
@@ -2712,7 +2712,7 @@ fun CommunityTabContent(
                                     val msg = Json.decodeFromString<CommunityMsg>(obj.toString())
                                     list.add(msg)
                                 }
-                                println("DEBUG: " + "CommunityTab", "Successfully parsed ${list.size} recent messages")
+                                println("DEBUG: " + "CommunityTab" + " - " + "Successfully parsed ${list.size} recent messages")
                                 coroutineScope.launch {
                                     messages.clear()
                                     messages.addAll(list)
@@ -2721,7 +2721,7 @@ fun CommunityTabContent(
                                     }
                                 }
                             } catch (e: Exception) {
-                                println("ERROR: " + "CommunityTab", "Error parsing recent messages: ${e.message}", e)
+                                println("ERROR: " + "CommunityTab" + " - " + "Error parsing recent messages: ${e.message}" + " - " + e)
                             }
                         }
                     }
@@ -2774,9 +2774,9 @@ fun CommunityTabContent(
 
             kotlinx.coroutines.awaitCancellation()
         } catch (e: Exception) {
-            println("ERROR: " + "CommunityTab", "Socket connection error: ${e.message}")
+            println("ERROR: " + "CommunityTab" + " - " + "Socket connection error: ${e.message}")
         } finally {
-            println("DEBUG: " + "CommunityTab", "Cleaning up socket...")
+            println("DEBUG: " + "CommunityTab" + " - " + "Cleaning up socket...")
             socketInstance?.disconnect()
             socketInstance?.off()
             socket = null

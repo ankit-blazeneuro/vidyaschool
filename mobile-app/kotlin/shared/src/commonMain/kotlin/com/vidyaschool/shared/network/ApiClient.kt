@@ -4,6 +4,9 @@ import com.vidyaschool.shared.models.CreateOrderRequest
 import com.vidyaschool.shared.models.CreateOrderResponse
 import com.vidyaschool.shared.models.CreateSessionRequest
 import com.vidyaschool.shared.models.CreateSessionResponse
+import com.vidyaschool.shared.models.DeviceCodeResponse
+import com.vidyaschool.shared.models.DevicePollRequest
+import com.vidyaschool.shared.models.DevicePollResponse
 import com.vidyaschool.shared.models.DocMarkdownResponse
 import com.vidyaschool.shared.models.FeeInstallment
 import com.vidyaschool.shared.models.LoginRequest
@@ -263,5 +266,18 @@ class ApiClient {
         httpClient.get("$BACKEND_URL/api/notifications/history") {
             header("Authorization", "Bearer $authToken")
             parameter("days", days)
+        }.body()
+
+    // -----------------------------------------------------------------------
+    // Device Code Auth (Browser Login)
+    // -----------------------------------------------------------------------
+
+    suspend fun getDeviceCode(): DeviceCodeResponse =
+        httpClient.post("$BACKEND_URL/api/auth/device/code").body()
+
+    suspend fun pollDeviceStatus(deviceToken: String): DevicePollResponse =
+        httpClient.post("$BACKEND_URL/api/auth/device/poll") {
+            contentType(ContentType.Application.Json)
+            setBody(DevicePollRequest(deviceToken))
         }.body()
 }
