@@ -41,9 +41,9 @@ class SliderImage(SQLModel, table=True):
 class UserProfile(SQLModel, table=True):
     __tablename__ = "user_profile"
     id: str = Field(primary_key=True)
-    user_id: str = Field(alias="user_id", foreign_key="user.id")
+    user_id: str = Field(alias="user_id", foreign_key="user.id", index=True)
     admission_number: Optional[str] = Field(default=None, alias="admission_number")
-    username: Optional[str] = None
+    username: Optional[str] = Field(default=None, index=True)
     phone_number: Optional[str] = Field(default=None, alias="phone_number")
     parent_name: Optional[str] = Field(default=None, alias="parent_name")
     parent_phone: Optional[str] = Field(default=None, alias="parent_phone")
@@ -52,7 +52,7 @@ class UserProfile(SQLModel, table=True):
     city: Optional[str] = None
     state: Optional[str] = None
     pincode: Optional[str] = None
-    class_: Optional[str] = Field(default=None, alias="class", sa_column_kwargs={"name": "class"})
+    class_: Optional[str] = Field(default=None, alias="class", index=True, sa_column_kwargs={"name": "class"})
     section: Optional[str] = None
     class_section_last_updated: Optional[datetime] = Field(default=None, alias="class_section_last_updated")
     class_section_changes: Optional[str] = Field(default=None, alias="class_section_changes")
@@ -65,14 +65,14 @@ class UserProfile(SQLModel, table=True):
 class FeeInstallment(SQLModel, table=True):
     __tablename__ = "fee_installment"
     id: str = Field(primary_key=True)
-    user_id: str = Field(alias="user_id", foreign_key="user.id")
-    month: str
-    year: str
+    user_id: str = Field(alias="user_id", foreign_key="user.id", index=True)
+    month: str = Field(index=True)
+    year: str = Field(index=True)
     amount: int
     due_date: date = Field(alias="due_date")
-    status: str  # 'paid', 'pending', 'overdue', 'upcoming'
+    status: str = Field(index=True)  # 'paid', 'pending', 'overdue', 'upcoming'
     paid_date: Optional[date] = Field(default=None, alias="paid_date")
-    receipt_no: Optional[str] = Field(default=None, alias="receipt_no")
+    receipt_no: Optional[str] = Field(default=None, alias="receipt_no", index=True)
     payment_method: Optional[str] = Field(default=None, alias="payment_method")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -209,10 +209,11 @@ class NotificationHistory(SQLModel, table=True):
 
 
 class FeeStructure(SQLModel, table=True):
-    """Stores the per-class fee configuration (components JSON) for each class 1-12."""
+    """Stores the per-class fee configuration (components JSON) for each class (Nursery, KG, 1-12)."""
     __tablename__ = "fee_structure"
     id: str = Field(primary_key=True)
-    class_num: int = Field(alias="class_num")          # 1..12
+    class_num: int = Field(alias="class_num", index=True)         # -1=Nursery, 0=KG, 1..12
+    class_name: Optional[str] = Field(default=None, alias="class_name", index=True) # "Nursery", "KG", "1".."12"
     components: str = Field(default="[]")               # JSON array of {name, amount, billingPeriod}
     transport_fee: int = Field(default=0, alias="transport_fee")   # extra fee for transport users
     created_at: datetime = Field(default_factory=datetime.utcnow)

@@ -906,33 +906,58 @@ def search_users(q: Optional[str] = None, current_user: User = Depends(get_curre
 
 
 # ─── Default fee amounts per class (tuition only) ──────────────────────────
-_DEFAULT_CLASS_FEES = {
-    1: 8000,  2: 8000,  3: 8000,  4: 8000,  5: 8000,
-    6: 10000, 7: 10000, 8: 10000,
-    9: 12000, 10: 12000,
-    11: 15000, 12: 15000,
+CLASSES_ORDER = ["Nursery", "KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
+_DEFAULT_CLASS_FEES_BY_KEY = {
+    "Nursery": 6000,
+    "KG": 6000,
+    "1": 8000, "2": 8000, "3": 8000, "4": 8000, "5": 8000,
+    "6": 10000, "7": 10000, "8": 10000,
+    "9": 12000, "10": 12000,
+    "11": 15000, "12": 15000,
 }
+_CLASS_KEY_TO_NUM = {
+    "Nursery": -1,
+    "KG": 0,
+    **{str(i): i for i in range(1, 13)}
+}
+_CLASS_NUM_TO_KEY = {v: k for k, v in _CLASS_KEY_TO_NUM.items()}
 _DEFAULT_TRANSPORT_FEE = 2000
 
 
-def _get_or_init_structure(class_num: int, db: Session):
-    """Return the FeeStructure row for a class, creating a sensible default if it doesn't exist."""
+def _serialize_structure(row) -> dict:
+    import json
+    key = getattr(row, "class_name", None) or _CLASS_NUM_TO_KEY.get(row.class_num, str(row.class_num))
+    return {
+        "classKey": key,
+        "classNum": row.class_num,
+        "className": f"Class {key}" if key.isdigit() else key,
+        "components": json.loads(row.components),
+        "transportFee": row.transport_fee,
+        "updatedAt": row.updated_at.isoformat() + "Z",
+    }
+
+
+def _get_or_init_structure_by_key(class_key: str, db: Session):
     from models import FeeStructure
     import json, uuid as _uuid
-    row = db.query(FeeStructure).filter(FeeStructure.class_num == class_num).first()
+    num = _CLASS_KEY_TO_NUM.get(str(class_key), 10)
+    row = db.query(FeeStructure).filter(
+        (FeeStructure.class_name == str(class_key)) | (FeeStructure.class_num == num)
+    ).first()
     if row:
         return row
 
-    tuition = _DEFAULT_CLASS_FEES.get(class_num, 10000)
+    tuition = _DEFAULT_CLASS_FEES_BY_KEY.get(str(class_key), 8000)
     default_components = [
-        {"id": f"c{class_num}-1", "name": "Tuition Fee", "amount": tuition, "billingPeriod": "Monthly"},
-        {"id": f"c{class_num}-2", "name": "Library & Computing Access", "amount": 500, "billingPeriod": "Monthly"},
-        {"id": f"c{class_num}-3", "name": "Co-Curricular Activities", "amount": 1000, "billingPeriod": "Monthly"},
-        {"id": f"c{class_num}-4", "name": "Examination Fee", "amount": 1500, "billingPeriod": "Quarterly"},
+        {"id": f"c{class_key}-1", "name": "Tuition Fee", "amount": tuition, "billingPeriod": "Monthly"},
+        {"id": f"c{class_key}-2", "name": "Computing & Activity Access", "amount": 500, "billingPeriod": "Monthly"},
+        {"id": f"c{class_key}-3", "name": "Co-Curricular Activities", "amount": 1000, "billingPeriod": "Monthly"},
+        {"id": f"c{class_key}-4", "name": "Examination Fee", "amount": 1500, "billingPeriod": "Quarterly"},
     ]
     row = FeeStructure(
         id=str(_uuid.uuid4()),
-        class_num=class_num,
+        class_num=num,
+        class_name=str(class_key),
         components=json.dumps(default_components),
         transport_fee=_DEFAULT_TRANSPORT_FEE,
     )
@@ -942,23 +967,52 @@ def _get_or_init_structure(class_num: int, db: Session):
     return row
 
 
-def _serialize_structure(row) -> dict:
-    import json
-    return {
-        "classNum": row.class_num,
-        "components": json.loads(row.components),
-        "transportFee": row.transport_fee,
-        "updatedAt": row.updated_at.isoformat() + "Z",
-    }
+def _get_or_init_structure(class_num: int, db: Session):
+    key = _CLASS_NUM_TO_KEY.get(class_num, str(class_num))
+    return _get_or_init_structure_by_key(key, db)
 
 
 @router.get("/api/admin/fee-structures")
 def get_fee_structures(admin: User = Depends(require_role(["admin", "account"])), db: Session = Depends(get_db)):
-    """Return fee structure config for every class (1-12)."""
+    """Return fee structure config for all classes (Nursery, KG, 1-12) in 1 single optimized DB query."""
+    from models import FeeStructure
+    import json, uuid as _uuid
+
+    existing_rows = db.query(FeeStructure).all()
+    by_key = {}
+    for r in existing_rows:
+        key = getattr(r, "class_name", None) or _CLASS_NUM_TO_KEY.get(r.class_num, str(r.class_num))
+        by_key[key] = r
+
     result = []
-    for class_num in range(1, 13):
-        row = _get_or_init_structure(class_num, db)
+    to_create = []
+    for class_key in CLASSES_ORDER:
+        row = by_key.get(class_key)
+        if not row:
+            num = _CLASS_KEY_TO_NUM.get(class_key, 10)
+            tuition = _DEFAULT_CLASS_FEES_BY_KEY.get(class_key, 8000)
+            default_components = [
+                {"id": f"c{class_key}-1", "name": "Tuition Fee", "amount": tuition, "billingPeriod": "Monthly"},
+                {"id": f"c{class_key}-2", "name": "Computing & Activity Access", "amount": 500, "billingPeriod": "Monthly"},
+                {"id": f"c{class_key}-3", "name": "Co-Curricular Activities", "amount": 1000, "billingPeriod": "Monthly"},
+                {"id": f"c{class_key}-4", "name": "Examination Fee", "amount": 1500, "billingPeriod": "Quarterly"},
+            ]
+            row = FeeStructure(
+                id=str(_uuid.uuid4()),
+                class_num=num,
+                class_name=class_key,
+                components=json.dumps(default_components),
+                transport_fee=_DEFAULT_TRANSPORT_FEE,
+            )
+            to_create.append(row)
+            by_key[class_key] = row
+
         result.append(_serialize_structure(row))
+
+    if to_create:
+        db.add_all(to_create)
+        db.commit()
+
     return result
 
 
@@ -967,23 +1021,28 @@ class SaveFeeStructureRequest(BaseModel):
     transportFee: int = 0
 
 
-@router.put("/api/admin/fee-structures/{class_num}")
+@router.put("/api/admin/fee-structures/{class_id}")
 def save_fee_structure(
-    class_num: int,
+    class_id: str,
     body: SaveFeeStructureRequest,
     admin: User = Depends(require_role(["admin", "account"])),
     db: Session = Depends(get_db),
 ):
-    """Save (overwrite) the fee structure for a specific class and auto-update student fee installments."""
-    if class_num < 1 or class_num > 12:
-        raise HTTPException(status_code=400, detail="class_num must be between 1 and 12")
+    """Save (overwrite) the fee structure for a specific class (Nursery, KG, 1..12) and auto-update student fee installments."""
     import json
     from models import FeeStructure
-    row = db.query(FeeStructure).filter(FeeStructure.class_num == class_num).first()
+
+    num = _CLASS_KEY_TO_NUM.get(str(class_id), 10)
+    row = db.query(FeeStructure).filter(
+        (FeeStructure.class_name == str(class_id)) | (FeeStructure.class_num == num)
+    ).first()
+
     if not row:
-        row = _get_or_init_structure(class_num, db)
+        row = _get_or_init_structure_by_key(str(class_id), db)
+
     row.components = json.dumps(body.components)
     row.transport_fee = body.transportFee
+    row.class_name = str(class_id)
     row.updated_at = datetime.utcnow()
     db.add(row)
     db.commit()
@@ -991,16 +1050,17 @@ def save_fee_structure(
 
     # Auto-apply updated fee structure to all students in this class
     try:
-        apply_req = ApplyFeeStructureRequest(classNums=[class_num])
+        apply_req = ApplyFeeStructureRequest(classKeys=[str(class_id)])
         apply_fee_structures(body=apply_req, admin=admin, db=db)
     except Exception as exc:
-        print(f"Auto-apply fee structure failed for class {class_num}: {exc}")
+        print(f"Auto-apply fee structure failed for class {class_id}: {exc}")
 
     return _serialize_structure(row)
 
 
 class ApplyFeeStructureRequest(BaseModel):
-    classNums: list[int] = []   # which classes to apply; empty = all 1-12
+    classKeys: list[str] = []   # e.g. ["Nursery", "KG", "10"]
+    classNums: list[int] = []   # legacy compatibility
     year: Optional[str] = None  # e.g. "2026"
 
 
@@ -1011,21 +1071,26 @@ def apply_fee_structures(
     db: Session = Depends(get_db),
 ):
     """
-    Generate / update monthly FeeInstallment rows for every student whose
-    class is in classNums (or all classes if classNums is empty).
-    Students with transport_mode set get an extra transport_fee added to their monthly amount.
-    Pre-existing PAID installments are never overwritten.
+    Generate / update monthly FeeInstallment rows for every student whose class matches target classes.
+    Uses BATCH database queries for maximum performance.
     """
     import json
     from models import FeeStructure
 
-    target_classes = [str(c) for c in (body.classNums if body.classNums else range(1, 13))]
+    target_classes = body.classKeys if body.classKeys else [str(c) for c in body.classNums]
+    if not target_classes:
+        target_classes = CLASSES_ORDER
+
     current_year = int(body.year) if body.year else datetime.utcnow().year
 
-    # Load structures indexed by class_num
-    structures = {str(row.class_num): row for row in db.query(FeeStructure).all()}
+    # Load structures in ONE query
+    existing_structures = db.query(FeeStructure).all()
+    structures = {}
+    for r in existing_structures:
+        key = getattr(r, "class_name", None) or _CLASS_NUM_TO_KEY.get(r.class_num, str(r.class_num))
+        structures[key] = r
 
-    # Get all students in target classes with profile info
+    # Get all target students with profiles in ONE query
     results = (
         db.query(User, UserProfile)
         .join(UserProfile, User.id == UserProfile.user_id)
@@ -1033,6 +1098,28 @@ def apply_fee_structures(
         .all()
     )
 
+    if not results:
+        return {"success": True, "studentsProcessed": 0, "installmentsCreated": 0, "installmentsUpdated": 0}
+
+    student_ids = [u.id for u, _ in results]
+
+    # Batch fetch existing installments for all students in ONE query
+    existing_installments_list = (
+        db.query(FeeInstallment)
+        .filter(
+            FeeInstallment.user_id.in_(student_ids),
+            FeeInstallment.year == str(current_year)
+        )
+        .all()
+    )
+
+    # Index existing installments by (user_id, month)
+    existing_map = {(inst.user_id, inst.month): inst for inst in existing_installments_list}
+
+    from app.core.fees import ACADEMIC_MONTHS
+    from datetime import date as _date
+
+    to_add = []
     created_count = 0
     updated_count = 0
 
@@ -1040,9 +1127,8 @@ def apply_fee_structures(
         class_str = profile.class_
         row = structures.get(class_str)
         if not row:
-            # Try to init if missing
             try:
-                row = _get_or_init_structure(int(class_str), db)
+                row = _get_or_init_structure_by_key(class_str, db)
                 structures[class_str] = row
             except Exception:
                 continue
@@ -1050,7 +1136,6 @@ def apply_fee_structures(
         components = json.loads(row.components)
         uses_transport = profile.transport_mode and profile.transport_mode not in ("none", "")
 
-        # Calculate monthly amount: sum of Monthly components + quarterly/12 + transport if applicable
         monthly_amount = 0
         for comp in components:
             amt = int(comp.get("amount", 0))
@@ -1068,23 +1153,12 @@ def apply_fee_structures(
         if monthly_amount <= 0:
             continue
 
-        from app.core.fees import ACADEMIC_MONTHS
-        from datetime import date as _date
-
         for idx, month in enumerate(ACADEMIC_MONTHS, start=1):
             due = _date(current_year, idx, 10)
-            existing = (
-                db.query(FeeInstallment)
-                .filter(
-                    FeeInstallment.user_id == u.id,
-                    FeeInstallment.month == month,
-                    FeeInstallment.year == str(current_year),
-                )
-                .first()
-            )
+            existing = existing_map.get((u.id, month))
             if existing:
                 if existing.status == "paid":
-                    continue  # never touch paid installments
+                    continue
                 existing.amount = monthly_amount
                 existing.due_date = due
                 existing.updated_at = datetime.utcnow()
@@ -1100,8 +1174,11 @@ def apply_fee_structures(
                     due_date=due,
                     status="pending",
                 )
-                db.add(inst)
+                to_add.append(inst)
                 created_count += 1
+
+    if to_add:
+        db.add_all(to_add)
 
     db.commit()
 

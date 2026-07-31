@@ -59,7 +59,9 @@ interface FeeComponent {
 }
 
 interface ClassStructure {
+  classKey: string
   classNum: number
+  className: string
   components: FeeComponent[]
   transportFee: number
   updatedAt?: string
@@ -94,10 +96,6 @@ function calcMonthlyTotal(components: FeeComponent[], transportFee: number, incl
   return base + (includeTransport ? transportFee : 0)
 }
 
-function classLabel(n: number) {
-  return `Class ${n}`
-}
-
 const PERIOD_COLORS: Record<string, string> = {
   Monthly: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
   Quarterly: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
@@ -109,7 +107,7 @@ export function FeeStructuresClient({ username }: { username: string }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [applying, setApplying] = useState(false)
-  const [activeClassNum, setActiveClassNum] = useState(1)
+  const [activeClassKey, setActiveClassKey] = useState("Nursery")
 
   const [addOpen, setAddOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -132,31 +130,34 @@ export function FeeStructuresClient({ username }: { username: string }) {
       if (!res.ok) throw new Error("Failed to fetch fee structures")
       const data: ClassStructure[] = await res.json()
       setStructures(data.map((s) => ({ ...s, dirty: false })))
+      if (data.length && !data.some(s => s.classKey === activeClassKey)) {
+        setActiveClassKey(data[0].classKey || "Nursery")
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load structures"
       toast.error(msg)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [activeClassKey])
 
   useEffect(() => {
     loadStructures()
   }, [loadStructures])
 
-  const activeStructure = structures.find((s) => s.classNum === activeClassNum)
+  const activeStructure = structures.find((s) => (s.classKey || String(s.classNum)) === activeClassKey) || structures[0]
 
   // keep transport fee input in sync when switching classes
   useEffect(() => {
     if (activeStructure) {
       setTransportFeeInput(activeStructure.transportFee.toString())
     }
-  }, [activeClassNum, activeStructure?.transportFee])
+  }, [activeClassKey, activeStructure?.transportFee])
 
   // ─── Mark structure as dirty on local edits ─────────────────────────────
   function mutateActive(fn: (s: ClassStructure) => ClassStructure) {
     setStructures((prev) =>
-      prev.map((s) => (s.classNum === activeClassNum ? { ...fn(s), dirty: true } : s))
+      prev.map((s) => ((s.classKey || String(s.classNum)) === activeClassKey ? { ...fn(s), dirty: true } : s))
     )
   }
 
@@ -164,8 +165,9 @@ export function FeeStructuresClient({ username }: { username: string }) {
   const handleSave = async () => {
     if (!activeStructure) return
     setSaving(true)
+    const targetKey = activeStructure.classKey || String(activeStructure.classNum)
     try {
-      const res = await apiRequest(`/api/admin/fee-structures/${activeClassNum}`, {
+      const res = await apiRequest(`/api/admin/fee-structures/${targetKey}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -176,9 +178,9 @@ export function FeeStructuresClient({ username }: { username: string }) {
       if (!res.ok) throw new Error("Failed to save")
       const updated: ClassStructure = await res.json()
       setStructures((prev) =>
-        prev.map((s) => (s.classNum === activeClassNum ? { ...updated, dirty: false } : s))
+        prev.map((s) => ((s.classKey || String(s.classNum)) === targetKey ? { ...updated, dirty: false } : s))
       )
-      toast.success(`Class ${activeClassNum} fee structure saved!`)
+      toast.success(`${activeStructure.className || `Class ${targetKey}`} fee structure saved!`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Save failed"
       toast.error(msg)
@@ -192,23 +194,16 @@ export function FeeStructuresClient({ username }: { username: string }) {
     e.preventDefault()
     setApplying(true)
     try {
-      const classNums = applyScope === "current" ? [activeClassNum] : []
+      const classKeys = applyScope === "current" && activeStructure ? [activeStructure.classKey || String(activeStructure.classNum)] : []
       const res = await apiRequest("/api/admin/fee-structures/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ classNums, year: applyYear }),
+        body: JSON.stringify({ classKeys, year: applyYear }),
       })
       if (!res.ok) throw new Error("Apply failed")
       const result = await res.json()
       setApplyOpen(false)
-      toast.success(
-        `Fee structures applied!`,
-        {
-          description: `${result.studentsProcessed} students processed — ${result.installmentsCreated} installments created, ${result.installmentsUpdated} updated.`,
-          icon: <CheckCircle2 className="h-5 w-5 text-emerald-500" />,
-          duration: 6000,
-        }
-      )
+      toast.success(`Fee structures applied! Updated ${result.installmentsUpdated || 0} student installments.`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Apply failed"
       toast.error(msg)
@@ -341,19 +336,21 @@ export function FeeStructuresClient({ username }: { username: string }) {
       {/* ── Main Grid ────────────────────────────────────────────────────── */}
       <div className="grid gap-6 md:grid-cols-[220px_1fr]">
 
-        {/* Left: Class Selector (1–12) */}
+        {/* Left: Class Selector (Nursery, KG, 1–12) */}
         <div className="flex flex-col gap-2">
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground pl-1">
-            Classes (1 – 12)
+            Classes (Nursery – 12)
           </p>
           <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
             {structures.map((s) => {
-              const isSelected = activeClassNum === s.classNum
+              const key = s.classKey || String(s.classNum)
+              const isSelected = activeClassKey === key
               const total = calcMonthlyTotal(s.components, s.transportFee, false)
+              const label = s.className || (key === "Nursery" || key === "KG" ? key : `Class ${s.classNum}`)
               return (
                 <button
-                  key={s.classNum}
-                  onClick={() => setActiveClassNum(s.classNum)}
+                  key={key}
+                  onClick={() => setActiveClassKey(key)}
                   className={`p-3 rounded-xl border text-left transition-all duration-150 relative ${
                     isSelected
                       ? "bg-card border-primary shadow-sm ring-1 ring-primary/20"
@@ -365,7 +362,7 @@ export function FeeStructuresClient({ username }: { username: string }) {
                   )}
                   <div className="flex items-center justify-between">
                     <span className={`text-sm font-bold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                      Class {s.classNum}
+                      {label}
                     </span>
                     <Badge variant="outline" className="text-[10px] font-medium">
                       {s.components.length}
@@ -386,7 +383,7 @@ export function FeeStructuresClient({ username }: { username: string }) {
                 <div>
                   <CardTitle className="text-base font-bold flex items-center gap-2">
                     <Layers className="size-4 text-primary" />
-                    Class {activeStructure.classNum} — Fee Components
+                    {activeStructure.className || `Class ${activeStructure.classNum}`} — Fee Components
                   </CardTitle>
                   <CardDescription className="text-xs mt-1">
                     Edit fee components below. Changes are local until you click{" "}
