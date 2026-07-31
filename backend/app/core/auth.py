@@ -1,4 +1,5 @@
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
 from typing import List, Optional
 from urllib.parse import unquote
 
@@ -7,6 +8,20 @@ from sqlmodel import Session
 
 from app.core.database import get_db
 from models import User, Session as SessionModel
+
+
+def create_session_token(user_id: str, db: Session, user_agent: Optional[str] = "VidyaSchool Desktop App") -> str:
+    token = str(uuid.uuid4())
+    session_obj = SessionModel(
+        id=str(uuid.uuid4()),
+        token=token,
+        user_id=user_id,
+        expires_at=datetime.utcnow() + timedelta(days=30),
+        user_agent=user_agent
+    )
+    db.add(session_obj)
+    db.commit()
+    return token
 
 
 def decode_session_token(token: Optional[str]) -> Optional[str]:
