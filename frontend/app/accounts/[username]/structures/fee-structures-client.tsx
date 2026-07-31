@@ -497,7 +497,7 @@ export function FeeStructuresClient({ username }: { username: string }) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Fee Component</DialogTitle>
-            <DialogDescription>Add a new billing item to Class {activeClassNum}.</DialogDescription>
+            <DialogDescription>Add a new billing item to {activeStructure?.className || activeClassKey}.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddSubmit} className="space-y-4 pt-2">
             <div className="grid gap-2">
@@ -545,7 +545,7 @@ export function FeeStructuresClient({ username }: { username: string }) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Fee Component</DialogTitle>
-            <DialogDescription>Modify this billing item for Class {activeClassNum}.</DialogDescription>
+            <DialogDescription>Modify this billing item for {activeStructure?.className || activeClassKey}.</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-4 pt-2">
             <div className="grid gap-2">
@@ -624,7 +624,7 @@ export function FeeStructuresClient({ username }: { username: string }) {
                 <Select value={applyScope} onValueChange={(v: any) => setApplyScope(v)}>
                   <SelectTrigger id="applyScope"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="current">Class {activeClassNum} only</SelectItem>
+                    <SelectItem value="current">{activeStructure?.className || activeClassKey} only</SelectItem>
                     <SelectItem value="all">All Classes (1–12)</SelectItem>
                   </SelectContent>
                 </Select>
