@@ -271,8 +271,42 @@ export default function StudentNotesPage() {
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="h-56 bg-zinc-100 dark:bg-[#18181b] rounded-2xl p-5 flex flex-col gap-3 animate-pulse border border-border/40"
-            />
+              className="h-56 bg-zinc-100 dark:bg-[#18181b] rounded-2xl p-5 flex flex-col gap-3 border border-border/40 overflow-hidden"
+            >
+              {/* Badge + timestamp row */}
+              <div className="flex items-center justify-between">
+                <div className="h-5 w-20 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
+                <div className="h-3 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
+              </div>
+
+              {/* Title */}
+              <div className="flex flex-col gap-1.5">
+                <div className="h-4 w-full rounded-md bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
+                <div className="h-4 w-3/4 rounded-md bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
+              </div>
+
+              {/* Bullets */}
+              <div className="flex flex-col gap-2 flex-1">
+                {[...Array(3)].map((_, j) => (
+                  <div key={j} className="flex items-center gap-2">
+                    <div className="size-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600 shrink-0 animate-pulse" />
+                    <div
+                      className="h-3 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse"
+                      style={{ width: `${75 - j * 12}%` }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Footer */}
+              <div className="pt-2.5 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <div className="size-3.5 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
+                  <div className="h-3 w-24 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
+                </div>
+                <div className="size-3.5 rounded-full bg-zinc-200 dark:bg-zinc-700 animate-pulse" />
+              </div>
+            </div>
           ))}
         </div>
       ) : filteredNotes.length === 0 ? (
