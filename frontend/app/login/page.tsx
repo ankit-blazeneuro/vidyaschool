@@ -9,30 +9,31 @@ import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from 
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { toast } from "sonner"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError("")
 
-    try {
-      await authClient.signIn.email({
-        email,
-        password,
-        callbackURL: "/dashboard",
+    const { error } = await authClient.signIn.email({
+      email,
+      password,
+      callbackURL: "/dashboard",
+    })
+
+    if (error) {
+      toast.error(error.message || "Failed to sign in", {
+        description: "Please check your credentials and try again.",
       })
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to sign in")
-    } finally {
-      setLoading(false)
     }
+
+    setLoading(false)
   }
 
   const handleGoogleSignIn = async () => {
@@ -91,9 +92,9 @@ export default function LoginPage() {
                 <Field>
                   <div className="flex items-center">
                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <a href="#" className="ml-auto text-sm underline-offset-4 hover:underline">
+                    <Link href="/forgot-password" className="ml-auto text-sm underline-offset-4 hover:underline">
                       Forgot your password?
-                    </a>
+                    </Link>
                   </div>
                   <div className="relative">
                     <Input
@@ -118,7 +119,7 @@ export default function LoginPage() {
                   </div>
                 </Field>
 
-                {error ? <p className="text-center text-sm text-destructive">{error}</p> : null}
+
 
                 <Field>
                   <Button type="submit" className="w-full" disabled={loading}>

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import Image from "next/image"
+import { toast } from "sonner"
 
 export default function SignUpPage() {
   const [name, setName] = useState("")
@@ -17,37 +18,38 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("")
   const [preferredRole, setPreferredRole] = useState<"student" | "teacher" | "librarian">("student")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError("")
 
-    try {
-      const { data } = await authClient.signUp.email({
-        name,
-        email,
-        password,
-        preferredRole,
+    const { data, error } = await authClient.signUp.email({
+      name,
+      email,
+      password,
+      preferredRole,
+    })
+
+    if (error) {
+      toast.error(error.message || "Failed to sign up", {
+        description: "Please check your details and try again.",
       })
-      
-      if ((preferredRole === "teacher" || preferredRole === "librarian") && data?.user?.id) {
-        await fetch("/api/admin/teacher-requests/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: data.user.id, preferredRole })
-        })
-      }
-      
-      setSuccess(true)
-    } catch (err: any) {
-      setError(err.message || "Failed to sign up")
-    } finally {
       setLoading(false)
+      return
     }
+
+    if ((preferredRole === "teacher" || preferredRole === "librarian") && data?.user?.id) {
+      await fetch("/api/admin/teacher-requests/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: data.user.id, preferredRole })
+      })
+    }
+
+    setSuccess(true)
+    setLoading(false)
   }
 
   const handleGoogleSignIn = async () => {
@@ -172,7 +174,7 @@ export default function SignUpPage() {
                     </FieldDescription>
                   )}
                 </Field>
-                {error && <p className="text-sm text-destructive text-center">{error}</p>}
+
                 <Field>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Creating account..." : "Create account"}

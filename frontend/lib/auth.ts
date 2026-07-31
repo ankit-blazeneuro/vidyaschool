@@ -18,12 +18,13 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+    resetPasswordTokenExpiresIn: 300,
     sendResetPassword: async ({ user, url }) => {
       await resend.emails.send({
         from: 'VidyaSchool <onboarding@resend.dev>',
         to: user.email,
         subject: 'Reset your password',
-        html: `<p>Click <a href="${url}">here</a> to reset your password.</p>`,
+        html: `<p>Click <a href="${url}">here</a> to reset your password. This link expires in 5 minutes.</p>`,
       })
     },
   },

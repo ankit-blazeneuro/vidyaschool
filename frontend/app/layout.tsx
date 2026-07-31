@@ -47,6 +47,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { RootProvider } from "fumadocs-ui/provider/next"
 import { PWARegister } from "@/components/pwa-register"
 import { CustomSearchDialog } from "@/components/custom-search-dialog"
+import { Toaster } from "@/components/ui/sonner"
 
 export default async function RootLayout({
   children,
@@ -78,6 +79,7 @@ export default async function RootLayout({
             >
               <PWARegister />
               {children}
+              <Toaster richColors position="top-right" />
             </RootProvider>
           </TooltipProvider>
         </ThemeProvider>
