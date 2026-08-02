@@ -157,12 +157,13 @@ export default function StudentFeesPage() {
         section: accountData.profile?.section || "",
       })
 
-      // 2. Fetch fees from FastAPI backend
-      const feesRes = await fetch(`${BACKEND_URL}/api/fees`, {
-        credentials: "include"
-      })
+      // 2. Fetch fees from API (Next.js /api/fees with direct Drizzle DB resolution)
+      let feesRes = await fetch('/api/fees')
       if (!feesRes.ok) {
-        throw new Error("Failed to load fee installments from backend server")
+        feesRes = await fetch(`${BACKEND_URL}/api/fees`, { credentials: "include" })
+      }
+      if (!feesRes.ok) {
+        throw new Error("Failed to load fee installments")
       }
       const feesData = await feesRes.json() as FeeApiRecord[]
       

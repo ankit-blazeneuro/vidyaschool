@@ -182,14 +182,67 @@ def verify_receipt(receipt_no: str, db: Session = Depends(get_db)):
     }
 
 
+def calculate_student_net_monthly_fee(user_id: str, db: Session) -> int:
+    from models import UserProfile
+    import json
+
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user_id).first()
+    class_str = profile.class_ if (profile and profile.class_ and profile.class_ != "none") else "10"
+
+    structure_row = _get_or_init_structure_by_key(class_str, db)
+    components = json.loads(structure_row.components) if structure_row else []
+
+    base_monthly = 0
+    for comp in components:
+        amt = int(comp.get("amount", 0))
+        period = comp.get("billingPeriod", "Monthly")
+        if period == "Monthly":
+            base_monthly += amt
+        elif period == "Quarterly":
+            base_monthly += round(amt / 3)
+        elif period == "Annually":
+            base_monthly += round(amt / 12)
+
+    uses_transport = is_transport_user(profile.transport_mode if profile else None)
+    transport_fee = structure_row.transport_fee if (uses_transport and structure_row) else 0
+
+    return base_monthly + transport_fee
+
+
 @router.get("/api/fees")
 def get_my_fees(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    net_monthly = calculate_student_net_monthly_fee(user.id, db)
     installments = db.query(FeeInstallment).filter(FeeInstallment.user_id == user.id).order_by(FeeInstallment.due_date).all()
+    
     if not installments:
-        default_installments = build_default_fee_installments(user.id, academic_year="25-26")
-        db.add_all(default_installments)
+        from app.core.fees import ACADEMIC_MONTHS
+        from datetime import date as _date
+        current_year = datetime.utcnow().year
+        installments = []
+        for idx, month in enumerate(ACADEMIC_MONTHS, start=1):
+            inst = FeeInstallment(
+                id=str(uuid.uuid4()),
+                user_id=user.id,
+                month=month,
+                year=str(current_year),
+                amount=net_monthly,
+                due_date=_date(current_year, idx, 10),
+                status="pending",
+            )
+            installments.append(inst)
+        db.add_all(installments)
         db.commit()
-        return [_serialize_installment(inst) for inst in default_installments]
+    else:
+        # Sync pending/overdue installment amounts to net_monthly
+        updated = False
+        for inst in installments:
+            if inst.status != "paid" and inst.amount != net_monthly:
+                inst.amount = net_monthly
+                db.add(inst)
+                updated = True
+        if updated:
+            db.commit()
+
     return [_serialize_installment(inst) for inst in installments]
 
 
