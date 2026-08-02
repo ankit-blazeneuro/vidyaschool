@@ -503,7 +503,7 @@ export function registerFusionLanguage(monaco: typeof import("monaco-editor")) {
   // Autocomplete / Intellisense
   monaco.languages.registerCompletionItemProvider("fusion", {
     triggerCharacters: ["<", " ", "{"],
-    provideCompletionItems: (model, position) => {
+    provideCompletionItems: (model: import("monaco-editor").editor.ITextModel, position: import("monaco-editor").Position) => {
       const word = model.getWordUntilPosition(position)
       const range = {
         startLineNumber: position.lineNumber,
