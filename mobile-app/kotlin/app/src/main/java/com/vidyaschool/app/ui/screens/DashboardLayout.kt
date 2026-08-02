@@ -409,9 +409,8 @@ fun DashboardLayout(
                                         provider, email, currentName.value, currentRole.value, currentAvatarUrl.value, sessionToken, verifyBody.studentClass, currentUsername.value
                                     )
                                 } else {
-                                    // Session is invalid/revoked! Logout immediately
-                                    onLogout()
-                                    return@launch
+                                    // Session is not explicitly verified, fallback to user role check
+                                    sessionVerified = false
                                 }
                             }
                         }

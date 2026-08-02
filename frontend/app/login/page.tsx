@@ -164,19 +164,26 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
-    const { error } = await authClient.signIn.email({
-      email,
-      password,
-      callbackURL: "/dashboard",
-    })
-
-    if (error) {
-      toast.error(error.message || "Failed to sign in", {
-        description: "Please check your credentials and try again.",
+    try {
+      const { data, error } = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: "/dashboard",
       })
-    }
 
-    setLoading(false)
+      if (error) {
+        toast.error(error.message || "Failed to sign in", {
+          description: "Please check your credentials and try again.",
+        })
+        setLoading(false)
+      } else {
+        toast.success("Login successful! Redirecting...")
+        window.location.href = "/dashboard"
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "An unexpected error occurred during sign in.")
+      setLoading(false)
+    }
   }
 
   const handleGoogleSignIn = async () => {
