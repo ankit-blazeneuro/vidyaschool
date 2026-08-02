@@ -34,12 +34,17 @@ const authOnlyRoutes = ['/student/onboarding', '/auth/waiting-room']
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Allow public routes and API auth routes
-  if (publicRoutes.some(route => pathname === route) || pathname.startsWith('/api/auth/') || pathname.startsWith('/.well-known') || pathname.startsWith('/docs') || pathname.startsWith('/api/search')) {
+  // Allow static assets, API auth, docs, well-known, and search endpoints immediately
+  if (
+    pathname.startsWith('/api/auth/') ||
+    pathname.startsWith('/.well-known') ||
+    pathname.startsWith('/docs') ||
+    pathname.startsWith('/api/search')
+  ) {
     return NextResponse.next()
   }
 
-  // Get session (single call — reused for /dashboard redirect AND firewall checks)
+  // Get session (single call — reused for /login redirect, /dashboard redirect AND firewall checks)
   let session: any = null
   try {
     session = await auth.api.getSession({
@@ -81,6 +86,18 @@ export async function middleware(request: NextRequest) {
         console.error('[middleware] DB fallback session check error:', e)
       }
     }
+  }
+
+  // REDIRECT LOGGED-IN USERS AWAY FROM /login AND /signup BACK TO THEIR DASHBOARD
+  if ((pathname === '/login' || pathname === '/signup') && session?.user) {
+    const user = session.user as any
+    const destination = roleDashboardMap[user.role as string] ?? '/student'
+    return NextResponse.redirect(new URL(destination, request.url))
+  }
+
+  // Allow unauthenticated public routes ('/', '/login', '/signup', '/unauthorized', '/downloads')
+  if (publicRoutes.some(route => pathname === route)) {
+    return NextResponse.next()
   }
 
   // FAST /dashboard redirect — handled at edge with the already-fetched session

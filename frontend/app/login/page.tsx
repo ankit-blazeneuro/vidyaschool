@@ -34,6 +34,22 @@ export default function LoginPage() {
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
+    fetch('/api/profile/username')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.role) {
+          const roleDestMap: Record<string, string> = {
+            teacher: '/teacher',
+            admin: '/admin',
+            librarian: '/librarian',
+            account: '/accounts',
+            student: '/student',
+          }
+          window.location.href = roleDestMap[data.role] || '/student'
+        }
+      })
+      .catch(() => {})
+
     return () => {
       cleanupQR()
     }
