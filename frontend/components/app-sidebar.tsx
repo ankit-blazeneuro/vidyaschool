@@ -34,7 +34,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, MoonIcon, CircleUserRoundIcon, ChevronsUpDown, SunIcon, Laptop, ChevronRight, LogOut, CalendarIcon, NotebookPenIcon, Trophy, Mail } from "lucide-react"
-import { useSession, signOut } from "@/lib/auth-client"
+import { useSession, signOut, logoutUser } from "@/lib/auth-client"
 import { io } from "socket.io-client"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -937,8 +937,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     className="w-full justify-start gap-2.5 px-2.5"
                     onClick={async () => {
                       setIsCommandOpen(false)
-                      await signOut()
-                      window.location.href = "/login"
+                      await logoutUser()
                     }}
                   >
                     <LogOut className="size-4 shrink-0" />

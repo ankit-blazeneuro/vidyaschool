@@ -95,8 +95,8 @@ export default function WaitingRoomPage() {
   }, [user, router])
 
   const handleLogout = async () => {
-    await authClient.signOut()
-    router.push("/")
+    const { logoutUser } = await import("@/lib/auth-client")
+    await logoutUser()
   }
 
   if (loading) {

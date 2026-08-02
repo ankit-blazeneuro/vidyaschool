@@ -24,9 +24,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useSession, authClient, logoutUser } from "@/lib/auth-client"
 import { useTheme } from "@/components/theme-provider"
 import { EllipsisVerticalIcon, CircleUserRoundIcon, BellIcon, LogOutIcon, SunIcon } from "lucide-react"
-import { useSession, authClient } from "@/lib/auth-client"
 import Link from "next/link"
 import * as React from "react"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -90,8 +90,7 @@ export function NavUser() {
   const user = currentUser
 
   const handleSignOut = async () => {
-    await authClient.signOut()
-    window.location.href = "/"
+    await logoutUser()
   }
 
   const getInitials = (name: string) => {

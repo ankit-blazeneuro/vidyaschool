@@ -1,9 +1,8 @@
 "use client"
 
-import { useSession } from "@/lib/auth-client"
+import { useSession, logoutUser } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { LogOut } from "lucide-react"
-import { authClient } from "@/lib/auth-client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export function UserCard() {
@@ -14,8 +13,7 @@ export function UserCard() {
   }
 
   const handleSignOut = async () => {
-    await authClient.signOut()
-    window.location.href = "/"
+    await logoutUser()
   }
 
   const getInitials = (name: string) => {

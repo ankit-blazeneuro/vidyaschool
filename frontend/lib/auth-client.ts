@@ -23,3 +23,25 @@ export const authClient = createAuthClient({
 })
 
 export const { signIn, signUp, signOut, useSession } = authClient
+
+export async function logoutUser() {
+  try {
+    await fetch("/api/auth/logout", { method: "POST" })
+  } catch (e) {}
+
+  try {
+    await authClient.signOut()
+  } catch (e) {}
+
+  if (typeof document !== 'undefined') {
+    document.cookie = "better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    document.cookie = "__Secure-better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+  }
+
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.clear()
+    if (typeof sessionStorage !== 'undefined') sessionStorage.clear()
+  } catch (e) {}
+
+  window.location.href = "/login"
+}

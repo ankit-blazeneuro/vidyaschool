@@ -101,9 +101,8 @@ export default function TeacherWaitingRoomPage() {
   const handleSignOut = async () => {
     if (socket) socket.disconnect()
     if (checkInterval) clearInterval(checkInterval)
-    const { authClient } = await import("@/lib/auth-client")
-    await authClient.signOut()
-    window.location.href = "/"
+    const { logoutUser } = await import("@/lib/auth-client")
+    await logoutUser()
   }
 
   if (isPending) {
