@@ -180,9 +180,10 @@ export default function SignUpPage() {
                     {loading ? "Creating account..." : "Create account"}
                   </Button>
                 </Field>
-                <FieldSeparator>Or continue with</FieldSeparator>
-                <Field>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-5 pt-4 mt-2">
+                  <FieldSeparator>Or continue with</FieldSeparator>
+                  <Field>
+                    <div className="grid grid-cols-2 gap-4 pt-1">
                     <Button variant="outline" type="button" onClick={handleGoogleSignIn}>
                       <svg width="721" height="737" viewBox="0 0 721 737" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
                         <path d="M721 376.538C721 350.431 718.659 325.329 714.312 301.23L460.213 301.23V443.812L565.831 443.812C557.136 489.666 531.052 528.492 491.925 554.598V647.31H611.312C680.87 583.048 721 488.662 721 376.538Z" fill="#4285F4"/>
@@ -204,6 +205,7 @@ export default function SignUpPage() {
                     </Link>
                   </FieldDescription>
                 </Field>
+              </div>
               </FieldGroup>
             </form>
           </div>

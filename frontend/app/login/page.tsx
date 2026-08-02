@@ -268,10 +268,10 @@ export default function LoginPage() {
                 </form>
 
                 {/* ── Social Login Row with Padding Top ────────────────── */}
-                <div className="space-y-4 pt-4 mt-4">
+                <div className="flex flex-col gap-5 pt-6 mt-4">
                   <FieldSeparator>Or sign in with</FieldSeparator>
 
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-3 pt-1">
                     <Button
                       variant="outline"
                       type="button"
