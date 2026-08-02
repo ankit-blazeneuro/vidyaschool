@@ -37,7 +37,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ 
       username: profile?.username || null,
-      onboardingCompleted: profile?.onboardingCompleted ?? false 
+      onboardingCompleted: profile?.onboardingCompleted ?? false,
+      role: (session.user as any).role || 'student'
     })
   } catch (error) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -21,7 +21,7 @@ export default async function AccountsRedirect() {
     where: eq(userProfile.userId, userData.id)
   })
   
-  if (!profile?.username || !profile?.onboardingCompleted) {
+  if (!profile?.username) {
     redirect("/accounts/onboarding")
   }
   

@@ -25,7 +25,7 @@ function TeacherOnboardingContent() {
         setProfile(data)
         setLoading(false)
 
-        if (data.username && data.onboardingCompleted) {
+        if (data.username) {
           if (searchParams.get("onboarding") !== "true") {
             router.push(`/teacher/${data.username}`)
           }
@@ -46,7 +46,7 @@ function TeacherOnboardingContent() {
     )
   }
 
-  const showOnboarding = searchParams.get("onboarding") === "true" || !profile?.username || !profile?.onboardingCompleted
+  const showOnboarding = searchParams.get("onboarding") === "true" || !profile?.username
 
   return (
     <div className="min-h-screen bg-muted/30 relative flex flex-col items-center justify-center p-6">

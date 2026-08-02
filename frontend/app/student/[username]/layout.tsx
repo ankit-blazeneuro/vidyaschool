@@ -25,18 +25,13 @@ export default async function UsernameLayout({
     })
   ])
 
-  // If the current user has no completed profile, send them to onboarding
-  if (!currentProfile?.onboardingCompleted || !currentProfile.username) {
-    redirect('/signup/onboarding')
-  }
-
   // If the requested username doesn't exist, redirect everyone to their own profile
-  if (!requestedProfile) {
+  if (!requestedProfile && currentProfile?.username) {
     redirect(`/student/${currentProfile.username}`)
   }
 
   // Students can only view their own profile; admins can view any
-  if (user.role === 'student' && currentProfile.username !== username) {
+  if (user.role === 'student' && currentProfile?.username && currentProfile.username !== username) {
     redirect(`/student/${currentProfile.username}`)
   }
 

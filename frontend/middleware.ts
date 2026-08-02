@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { auth } from './lib/auth'
 import { db } from './lib/db'
-import { user as userTable, session as sessionTable } from './lib/schema'
+import { user as userTable, session as sessionTable, userProfile } from './lib/schema'
 import { eq } from 'drizzle-orm'
 
 // Public routes - accessible without authentication
@@ -30,6 +30,24 @@ const protectedRoutes = {
 
 // Routes that bypass role check (but still require auth)
 const authOnlyRoutes = ['/student/onboarding', '/auth/waiting-room']
+
+async function resolveUserDestination(user: any) {
+  try {
+    const profile = await db
+      .select()
+      .from(userProfile)
+      .where(eq(userProfile.userId, user.id))
+      .then(res => res[0])
+
+    if (profile?.onboardingCompleted && profile?.username) {
+      const rolePrefix = roleDashboardMap[user.role as string] ?? '/student'
+      return `${rolePrefix}/${profile.username}`
+    }
+  } catch (e) {
+    console.error('[middleware] userProfile query error:', e)
+  }
+  return '/signup/onboarding'
+}
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -88,10 +106,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // REDIRECT LOGGED-IN USERS AWAY FROM /login AND /signup BACK TO THEIR DASHBOARD
+  // REDIRECT LOGGED-IN USERS AWAY FROM /login AND /signup DIRECTLY TO /[role]/[username] OR ONBOARDING
   if ((pathname === '/login' || pathname === '/signup') && session?.user) {
     const user = session.user as any
-    const destination = roleDashboardMap[user.role as string] ?? '/student'
+    const destination = await resolveUserDestination(user)
     return NextResponse.redirect(new URL(destination, request.url))
   }
 
@@ -100,13 +118,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // FAST /dashboard redirect — handled at edge with the already-fetched session
+  // FAST /dashboard redirect — handled at edge with the already-fetched session & profile
   if (pathname === '/dashboard') {
     if (!session?.user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     const user = session.user as any
-    const destination = roleDashboardMap[user.role as string] ?? '/student'
+    const destination = await resolveUserDestination(user)
     return NextResponse.redirect(new URL(destination, request.url))
   }
 

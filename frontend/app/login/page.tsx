@@ -37,7 +37,7 @@ export default function LoginPage() {
     fetch('/api/profile/username')
       .then(res => res.ok ? res.json() : null)
       .then(data => {
-        if (data?.role) {
+        if (data) {
           const roleDestMap: Record<string, string> = {
             teacher: '/teacher',
             admin: '/admin',
@@ -45,7 +45,12 @@ export default function LoginPage() {
             account: '/accounts',
             student: '/student',
           }
-          window.location.href = roleDestMap[data.role] || '/student'
+          const prefix = roleDestMap[data.role] || '/student'
+          if (data.onboardingCompleted && data.username) {
+            window.location.href = `${prefix}/${data.username}`
+          } else {
+            window.location.href = '/signup/onboarding'
+          }
         }
       })
       .catch(() => {})
@@ -141,6 +146,27 @@ export default function LoginPage() {
         body: JSON.stringify({ session_token: sessionToken, user }),
       })
       toast.success(`Welcome back, ${user.name ?? "User"}! 🎉`)
+      try {
+        const res = await fetch('/api/profile/username')
+        if (res.ok) {
+          const data = await res.json()
+          const roleDestMap: Record<string, string> = {
+            teacher: '/teacher',
+            admin: '/admin',
+            librarian: '/librarian',
+            account: '/accounts',
+            student: '/student',
+          }
+          const prefix = roleDestMap[data.role] || '/student'
+          if (data.onboardingCompleted && data.username) {
+            window.location.href = `${prefix}/${data.username}`
+            return
+          } else {
+            window.location.href = '/signup/onboarding'
+            return
+          }
+        }
+      } catch {}
       window.location.href = "/dashboard"
     } catch {
       window.location.href = `/dashboard?qr_session=${sessionToken}`
@@ -177,6 +203,27 @@ export default function LoginPage() {
         setLoading(false)
       } else {
         toast.success("Login successful! Redirecting...")
+        try {
+          const res = await fetch('/api/profile/username')
+          if (res.ok) {
+            const data = await res.json()
+            const roleDestMap: Record<string, string> = {
+              teacher: '/teacher',
+              admin: '/admin',
+              librarian: '/librarian',
+              account: '/accounts',
+              student: '/student',
+            }
+            const prefix = roleDestMap[data.role] || '/student'
+            if (data.onboardingCompleted && data.username) {
+              window.location.href = `${prefix}/${data.username}`
+              return
+            } else {
+              window.location.href = '/signup/onboarding'
+              return
+            }
+          }
+        } catch {}
         window.location.href = "/dashboard"
       }
     } catch (err: any) {

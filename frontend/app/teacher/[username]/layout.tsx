@@ -25,18 +25,15 @@ export default async function TeacherUsernameLayout({
     })
   ])
 
-  // If the current user has no completed profile, send them to onboarding
-  if (!currentProfile?.onboardingCompleted || !currentProfile.username) {
-    redirect('/signup/onboarding')
-  }
+
 
   // If the requested username doesn't exist, redirect everyone to their own profile
-  if (!requestedProfile) {
+  if (!requestedProfile && currentProfile?.username) {
     redirect(`/teacher/${currentProfile.username}`)
   }
 
   // Teachers/librarians can only view their own profile/dashboard; admins can view any
-  if ((user.role === 'teacher' || user.role === 'librarian') && currentProfile.username !== username) {
+  if ((user.role === 'teacher' || user.role === 'librarian') && currentProfile?.username && currentProfile.username !== username) {
     redirect(`/teacher/${currentProfile.username}`)
   }
 

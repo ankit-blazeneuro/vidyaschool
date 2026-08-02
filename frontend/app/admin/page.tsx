@@ -21,14 +21,10 @@ export default async function AdminRootPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
   const selectQuery = resolvedSearchParams?.select
 
-  // If no username or onboarding is incomplete, redirect to /signup/onboarding
-  if (!profile || !profile.username || !profile.onboardingCompleted) {
-    redirect('/signup/onboarding')
-  }
-
-  // If they have a username and onboarding completed, redirect to dashboard under /admin/[username]
-  if (profile && profile.username && profile.onboardingCompleted) {
+  if (profile?.username) {
     redirect(`/admin/${profile.username}`)
+  } else {
+    redirect('/signup/onboarding')
   }
 
   return (

@@ -44,9 +44,9 @@ function StudentOnboardingContent() {
 
         const forceOnboarding = searchParams.get("onboarding") === "true"
 
-        if (data.username && data.onboardingCompleted && !forceOnboarding) {
+        if (data.username && !forceOnboarding) {
           router.push(`/student/${data.username}`)
-        } else if (!data.username || !data.onboardingCompleted) {
+        } else if (!data.username) {
           router.push("/signup/onboarding")
         }
       })
@@ -66,7 +66,7 @@ function StudentOnboardingContent() {
     )
   }
 
-  const showOnboarding = searchParams.get("onboarding") === "true" || !profile?.username || !profile?.onboardingCompleted
+  const showOnboarding = searchParams.get("onboarding") === "true" || !profile?.username
 
   return (
     <div className="relative w-full min-h-screen bg-muted/30 flex flex-col items-center justify-center p-6">

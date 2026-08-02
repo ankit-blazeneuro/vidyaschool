@@ -25,18 +25,13 @@ export default async function LibrarianUsernameLayout({
     })
   ])
 
-  // If the current user has no completed profile, send them to onboarding
-  if (!currentProfile?.onboardingCompleted || !currentProfile.username) {
-    redirect('/signup/onboarding')
-  }
-
   // If the requested username doesn't exist, redirect everyone to their own profile
-  if (!requestedProfile) {
+  if (!requestedProfile && currentProfile?.username) {
     redirect(`/librarian/${currentProfile.username}`)
   }
 
   // Librarians can only view their own profile/dashboard; admins can view any
-  if (user.role === 'librarian' && currentProfile.username !== username) {
+  if (user.role === 'librarian' && currentProfile?.username && currentProfile.username !== username) {
     redirect(`/librarian/${currentProfile.username}`)
   }
 
