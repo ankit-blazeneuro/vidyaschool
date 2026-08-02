@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { getAuthenticatedSession } from '@/lib/auth-helpers'
 import { db } from '@/lib/db'
 import { teacherNote } from '@/lib/schema'
 import { eq, and, desc } from 'drizzle-orm'
@@ -8,7 +7,7 @@ import { eq, and, desc } from 'drizzle-orm'
 const ALLOWED = ['teacher', 'admin', 'librarian']
 
 export async function GET(req: Request) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user || !ALLOWED.includes(session.user.role))
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -34,7 +33,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user || !ALLOWED.includes(session.user.role))
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -53,7 +52,7 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user || !ALLOWED.includes(session.user.role))
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -74,7 +73,7 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user || !ALLOWED.includes(session.user.role))
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

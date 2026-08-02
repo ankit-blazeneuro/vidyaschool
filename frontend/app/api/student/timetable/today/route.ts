@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { getAuthenticatedSession } from '@/lib/auth-helpers'
 import { db } from '@/lib/db'
 import { timetable, userProfile, user } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
@@ -8,39 +7,43 @@ import { eq, and } from 'drizzle-orm'
 const SUBJECT_COLORS = [
   {
     bg: "bg-violet-50/60 dark:bg-violet-500/5",
-    border: "border-violet-200/50 dark:border-violet-500/20 border-l-violet-500 dark:border-l-violet-500 border-l-4",
-    title: "text-violet-900 dark:text-violet-200",
-    time: "text-violet-700/80 dark:text-violet-400/80",
+    border: "border-violet-200/80 dark:border-violet-500/20",
+    badgeBg: "bg-violet-100 dark:bg-violet-500/20",
+    badgeText: "text-violet-700 dark:text-violet-300",
+    timeBadgeBg: "bg-violet-100/70 dark:bg-violet-500/15",
+    timeBadgeText: "text-violet-600 dark:text-violet-400",
   },
   {
-    bg: "bg-sky-50/60 dark:bg-sky-500/5",
-    border: "border-sky-200/50 dark:border-sky-500/20 border-l-sky-500 dark:border-l-sky-500 border-l-4",
-    title: "text-sky-900 dark:text-sky-200",
-    time: "text-sky-700/80 dark:text-sky-400/80",
+    bg: "bg-blue-50/60 dark:bg-blue-500/5",
+    border: "border-blue-200/80 dark:border-blue-500/20",
+    badgeBg: "bg-blue-100 dark:bg-blue-500/20",
+    badgeText: "text-blue-700 dark:text-blue-300",
+    timeBadgeBg: "bg-blue-100/70 dark:bg-blue-500/15",
+    timeBadgeText: "text-blue-600 dark:text-blue-400",
   },
   {
     bg: "bg-amber-50/60 dark:bg-amber-500/5",
-    border: "border-amber-200/50 dark:border-amber-500/20 border-l-amber-500 dark:border-l-amber-500 border-l-4",
-    title: "text-amber-900 dark:text-amber-200",
-    time: "text-amber-700/80 dark:text-amber-400/80",
+    border: "border-amber-200/80 dark:border-amber-500/20",
+    badgeBg: "bg-amber-100 dark:bg-amber-500/20",
+    badgeText: "text-amber-700 dark:text-amber-300",
+    timeBadgeBg: "bg-amber-100/70 dark:bg-amber-500/15",
+    timeBadgeText: "text-amber-600 dark:text-amber-400",
   },
   {
     bg: "bg-emerald-50/60 dark:bg-emerald-500/5",
-    border: "border-emerald-200/50 dark:border-emerald-500/20 border-l-emerald-500 dark:border-l-emerald-500 border-l-4",
-    title: "text-emerald-900 dark:text-emerald-200",
-    time: "text-emerald-700/80 dark:text-emerald-400/80",
+    border: "border-emerald-200/80 dark:border-emerald-500/20",
+    badgeBg: "bg-emerald-100 dark:bg-emerald-500/20",
+    badgeText: "text-emerald-700 dark:text-emerald-300",
+    timeBadgeBg: "bg-emerald-100/70 dark:bg-emerald-500/15",
+    timeBadgeText: "text-emerald-600 dark:text-emerald-400",
   },
   {
     bg: "bg-rose-50/60 dark:bg-rose-500/5",
-    border: "border-rose-200/50 dark:border-rose-500/20 border-l-rose-500 dark:border-l-rose-500 border-l-4",
-    title: "text-rose-900 dark:text-rose-200",
-    time: "text-rose-700/80 dark:text-rose-400/80",
-  },
-  {
-    bg: "bg-indigo-50/60 dark:bg-indigo-500/5",
-    border: "border-indigo-200/50 dark:border-indigo-500/20 border-l-indigo-500 dark:border-l-indigo-500 border-l-4",
-    title: "text-indigo-900 dark:text-indigo-200",
-    time: "text-indigo-700/80 dark:text-indigo-400/80",
+    border: "border-rose-200/80 dark:border-rose-500/20",
+    badgeBg: "bg-rose-100 dark:bg-rose-500/20",
+    badgeText: "text-rose-700 dark:text-rose-300",
+    timeBadgeBg: "bg-rose-100/70 dark:bg-rose-500/15",
+    timeBadgeText: "text-rose-600 dark:text-rose-400",
   },
 ]
 
@@ -53,7 +56,7 @@ function getSubjectColor(subject: string) {
 }
 
 export async function GET() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

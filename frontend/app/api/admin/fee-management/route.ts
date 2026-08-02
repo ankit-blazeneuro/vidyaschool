@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
+import { getAuthenticatedSession } from "@/lib/auth-helpers"
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
 
@@ -14,7 +14,7 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000"
  */
 export async function GET(req: NextRequest) {
   // Verify session on the Next.js layer first
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }

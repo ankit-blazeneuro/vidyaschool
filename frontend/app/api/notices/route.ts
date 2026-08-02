@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { notice, user, userProfile } from '@/lib/schema'
 import { eq, or, and, isNull, desc } from 'drizzle-orm'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { getAuthenticatedSession } from '@/lib/auth-helpers'
 import crypto from 'crypto'
 
 export async function GET(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -123,7 +122,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user || (session.user.role !== 'teacher' && session.user.role !== 'librarian' && session.user.role !== 'admin')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -162,7 +161,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

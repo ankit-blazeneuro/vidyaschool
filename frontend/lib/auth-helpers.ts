@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm'
 
 export type Role = 'student' | 'teacher' | 'admin' | 'account' | 'librarian'
 
-export async function getCurrentUser() {
+export async function getAuthenticatedSession() {
   const hdrs = await headers()
   let session = null
   try {
@@ -15,10 +15,9 @@ export async function getCurrentUser() {
       headers: hdrs
     })
   } catch (err) {
-    console.error('[getCurrentUser] getSession error:', err)
+    console.error('[getAuthenticatedSession] getSession error:', err)
   }
 
-  // Robust Direct DB Fallback: If better-auth getSession returned null, check DB for session token cookie
   if (!session?.user) {
     const rawCookie = hdrs.get('cookie')
     const cookieMatch = rawCookie?.match(/(?:__Secure-better-auth\.session_token|better-auth\.session_token)=([^;]+)/)
@@ -41,15 +40,23 @@ export async function getCurrentUser() {
             .then(res => res[0])
 
           if (dbUser) {
-            return dbUser
+            session = {
+              user: dbUser,
+              session: dbSession
+            }
           }
         }
       } catch (e) {
-        console.error('[getCurrentUser] DB fallback session check error:', e)
+        console.error('[getAuthenticatedSession] DB fallback session check error:', e)
       }
     }
   }
 
+  return session
+}
+
+export async function getCurrentUser() {
+  const session = await getAuthenticatedSession()
   return session?.user || null
 }
 

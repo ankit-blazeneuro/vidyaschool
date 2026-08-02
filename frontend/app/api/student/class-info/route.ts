@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
+import { getAuthenticatedSession } from '@/lib/auth-helpers'
 import { db } from '@/lib/db'
 import { subjectClassAssignment, userProfile, user } from '@/lib/schema'
 import { eq, and } from 'drizzle-orm'
 
 export async function GET() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const profile = await db.query.userProfile.findFirst({
