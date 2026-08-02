@@ -2,15 +2,49 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { db } from "@/lib/db"
-import { userDocument } from "@/lib/schema"
+import { user as userTable, session as sessionTable, userDocument } from "@/lib/schema"
 import { eq } from "drizzle-orm"
 import { generatePresignedDownloadUrl, isS3Configured } from "@/lib/s3"
 import { readFile, stat } from "fs/promises"
 import path from "path"
 
+async function getAuthenticatedSession() {
+  const hdrs = await headers()
+  let session = null
+
+  try {
+    session = await auth.api.getSession({ headers: hdrs })
+  } catch (e) {
+    console.error("[api/documents/serve] getSession error:", e)
+  }
+
+  if (!session?.user) {
+    const rawCookie = hdrs.get("cookie")
+    const cookieMatch = rawCookie?.match(/(?:__Secure-better-auth\.session_token|better-auth\.session_token)=([^;]+)/)
+    const tokenVal = cookieMatch ? cookieMatch[1] : null
+
+    if (tokenVal) {
+      const cleanToken = decodeURIComponent(tokenVal).split(".")[0]
+      try {
+        const dbSession = await db.select().from(sessionTable).where(eq(sessionTable.token, cleanToken)).then(res => res[0])
+        if (dbSession && new Date(dbSession.expiresAt) > new Date()) {
+          const dbUser = await db.select().from(userTable).where(eq(userTable.id, dbSession.userId)).then(res => res[0])
+          if (dbUser) {
+            session = { user: dbUser, session: dbSession }
+          }
+        }
+      } catch (err) {
+        console.error("[api/documents/serve] DB session fallback error:", err)
+      }
+    }
+  }
+
+  return session
+}
+
 export async function GET(req: NextRequest) {
   // Step 1: Enforce Session Authentication
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized access" }, { status: 401 })
   }

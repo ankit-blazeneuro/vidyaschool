@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { db } from "@/lib/db"
-import { userDocument } from "@/lib/schema"
+import { user as userTable, session as sessionTable, userDocument } from "@/lib/schema"
 import { eq, and } from "drizzle-orm"
 import { generatePresignedUploadUrl, uploadBufferToS3, isS3Configured } from "@/lib/s3"
 import { writeFile, mkdir } from "fs/promises"
@@ -20,9 +20,43 @@ const ALLOWED_MIME_TYPES = [
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB limit
 
+async function getAuthenticatedSession() {
+  const hdrs = await headers()
+  let session = null
+
+  try {
+    session = await auth.api.getSession({ headers: hdrs })
+  } catch (e) {
+    console.error("[api/documents] getSession error:", e)
+  }
+
+  if (!session?.user) {
+    const rawCookie = hdrs.get("cookie")
+    const cookieMatch = rawCookie?.match(/(?:__Secure-better-auth\.session_token|better-auth\.session_token)=([^;]+)/)
+    const tokenVal = cookieMatch ? cookieMatch[1] : null
+
+    if (tokenVal) {
+      const cleanToken = decodeURIComponent(tokenVal).split(".")[0]
+      try {
+        const dbSession = await db.select().from(sessionTable).where(eq(sessionTable.token, cleanToken)).then(res => res[0])
+        if (dbSession && new Date(dbSession.expiresAt) > new Date()) {
+          const dbUser = await db.select().from(userTable).where(eq(userTable.id, dbSession.userId)).then(res => res[0])
+          if (dbUser) {
+            session = { user: dbUser, session: dbSession }
+          }
+        }
+      } catch (err) {
+        console.error("[api/documents] DB session fallback error:", err)
+      }
+    }
+  }
+
+  return session
+}
+
 // GET: Retrieve user's uploaded documents with secure authenticated serving URLs
 export async function GET(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
@@ -60,7 +94,7 @@ export async function GET(req: NextRequest) {
 
 // POST: Upload document (Presigned URL or direct FormData)
 export async function POST(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
@@ -287,7 +321,7 @@ export async function POST(req: NextRequest) {
 
 // DELETE: Delete document by docType
 export async function DELETE(req: NextRequest) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getAuthenticatedSession()
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
