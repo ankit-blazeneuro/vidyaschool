@@ -330,6 +330,95 @@ const ARTICLES: Record<string, Record<string, GuideArticle>> = {
           a: "Social login accounts don't use VidyaSchool passwords. To reset your access, use the password reset option on your Google or GitHub account settings page."
         }
       ]
+    },
+    "qr-login": {
+      title: "QR Code Mobile Login",
+      badge: "Passwordless Auth",
+      description: "How to use VidyaSchool's high-entropy QR Code login stream to instantly sign into desktop web browsers without typing passwords.",
+      steps: [
+        {
+          step: "01",
+          title: "Open Login Page on Desktop",
+          desc: "Navigate to the VidyaSchool login page (/login) on your desktop or laptop browser and select the 'QR Code Login' tab. A unique 256-bit QR code will be generated on screen."
+        },
+        {
+          step: "02",
+          title: "Open VidyaSchool Mobile App",
+          desc: "Launch the authenticated VidyaSchool mobile app on your smartphone where you are already signed in."
+        },
+        {
+          step: "03",
+          title: "Scan the Desktop QR Code",
+          desc: "Tap the QR Scanner icon in the mobile app header navigation and align your phone camera with the QR code displayed on your desktop screen."
+        },
+        {
+          step: "04",
+          title: "Confirm & Automatic Sign-In",
+          desc: "The mobile app validates the QR token with your active session. Within milliseconds, a Socket.IO confirmation signal is sent to the desktop browser, automatically logging you in and opening your dashboard (/student/[username] or /teacher/[username])."
+        }
+      ],
+      tips: [
+        "QR codes expire after 180 seconds (3 minutes) for security. Click 'Refresh QR Code' on screen if expired.",
+        "Never scan QR codes sent via email, social media, or chat messages — QR codes must only be scanned directly from the official portal desktop screen."
+      ],
+      warnings: [
+        "Only scan QR codes displayed on your official school portal desktop screen (localhost or vidyaschool.vercel.app).",
+        "If your phone reports 'Invalid or expired QR token', click 'Refresh QR Code' on your browser to generate a fresh token."
+      ],
+      faqs: [
+        {
+          q: "What if the QR code isn't scanning?",
+          a: "Ensure your computer screen brightness is turned up and hold your phone camera 6-12 inches away from the monitor. If it still doesn't scan, click 'Refresh QR Code' to render a fresh code."
+        },
+        {
+          q: "Is QR code login secure?",
+          a: "Yes! Each QR code contains a single-use 256-bit entropy token backed by a 3-minute TTL and cryptographically bound to your mobile session."
+        }
+      ]
+    },
+    "session-security": {
+      title: "Session Revocation & Safety",
+      badge: "Device Security",
+      description: "User guide for auditing active logged-in devices, revoking suspicious sessions, and maintaining account security.",
+      steps: [
+        {
+          step: "01",
+          title: "Access Account Settings",
+          desc: "Log into your portal and navigate to My Account (/account or /student/[username]/account)."
+        },
+        {
+          step: "02",
+          title: "Inspect Active Sessions",
+          desc: "Scroll to the 'Active Devices & Sessions' section. This panel lists every browser, computer, and mobile phone currently signed into your account, including IP address, user-agent, creation date, and current session indicators."
+        },
+        {
+          step: "03",
+          title: "Revoke Specific Session",
+          desc: "If you recognize a device you no longer use (or a public library computer you forgot to log out of), click the 'Revoke' button next to that device. The session token is immediately deleted from the database."
+        },
+        {
+          step: "04",
+          title: "Revoke All Other Devices",
+          desc: "To instantly log out all other laptops, tablets, and phones while keeping your current browser active, click 'Log Out All Other Devices'."
+        }
+      ],
+      tips: [
+        "Periodically check your Active Sessions list, especially after using shared school computers or cyber cafés.",
+        "Click 'Log Out All Other Devices' immediately if you suspect someone knows your password or if your smartphone was lost."
+      ],
+      warnings: [
+        "Session revocation takes effect instantly across Next.js edge middleware and FastAPI backend — any subsequent request from a revoked device will return an HTTP 401 Unauthorized error."
+      ],
+      faqs: [
+        {
+          q: "What happens when I revoke a session?",
+          a: "The session token is permanently purged from the PostgreSQL database. The revoked device is immediately logged out on its next request."
+        },
+        {
+          q: "How long do sessions stay active?",
+          a: "Standard sessions remain active for 30 days unless manually revoked or logged out."
+        }
+      ]
     }
   },
   student: {

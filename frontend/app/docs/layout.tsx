@@ -27,6 +27,8 @@ const tree: PageTree.Root = {
         { type: "page", name: "2. Portal Login Streams", url: "/docs/auth/login" },
         { type: "page", name: "3. Verification & Approval", url: "/docs/auth/approval" },
         { type: "page", name: "4. Password Reset", url: "/docs/auth/password-reset" },
+        { type: "page", name: "5. QR Code Login", url: "/docs/auth/qr-login" },
+        { type: "page", name: "6. Session Revocation & Safety", url: "/docs/auth/session-security" },
       ],
     },
     {
