@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { auth } from './lib/auth'
+import { db } from './lib/db'
+import { user as userTable, session as sessionTable } from './lib/schema'
+import { eq } from 'drizzle-orm'
 
 // Public routes - accessible without authentication
 const publicRoutes = ['/', '/login', '/signup', '/unauthorized', '/downloads']
@@ -36,27 +39,49 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Allow auth-only routes (like onboarding and waiting room) - check auth first
-  if (authOnlyRoutes.some(route => pathname.startsWith(route))) {
-    const session = await auth.api.getSession({
+  // Get session (single call — reused for /dashboard redirect AND firewall checks)
+  let session: any = null
+  try {
+    session = await auth.api.getSession({
       headers: request.headers
     })
-    if (!session?.user) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-    // Allow access to waiting room regardless of role
-    return NextResponse.next()
+  } catch (err) {
+    console.error('[middleware] getSession error:', err)
   }
 
-  // FIREWALL CHECK: Is this a protected route?
-  const isProtectedRoute = Object.keys(protectedRoutes).some(route => 
-    pathname.startsWith(route)
-  )
+  // Robust Fallback: If better-auth getSession returned null, but a session token cookie exists,
+  // query DB directly so valid sessions (like QR login) are recognized without blocking!
+  if (!session?.user) {
+    const rawCookie = request.cookies.get('better-auth.session_token')?.value || 
+                      request.cookies.get('__Secure-better-auth.session_token')?.value
+    if (rawCookie) {
+      const cleanToken = rawCookie.split('.')[0]
+      try {
+        const dbSession = await db
+          .select()
+          .from(sessionTable)
+          .where(eq(sessionTable.token, cleanToken))
+          .then(res => res[0])
 
-  // Get session (single call — reused for /dashboard redirect AND firewall checks)
-  const session = await auth.api.getSession({
-    headers: request.headers
-  })
+        if (dbSession && new Date(dbSession.expiresAt) > new Date()) {
+          const dbUser = await db
+            .select()
+            .from(userTable)
+            .where(eq(userTable.id, dbSession.userId))
+            .then(res => res[0])
+
+          if (dbUser) {
+            session = {
+              user: dbUser,
+              session: dbSession
+            }
+          }
+        }
+      } catch (e) {
+        console.error('[middleware] DB fallback session check error:', e)
+      }
+    }
+  }
 
   // FAST /dashboard redirect — handled at edge with the already-fetched session
   if (pathname === '/dashboard') {
@@ -68,7 +93,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(destination, request.url))
   }
 
-  // FIREWALL RULE 1: Block ALL unauthenticated users from /student and /teacher
+  // FIREWALL CHECK: Is this a protected route?
+  const isProtectedRoute = Object.keys(protectedRoutes).some(route => 
+    pathname.startsWith(route)
+  )
+
+  // FIREWALL RULE 1: Block ALL unauthenticated users from protected routes
   if (isProtectedRoute && !session?.user) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('from', pathname)
