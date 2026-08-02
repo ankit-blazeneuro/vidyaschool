@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2Icon, UserIcon, UploadCloudIcon } from "lucide-react"
+import { Loader2Icon, UserIcon, UploadCloudIcon, BusIcon, FootprintsIcon } from "lucide-react"
 
 const STUDENT_DOCUMENT_SLOTS: DocumentSlot[] = [
   {
@@ -274,6 +274,37 @@ export default function StudentAccountPage() {
                       </Select>
                     ) : (
                       <p className="text-sm mt-1">{profile.section || "Not set"}</p>
+                    )}
+                  </div>
+                  <div className="md:col-span-2 pt-2 border-t mt-2">
+                    <Label className="text-sm font-semibold">Commute / Transport Mode</Label>
+                    {isEditing ? (
+                      <Select
+                        value={profile.transportMode || 'walking'}
+                        onValueChange={(val) => setProfile({...profile, transportMode: val})}
+                      >
+                        <SelectTrigger className="w-full h-9 mt-1">
+                          <SelectValue placeholder="Select Commute Mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="walking">Walking / Self Commute</SelectItem>
+                          <SelectItem value="transport">School Transport / Bus</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="flex items-center gap-2 mt-1.5">
+                        {profile.transportMode === 'transport' || profile.transportMode === 'school_bus' || profile.transportMode === 'bus' ? (
+                          <Badge variant="default" className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 py-1 px-3">
+                            <BusIcon className="h-4 w-4" />
+                            School Transport / Bus
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="flex items-center gap-1.5 py-1 px-3 font-medium">
+                            <FootprintsIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            Walking / Self Commute
+                          </Badge>
+                        )}
+                      </div>
                     )}
                   </div>
                   {isEditing && isClassSectionLocked && nextAllowedDate && (

@@ -121,6 +121,7 @@ export async function PATCH(req: NextRequest) {
         secondaryRole: secondaryRole !== undefined ? secondaryRole : existingProfile.secondaryRole,
         class: data.class !== undefined ? data.class : existingProfile.class,
         section: data.section !== undefined ? data.section : existingProfile.section,
+        transportMode: data.transportMode !== undefined ? data.transportMode : existingProfile.transportMode,
         classSectionLastUpdated,
         classSectionChanges,
         updatedAt: new Date(),
