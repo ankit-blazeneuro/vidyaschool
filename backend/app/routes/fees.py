@@ -6,7 +6,10 @@ import os
 import struct
 import uuid
 import zlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+def get_utc_now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 from typing import Any, Dict, Optional
 from urllib import error as urllib_error
 from urllib import request as urllib_request
@@ -728,8 +731,8 @@ def get_user_account(
             id=str(uuid.uuid4()),
             user_id=current_user.id,
             onboarding_completed=False,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            created_at=get_utc_now(),
+            updated_at=get_utc_now()
         )
         db.add(profile)
         db.commit()
@@ -808,7 +811,7 @@ def update_user_profile(
     is_section_changed = new_section is not None and new_section != profile.section
 
     if is_class_changed or is_section_changed:
-        now = datetime.utcnow()
+        now = get_utc_now()
         if profile.class_section_last_updated:
             diff_days = (now - profile.class_section_last_updated).total_seconds() / 86400
             if diff_days < 365:
@@ -821,7 +824,7 @@ def update_user_profile(
         if new_section is not None: profile.section = new_section
         profile.class_section_last_updated = now
 
-    profile.updated_at = datetime.utcnow()
+    profile.updated_at = get_utc_now()
     db.add(profile)
     db.commit()
     db.refresh(profile)

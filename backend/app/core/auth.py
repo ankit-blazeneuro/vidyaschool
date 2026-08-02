@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from urllib.parse import unquote
 
@@ -8,6 +8,10 @@ from sqlmodel import Session
 
 from app.core.database import get_db
 from models import User, Session as SessionModel
+
+
+def get_utc_now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def get_client_ip(request: Request) -> str:
@@ -29,15 +33,16 @@ def create_session_token(
     ip_address: Optional[str] = None
 ) -> str:
     token = str(uuid.uuid4())
+    now = get_utc_now()
     session_obj = SessionModel(
         id=str(uuid.uuid4()),
         token=token,
         user_id=user_id,
-        expires_at=datetime.utcnow() + timedelta(days=30),
+        expires_at=now + timedelta(days=30),
         user_agent=user_agent or "VidyaSchool App",
         ip_address=ip_address or "Unknown IP",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+        created_at=now,
+        updated_at=now
     )
     db.add(session_obj)
     db.commit()
@@ -62,7 +67,6 @@ def decode_session_token(token: Optional[str]) -> Optional[str]:
 
 
 def get_current_user(request: Request, db: Session = Depends(get_db)):
-
     raw_token = request.cookies.get("better-auth.session_token") or request.cookies.get("__Secure-better-auth.session_token")
     token = decode_session_token(raw_token)
     if not token:
@@ -78,7 +82,7 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
     if not db_session:
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid session")
 
-    if db_session.expires_at < datetime.utcnow():
+    if db_session.expires_at < get_utc_now():
         raise HTTPException(status_code=401, detail="Unauthorized: Session expired")
 
     db_user = db.query(User).filter(User.id == db_session.user_id).first()

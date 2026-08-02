@@ -400,6 +400,17 @@ app.add_middleware(
 
 app.add_middleware(RateLimitMiddleware)
 
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail, "error": exc.detail},
+        headers=getattr(exc, "headers", None)
+    )
+
 app.include_router(fees_router)
 app.include_router(teacher_router)
 app.include_router(slider_router)
