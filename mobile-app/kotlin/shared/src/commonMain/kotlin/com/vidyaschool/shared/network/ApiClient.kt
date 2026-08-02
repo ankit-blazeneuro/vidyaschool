@@ -120,13 +120,13 @@ class ApiClient {
     // -----------------------------------------------------------------------
 
     suspend fun getSliderImages(role: String, studentClass: String? = null): List<SliderImage> =
-        httpClient.get("$FRONTEND_URL/api/slider/images") {
+        httpClient.get("$BACKEND_URL/api/slider/images") {
             parameter("role", role)
             if (studentClass != null) parameter("student_class", studentClass)
         }.body()
 
     suspend fun updateSliderImages(images: List<SliderImage>): UpdateSliderImagesResponse =
-        httpClient.post("$FRONTEND_URL/api/admin/slider-images") {
+        httpClient.post("$BACKEND_URL/api/admin/slider-images") {
             contentType(ContentType.Application.Json)
             setBody(images)
         }.body()

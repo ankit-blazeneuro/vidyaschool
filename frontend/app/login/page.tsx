@@ -13,7 +13,9 @@ import { toast } from "sonner"
 import { QRCodeSVG } from "qrcode.react"
 import { io, Socket } from "socket.io-client"
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+// Use the env var which is set to the actual backend URL on Vercel
+// Falls back to localhost only in local dev (where NEXT_PUBLIC_BACKEND_URL isn't set)
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000"
 const QR_TTL = 180 // seconds
 
 type QRStatus = "idle" | "generating" | "active" | "scanned" | "confirmed" | "expired"

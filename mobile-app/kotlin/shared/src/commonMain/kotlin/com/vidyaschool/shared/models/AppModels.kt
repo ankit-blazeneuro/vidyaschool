@@ -297,7 +297,7 @@ data class UserProfileData(
 
 @Serializable
 data class ProfileResponse(
-    val user: User,
+    val user: User? = null,
     val profile: UserProfileData? = null
 )
 

@@ -9,7 +9,10 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 export const auth = betterAuth({
   trustedOrigins: [
-    "https://vidyaschool.vercel.app",
+    'https://vidyaschool.vercel.app',
+    'https://*.vercel.app',
+    ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
+    'http://localhost:3000',
   ],
   database: drizzleAdapter(db, {
     provider: 'pg',
