@@ -5,7 +5,8 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { 
   GraduationCap, 
@@ -305,7 +306,7 @@ export default function SignUpOnboardingPage() {
                   </p>
                 </div>
 
-                <div className="grid gap-3 max-h-[380px] overflow-y-auto pr-1">
+                <RadioGroup value={role} onValueChange={(val) => setRole(val as RoleOption)} className="grid gap-3 max-h-[380px] overflow-y-auto pr-1">
                   {ROLES.map((r) => {
                     const Icon = r.icon
                     const isSelected = role === r.id
@@ -319,24 +320,18 @@ export default function SignUpOnboardingPage() {
                             : "border-border hover:border-muted-foreground/30 hover:bg-muted/20"
                         }`}
                       >
-                        <div className={`p-2.5 rounded-lg shrink-0 ${isSelected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                          <Icon className="h-5 w-5" />
+                        <RadioGroupItem value={r.id} id={`role-${r.id}`} className="mt-1 cursor-pointer" />
+                        <div className={`p-2 rounded-lg shrink-0 ${isSelected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          <Icon className="h-4 w-4" />
                         </div>
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-bold text-foreground">{r.label}</h4>
-                            {isSelected && (
-                              <div className="h-4 w-4 bg-primary text-primary-foreground rounded-full flex items-center justify-center">
-                                <Check className="h-3 w-3" />
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground leading-relaxed">{r.description}</p>
-                        </div>
+                        <Label htmlFor={`role-${r.id}`} className="flex-1 space-y-1 cursor-pointer">
+                          <h4 className="text-sm font-bold text-foreground leading-none">{r.label}</h4>
+                          <p className="text-xs text-muted-foreground leading-relaxed font-normal">{r.description}</p>
+                        </Label>
                       </div>
                     )
                   })}
-                </div>
+                </RadioGroup>
 
                 {(role === "teacher" || role === "librarian") && (
                   <div className="p-3 text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg border border-amber-500/20 font-medium">
