@@ -43,3 +43,4 @@ python-multipart==0.0.20
 pdfplumber==0.11.6
 Pillow==11.3.0
 base58==2.1.1
+qrcode[pil]

@@ -325,6 +325,7 @@ fun DashboardLayout(
     var sidebarNotesSubject by remember { mutableStateOf("All") }
     var sidebarSessionsCount by remember { mutableStateOf<Int?>(null) }
     var paymentSuccessInstallment by remember { mutableStateOf<FeeInstallment?>(null) }
+    var showQRLogin by remember { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     
     // Check initial notification history on launch to set unread badge dot
@@ -365,6 +366,7 @@ fun DashboardLayout(
             showComplaintDialog ||
             showAiDialog ||
             showAgentScreen ||
+            showQRLogin ||
             showSearchDialog ||
             selectedTab != "home"
 
@@ -378,6 +380,7 @@ fun DashboardLayout(
             showComplaintDialog -> showComplaintDialog = false
             showAiDialog -> showAiDialog = false
             showAgentScreen -> showAgentScreen = false
+            showQRLogin -> showQRLogin = false
             selectedTab != "home" -> selectedTab = "home"
             else -> {}
         }
@@ -995,6 +998,54 @@ fun DashboardLayout(
                         showComplaintDialog = true
                     }
 
+                    // ── QR Code Login (above Manage Sessions) ─────────────────────────────
+                    val tealColor = Color(0xFF14B8A6)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 3.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(tealColor.copy(alpha = 0.08f))
+                            .border(1.dp, tealColor.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
+                            .clickable {
+                                scope.launch { drawerState.close() }
+                                showQRLogin = true
+                            }
+                            .padding(horizontal = 12.dp)
+                            .height(42.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = tealColor
+                        )
+                        Text(
+                            text = "QR Code Login",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = tealColor,
+                            modifier = Modifier.weight(1f)
+                        )
+                        // Small badge indicating "for web"
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(tealColor.copy(alpha = 0.15f))
+                                .padding(horizontal = 5.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "WEB",
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = tealColor,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+                    }
+
                     DrawerLink(
                         label = "Manage Sessions",
                         iconRes = R.drawable.ic_custom_sessions,
@@ -1385,6 +1436,26 @@ fun DashboardLayout(
                 selectedChatId = null
             }
         )
+    }
+
+    // ── QR Code Login overlay ───────────────────────────────────────────────
+    if (showQRLogin) {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { showQRLogin = false },
+            properties = androidx.compose.ui.window.DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = false
+            )
+        ) {
+            QRLoginScreen(
+                onClose = { showQRLogin = false },
+                onLoginSuccess = { token, user ->
+                    // QR login is for web — just close the scanner after confirming
+                    showQRLogin = false
+                }
+            )
+        }
     }
 
     // Note detail screen (opened in new full screen when note is clicked)

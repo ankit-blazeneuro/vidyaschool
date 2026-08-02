@@ -371,6 +371,22 @@ interface AuthApi {
         @Path("chatId") chatId: String,
         @Body request: SendChatMessageRequest
     ): Response<ResponseBody>
+
+    // ── QR Code Login ──────────────────────────────────────────────────────
+
+    @POST("api/auth/qr/generate")
+    suspend fun generateQRToken(): Response<QRGenerateResponse>
+
+    @POST("api/auth/qr/confirm")
+    suspend fun confirmQRToken(
+        @Header("Authorization") authHeader: String,
+        @Body request: QRConfirmRequest
+    ): Response<Map<String, Any>>
+
+    @GET("api/auth/qr/status/{qrToken}")
+    suspend fun pollQRStatus(
+        @Path("qrToken") qrToken: String
+    ): Response<QRStatusResponse>
 }
 
 data class InitChatRequest(
@@ -556,4 +572,21 @@ data class StudentExamResult(
     val termName: String? = null,
     val gpa: String? = null,
     val subjects: List<StudentSubjectMark>? = null
+)
+
+// ── QR Login models ─────────────────────────────────────────────────────────
+
+data class QRGenerateResponse(
+    @SerializedName("qr_token") val qrToken: String,
+    @SerializedName("expires_in") val expiresIn: Int = 180
+)
+
+data class QRConfirmRequest(
+    @SerializedName("qr_token") val qrToken: String
+)
+
+data class QRStatusResponse(
+    val status: String,                        // "pending" | "confirmed" | "expired"
+    @SerializedName("session_token") val sessionToken: String? = null,
+    val user: Map<String, Any?>? = null
 )

@@ -132,4 +132,12 @@ dependencies {
 
     // Lottie for Compose animations
     implementation("com.airbnb.android:lottie-compose:6.4.0")
+
+    // CameraX + ZXing for QR code scanning
+    implementation("androidx.camera:camera-core:1.3.1")
+    implementation("androidx.camera:camera-camera2:1.3.1")
+    implementation("androidx.camera:camera-lifecycle:1.3.1")
+    implementation("androidx.camera:camera-view:1.3.1")
+    implementation("com.google.zxing:core:3.5.3")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0@aar") { isTransitive = true }
 }

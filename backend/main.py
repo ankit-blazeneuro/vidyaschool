@@ -35,6 +35,7 @@ from app.routes.page_builder_ai import router as page_builder_ai_router
 from app.routes.email import router as email_router
 from app.routes.sessions import router as sessions_router
 from app.routes.auth_device import router as auth_device_router
+from app.routes.qr_auth import router as qr_auth_router
 from models import User
 
 # Load database URL and adjust for SQLAlchemy PostgreSQL driver
@@ -253,6 +254,23 @@ async def disconnect(sid):
         await sio.emit('online_users', list(active_users.values()), room='community')
     print(f"Socket.IO client disconnected: {sid}")
 
+# ── QR Login: browser joins a per-token room to receive instant auth ────────
+@sio.event
+async def join_qr_room(sid, data):
+    """Browser calls this right after generating a QR token."""
+    qr_token = data.get("qr_token", "")
+    if qr_token:
+        await sio.enter_room(sid, f"qr_{qr_token}")
+        print(f"Socket {sid} joined QR room: qr_{qr_token}")
+
+@sio.event
+async def leave_qr_room(sid, data):
+    """Browser calls this on cleanup (navigation away, token expired, etc.)."""
+    qr_token = data.get("qr_token", "")
+    if qr_token:
+        await sio.leave_room(sid, f"qr_{qr_token}")
+        print(f"Socket {sid} left QR room: qr_{qr_token}")
+
 @sio.event
 async def teacher_request_status(sid, data):
     user_id = data.get("userId")
@@ -390,6 +408,7 @@ app.include_router(page_builder_ai_router, prefix="/api/page-builder", tags=["pa
 app.include_router(email_router)
 app.include_router(sessions_router)
 app.include_router(auth_device_router)
+app.include_router(qr_auth_router)
 
 # Admin endpoints for teacher approval and subject requests
 @app.get("/api/health")
