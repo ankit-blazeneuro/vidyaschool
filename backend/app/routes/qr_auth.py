@@ -31,7 +31,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlmodel import Session
 
-from app.core.auth import get_current_user, create_session_token
+from app.core.auth import get_current_user, create_session_token, get_client_ip
 from app.core.database import get_db
 from models import User, UserProfile
 
@@ -121,11 +121,11 @@ async def confirm_qr_token(
         raise HTTPException(status_code=409, detail="QR code has already been used.")
 
     # Create a new session for this user (the web login session)
-    user_agent = request.headers.get("User-Agent", "QR Login — Mobile App")
-    ip_address = request.client.host if request.client else None
+    user_agent = request.headers.get("User-Agent", "VidyaSchool Mobile App")
+    client_ip = get_client_ip(request)
 
     new_session_token = create_session_token(
-        current_user.id, db, user_agent=f"QR-Login via: {user_agent}"
+        current_user.id, db, user_agent=f"QR Login ({user_agent})", ip_address=client_ip
     )
 
     # Gather user info to send to the web browser

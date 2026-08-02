@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from app.core.database import get_db
-from app.core.auth import get_current_user, create_session_token, decode_session_token
+from app.core.auth import get_current_user, create_session_token, decode_session_token, get_client_ip
 from models import User, UserProfile
 
 router = APIRouter(tags=["auth-device"])
@@ -253,7 +253,8 @@ def create_public_session(body: CreateSessionBody, request: Request, db: Session
         db.refresh(user)
 
     user_agent = request.headers.get("User-Agent", "VidyaSchool Mobile App")
-    token = create_session_token(user.id, db, user_agent=user_agent)
+    client_ip = get_client_ip(request)
+    token = create_session_token(user.id, db, user_agent=user_agent, ip_address=client_ip)
 
     return {
         "success": True,

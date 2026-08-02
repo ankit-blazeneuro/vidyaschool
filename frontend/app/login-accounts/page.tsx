@@ -99,14 +99,14 @@ export default function LoginAccountsPage() {
   }
 
   const parseUserAgent = (userAgent: string | null) => {
-    if (!userAgent) return { device: "Unknown OS", browser: "Unknown Browser", isMobile: false }
+    if (!userAgent) return { device: "Android", browser: "VidyaSchool Mobile App", isMobile: true }
     const ua = userAgent.toLowerCase()
-    let os = "Unknown OS"
-    let browser = "Unknown Browser"
+    let os = "Android"
+    let browser = "VidyaSchool Mobile App"
 
-    if (ua.includes("android app") || ua.includes("android-app") || ua.includes("okhttp")) {
+    if (ua.includes("android app") || ua.includes("android-app") || ua.includes("okhttp") || ua.includes("vidyaschool") || ua.includes("mobile")) {
       os = "Android"
-      browser = "Android App"
+      browser = ua.includes("qr") ? "QR Mobile Login" : "VidyaSchool Mobile App"
     } else {
       if (ua.includes("windows")) os = "Windows"
       else if (ua.includes("macintosh") || ua.includes("mac os")) os = "macOS"
@@ -121,7 +121,11 @@ export default function LoginAccountsPage() {
       else if (ua.includes("opera") || ua.includes("opr")) browser = "Opera"
     }
 
-    return { device: os, browser: browser === "Android App" ? "Android App" : `${browser} on ${os}`, isMobile: os === "Android" || os === "iOS" }
+    const browserLabel = browser === "VidyaSchool Mobile App" || browser === "Android App" || browser === "QR Mobile Login"
+      ? browser
+      : `${browser} on ${os}`
+
+    return { device: os, browser: browserLabel, isMobile: os === "Android" || os === "iOS" }
   }
 
   if (loading) {

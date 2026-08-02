@@ -18,7 +18,7 @@ object RetrofitClient {
         .addInterceptor(loggingInterceptor)
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
-                .header("User-Agent", "Android App")
+                .header("User-Agent", "VidyaSchool Android App v1.0")
                 .build()
             chain.proceed(request)
         }
@@ -32,7 +32,7 @@ object RetrofitClient {
         .addInterceptor(socketLoggingInterceptor)
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
-                .header("User-Agent", "Android App")
+                .header("User-Agent", "VidyaSchool Android App v1.0")
                 .build()
             chain.proceed(request)
         }
@@ -45,7 +45,7 @@ object RetrofitClient {
         .addInterceptor(socketLoggingInterceptor)
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
-                .header("User-Agent", "Android App")
+                .header("User-Agent", "VidyaSchool Android App v1.0")
                 .header("Accept", "text/event-stream")
                 .build()
             chain.proceed(request)

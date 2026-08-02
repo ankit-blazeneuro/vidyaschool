@@ -17,12 +17,25 @@ export async function GET() {
     .from(sessionTable)
     .where(eq(sessionTable.userId, currentSession.user.id))
 
+  const reqHeaders = await headers()
+  const currentIp = reqHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() || reqHeaders.get('x-real-ip') || null
+
+  // Map and clean up session fields
+  const formattedSessions = activeSessions.map((sess) => {
+    const isCurrent = sess.id === currentSession.session.id
+    return {
+      ...sess,
+      ipAddress: sess.ipAddress || (isCurrent ? currentIp : null),
+      userAgent: sess.userAgent || (isCurrent ? reqHeaders.get('user-agent') : 'VidyaSchool Mobile App'),
+    }
+  })
+
   // Group sessions by unique device (userAgent + ipAddress) to avoid repetition
-  const uniqueSessions: typeof activeSessions = []
+  const uniqueSessions: typeof formattedSessions = []
   const seen = new Set<string>()
 
   // Always keep the current session first
-  for (const sess of activeSessions) {
+  for (const sess of formattedSessions) {
     const isCurrent = sess.id === currentSession.session.id
     const key = `${sess.userAgent || ''}-${sess.ipAddress || ''}`
     
@@ -33,7 +46,7 @@ export async function GET() {
   }
 
   // Add other sessions only if they represent a different device
-  for (const sess of activeSessions) {
+  for (const sess of formattedSessions) {
     const isCurrent = sess.id === currentSession.session.id
     if (isCurrent) continue
     

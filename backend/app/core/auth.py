@@ -10,14 +10,34 @@ from app.core.database import get_db
 from models import User, Session as SessionModel
 
 
-def create_session_token(user_id: str, db: Session, user_agent: Optional[str] = "VidyaSchool Desktop App") -> str:
+def get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "Unknown IP"
+
+
+def create_session_token(
+    user_id: str,
+    db: Session,
+    user_agent: Optional[str] = "VidyaSchool App",
+    ip_address: Optional[str] = None
+) -> str:
     token = str(uuid.uuid4())
     session_obj = SessionModel(
         id=str(uuid.uuid4()),
         token=token,
         user_id=user_id,
         expires_at=datetime.utcnow() + timedelta(days=30),
-        user_agent=user_agent
+        user_agent=user_agent or "VidyaSchool App",
+        ip_address=ip_address or "Unknown IP",
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
     )
     db.add(session_obj)
     db.commit()
