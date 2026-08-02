@@ -298,6 +298,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     "https://github.com/ankit-blazeneuro/vidyaschool/releases/download/v1.0.52/app-debug.apk"
   )
 
+  const [fetchedUser, setFetchedUser] = React.useState<any>(null)
+
+  React.useEffect(() => {
+    fetch('/api/account')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.user) setFetchedUser(data.user)
+      })
+      .catch(() => {})
+  }, [])
+
   React.useEffect(() => {
     fetch('/api/profile/username')
       .then(() => setProfileLoading(false))
@@ -322,8 +333,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       .catch(() => {})
   }, [])
 
-  const isLoading = isPending || profileLoading
-  const userRole = session?.user?.role
+  const userToDisplay = session?.user || fetchedUser
+  const isLoading = (isPending && !fetchedUser) || profileLoading
+  const userRole = userToDisplay?.role || session?.user?.role
   
   const isLibrarian = userRole === "librarian" || (userRole === undefined && pathname?.startsWith("/librarian"))
   const isTeacher = userRole === "teacher" || (userRole === undefined && pathname?.startsWith("/teacher"))
@@ -821,16 +833,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 >
                   <div className="relative shrink-0">
                     <Avatar className="h-8 w-8 rounded-lg">
-                      <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name} />
+                      <AvatarImage src={userToDisplay?.image || undefined} alt={userToDisplay?.name} />
                       <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-bold text-primary">
-                        {session?.user?.name ? getInitials(session.user.name) : "VS"}
+                        {userToDisplay?.name ? getInitials(userToDisplay.name) : "VS"}
                       </AvatarFallback>
                     </Avatar>
                     <span className="absolute -bottom-0.5 -right-0.5 block size-2 rounded-full bg-green-500 ring-2 ring-sidebar dark:ring-[#1c1c1e]" />
                   </div>
                   <div className="flex flex-col items-start min-w-0 flex-1">
                     <span className="truncate text-sm font-semibold text-foreground leading-tight">
-                      {session?.user?.name}
+                      {userToDisplay?.name || "VidyaSchool User"}
                     </span>
                   </div>
                   <ChevronsUpDown className="size-3.5 text-muted-foreground/60 shrink-0 group-hover:text-muted-foreground transition-colors" />
@@ -845,17 +857,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 {/* User info header */}
                 <div className="flex items-center gap-3 px-3.5 py-3 border-b border-zinc-100 dark:border-zinc-800/60">
                   <Avatar className="h-9 w-9 rounded-lg shrink-0">
-                    <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name} />
+                    <AvatarImage src={userToDisplay?.image || undefined} alt={userToDisplay?.name} />
                     <AvatarFallback className="rounded-lg bg-primary/10 text-sm font-bold text-primary">
-                      {session?.user?.name ? getInitials(session.user.name) : "VS"}
+                      {userToDisplay?.name ? getInitials(userToDisplay.name) : "VS"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col min-w-0">
                     <span className="text-sm font-semibold text-foreground truncate leading-snug">
-                      {session?.user?.name}
+                      {userToDisplay?.name || "VidyaSchool User"}
                     </span>
                     <span className="text-[11px] text-muted-foreground truncate leading-snug">
-                      {session?.user?.email}
+                      {userToDisplay?.email || ""}
                     </span>
                   </div>
                 </div>
@@ -1053,8 +1065,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </>
         )}
       </SidebarContent>
-      <SidebarFooter className="p-2 space-y-2">
-        <NavUser />
+      <SidebarFooter className="px-2 pt-0 pb-1.5">
         <div className="flex items-center justify-start gap-1 text-[10px] text-muted-foreground/80 font-normal w-full pl-1.5">
           <span>© {new Date().getFullYear()} VidyaSchool</span>
           <span>•</span>
