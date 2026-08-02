@@ -7,6 +7,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
+import { NavUser } from "@/components/nav-user"
 import { OnboardingAlert } from "@/components/onboarding-alert"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -65,13 +66,29 @@ function fetchUsernameOnce(): Promise<string | null> {
   return _usernameFetchPromise
 }
 
-// Single shared hook — replaces the 5 duplicate per-role hooks
+// Single shared hook — extracts username from URL or fetches from API
 function useProfileUsername(): string | null {
-  const [username, setUsername] = React.useState<string | null>(_cachedUsername)
+  const pathname = usePathname()
+  const [username, setUsername] = React.useState<string | null>(() => {
+    if (_cachedUsername) return _cachedUsername
+    if (pathname) {
+      const parts = pathname.split('/').filter(Boolean)
+      if (parts.length >= 2 && ['student', 'teacher', 'admin', 'librarian', 'accounts'].includes(parts[0])) {
+        return parts[1]
+      }
+    }
+    return null
+  })
+
   React.useEffect(() => {
-    if (_cachedUsername !== null) { setUsername(_cachedUsername); return }
-    fetchUsernameOnce().then(u => setUsername(u))
-  }, [])
+    fetchUsernameOnce().then(u => {
+      if (u) {
+        _cachedUsername = u
+        setUsername(u)
+      }
+    })
+  }, [pathname])
+
   return username
 }
 
@@ -1036,7 +1053,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </>
         )}
       </SidebarContent>
-      <SidebarFooter className="px-2 pt-0 pb-1.5">
+      <SidebarFooter className="p-2 space-y-2">
+        <NavUser />
         <div className="flex items-center justify-start gap-1 text-[10px] text-muted-foreground/80 font-normal w-full pl-1.5">
           <span>© {new Date().getFullYear()} VidyaSchool</span>
           <span>•</span>

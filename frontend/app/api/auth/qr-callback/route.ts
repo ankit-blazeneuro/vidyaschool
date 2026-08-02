@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { user as userTable, session as sessionTable } from "@/lib/schema"
+import { user as userTable, session as sessionTable, userProfile } from "@/lib/schema"
 import { eq } from "drizzle-orm"
 
 export async function POST(req: NextRequest) {
@@ -51,6 +51,31 @@ export async function POST(req: NextRequest) {
       }
     } else {
       userId = user?.id ? String(user.id) : crypto.randomUUID()
+    }
+
+    // Ensure userProfile record exists for user
+    try {
+      const existingProfile = await db
+        .select()
+        .from(userProfile)
+        .where(eq(userProfile.userId, userId))
+        .then((res) => res[0])
+
+      if (!existingProfile) {
+        const genUsername = name.toLowerCase().replace(/[^a-z0-9]/g, "") || `user${Math.floor(Math.random() * 1000)}`
+        const genAdmission = `VS-${Math.floor(100000 + Math.random() * 900000)}`
+        await db.insert(userProfile).values({
+          id: crypto.randomUUID(),
+          userId: userId,
+          username: genUsername,
+          admissionNumber: genAdmission,
+          onboardingCompleted: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      }
+    } catch (profileErr) {
+      console.error("[qr-callback] profile creation error:", profileErr)
     }
 
     // Insert session into Drizzle PostgreSQL session table so Better Auth & middleware recognize it

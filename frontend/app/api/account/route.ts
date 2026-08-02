@@ -41,9 +41,29 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const profile = await db.query.userProfile.findFirst({
+  let profile = await db.query.userProfile.findFirst({
     where: eq(userProfile.userId, session.user.id)
   })
+
+  if (!profile) {
+    const genUsername = (session.user.name || session.user.email || "user").toLowerCase().replace(/[^a-z0-9]/g, "") || `user${Math.floor(Math.random() * 1000)}`
+    const genAdmission = `VS-${Math.floor(100000 + Math.random() * 900000)}`
+    try {
+      const newProf = {
+        id: crypto.randomUUID(),
+        userId: session.user.id,
+        username: genUsername,
+        admissionNumber: genAdmission,
+        onboardingCompleted: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      await db.insert(userProfile).values(newProf)
+      profile = newProf as any
+    } catch (e) {
+      console.error("[api/account] Profile creation error:", e)
+    }
+  }
 
   return NextResponse.json({ user: session.user, profile })
 }
