@@ -1,83 +1,19 @@
-'use client'
+import { redirect } from "next/navigation"
+import { requireRole } from "@/lib/auth-helpers"
+import { db } from "@/lib/db"
+import { userProfile } from "@/lib/schema"
+import { eq } from "drizzle-orm"
 
-import * as React from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { OnboardingDialog } from "@/components/onboarding-dialog"
-import { Loader2Icon } from "lucide-react"
+export default async function LibrarianRootPage() {
+  const currentUser = await requireRole(['librarian', 'admin'])
 
-function LibrarianOnboardingContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [profile, setProfile] = React.useState<any>(null)
-  const [loading, setLoading] = React.useState(true)
+  const profile = await db.query.userProfile.findFirst({
+    where: eq(userProfile.userId, currentUser.id)
+  })
 
-  React.useEffect(() => {
-    fetch('/api/profile/username')
-      .then(res => {
-        if (!res.ok) {
-          router.push("/login")
-          return null
-        }
-        return res.json()
-      })
-      .then(data => {
-        if (!data) return
-        setProfile(data)
-        setLoading(false)
-
-        if (data.username) {
-          if (searchParams.get("onboarding") !== "true") {
-            router.push(`/librarian/${data.username}`)
-          }
-        } else {
-          router.replace("/signup/onboarding")
-        }
-      })
-      .catch(() => {
-        router.push("/login")
-      })
-  }, [router, searchParams])
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
-        <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+  if (profile?.username) {
+    redirect(`/librarian/${profile.username}`)
   }
 
-  const showOnboarding = searchParams.get("onboarding") === "true" || !profile?.username
-
-  return (
-    <div className="min-h-screen bg-muted/30 relative flex flex-col items-center justify-center p-6">
-      <div className="text-center space-y-4 max-w-md">
-        <h1 className="text-3xl font-extrabold text-foreground tracking-tight animate-pulse">Vidya School</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Welcome back! Preparing your librarian workspace. Please complete the profile onboarding form to continue.
-        </p>
-      </div>
-
-      {showOnboarding && (
-        <OnboardingDialog
-          userRole="librarian"
-          userEmail=""
-          onSuccess={(newUsername) => {
-            router.push(`/librarian/${newUsername}`)
-          }}
-        />
-      )}
-    </div>
-  )
-}
-
-export default function LibrarianRootPage() {
-  return (
-    <React.Suspense fallback={
-      <div className="flex min-h-screen w-full items-center justify-center bg-background">
-        <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    }>
-      <LibrarianOnboardingContent />
-    </React.Suspense>
-  )
+  redirect('/login')
 }

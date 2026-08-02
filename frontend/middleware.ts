@@ -4,11 +4,12 @@ import { auth } from './lib/auth'
 import { db } from './lib/db'
 import { user as userTable, session as sessionTable, userProfile } from './lib/schema'
 import { eq } from 'drizzle-orm'
+import { checkRateLimit } from './lib/rate-limit'
 
 // Public routes - accessible without authentication
 const publicRoutes = ['/', '/login', '/signup', '/unauthorized', '/downloads']
 
-// Role → destination mapping for /dashboard redirect (handled at edge, no extra DB call)
+// Role → destination mapping for /dashboard and /[role] redirect
 const roleDashboardMap: Record<string, string> = {
   teacher: '/teacher',
   librarian: '/librarian',
@@ -28,9 +29,6 @@ const protectedRoutes = {
   '/login-accounts': ['student', 'teacher', 'admin', 'account', 'librarian'],
 }
 
-// Routes that bypass role check (but still require auth)
-const authOnlyRoutes = ['/student/onboarding', '/auth/waiting-room']
-
 async function resolveUserDestination(user: any) {
   try {
     const profile = await db
@@ -39,20 +37,54 @@ async function resolveUserDestination(user: any) {
       .where(eq(userProfile.userId, user.id))
       .then(res => res[0])
 
-    if (profile?.onboardingCompleted && profile?.username) {
+    if (profile?.username) {
       const rolePrefix = roleDashboardMap[user.role as string] ?? '/student'
       return `${rolePrefix}/${profile.username}`
     }
   } catch (e) {
     console.error('[middleware] userProfile query error:', e)
   }
-  return '/signup/onboarding'
+  return '/login'
 }
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Allow static assets, API auth, docs, well-known, and search endpoints immediately
+  // RATE LIMITING FOR ALL NEXT.JS API ENDPOINTS (/api/*)
+  if (pathname.startsWith('/api')) {
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      request.headers.get('x-real-ip') ||
+      request.headers.get('cf-connecting-ip') ||
+      '127.0.0.1'
+
+    const isSensitive =
+      pathname.startsWith('/api/auth') ||
+      pathname.startsWith('/api/profile') ||
+      pathname.startsWith('/api/admin')
+
+    const limit = isSensitive ? 60 : 180
+    const key = `next_api:${ip}:${isSensitive ? 'strict' : 'general'}`
+
+    const { allowed, remaining, reset } = checkRateLimit(key, limit, 60000)
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(reset),
+            'X-RateLimit-Limit': String(limit),
+            'X-RateLimit-Remaining': String(remaining),
+            'X-RateLimit-Reset': String(reset),
+          },
+        }
+      )
+    }
+  }
+
+  // Allow static assets, API auth, docs, well-known, and search endpoints after rate-limit check
   if (
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/.well-known') ||
@@ -72,8 +104,7 @@ export async function middleware(request: NextRequest) {
     console.error('[middleware] getSession error:', err)
   }
 
-  // Robust Fallback: If better-auth getSession returned null, but a session token cookie exists,
-  // query DB directly so valid sessions (like QR login) are recognized without blocking!
+  // Robust Fallback: If better-auth getSession returned null, but a session token cookie exists
   if (!session?.user) {
     const rawCookie = request.cookies.get('better-auth.session_token')?.value || 
                       request.cookies.get('__Secure-better-auth.session_token')?.value
@@ -106,7 +137,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // REDIRECT LOGGED-IN USERS AWAY FROM /login AND /signup DIRECTLY TO /[role]/[username] OR ONBOARDING
+  // REDIRECT LOGGED-IN USERS AWAY FROM /login AND /signup DIRECTLY TO /[role]/[username]
   if ((pathname === '/login' || pathname === '/signup') && session?.user) {
     const user = session.user as any
     const destination = await resolveUserDestination(user)
@@ -118,7 +149,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // FAST /dashboard redirect — handled at edge with the already-fetched session & profile
+  // FAST /dashboard redirect — handled at edge with session & profile
   if (pathname === '/dashboard') {
     if (!session?.user) {
       return NextResponse.redirect(new URL('/login', request.url))
@@ -140,7 +171,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // FIREWALL RULE 2: Check role permissions for authenticated users
+  // FIREWALL RULE 2: Check role permissions and handle immediate /[role] -> /[role]/[username] redirect
   if (session?.user) {
     const user = session.user as any
     
@@ -158,6 +189,12 @@ export async function middleware(request: NextRequest) {
     for (const [route, allowedRoles] of sortedRoutes) {
       if (pathname.startsWith(route)) {
         if (allowedRoles.includes(user.role as string)) {
+          // FAST ROUTE HANDLING: If user hits root /[role] (e.g. /student, /teacher, /admin, /accounts, /librarian),
+          // immediately redirect to /[role]/[username]
+          if (pathname === route) {
+            const destination = await resolveUserDestination(user)
+            return NextResponse.redirect(new URL(destination, request.url))
+          }
           return NextResponse.next()
         } else {
           return NextResponse.redirect(new URL('/unauthorized', request.url))

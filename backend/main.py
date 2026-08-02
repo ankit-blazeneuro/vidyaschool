@@ -22,6 +22,7 @@ from typing import Optional
 import socketio
 
 from app.core.auth import decode_session_token, require_role, get_current_user
+from app.core.rate_limit import RateLimitMiddleware
 from app.core.database import init_db, get_db
 from app.core.fees import build_default_fee_installments
 from app.routes.fees import router as fees_router
@@ -396,6 +397,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(RateLimitMiddleware)
 
 app.include_router(fees_router)
 app.include_router(teacher_router)

@@ -1,4 +1,9 @@
 import * as React from "react"
+import { redirect } from "next/navigation"
+import { requireRole } from "@/lib/auth-helpers"
+import { db } from "@/lib/db"
+import { userProfile } from "@/lib/schema"
+import { eq } from "drizzle-orm"
 import { AccountsSidebar } from "./_components/accounts-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -12,6 +17,15 @@ export default async function AccountsLayout({
   params: Promise<{ username: string }>
 }) {
   const { username } = await params
+  const user = await requireRole(['account', 'admin'])
+
+  const currentProfile = await db.query.userProfile.findFirst({
+    where: eq(userProfile.userId, user.id)
+  })
+
+  if (user.role === 'account' && currentProfile?.username && currentProfile.username !== username) {
+    redirect(`/accounts/${currentProfile.username}`)
+  }
 
   return (
     <SidebarProvider
