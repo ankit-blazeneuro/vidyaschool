@@ -1080,6 +1080,160 @@ const ARTICLES: Record<string, Record<string, GuideArticle>> = {
         }
       ]
     }
+  },
+  "developers": {
+    architecture: {
+      title: "System Architecture & Core Stack",
+      badge: "Developer Guide",
+      description: "Comprehensive technical blueprint of VidyaSchool's dual-engine hybrid architecture, tech stack components, repository anatomy, and communication contracts.",
+      details: [
+        {
+          title: "Core Technology Stack",
+          body: "VidyaSchool is built using a modern, resilient technology stack:\n• Frontend Framework: Next.js 16 (React 19, App Router) with Server Components & Edge Middleware.\n• Design System: Custom Vanilla CSS tokens + Tailwind CSS with Glassmorphism aesthetic and automatic dark mode.\n• Documentation: Fumadocs UI with PageTree navigation and custom Markdown theme overrides.\n• Primary Database: PostgreSQL (Neon Serverless / Docker Postgres) shared by Node.js and Python runtimes.\n• Frontend ORM: Drizzle ORM for type-safe database queries and migrations.\n• Python Backend: FastAPI (Python 3.12+) running an ASGI server with SQLModel / SQLAlchemy ORM.\n• Realtime Gateway: Socket.IO AsyncServer for instant community chat, online user counts, and admin notifications.\n• Authentication: Better-Auth with session token cookie synchronization across Node.js & Python.\n• Telemetry & Monitoring: Sentry SDK for client and server error tracing."
+        },
+        {
+          title: "Dual-Engine Hybrid Proxy Architecture",
+          body: "The platform operates on a high-throughput hybrid proxy model:\n1. Edge Interception: Next.js Middleware (middleware.ts) intercepts incoming requests, verifies session tokens, enforces rate limits, and performs zero-waterfall redirects from /[role] to /[role]/[username].\n2. SSR UI & Local APIs: Next.js Server Components handle UI rendering and light CRUD operations.\n3. FastAPI Microservices: Requests to /api/backend/* or proxied account/profile routes are forwarded directly to the Python FastAPI backend (running on port 8000) for complex business logic, fee calculations, and AI page generation."
+        },
+        {
+          title: "Repository Directory Anatomy",
+          body: "The codebase is organized into two primary root modules:\n• /frontend:\n  - app/: Next.js App Router pages (admin, student, teacher, accounts, librarian, docs, login, signup).\n  - components/: Reusable UI components (buttons, badges, sidebar, dialogs, avatar uploaders).\n  - lib/: Core utilities, database schema (schema.ts), Better-Auth client/server helpers, and rate-limit.ts.\n  - middleware.ts: Edge firewall, rate limiter, and fast role router.\n• /backend:\n  - main.py: FastAPI entry point, ASGI server initialization, CORS regex, and exception handlers.\n  - app/core/: Security auth helpers (auth.py), database connection (database.py), and rate limit middleware (rate_limit.py).\n  - app/routes/: Specialized domain routers (fees.py, teacher.py, chats.py, library.py, page_builder_ai.py).\n  - models.py: SQLModel database entities matching PostgreSQL schema."
+        }
+      ],
+      tips: [
+        "Refer to /frontend/lib/schema.ts and /backend/models.py whenever adding or modifying database fields.",
+        "Use /api/backend/[...path] as the proxy route when triggering FastAPI endpoints from Next.js client components."
+      ],
+      faqs: [
+        {
+          q: "Why does the application use both Next.js and FastAPI?",
+          a: "Next.js delivers fast Server-Side Rendering (SSR), SEO, and edge routing for the web UI, while FastAPI provides high-performance asynchronous Python processing for heavy computations, data analytics, AI element generation, and Socket.IO realtime events."
+        },
+        {
+          q: "How do Next.js and FastAPI share user sessions?",
+          a: "Both services query the same PostgreSQL database. Next.js sets session tokens in HTTP cookies; FastAPI decodes the token from the request cookie or Bearer header and validates it against the shared 'session' database table."
+        }
+      ]
+    },
+    frontend: {
+      title: "Frontend Framework & UI System",
+      badge: "Next.js 16 & UI",
+      description: "Technical guide to Next.js 16 App Router usage, server component rendering, custom CSS design system, and Fumadocs integration.",
+      details: [
+        {
+          title: "Server vs Client Component Strategy",
+          body: "VidyaSchool follows a strict React Server Component (RSC) architecture:\n• Server Components: All page layouts (app/[role]/[username]/layout.tsx) and root route redirect handlers (app/student/page.tsx) run purely on the server to prevent client loading state waterfalls.\n• Client Components ('use client'): Used strictly for interactive forms, real-time charts, tab interfaces, socket listeners, and avatar uploaders."
+        },
+        {
+          title: "Design System & Aesthetics",
+          body: "The UI design prioritizes visual excellence and responsiveness:\n• Curated HSL Color Tokens: CSS variables in globals.css provide harmonious dark/light mode themes.\n• Modern Typography: Inter/Roboto/Outfit Google fonts instead of browser defaults.\n• Interactive Glassmorphism: Smooth backdrop blurs, dynamic gradients, subtle micro-animations, and custom hover states.\n• Dark Mode System: Synced via ThemeProvider and customized in Fumadocs UI."
+        },
+        {
+          title: "Fast Role Redirection Engine",
+          body: "When users visit a root role URL (e.g., /student or /teacher):\n• Middleware (middleware.ts) immediately checks session credentials and resolves the user's username.\n• The request is redirected at the Edge layer to /[role]/[username] before any client-side JavaScript bundle executes.\n• Page layouts enforce role ownership so users can only access their own dashboard."
+        }
+      ],
+      tips: [
+        "Always use requireRole(['role']) in server components to enforce role authorization.",
+        "Keep client components localized at the leaf level to maximize server rendering performance."
+      ]
+    },
+    backend: {
+      title: "FastAPI Backend Engine",
+      badge: "Python Engine",
+      description: "Technical documentation for the Python 3.12+ FastAPI backend, domain routers, exception handlers, and Socket.IO realtime server.",
+      details: [
+        {
+          title: "FastAPI Application Structure",
+          body: "The Python backend (backend/main.py) is built on FastAPI and Uvicorn:\n• ASGI Application: Mounted with Socket.IO AsyncServer for realtime websockets.\n• CORS Middleware: Configured with strict regex matching localhost, Vercel deployments, and production domains.\n• Global Exception Handler: Custom StarletteHTTPException handler guarantees all error responses return a standardized JSON body containing both 'detail' and 'error' keys."
+        },
+        {
+          title: "Domain Routers & Modules",
+          body: "The backend is partitioned into dedicated domain routers:\n• app/routes/fees.py: Fee calculation engine, itemized installment ledgers, Razorpay payment webhooks, and account profile CRUD.\n• app/routes/chats.py: Socket.IO community messaging, leaderboard engine, and class marks processing.\n• app/routes/page_builder_ai.py: Streaming AI page builder with elementor templates.\n• app/routes/teacher.py: Faculty rosters, subject assignments, and leave requests."
+        },
+        {
+          title: "Realtime Socket.IO Events",
+          body: "The realtime server broadcasts live events:\n• join: Client joins 'community' room and receives active online user rosters.\n• approval_status & request_updated: Broadcasts teacher approval status updates to admin rooms.\n• online_users: Emits connected client lists in real time."
+        }
+      ],
+      tips: [
+        "Run 'python3 -m py_compile main.py app/routes/fees.py' to validate Python syntax before committing.",
+        "Always use Depends(get_db) for thread-safe database session management in FastAPI routes."
+      ]
+    },
+    database: {
+      title: "Database & ORM Schema Sync",
+      badge: "PostgreSQL & ORM",
+      description: "Unified database architecture, Drizzle ORM (TypeScript) and SQLModel (Python) parity, and database migration guidelines.",
+      details: [
+        {
+          title: "Unified PostgreSQL Database",
+          body: "Both frontend and backend services connect to the same PostgreSQL database instance:\n• Host: Serverless Neon PostgreSQL or local PostgreSQL container.\n• Connection Pooling: Configured with pool_pre_ping=True and pool_recycle=300 in Python, and connection pooling in Drizzle ORM."
+        },
+        {
+          title: "TypeScript (Drizzle) & Python (SQLModel) Parity",
+          body: "Database entities are mapped 1:1 across languages:\n• user <-> User: id, name, email, role, preferred_role, teacher_approval_status.\n• user_profile <-> UserProfile: user_id, admission_number, username, phone_number, parent_name, class (class_), section, transport_mode, onboarding_completed.\n• session <-> SessionModel: token, user_id, expires_at, ip_address, user_agent.\n• fee_installment <-> FeeInstallment: user_id, month, year, amount, due_date, status, paid_date, receipt_no."
+        },
+        {
+          title: "Migration Workflow",
+          body: "When modifying database tables:\n1. Update frontend/lib/schema.ts (Drizzle schema).\n2. Update backend/models.py (SQLModel schema).\n3. Run 'npx drizzle-kit generate' or migration SQL scripts to apply changes to PostgreSQL."
+        }
+      ],
+      tips: [
+        "In Python SQLModel, use Field(alias='...') for columns named after Python reserved keywords (e.g. class_ alias 'class').",
+        "Verify date field formats: Drizzle uses JavaScript Date objects, while FastAPI serializes ISO 8601 strings."
+      ]
+    },
+    security: {
+      title: "Security, Auth & Rate Limiting",
+      badge: "Security & Rate Limit",
+      description: "Comprehensive security architecture, session token verification, dual-layer sliding window rate limiters, and RBAC firewall.",
+      details: [
+        {
+          title: "Dual-Layer Sliding Window Rate Limiter",
+          body: "To protect against DDoS and brute-force attacks, rate limiters are active on both tiers:\n1. Next.js Edge Rate Limiter (frontend/lib/rate-limit.ts & middleware.ts):\n   - Strict endpoints (/api/auth/*, /api/profile/*, /api/admin/*): 60 requests per minute per IP.\n   - General API endpoints (/api/*): 180 requests per minute per IP.\n2. FastAPI Rate Limiter (backend/app/core/rate_limit.py):\n   - Auth & session endpoints: 60 requests per minute per IP.\n   - Health checks: 300 requests per minute per IP.\n   - Standard API endpoints: 180 requests per minute per IP.\nExceeded limits trigger an HTTP 429 Too Many Requests response with Retry-After and X-RateLimit-* headers."
+        },
+        {
+          title: "Session Authentication & Token Parsing",
+          body: "Session verification workflow:\n• Session Token Cookie: Stored as better-auth.session_token.\n• Token Decoding: Strips signature prefixes (split by '.') and unquotes URL-encoded tokens.\n• DB Verification: Checks expiration date (expires_at > UTC now) against PostgreSQL session records."
+        },
+        {
+          title: "Role-Based Access Control (RBAC)",
+          body: "Multi-layered authorization enforcement:\n• Middleware Firewall: Enforces role permissions per path prefix (/student, /teacher, /admin, /accounts, /librarian).\n• Server Helper: requireRole(['role']) verifies active session role in server components.\n• Layout Security: Validates that requested profile usernames match the authenticated user."
+        }
+      ],
+      tips: [
+        "Rate limiters use in-memory sliding windows with automated 5-minute cleanup cycles.",
+        "Always forward request cookie and authorization headers when making server-to-server proxy calls."
+      ]
+    },
+    deployment: {
+      title: "Deployment, CI/CD & Environment Setup",
+      badge: "Deployment & Setup",
+      description: "Complete guide for local developer onboarding, environment variable configuration, testing, and production deployment.",
+      details: [
+        {
+          title: "Local Development Setup",
+          body: "Follow these steps to run the full application locally:\n\n1. Frontend (Next.js):\n   $ cd frontend\n   $ npm install\n   $ npm run dev\n   (App running at http://localhost:3000)\n\n2. Backend (FastAPI):\n   $ cd backend\n   $ python3 -m venv .venv\n   $ source .venv/bin/activate\n   $ pip install -r requirements.txt\n   $ uvicorn main:app --reload --port 8000\n   (API running at http://localhost:8000)"
+        },
+        {
+          title: "Environment Variable Configuration",
+          body: "Required configuration parameters:\n• DATABASE_URL: PostgreSQL connection string (postgresql://user:pass@host/dbname).\n• BACKEND_URL / NEXT_PUBLIC_BACKEND_URL: FastAPI backend address (http://localhost:8000 in dev).\n• BETTER_AUTH_SECRET: Secret key for session encryption.\n• SENTRY_DSN: Telemetry DSN for client/server error monitoring.\n• FIREBASE_CREDENTIALS_JSON: Firebase Admin SDK credentials for push notifications."
+        },
+        {
+          title: "Production Deployment",
+          body: "Deployment target configuration:\n• Frontend: Vercel / Docker container running Next.js build (npm run build).\n• Backend: Render / Railway / AWS ECS running FastAPI uvicorn worker.\n• Database: Neon Serverless PostgreSQL with SSL connection mode."
+        },
+        {
+          title: "Code Validation Commands",
+          body: "Always run code quality checks before submitting pull requests:\n• Frontend TypeScript Validation: npx tsc --noEmit\n• Backend Python Compilation: python3 -m py_compile app/core/auth.py app/routes/fees.py main.py"
+        }
+      ],
+      tips: [
+        "Use 'git status' to verify all modified files before pushing changes to origin main.",
+        "Keep .env files out of source control; use .env.example for template reference."
+      ]
+    }
   }
 }
 

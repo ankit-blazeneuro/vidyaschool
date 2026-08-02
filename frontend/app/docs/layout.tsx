@@ -74,6 +74,18 @@ const tree: PageTree.Root = {
     },
     {
       type: "folder",
+      name: "Developers Guide",
+      children: [
+        { type: "page", name: "1. Architecture & Stack", url: "/docs/developers/architecture" },
+        { type: "page", name: "2. Frontend & UI System", url: "/docs/developers/frontend" },
+        { type: "page", name: "3. FastAPI Backend Engine", url: "/docs/developers/backend" },
+        { type: "page", name: "4. Database & ORM Schema", url: "/docs/developers/database" },
+        { type: "page", name: "5. Security & Rate Limiting", url: "/docs/developers/security" },
+        { type: "page", name: "6. Deployment & Setup", url: "/docs/developers/deployment" },
+      ],
+    },
+    {
+      type: "folder",
       name: "Legal Policies",
       children: [
         { type: "page", name: "Privacy Policy", url: "/docs/privacy-policy" },
