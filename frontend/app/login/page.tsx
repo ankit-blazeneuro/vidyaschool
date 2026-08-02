@@ -352,58 +352,57 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex flex-col items-center gap-5">
-                  {/* Black & White Aesthetic Frame Without Animated Scan Line */}
+                  {/* High-contrast QR Frame to guarantee instant scanning on dark mode */}
                   <div
                     className={cn(
-                      "relative rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 flex flex-col items-center justify-center",
-                      qrStatus === "confirmed" && "border-foreground"
+                      "relative rounded-2xl border border-border bg-white p-5 shadow-md transition-all duration-300 flex flex-col items-center justify-center dark:border-zinc-800",
+                      qrStatus === "confirmed" && "border-zinc-900 ring-2 ring-zinc-900/20"
                     )}
                   >
-                    <div className="w-[190px] h-[190px] flex items-center justify-center">
+                    <div className="w-[190px] h-[190px] flex items-center justify-center bg-white rounded-xl">
                       {qrStatus === "generating" && (
-                        <Loader2 className="h-7 w-7 animate-spin text-foreground" />
+                        <Loader2 className="h-7 w-7 animate-spin text-zinc-900" />
                       )}
 
                       {qrStatus === "active" && qrToken && (
                         <QRCodeSVG
                           value={qrPayloadString}
-                          size={190}
-                          bgColor="transparent"
-                          fgColor="currentColor"
+                          size={180}
+                          bgColor="#FFFFFF"
+                          fgColor="#000000"
                           level="H"
                           includeMargin={false}
-                          className="text-foreground"
                         />
                       )}
 
                       {qrStatus === "scanned" && (
                         <div className="flex flex-col items-center gap-2.5">
-                          <Smartphone className="h-10 w-10 text-foreground animate-pulse" />
-                          <p className="text-xs font-semibold text-foreground text-center">
+                          <Smartphone className="h-10 w-10 text-zinc-900 animate-pulse" />
+                          <p className="text-xs font-semibold text-zinc-900 text-center">
                             QR Scanned!
                             <br />
-                            <span className="text-[11px] font-normal text-muted-foreground">Confirm on phone…</span>
+                            <span className="text-[11px] font-normal text-zinc-500">Confirm on phone…</span>
                           </p>
                         </div>
                       )}
 
                       {qrStatus === "confirmed" && (
                         <div className="flex flex-col items-center gap-2.5">
-                          <CheckCircle2 className="h-12 w-12 text-foreground" style={{ animation: "pop-in 0.3s ease" }} />
-                          <p className="text-xs font-bold text-foreground text-center">
+                          <CheckCircle2 className="h-12 w-12 text-zinc-900" style={{ animation: "pop-in 0.3s ease" }} />
+                          <p className="text-xs font-bold text-zinc-900 text-center">
                             Authenticated!
                             <br />
-                            <span className="text-[11px] font-normal text-muted-foreground">Redirecting…</span>
+                            <span className="text-[11px] font-normal text-zinc-500">Redirecting…</span>
                           </p>
                         </div>
                       )}
 
                       {qrStatus === "expired" && (
                         <div className="flex flex-col items-center gap-2">
-                          <div className="rounded-full bg-muted p-3">
-                            <KeyRound className="h-6 w-6 text-muted-foreground" />
+                          <div className="rounded-full bg-zinc-100 p-3">
+                            <KeyRound className="h-6 w-6 text-zinc-600" />
                           </div>
-                          <p className="text-xs text-muted-foreground text-center">QR expired</p>
+                          <p className="text-xs text-zinc-500 text-center">QR expired</p>
                         </div>
                       )}
                     </div>
