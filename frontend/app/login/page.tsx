@@ -186,6 +186,15 @@ export default function LoginPage() {
   const countdownPct = (qrSecondsLeft / QR_TTL) * 100
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`
 
+  // Memoize QR value so SVG stays 100% static during countdown without re-evaluating
+  const qrPayloadString = useCallback(() => {
+    if (!qrToken) return ""
+    return JSON.stringify({
+      type: "vidyaschool_qr_login",
+      token: qrToken,
+    })
+  }, [qrToken])()
+
   return (
     <div className="grid min-h-svh lg:grid-cols-2 bg-background text-foreground">
       <div className="flex flex-col gap-4 p-6 md:p-10">
@@ -357,11 +366,7 @@ export default function LoginPage() {
 
                       {qrStatus === "active" && qrToken && (
                         <QRCodeSVG
-                          value={JSON.stringify({
-                            type: "vidyaschool_qr_login",
-                            token: qrToken,
-                            ts: Date.now(),
-                          })}
+                          value={qrPayloadString}
                           size={190}
                           bgColor="transparent"
                           fgColor="currentColor"
