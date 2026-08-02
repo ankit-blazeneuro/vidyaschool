@@ -998,51 +998,12 @@ fun DashboardLayout(
                     }
 
                     // ── QR Code Login (above Manage Sessions) ─────────────────────────────
-                    val tealColor = Color(0xFF14B8A6)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 3.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(tealColor.copy(alpha = 0.08f))
-                            .border(1.dp, tealColor.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
-                            .clickable {
-                                scope.launch { drawerState.close() }
-                                showQRLogin = true
-                            }
-                            .padding(horizontal = 12.dp)
-                            .height(42.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    DrawerLink(
+                        label = "QR Code Login",
+                        iconRes = R.drawable.ic_custom_qr_code
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Share,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = tealColor
-                        )
-                        Text(
-                            text = "QR Code Login",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = tealColor,
-                            modifier = Modifier.weight(1f)
-                        )
-                        // Small badge indicating "for web"
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(tealColor.copy(alpha = 0.15f))
-                                .padding(horizontal = 5.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "WEB",
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = tealColor,
-                                letterSpacing = 0.5.sp
-                            )
-                        }
+                        scope.launch { drawerState.close() }
+                        showQRLogin = true
                     }
 
                     DrawerLink(
