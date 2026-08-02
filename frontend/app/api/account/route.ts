@@ -1,69 +1,36 @@
-import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { user as userTable, session as sessionTable, userProfile } from '@/lib/schema'
-import { eq } from 'drizzle-orm'
-import { auth } from '@/lib/auth'
+import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 
-export async function GET() {
+const BACKEND_URL = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '')
+
+export async function GET(req: NextRequest) {
   const hdrs = await headers()
-  let session = null
+  const cookieHeader = hdrs.get('cookie') || ''
+  const authHeader = hdrs.get('authorization') || ''
 
   try {
-    session = await auth.api.getSession({ headers: hdrs })
-  } catch (e) {
-    console.error("[api/account] getSession error:", e)
-  }
+    const res = await fetch(`${BACKEND_URL}/api/account`, {
+      headers: {
+        'cookie': cookieHeader,
+        ...(authHeader && { 'authorization': authHeader }),
+      },
+      cache: 'no-store'
+    })
 
-  // Fallback to checking DB directly if auth.api.getSession is null
-  if (!session?.user) {
-    const rawCookie = hdrs.get('cookie')
-    const cookieMatch = rawCookie?.match(/(?:__Secure-better-auth\.session_token|better-auth\.session_token)=([^;]+)/)
-    const tokenVal = cookieMatch ? cookieMatch[1] : null
-
-    if (tokenVal) {
-      const cleanToken = decodeURIComponent(tokenVal).split('.')[0]
+    if (!res.ok) {
+      const errText = await res.text()
+      let detail = errText
       try {
-        const dbSession = await db.select().from(sessionTable).where(eq(sessionTable.token, cleanToken)).then(res => res[0])
-        if (dbSession && new Date(dbSession.expiresAt) > new Date()) {
-          const dbUser = await db.select().from(userTable).where(eq(userTable.id, dbSession.userId)).then(res => res[0])
-          if (dbUser) {
-            session = { user: dbUser, session: dbSession }
-          }
-        }
-      } catch (err) {
-        console.error("[api/account] DB session fallback error:", err)
-      }
+        const parsed = JSON.parse(errText)
+        detail = parsed.detail || errText
+      } catch {}
+      return NextResponse.json({ error: detail || 'Failed to fetch account' }, { status: res.status })
     }
+
+    const data = await res.json()
+    return NextResponse.json(data)
+  } catch (error: any) {
+    console.error('[api/account] FastAPI proxy error:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
-
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  let profile = await db.query.userProfile.findFirst({
-    where: eq(userProfile.userId, session.user.id)
-  })
-
-  if (!profile) {
-    const genUsername = (session.user.name || session.user.email || "user").toLowerCase().replace(/[^a-z0-9]/g, "") || `user${Math.floor(Math.random() * 1000)}`
-    const genAdmission = `VS-${Math.floor(100000 + Math.random() * 900000)}`
-    try {
-      const newProf = {
-        id: crypto.randomUUID(),
-        userId: session.user.id,
-        username: null,
-        admissionNumber: null,
-        onboardingCompleted: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-      await db.insert(userProfile).values(newProf)
-      profile = newProf as any
-    } catch (e) {
-      console.error("[api/account] Profile creation error:", e)
-    }
-  }
-
-  return NextResponse.json({ user: session.user, profile })
 }

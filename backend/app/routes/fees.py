@@ -6,7 +6,7 @@ import os
 import struct
 import uuid
 import zlib
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 from urllib import error as urllib_error
 from urllib import request as urllib_request
@@ -716,6 +716,118 @@ class OnboardingSubmitRequest(BaseModel):
     class Config:
         populate_by_name = True
         allow_population_by_field_name = True
+
+@router.get("/api/account")
+def get_user_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    if not profile:
+        profile = UserProfile(
+            id=str(uuid.uuid4()),
+            user_id=current_user.id,
+            onboarding_completed=False,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+
+    prof_data = {
+        "id": profile.id,
+        "userId": profile.user_id,
+        "admissionNumber": profile.admission_number,
+        "username": profile.username,
+        "phoneNumber": profile.phone_number,
+        "parentName": profile.parent_name,
+        "parentPhone": profile.parent_phone,
+        "parentEmail": profile.parent_email,
+        "address": profile.address,
+        "city": profile.city,
+        "state": profile.state,
+        "pincode": profile.pincode,
+        "class": profile.class_,
+        "section": profile.section,
+        "classSectionLastUpdated": profile.class_section_last_updated.isoformat() if profile.class_section_last_updated else None,
+        "classSectionChanges": profile.class_section_changes,
+        "secondaryRole": profile.secondary_role,
+        "transportMode": profile.transport_mode,
+        "onboardingCompleted": profile.onboarding_completed,
+        "createdAt": profile.created_at.isoformat() if profile.created_at else None,
+        "updatedAt": profile.updated_at.isoformat() if profile.updated_at else None,
+    }
+
+    user_data = {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "image": current_user.image,
+        "role": current_user.role,
+        "preferredRole": getattr(current_user, "preferred_role", None),
+        "createdAt": current_user.created_at.isoformat() if hasattr(current_user, "created_at") and getattr(current_user, "created_at", None) else None
+    }
+
+    return {"user": user_data, "profile": prof_data}
+
+
+@router.patch("/api/profile")
+@router.patch("/api/profile/update")
+def update_user_profile(
+    data: Dict[str, Any],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    username = data.get("username")
+    if username:
+        clean_username = str(username).strip().lower()
+        existing = db.query(UserProfile).filter(UserProfile.username == clean_username).first()
+        if existing and existing.user_id != current_user.id:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        profile.username = clean_username
+
+    if "phoneNumber" in data: profile.phone_number = data["phoneNumber"]
+    if "parentName" in data: profile.parent_name = data["parentName"]
+    if "parentPhone" in data: profile.parent_phone = data["parentPhone"]
+    if "parentEmail" in data: profile.parent_email = data["parentEmail"]
+    if "address" in data: profile.address = data["address"]
+    if "city" in data: profile.city = data["city"]
+    if "state" in data: profile.state = data["state"]
+    if "pincode" in data: profile.pincode = data["pincode"]
+    if "secondaryRole" in data: profile.secondary_role = data["secondaryRole"]
+    if "transportMode" in data: profile.transport_mode = data["transportMode"]
+
+    new_class = data.get("class")
+    new_section = data.get("section")
+    is_class_changed = new_class is not None and new_class != profile.class_
+    is_section_changed = new_section is not None and new_section != profile.section
+
+    if is_class_changed or is_section_changed:
+        now = datetime.utcnow()
+        if profile.class_section_last_updated:
+            diff_days = (now - profile.class_section_last_updated).total_seconds() / 86400
+            if diff_days < 365:
+                next_allowed = profile.class_section_last_updated + timedelta(days=365)
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"You can only change your class and section once a year. Next change allowed after {next_allowed.strftime('%Y-%m-%d')}"
+                )
+        if new_class is not None: profile.class_ = new_class
+        if new_section is not None: profile.section = new_section
+        profile.class_section_last_updated = now
+
+    profile.updated_at = datetime.utcnow()
+    db.add(profile)
+    db.commit()
+    db.refresh(profile)
+
+    return {"success": True, "newUsername": profile.username}
+
 
 @router.get("/api/onboarding/status")
 def get_onboarding_status(

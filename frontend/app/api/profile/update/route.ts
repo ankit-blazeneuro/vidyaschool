@@ -1,83 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { userProfile } from '@/lib/schema'
-import { eq } from 'drizzle-orm'
+import { headers } from 'next/headers'
+
+const BACKEND_URL = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000').replace(/\/+$/, '')
 
 export async function PATCH(req: NextRequest) {
+  const hdrs = await headers()
+  const cookieHeader = hdrs.get('cookie') || ''
+  const authHeader = hdrs.get('authorization') || ''
+  const body = await req.json()
+
   try {
-    const session = await auth.api.getSession({ headers: req.headers })
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const data = await req.json()
-
-    // Check username uniqueness if it changed
-    if (data.username) {
-      const trimmed = data.username.trim().toLowerCase()
-      const existing = await db.query.userProfile.findFirst({
-        where: eq(userProfile.username, trimmed)
-      })
-      if (existing && existing.userId !== session.user.id) {
-        return NextResponse.json({ error: 'Username already taken' }, { status: 400 })
-      }
-      data.username = trimmed
-    }
-
-    const existingProfile = await db.query.userProfile.findFirst({
-      where: eq(userProfile.userId, session.user.id)
+    const res = await fetch(`${BACKEND_URL}/api/profile/update`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'cookie': cookieHeader,
+        ...(authHeader && { 'authorization': authHeader }),
+      },
+      body: JSON.stringify(body)
     })
 
-    if (!existingProfile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    if (!res.ok) {
+      const errText = await res.text()
+      let detail = errText
+      try {
+        const parsed = JSON.parse(errText)
+        detail = parsed.detail || errText
+      } catch {}
+      return NextResponse.json({ error: detail }, { status: res.status })
     }
 
-    const isClassChanged = data.class !== undefined && data.class !== existingProfile.class;
-    const isSectionChanged = data.section !== undefined && data.section !== existingProfile.section;
-
-    let classSectionLastUpdated = existingProfile.classSectionLastUpdated;
-
-    if (isClassChanged || isSectionChanged) {
-      if (existingProfile.classSectionLastUpdated) {
-        const lastUpdated = new Date(existingProfile.classSectionLastUpdated);
-        const now = new Date();
-        const differenceInTime = now.getTime() - lastUpdated.getTime();
-        const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-
-        if (differenceInDays < 365) {
-          const nextAllowedDate = new Date(lastUpdated.getTime() + 365 * 24 * 60 * 60 * 1000);
-          return NextResponse.json({
-            error: `You can only change your class and section once a year. Next change allowed after ${nextAllowedDate.toLocaleDateString()}`
-          }, { status: 400 });
-        }
-      }
-      classSectionLastUpdated = new Date();
-    }
-
-    await db.update(userProfile)
-      .set({
-        username:    data.username    ?? existingProfile.username,
-        phoneNumber: data.phoneNumber ?? existingProfile.phoneNumber,
-        parentName:  data.parentName  ?? existingProfile.parentName,
-        parentPhone: data.parentPhone ?? existingProfile.parentPhone,
-        parentEmail: data.parentEmail ?? existingProfile.parentEmail,
-        address:     data.address     ?? existingProfile.address,
-        city:        data.city        ?? existingProfile.city,
-        state:       data.state       ?? existingProfile.state,
-        pincode:     data.pincode     ?? existingProfile.pincode,
-        secondaryRole: data.secondaryRole !== undefined ? data.secondaryRole : existingProfile.secondaryRole,
-        class:       data.class       !== undefined ? data.class       : existingProfile.class,
-        section:     data.section     !== undefined ? data.section     : existingProfile.section,
-        transportMode: data.transportMode !== undefined ? data.transportMode : existingProfile.transportMode,
-        classSectionLastUpdated,
-        updatedAt: new Date(),
-      })
-      .where(eq(userProfile.userId, session.user.id))
-
-    return NextResponse.json({ success: true, newUsername: data.username ?? existingProfile.username })
+    const data = await res.json()
+    return NextResponse.json(data)
   } catch (error: any) {
-    console.error('Profile update error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[api/profile/update] FastAPI proxy error:', error)
+    return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
   }
 }
