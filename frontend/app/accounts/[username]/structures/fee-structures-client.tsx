@@ -68,18 +68,14 @@ interface ClassStructure {
   dirty?: boolean // unsaved local changes
 }
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
-
 async function apiRequest(path: string, options: RequestInit = {}) {
-  try {
-    return await fetch(`/api/backend${path}`, options)
-  } catch (e) {
-    console.warn(`Proxy fetch to /api/backend${path} failed, trying direct backend...`, e)
-    return fetch(`${BACKEND_URL}${path}`, {
-      ...options,
-      credentials: "include",
-    })
-  }
+  return fetch(path, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  })
 }
 
 function formatCurrency(value?: number) {
