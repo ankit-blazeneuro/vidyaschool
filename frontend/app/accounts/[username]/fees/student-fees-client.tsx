@@ -137,7 +137,7 @@ export function StudentFeesClient({ username }: { username: string }) {
   const fetchStudents = async () => {
     setLoadingStudents(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/api/admin/students`)
+      const res = await fetch("/api/admin/students")
       if (!res.ok) throw new Error("Failed to load students")
       const data = await res.json()
       setStudents(data)
@@ -153,7 +153,7 @@ export function StudentFeesClient({ username }: { username: string }) {
   const fetchInstallments = async (studentId: string) => {
     setLoadingInstallments(true)
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/api/admin/fees/${studentId}/breakdown`)
+      const res = await fetch(`/api/admin/fees/${studentId}/breakdown`)
       if (!res.ok) throw new Error("Failed to load fee breakdown")
       const data = await res.json()
       
