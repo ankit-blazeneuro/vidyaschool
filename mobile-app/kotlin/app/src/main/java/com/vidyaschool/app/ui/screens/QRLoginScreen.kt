@@ -144,7 +144,11 @@ fun QRLoginScreen(
         val payload = parseQRPayload(raw) ?: return
 
         scanState = ScanState.Confirming
-        val token = sessionManager.getSessionToken() ?: return
+        val token = sessionManager.getSessionToken()
+        if (token.isNullOrBlank()) {
+            scanState = ScanState.Error("Please log in on your mobile app first")
+            return
+        }
 
         scope.launch {
             try {
