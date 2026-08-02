@@ -1,51 +1,46 @@
 'use client'
 
 import * as React from "react"
-import { useSession } from "@/lib/auth-client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { OnboardingDialog } from "@/components/onboarding-dialog"
 import { Loader2Icon } from "lucide-react"
 
 function TeacherOnboardingContent() {
-  const { data: session, isPending } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [profile, setProfile] = React.useState<any>(null)
-  const [loadingProfile, setLoadingProfile] = React.useState(true)
+  const [loading, setLoading] = React.useState(true)
 
   React.useEffect(() => {
-    if (isPending) return
-    if (!session?.user) {
-      router.push("/login")
-      return
-    }
-
-
-    // Fetch user profile status
     fetch('/api/profile/username')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          router.push("/login")
+          return null
+        }
+        return res.json()
+      })
       .then(data => {
+        if (!data) return
         setProfile(data)
-        setLoadingProfile(false)
-        
-        // If onboarding is completed, redirect to their username dashboard
+        setLoading(false)
+
         if (data.username && data.onboardingCompleted) {
           if (searchParams.get("onboarding") !== "true") {
             router.push(`/teacher/${data.username}`)
           }
         } else {
-          // If they are not onboarded, force ?onboarding=true in the URL
           if (searchParams.get("onboarding") !== "true") {
             router.replace("/teacher?onboarding=true")
           }
         }
       })
       .catch(() => {
-        setLoadingProfile(false)
+        router.push("/login")
       })
-  }, [session, isPending, router, searchParams])
+  }, [router, searchParams])
 
-  if (isPending || loadingProfile) {
+  if (loading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
@@ -64,12 +59,11 @@ function TeacherOnboardingContent() {
         </p>
       </div>
 
-      {showOnboarding && session?.user && (
+      {showOnboarding && (
         <OnboardingDialog
-          userRole={session.user.role as any}
-          userEmail={session.user.email}
+          userRole="teacher"
+          userEmail=""
           onSuccess={(newUsername) => {
-            // Optimize page change without reload
             router.push(`/teacher/${newUsername}`)
           }}
         />
