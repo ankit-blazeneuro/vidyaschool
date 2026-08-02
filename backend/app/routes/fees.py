@@ -924,6 +924,19 @@ _CLASS_NUM_TO_KEY = {v: k for k, v in _CLASS_KEY_TO_NUM.items()}
 _DEFAULT_TRANSPORT_FEE = 2000
 
 
+def is_transport_user(transport_mode: Optional[str]) -> bool:
+    """Return True ONLY if transport_mode explicitly indicates school transport (bus/van/school_transport).
+    Returns False for walking, walk, self, self_transport, foot, none, empty or null."""
+    if not transport_mode:
+        return False
+    mode = str(transport_mode).strip().lower()
+    non_transport_modes = {
+        "none", "", "walking", "walk", "self", "self_transport",
+        "self transport", "on_foot", "foot", "private", "no", "personal"
+    }
+    return mode not in non_transport_modes
+
+
 def _serialize_structure(row) -> dict:
     import json
     key = getattr(row, "class_name", None) or _CLASS_NUM_TO_KEY.get(row.class_num, str(row.class_num))
@@ -1134,7 +1147,7 @@ def apply_fee_structures(
                 continue
 
         components = json.loads(row.components)
-        uses_transport = profile.transport_mode and profile.transport_mode not in ("none", "")
+        uses_transport = is_transport_user(profile.transport_mode)
 
         monthly_amount = 0
         for comp in components:
@@ -1228,7 +1241,7 @@ def get_student_fee_breakdown(
 
     structure_row = _get_or_init_structure(class_num, db)
     components = json.loads(structure_row.components)
-    uses_transport = bool(profile and profile.transport_mode and profile.transport_mode not in ("none", ""))
+    uses_transport = is_transport_user(profile.transport_mode if profile else None)
     transport_fee = structure_row.transport_fee if uses_transport else 0
 
     base_monthly = 0
@@ -1302,7 +1315,7 @@ def get_admin_student_fee_breakdown(
 
     structure_row = _get_or_init_structure(class_num, db)
     components = json.loads(structure_row.components)
-    uses_transport = bool(profile and profile.transport_mode and profile.transport_mode not in ("none", ""))
+    uses_transport = is_transport_user(profile.transport_mode if profile else None)
     transport_fee = structure_row.transport_fee if uses_transport else 0
 
     base_monthly = 0
