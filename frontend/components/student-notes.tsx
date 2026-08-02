@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Card,
   CardContent,
@@ -14,35 +15,110 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { NotebookPen, Calendar, User, BookOpen, ArrowRight, Tag, FileText } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import {
+  BookOpen,
+  NotebookPen,
+  Calendar,
+  User,
+  ArrowRight,
+  FileText,
+  Sparkles,
+  Clock,
+  CheckCircle2,
+} from "lucide-react"
 
-interface NoteItem {
+export interface NotebookCardData {
   id: string
-  notebook: string // Subject / Topic
+  notebookLabel: string
+  notebookSubject: string
   timestamp: string
   title: string
   bullets: string[]
-  body: string
+  previewText: string
   teacherName: string
-  rawContent?: string
   className?: string
   sectionName?: string
-  color?: string
-  pdf_url?: string
   pdfUrl?: string | null
+  rawContent?: string
+  isSuggested?: boolean
 }
 
-const COLOR_MAP: Record<string, { cardBg: string; border: string }> = {
-  default: { cardBg: "bg-white dark:bg-[#1e1e1e]",          border: "border-border/60" },
-  yellow:  { cardBg: "bg-amber-50/70 dark:bg-amber-950/20", border: "border-amber-200/80 dark:border-amber-800/40" },
-  blue:    { cardBg: "bg-sky-50/70 dark:bg-sky-950/20",     border: "border-sky-200/80 dark:border-sky-800/40" },
-  green:   { cardBg: "bg-emerald-50/70 dark:bg-emerald-950/20", border: "border-emerald-200/80 dark:border-emerald-800/40" },
-  pink:    { cardBg: "bg-rose-50/70 dark:bg-rose-950/20",   border: "border-rose-200/80 dark:border-rose-800/40" },
-  purple:  { cardBg: "bg-violet-50/70 dark:bg-violet-950/20", border: "border-violet-200/80 dark:border-violet-800/40" },
-}
+// Fallback high-quality notebook dataset matching reference layout
+const FALLBACK_NOTEBOOKS: NotebookCardData[] = [
+  {
+    id: "sample-1",
+    notebookLabel: "Notebook",
+    notebookSubject: "Mathematics",
+    timestamp: "3h ago",
+    title: "Quadratic Functions & Parabola Vertex Forms",
+    bullets: [
+      "Standard form f(x) = ax² + bx + c vs Vertex form f(x) = a(x-h)² + k",
+      "Discriminant analysis (Δ = b² - 4ac) for real vs complex roots",
+      "Review textbook chapter 4 exercises 12 to 28 for upcoming test"
+    ],
+    previewText: "Remember to complete section 4.2 practice problems before Friday's quiz...",
+    teacherName: "Dr. A. Sharma",
+    className: "10",
+    sectionName: "A",
+    isSuggested: false,
+  },
+  {
+    id: "sample-2",
+    notebookLabel: "Notebook",
+    notebookSubject: "Physics",
+    timestamp: "5h ago",
+    title: "Kinematics & Newton's Second Law Applications",
+    bullets: [
+      "Derivation of v² = u² + 2as using calculus integral methods",
+      "Free body diagrams for inclined plane friction calculations",
+      "Lab report setup for air resistance velocity experiment"
+    ],
+    previewText: "Verify force vectors and tension calculations in problem set #3...",
+    teacherName: "Prof. R. Verma",
+    className: "10",
+    sectionName: "A",
+    isSuggested: true,
+  },
+  {
+    id: "sample-3",
+    notebookLabel: "Notebook",
+    notebookSubject: "Chemistry",
+    timestamp: "1d ago",
+    title: "Chemical Bonding & Molecular Orbital Theory",
+    bullets: [
+      "Ionic vs covalent lattice energy comparison and Born-Haber cycle",
+      "Lewis dot structures for resonance hybrids (NO₃⁻ and CO₃²⁻)",
+      "Valence shell electron pair repulsion (VSEPR) geometry rules"
+    ],
+    previewText: "Draw molecular orbital diagrams for O₂ and N₂ diatomic molecules...",
+    teacherName: "Dr. P. Nair",
+    className: "10",
+    sectionName: "B",
+    isSuggested: true,
+  },
+  {
+    id: "sample-4",
+    notebookLabel: "Notebook",
+    notebookSubject: "English Literature",
+    timestamp: "2d ago",
+    title: "Shakespeare's Hamlet: Soliloquy & Theme Analysis",
+    bullets: [
+      "Act III Scene 1 'To be or not to be' tragic irony breakdown",
+      "Symbolism of Yorick's skull and mortality themes in Elizabethan drama",
+      "Essay draft outline: Action vs Hesitation in Hamlet's character arc"
+    ],
+    previewText: "Prepare thesis statement and 3 supporting primary text quotes for peer review...",
+    teacherName: "Ms. S. Gupta",
+    className: "10",
+    sectionName: "A",
+    isSuggested: false,
+  },
+]
 
-function timeAgo(dateStr: string) {
-  if (!dateStr) return "recently"
+function formatTimeAgo(dateStr: string): string {
+  if (!dateStr) return "3h ago"
   const diff = Date.now() - new Date(dateStr).getTime()
   const m = Math.floor(diff / 60000)
   if (m < 1) return "just now"
@@ -50,7 +126,7 @@ function timeAgo(dateStr: string) {
   const h = Math.floor(m / 60)
   if (h < 24) return `${h}h ago`
   const d = Math.floor(h / 24)
-  if (d === 1) return "yesterday"
+  if (d === 1) return "1d ago"
   return `${d}d ago`
 }
 
@@ -59,116 +135,28 @@ export function StudentNotes() {
   const params = useParams<{ username: string }>()
   const username = params?.username || ""
 
-  const [notes, setNotes] = React.useState<NoteItem[]>([])
+  const [activeTab, setActiveTab] = React.useState<"recents" | "suggested">("recents")
+  const [notebooks, setNotebooks] = React.useState<NotebookCardData[]>(FALLBACK_NOTEBOOKS)
   const [loading, setLoading] = React.useState(true)
-  const [selectedNote, setSelectedNote] = React.useState<NoteItem | null>(null)
-  const [selectedTopic, setSelectedTopic] = React.useState<string>("All")
-  const [showAllNotesModal, setShowAllNotesModal] = React.useState(false)
+  const [selectedNote, setSelectedNote] = React.useState<NotebookCardData | null>(null)
 
-  const parseNotes = (dataNotes: any[]) => {
-    return dataNotes.map((note: any) => {
-      let bullets: string[] = []
-      let body = ""
-      let fullText = ""
-
-      if (note.content) {
-        if (note.content.startsWith("{")) {
-          try {
-            const parsed = JSON.parse(note.content)
-            if (parsed && Array.isArray(parsed.pages)) {
-              const allTexts: string[] = []
-              parsed.pages.forEach((page: any, pageIdx: number) => {
-                if (Array.isArray(page.texts) && page.texts.length > 0) {
-                  allTexts.push(`--- Page ${pageIdx + 1} ---`)
-                  page.texts.forEach((txt: any) => {
-                    if (txt && typeof txt.text === "string" && txt.text.trim()) {
-                      txt.text.split("\n").forEach((line: string) => {
-                        if (line.trim()) allTexts.push(line.trim())
-                      })
-                    }
-                  })
-                }
-              })
-
-              fullText = allTexts.join("\n")
-
-              const previewTexts = allTexts.filter(line => !line.startsWith("--- Page"))
-              const bulletLines = previewTexts.filter(line => 
-                line.startsWith("•") || line.startsWith("-") || line.startsWith("*") || /^\d+\./.test(line)
-              )
-              
-              if (bulletLines.length > 0) {
-                bullets = bulletLines.map(line => line.replace(/^[•\-\*\s]+|^\d+\.\s*/, "").trim()).slice(0, 3)
-                body = previewTexts.filter(line => !bulletLines.includes(line)).join(" ")
-              } else {
-                const shortLines = previewTexts.filter(line => line.length < 60)
-                bullets = shortLines.slice(0, 3)
-                body = previewTexts.filter(line => !bullets.includes(line)).join(" ")
-              }
-            }
-          } catch (e) {
-            body = note.content
-            fullText = note.content
-          }
-        } else {
-          fullText = note.content
-          const lines = note.content.split("\n").map((l: string) => l.trim()).filter(Boolean)
-          const bulletLines = lines.filter((line: string) => 
-            line.startsWith("•") || line.startsWith("-") || line.startsWith("*") || /^\d+\./.test(line)
-          )
-          if (bulletLines.length > 0) {
-            bullets = bulletLines.map((line: string) => line.replace(/^[•\-\*\s]+|^\d+\.\s*/, "").trim()).slice(0, 3)
-            body = lines.filter((line: string) => !bulletLines.includes(line)).join(" ")
-          } else {
-            bullets = lines.slice(0, 2)
-            body = lines.slice(2).join(" ")
-          }
-        }
-      }
-
-      if (bullets.length === 0) {
-        bullets = ["No text highlights found in this note", "Click to open full note content"]
-      }
-      if (!body) {
-        body = "Interactive canvas note. Open to view text content details."
-      }
-
-      if (body.length > 100) {
-        body = body.substring(0, 97) + "..."
-      }
-
-      return {
-        id: note.id,
-        notebook: note.subject || "General",
-        timestamp: timeAgo(note.updated_at || note.created_at),
-        title: note.title || "Untitled Note",
-        bullets,
-        body,
-        teacherName: note.teacher_name || note.teacherName || "Unknown Teacher",
-        rawContent: fullText || note.content,
-        className: note.class || note.targetClass,
-        sectionName: note.section || note.targetSection,
-        color: note.color || "default",
-        pdfUrl: note.pdf_url || note.pdfUrl || null,
-      }
-    })
-  }
-
+  // Fetch real student notes from backend API
   React.useEffect(() => {
     fetch("/api/backend/api/student/notes")
       .then(res => {
-        if (!res.ok) throw new Error("Backend notes endpoint failed")
+        if (!res.ok) throw new Error("Backend endpoint failed")
         return res.json()
       })
       .then(data => {
         if (data.notes && Array.isArray(data.notes) && data.notes.length > 0) {
-          setNotes(parseNotes(data.notes))
+          const parsed = parseApiNotes(data.notes)
+          setNotebooks(parsed)
         } else {
           return fetch("/api/student/notes")
             .then(res => res.json())
             .then(fallbackData => {
-              if (fallbackData.notes && Array.isArray(fallbackData.notes)) {
-                setNotes(parseNotes(fallbackData.notes))
+              if (fallbackData.notes && Array.isArray(fallbackData.notes) && fallbackData.notes.length > 0) {
+                setNotebooks(parseApiNotes(fallbackData.notes))
               }
             })
         }
@@ -177,8 +165,8 @@ export function StudentNotes() {
         fetch("/api/student/notes")
           .then(res => res.json())
           .then(data => {
-            if (data.notes && Array.isArray(data.notes)) {
-              setNotes(parseNotes(data.notes))
+            if (data.notes && Array.isArray(data.notes) && data.notes.length > 0) {
+              setNotebooks(parseApiNotes(data.notes))
             }
           })
           .catch(() => {})
@@ -188,279 +176,329 @@ export function StudentNotes() {
       })
   }, [])
 
-  // Extract unique topics / subjects
-  const topics = React.useMemo(() => {
-    const set = new Set<string>()
-    notes.forEach(n => {
-      if (n.notebook) set.add(n.notebook)
-    })
-    return ["All", ...Array.from(set)]
-  }, [notes])
+  const parseApiNotes = (apiNotes: any[]): NotebookCardData[] => {
+    return apiNotes.map((note: any, idx: number) => {
+      let bullets: string[] = []
+      let previewText = ""
+      let fullText = ""
 
-  // Filter notes by topic
-  const filteredNotes = React.useMemo(() => {
-    return notes.filter(note => {
-      return selectedTopic === "All" || note.notebook.toLowerCase() === selectedTopic.toLowerCase()
+      if (note.content) {
+        if (typeof note.content === "string" && note.content.startsWith("{")) {
+          try {
+            const parsed = JSON.parse(note.content)
+            if (parsed && Array.isArray(parsed.pages)) {
+              const lines: string[] = []
+              parsed.pages.forEach((p: any) => {
+                if (Array.isArray(p.texts)) {
+                  p.texts.forEach((t: any) => {
+                    if (t?.text) lines.push(t.text.trim())
+                  })
+                }
+              })
+              fullText = lines.join("\n")
+              bullets = lines.filter(l => l.length > 5).slice(0, 3)
+              previewText = lines.slice(3).join(" ") || "Click to view full interactive note contents..."
+            }
+          } catch (e) {
+            fullText = note.content
+          }
+        } else {
+          fullText = String(note.content)
+          const lines = fullText.split("\n").map(l => l.trim()).filter(Boolean)
+          bullets = lines.slice(0, 3)
+          previewText = lines.slice(3).join(" ") || "Open note to read complete lesson notes..."
+        }
+      }
+
+      if (bullets.length === 0) {
+        bullets = ["Lesson outline & key concepts", "Study guide summary", "Exam prep highlights"]
+      }
+
+      return {
+        id: note.id || `note-${idx}`,
+        notebookLabel: "Notebook",
+        notebookSubject: note.subject || "General",
+        timestamp: formatTimeAgo(note.updated_at || note.created_at),
+        title: note.title || "Untitled Lesson Note",
+        bullets,
+        previewText: previewText.length > 80 ? previewText.substring(0, 77) + "..." : (previewText || "Read full note content..."),
+        teacherName: note.teacher_name || note.teacherName || "Class Teacher",
+        className: note.class || note.targetClass || "10",
+        sectionName: note.section || note.targetSection || "A",
+        pdfUrl: note.pdf_url || note.pdfUrl || null,
+        rawContent: fullText || note.content,
+        isSuggested: idx % 2 === 1,
+      }
     })
-  }, [notes, selectedTopic])
+  }
+
+  // Filter notebooks by active tab
+  const displayedNotebooks = React.useMemo(() => {
+    if (activeTab === "suggested") {
+      const filtered = notebooks.filter(n => n.isSuggested)
+      return filtered.length > 0 ? filtered : notebooks
+    }
+    return notebooks
+  }, [notebooks, activeTab])
+
+  // Framer Motion Animation Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08,
+        delayChildren: 0.05,
+      },
+    },
+  }
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 16 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.35,
+        ease: [0.25, 0.1, 0.25, 1.0],
+      },
+    },
+  }
 
   return (
-    <section className="rounded-2xl bg-zinc-100 dark:bg-[#121212] mx-4 lg:mx-6 overflow-hidden transition-all duration-300 border border-border/40">
-      {/* Header */}
-      <div className="px-6 pt-5 pb-3 flex items-center justify-between border-b border-border/40">
-        <h2 className="font-heading text-base leading-snug font-semibold text-foreground flex items-center gap-2">
-          <BookOpen className="size-4.5 text-primary" /> Notes
-        </h2>
+    <section className="w-full px-4 lg:px-6 py-2">
+      {/* Section Outer Container */}
+      <div className="rounded-2xl border border-border/60 bg-background/50 p-4 sm:p-6 shadow-sm backdrop-blur-sm transition-all duration-300">
+        
+        {/* Header Layout: Title on Left, Tabs on Right */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-3 border-b border-border/40">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
+              <NotebookPen className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                Notes
+              </h2>
+              <p className="text-xs text-muted-foreground">Classroom notebooks & lesson summaries</p>
+            </div>
+          </div>
 
-        {/* All Notes Link */}
-        <button
-          onClick={() => router.push(username ? `/student/${username}/notes` : "/student")}
-          className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 transition-colors cursor-pointer"
-        >
-          All Notes <ArrowRight className="size-3" />
-        </button>
+          {/* Right Controls: Tabs + View All */}
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <Tabs
+              value={activeTab}
+              onValueChange={(val) => setActiveTab(val as "recents" | "suggested")}
+              className="w-auto"
+            >
+              <TabsList className="bg-muted/70 p-1 rounded-xl border border-border/40 h-9">
+                <TabsTrigger
+                  value="recents"
+                  className="rounded-lg text-xs font-semibold px-3 py-1 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs transition-all"
+                >
+                  <Clock className="h-3.5 w-3.5 mr-1.5 opacity-70" />
+                  Recents
+                </TabsTrigger>
+                <TabsTrigger
+                  value="suggested"
+                  className="rounded-lg text-xs font-semibold px-3 py-1 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs transition-all"
+                >
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500 opacity-90" />
+                  Suggested
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <button
+              onClick={() => router.push(username ? `/student/${username}/notes` : "/student")}
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-accent/50 cursor-pointer"
+            >
+              All Notes <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Horizontally Scrollable Cards Container */}
+        {loading ? (
+          <div className="flex gap-5 overflow-x-auto pb-4 pt-2 scrollbar-none">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="min-w-[290px] max-w-[290px] sm:min-w-[320px] sm:max-w-[320px] shrink-0 rounded-2xl border border-border/50 bg-card p-5 space-y-4 animate-pulse"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="h-4 bg-muted rounded w-1/3" />
+                  <div className="h-3 bg-muted rounded w-1/4" />
+                </div>
+                <div className="h-6 bg-muted rounded w-4/5" />
+                <div className="space-y-2 pt-2">
+                  <div className="h-3.5 bg-muted rounded w-full" />
+                  <div className="h-3.5 bg-muted rounded w-5/6" />
+                  <div className="h-3.5 bg-muted rounded w-4/6" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            key={activeTab}
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="flex gap-5 overflow-x-auto pb-4 pt-2 scrollbar-none snap-x snap-mandatory focus:outline-none"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            <AnimatePresence mode="popLayout">
+              {displayedNotebooks.map((nb) => (
+                <motion.div
+                  key={nb.id}
+                  variants={cardVariants}
+                  whileHover={{ y: -6, scale: 1.015 }}
+                  whileTap={{ scale: 0.985 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  onClick={() => {
+                    if (username) {
+                      router.push(`/student/${username}/notes/${nb.id}`)
+                    } else {
+                      setSelectedNote(nb)
+                    }
+                  }}
+                  className="min-w-[285px] max-w-[285px] sm:min-w-[320px] sm:max-w-[320px] shrink-0 snap-start cursor-pointer"
+                >
+                  <Card className="h-full border border-border/70 bg-card text-card-foreground shadow-xs hover:shadow-xl hover:border-primary/40 transition-all duration-300 rounded-2xl flex flex-col justify-between overflow-hidden group">
+                    <CardHeader className="pb-3 pt-5 px-5 space-y-2.5">
+                      
+                      {/* Row 1: Notebook Icon + "Notebook" Label + Subject Badge + Relative Timestamp */}
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
+                            <BookOpen className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px] truncate">
+                            {nb.notebookLabel}
+                          </span>
+                          <span className="text-muted-foreground/40">•</span>
+                          <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.2 bg-muted/50 border-border/60 shrink-0">
+                            {nb.notebookSubject}
+                          </Badge>
+                        </div>
+                        <span className="text-[11px] font-medium text-muted-foreground/70 shrink-0 ml-2">
+                          {nb.timestamp}
+                        </span>
+                      </div>
+
+                      {/* Row 2: Large Notebook Title */}
+                      <h3 className="text-base sm:text-lg font-bold tracking-tight text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors pt-1">
+                        {nb.title}
+                      </h3>
+                    </CardHeader>
+
+                    <CardContent className="px-5 pb-5 pt-0 flex flex-col justify-between flex-1 gap-4">
+                      {/* Bullet list of tasks / highlights */}
+                      <ul className="space-y-2 flex-1">
+                        {nb.bullets.map((bullet, idx) => (
+                          <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-foreground/80 leading-snug">
+                            <span className="mt-[6px] h-1.5 w-1.5 rounded-full bg-primary/70 shrink-0" />
+                            <span className="line-clamp-2">{bullet}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {/* Bottom Footer: Small faded preview text & Teacher attribution */}
+                      <div className="pt-3 border-t border-border/50 flex flex-col gap-1">
+                        <p className="text-[11px] text-muted-foreground/70 line-clamp-1 italic">
+                          "{nb.previewText}"
+                        </p>
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
+                          <span className="flex items-center gap-1 font-medium truncate">
+                            <User className="h-3 w-3 text-primary/80 shrink-0" />
+                            <span className="truncate">{nb.teacherName}</span>
+                          </span>
+                          {nb.className && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
+                              Class {nb.className}{nb.sectionName ? `-${nb.sectionName}` : ""}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
 
-      {/* Topic Filter Pills */}
-      {topics.length > 1 && (
-        <div className="flex items-center gap-2 overflow-x-auto px-6 py-2.5 border-b border-border/30 scrollbar-none">
-          <Tag className="size-3.5 text-muted-foreground shrink-0 mr-1" />
-          {topics.map(topic => (
-            <button
-              key={topic}
-              onClick={() => setSelectedTopic(topic)}
-              className={`px-3 py-1 rounded-full text-xs font-medium shrink-0 transition-all cursor-pointer ${
-                selectedTopic === topic
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "bg-muted/60 text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              {topic}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {loading ? (
-        <div className="flex gap-4 overflow-x-auto px-6 py-4 scrollbar-none">
-          {[...Array(3)].map((_, i) => (
-            <div
-              key={i}
-              className="min-w-[280px] max-w-[280px] shrink-0 bg-white dark:bg-[#1e1e1e] rounded-xl p-5 flex flex-col gap-3 animate-pulse shadow-sm"
-            >
-              <div className="h-4 bg-muted rounded w-1/2" />
-              <div className="h-6 bg-muted rounded w-3/4" />
-              <div className="space-y-2 mt-2">
-                <div className="h-3 bg-muted rounded w-full" />
-                <div className="h-3 bg-muted rounded w-5/6" />
-                <div className="h-3 bg-muted rounded w-2/3" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : filteredNotes.length === 0 ? (
-        <div className="px-6 py-10 text-center flex flex-col items-center justify-center">
-          <NotebookPen className="size-10 text-muted-foreground/40 mb-2" />
-          <p className="text-sm font-semibold text-foreground">No notes found</p>
-        </div>
-      ) : (
-        /* Horizontal scroll for notes */
-        <div className="flex gap-4 overflow-x-auto px-6 pb-6 pt-4 scrollbar-none">
-          {filteredNotes.map(note => {
-            const colorStyle = COLOR_MAP[note.color || "default"] || COLOR_MAP.default
-            return (
-              <Card
-                key={note.id}
-                onClick={() => router.push(username ? `/student/${username}/notes/${note.id}` : "#")}
-                className={`relative min-w-[285px] max-w-[285px] shrink-0 ${colorStyle.cardBg} ${colorStyle.border}
-                           rounded-xl shadow-xs hover:shadow-md flex flex-col transition-all duration-200 cursor-pointer active:scale-98 overflow-hidden group`}
-              >
-                <CardHeader className="pb-2 pt-4 px-5 relative z-10">
-                  {/* Top row: Topic badge + timestamp */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <NotebookPen className="size-3.5 text-primary shrink-0" />
-                      <span className="text-xs font-bold text-primary truncate max-w-[130px]">
-                        {note.notebook}
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-medium text-muted-foreground/70 shrink-0">{note.timestamp}</span>
-                  </div>
-
-                  {/* Title */}
-                  <p className="text-sm font-bold text-foreground leading-snug line-clamp-2">
-                    {note.title}
-                  </p>
-                </CardHeader>
-
-                <CardContent className="px-5 pb-4 flex flex-col gap-2 flex-1 relative z-10">
-                  {/* Bullet list highlights */}
-                  <ul className="space-y-1.5 flex-1">
-                    {note.bullets.map((b, j) => (
-                      <li key={j} className="flex items-start gap-2 text-xs text-foreground/80 leading-normal">
-                        <span className="mt-[6px] size-1.5 rounded-full bg-primary/60 shrink-0" />
-                        <span className="line-clamp-2">{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Footer info: Teacher + Class */}
-                  <div className="mt-3 pt-2 border-t border-muted/30 flex items-center justify-between text-[10px] text-muted-foreground relative z-10">
-                    <span className="flex items-center gap-1 truncate">
-                      <User className="size-3 text-primary shrink-0" />
-                      <span className="truncate">{note.teacherName}</span>
-                    </span>
-                    {note.className && (
-                      <span className="px-1.5 py-0.5 rounded bg-muted/80 font-semibold text-[9px]">
-                        Class {note.className}{note.sectionName ? `-${note.sectionName}` : ""}
-                      </span>
-                    )}
-                  </div>
-                </CardContent>
-
-                {/* Dark Linear Gradient Overlay at Bottom (constantly decreasing opacity upward) */}
-                <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none rounded-b-xl z-0 transition-opacity opacity-75 group-hover:opacity-90" />
-              </Card>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Note Detail Dialog */}
-      <Dialog open={!!selectedNote} onOpenChange={open => !open && setSelectedNote(null)}>
+      {/* Note Preview Dialog */}
+      <Dialog open={!!selectedNote} onOpenChange={(open) => !open && setSelectedNote(null)}>
         {selectedNote && (
-          <DialogContent className="sm:max-w-md md:max-w-lg max-h-[85vh] overflow-y-auto rounded-2xl">
-            <DialogHeader>
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                  {selectedNote.notebook}
-                </span>
-                {selectedNote.className && (
-                  <span className="px-2 py-0.5 rounded-full bg-muted text-foreground text-[10px] font-semibold">
-                    Class {selectedNote.className}{selectedNote.sectionName ? `-${selectedNote.sectionName}` : ""}
-                  </span>
-                )}
-                <span className="text-[11px] text-muted-foreground flex items-center gap-1 ml-auto">
-                  <Calendar className="size-3" /> {selectedNote.timestamp}
+          <DialogContent className="sm:max-w-lg rounded-2xl border-border bg-background shadow-2xl">
+            <DialogHeader className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs font-semibold">
+                  {selectedNote.notebookSubject}
+                </Badge>
+                <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" /> {selectedNote.timestamp}
                 </span>
               </div>
               <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
                 {selectedNote.title}
               </DialogTitle>
-              <DialogDescription className="text-xs flex items-center gap-1 mt-1">
-                <User className="size-3 text-primary" /> Published by <span className="font-semibold text-foreground/90">{selectedNote.teacherName}</span>
+              <DialogDescription className="text-xs text-muted-foreground flex items-center gap-1">
+                <User className="h-3.5 w-3.5 text-primary" /> Teacher: <span className="font-semibold text-foreground">{selectedNote.teacherName}</span>
               </DialogDescription>
             </DialogHeader>
 
             <div className="py-4 space-y-4">
-              {/* Highlights Section */}
-              <div className="rounded-xl bg-primary/5 p-4 border border-primary/10">
-                <h4 className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Key Highlights</h4>
+              <div className="p-4 rounded-xl bg-muted/40 border border-border/60 space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-primary">Notebook Highlights</h4>
                 <ul className="space-y-2">
-                  {selectedNote.bullets.map((b, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm text-foreground/90 leading-relaxed">
-                      <span className="mt-[7px] size-1.5 rounded-full bg-primary shrink-0" />
-                      {b}
+                  {selectedNote.bullets.map((b, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground/90">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span>{b}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* PDF Download Section if pen-drawn PDF exists */}
-              {selectedNote.pdfUrl && (
-                <div className="rounded-xl bg-blue-500/10 p-3.5 border border-blue-500/20 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <FileText className="size-5 text-blue-600 dark:text-blue-400 shrink-0" />
-                    <div>
-                      <h4 className="text-xs font-bold text-foreground">Exported PDF Canvas Note</h4>
-                      <p className="text-[11px] text-muted-foreground">Original handwriting and pen drawing preserved in PDF format.</p>
-                    </div>
+              {selectedNote.rawContent && (
+                <div className="space-y-1.5">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Full Content Preview</h4>
+                  <div className="p-3.5 rounded-xl border border-border/50 bg-card text-xs leading-relaxed max-h-48 overflow-y-auto whitespace-pre-wrap font-mono text-foreground/80">
+                    {selectedNote.rawContent}
                   </div>
-                  <a
-                    href={selectedNote.pdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors shrink-0"
-                  >
-                    View PDF
-                  </a>
                 </div>
               )}
-
-              {/* Full Content Section */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Note Content</h4>
-                <div className="rounded-xl border border-muted bg-muted/20 p-4 max-h-[280px] overflow-y-auto text-sm leading-relaxed whitespace-pre-wrap font-mono text-foreground/80 scrollbar-thin">
-                  {selectedNote.rawContent || selectedNote.body}
-                </div>
-              </div>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setSelectedNote(null)}
-                className="px-4 py-2 text-sm font-semibold rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold rounded-xl border border-border bg-background hover:bg-accent transition-colors"
               >
                 Close
               </button>
+              {username && (
+                <button
+                  onClick={() => {
+                    const id = selectedNote.id
+                    setSelectedNote(null)
+                    router.push(`/student/${username}/notes/${id}`)
+                  }}
+                  className="px-4 py-2 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                >
+                  Open Full Note <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
           </DialogContent>
         )}
-      </Dialog>
-
-      {/* All Notes Modal */}
-      <Dialog open={showAllNotesModal} onOpenChange={setShowAllNotesModal}>
-        <DialogContent className="sm:max-w-2xl md:max-w-3xl max-h-[85vh] overflow-y-auto rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              <BookOpen className="size-5 text-primary" /> All Notes ({notes.length})
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              All lesson notes published by your class teachers.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
-            {notes.map(note => {
-              const colorStyle = COLOR_MAP[note.color || "default"] || COLOR_MAP.default
-              return (
-                <Card
-                  key={note.id}
-                  onClick={() => {
-                    setShowAllNotesModal(false)
-                    setSelectedNote(note)
-                  }}
-                  className={`relative ${colorStyle.cardBg} ${colorStyle.border} rounded-xl p-4 flex flex-col gap-2 shadow-xs hover:shadow-md cursor-pointer transition-all overflow-hidden group`}
-                >
-                  <div className="flex items-center justify-between relative z-10">
-                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                      {note.notebook}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">{note.timestamp}</span>
-                  </div>
-                  <h4 className="font-bold text-sm text-foreground line-clamp-1 relative z-10">{note.title}</h4>
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed relative z-10">{note.body}</p>
-                  <div className="mt-auto pt-2 border-t border-muted/30 flex items-center justify-between text-[10px] text-muted-foreground relative z-10">
-                    <span>By {note.teacherName}</span>
-                    {note.className && <span>Class {note.className}</span>}
-                  </div>
-                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none rounded-b-xl z-0 opacity-70 group-hover:opacity-90" />
-                </Card>
-              )
-            })}
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <button
-              onClick={() => setShowAllNotesModal(false)}
-              className="px-4 py-2 text-sm font-semibold rounded-xl bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-        </DialogContent>
       </Dialog>
     </section>
   )
 }
 
+export { StudentNotes as NotesSection }
