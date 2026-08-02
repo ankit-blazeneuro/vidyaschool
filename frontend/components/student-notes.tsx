@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, type Variants } from "framer-motion"
 import {
   Card,
   CardContent,
@@ -242,7 +242,7 @@ export function StudentNotes() {
   }, [notebooks, activeTab])
 
   // Framer Motion Animation Variants
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -253,7 +253,7 @@ export function StudentNotes() {
     },
   }
 
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: { opacity: 0, y: 16 },
     show: {
       opacity: 1,
