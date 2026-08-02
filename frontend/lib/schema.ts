@@ -91,6 +91,16 @@ export const feeInstallment = pgTable('fee_installment', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+export const feeStructure = pgTable('fee_structure', {
+  id: text('id').primaryKey(),
+  classNum: integer('class_num').notNull(),
+  className: text('class_name'),
+  components: text('components').notNull().default('[]'),
+  transportFee: integer('transport_fee').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 export const subjectClassRequest = pgTable('subject_class_request', {
   id: text('id').primaryKey(),
   teacherId: text('teacher_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
