@@ -16,9 +16,7 @@ export default function SignUpPage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [preferredRole, setPreferredRole] = useState<"student" | "teacher" | "librarian">("student")
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -29,7 +27,6 @@ export default function SignUpPage() {
       name,
       email,
       password,
-      preferredRole,
     })
 
     if (error) {
@@ -40,49 +37,25 @@ export default function SignUpPage() {
       return
     }
 
-    if ((preferredRole === "teacher" || preferredRole === "librarian") && data?.user?.id) {
-      await fetch("/api/admin/teacher-requests/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: data.user.id, preferredRole })
-      })
-    }
-
-    setSuccess(true)
     setLoading(false)
+    window.location.href = "/signup/onboarding"
   }
 
   const handleGoogleSignIn = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: "/signup/onboarding",
     })
   }
 
   const handleGitHubSignIn = async () => {
     await authClient.signIn.social({
       provider: "github",
-      callbackURL: "/dashboard",
+      callbackURL: "/signup/onboarding",
     })
   }
 
-  if (success) {
-    return (
-      <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6">
-        <div className="flex w-full max-w-sm flex-col gap-6">
-          <div className="flex flex-col items-center gap-2 text-center">
-            <h1 className="text-2xl font-bold">Check your email</h1>
-            <p className="text-sm text-balance text-muted-foreground">
-              We've sent a verification link to <strong>{email}</strong>. Please check your inbox and click the link to verify your account.
-            </p>
-          </div>
-          <Button asChild>
-            <Link href="/login">Go to Sign In</Link>
-          </Button>
-        </div>
-      </div>
-    )
-  }
+
 
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
@@ -155,24 +128,6 @@ export default function SignUpPage() {
                       )}
                     </button>
                   </div>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="role">Preferred Role</FieldLabel>
-                  <Select value={preferredRole} onValueChange={(value: "student" | "teacher" | "librarian") => setPreferredRole(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="teacher">Teacher</SelectItem>
-                      <SelectItem value="librarian">Librarian</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {(preferredRole === "teacher" || preferredRole === "librarian") && (
-                    <FieldDescription>
-                      Teacher and Librarian accounts require admin approval
-                    </FieldDescription>
-                  )}
                 </Field>
 
                 <Field>

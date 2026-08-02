@@ -30,9 +30,7 @@ function LibrarianOnboardingContent() {
             router.push(`/librarian/${data.username}`)
           }
         } else {
-          if (searchParams.get("onboarding") !== "true") {
-            router.replace("/librarian?onboarding=true")
-          }
+          router.replace("/signup/onboarding")
         }
       })
       .catch(() => {
@@ -48,7 +46,7 @@ function LibrarianOnboardingContent() {
     )
   }
 
-  const showOnboarding = searchParams.get("onboarding") === "true" || !profile?.onboardingCompleted
+  const showOnboarding = searchParams.get("onboarding") === "true" || !profile?.username || !profile?.onboardingCompleted
 
   return (
     <div className="min-h-screen bg-muted/30 relative flex flex-col items-center justify-center p-6">

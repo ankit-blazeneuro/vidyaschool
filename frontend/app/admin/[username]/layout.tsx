@@ -22,7 +22,7 @@ export default async function AdminUsernameLayout({
 
   // If no username is set, send to onboarding
   if (!currentProfile?.onboardingCompleted || !currentProfile.username) {
-    redirect('/admin?select=username')
+    redirect('/signup/onboarding')
   }
 
   // If requested username does not match, redirect to their own

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getAuthenticatedSession } from "@/lib/auth-helpers"
 import { db } from "@/lib/db"
 import { userProfile as userProfileTable, feeStructure as feeStructureTable, feeInstallment as feeInstallmentTable } from "@/lib/schema"
-import { eq, asc } from "drizzle-orm"
+import { eq, asc, or } from "drizzle-orm"
 import crypto from "crypto"
 
 export function isTransportUser(transportMode?: string | null): boolean {
@@ -32,12 +32,18 @@ export async function GET() {
       .then(res => res[0])
 
     const studentClass = profile?.class || "10"
+    const classNum = parseInt(studentClass.replace(/\D/g, ""), 10) || 10
     const usesTransport = isTransportUser(profile?.transportMode)
 
     const structureRow = await db
       .select()
       .from(feeStructureTable)
-      .where(eq(feeStructureTable.className, studentClass))
+      .where(
+        or(
+          eq(feeStructureTable.className, studentClass),
+          eq(feeStructureTable.classNum, classNum)
+        )
+      )
       .then(res => res[0])
 
     let components: Array<{ id: string; name: string; amount: number; billingPeriod: string }> = []

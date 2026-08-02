@@ -67,9 +67,9 @@ export async function POST(req: NextRequest) {
         await db.insert(userProfile).values({
           id: crypto.randomUUID(),
           userId: userId,
-          username: genUsername,
-          admissionNumber: genAdmission,
-          onboardingCompleted: true,
+          username: null,
+          admissionNumber: null,
+          onboardingCompleted: false,
           createdAt: new Date(),
           updatedAt: new Date(),
         })

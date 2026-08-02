@@ -27,7 +27,7 @@ export default async function TeacherUsernameLayout({
 
   // If the current user has no completed profile, send them to onboarding
   if (!currentProfile?.onboardingCompleted || !currentProfile.username) {
-    redirect('/teacher?onboarding=true')
+    redirect('/signup/onboarding')
   }
 
   // If the requested username doesn't exist, redirect everyone to their own profile

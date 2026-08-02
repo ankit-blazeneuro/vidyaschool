@@ -46,6 +46,8 @@ function StudentOnboardingContent() {
 
         if (data.username && data.onboardingCompleted && !forceOnboarding) {
           router.push(`/student/${data.username}`)
+        } else if (!data.username || !data.onboardingCompleted) {
+          router.push("/signup/onboarding")
         }
       })
       .catch(() => {
@@ -64,7 +66,7 @@ function StudentOnboardingContent() {
     )
   }
 
-  const showOnboarding = searchParams.get("onboarding") === "true" || !profile?.onboardingCompleted
+  const showOnboarding = searchParams.get("onboarding") === "true" || !profile?.username || !profile?.onboardingCompleted
 
   return (
     <div className="relative w-full min-h-screen bg-muted/30 flex flex-col items-center justify-center p-6">

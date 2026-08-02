@@ -36,8 +36,8 @@ export async function GET(req: NextRequest) {
     const fallbackUsername = session.user.name?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'student'
 
     return NextResponse.json({ 
-      username: profile?.username || fallbackUsername,
-      onboardingCompleted: profile?.onboardingCompleted ?? true 
+      username: profile?.username || null,
+      onboardingCompleted: profile?.onboardingCompleted ?? false 
     })
   } catch (error) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

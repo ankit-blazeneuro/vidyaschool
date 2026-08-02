@@ -52,9 +52,9 @@ export async function GET() {
       const newProf = {
         id: crypto.randomUUID(),
         userId: session.user.id,
-        username: genUsername,
-        admissionNumber: genAdmission,
-        onboardingCompleted: true,
+        username: null,
+        admissionNumber: null,
+        onboardingCompleted: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       }
