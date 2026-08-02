@@ -15,7 +15,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import {
   BookOpen,
@@ -24,7 +23,6 @@ import {
   User,
   ArrowRight,
   FileText,
-  Sparkles,
   Clock,
   CheckCircle2,
 } from "lucide-react"
@@ -135,7 +133,6 @@ export function StudentNotes() {
   const params = useParams<{ username: string }>()
   const username = params?.username || ""
 
-  const [activeTab, setActiveTab] = React.useState<"recents" | "suggested">("recents")
   const [notebooks, setNotebooks] = React.useState<NotebookCardData[]>(FALLBACK_NOTEBOOKS)
   const [loading, setLoading] = React.useState(true)
   const [selectedNote, setSelectedNote] = React.useState<NotebookCardData | null>(null)
@@ -221,7 +218,7 @@ export function StudentNotes() {
         timestamp: formatTimeAgo(note.updated_at || note.created_at),
         title: note.title || "Untitled Lesson Note",
         bullets,
-        previewText: previewText.length > 80 ? previewText.substring(0, 77) + "..." : (previewText || "Read full note content..."),
+        previewText: previewText.length > 70 ? previewText.substring(0, 67) + "..." : (previewText || "Read full note content..."),
         teacherName: note.teacher_name || note.teacherName || "Class Teacher",
         className: note.class || note.targetClass || "10",
         sectionName: note.section || note.targetSection || "A",
@@ -232,130 +229,94 @@ export function StudentNotes() {
     })
   }
 
-  // Filter notebooks by active tab
-  const displayedNotebooks = React.useMemo(() => {
-    if (activeTab === "suggested") {
-      const filtered = notebooks.filter(n => n.isSuggested)
-      return filtered.length > 0 ? filtered : notebooks
-    }
-    return notebooks
-  }, [notebooks, activeTab])
-
   // Framer Motion Animation Variants
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.05,
+        staggerChildren: 0.06,
+        delayChildren: 0.04,
       },
     },
   }
 
   const cardVariants: Variants = {
-    hidden: { opacity: 0, y: 16 },
+    hidden: { opacity: 0, y: 12 },
     show: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.35,
+        duration: 0.3,
         ease: "easeOut",
       },
     },
   }
 
   return (
-    <section className="w-full px-4 lg:px-6 py-2">
+    <section className="w-full px-4 lg:px-6 py-1.5">
       {/* Section Outer Container */}
-      <div className="rounded-2xl border border-border/60 bg-background/50 p-4 sm:p-6 shadow-sm backdrop-blur-sm transition-all duration-300">
+      <div className="rounded-2xl border border-border/60 bg-background/50 p-3.5 sm:p-4 shadow-xs backdrop-blur-xs transition-all duration-300">
         
-        {/* Header Layout: Title on Left, Tabs on Right */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-3 border-b border-border/40">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0">
-              <NotebookPen className="h-5 w-5" />
+        {/* Header Layout: Title on Left, View All on Right */}
+        <div className="flex items-center justify-between gap-3 mb-3 pb-2.5 border-b border-border/40">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
+              <NotebookPen className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-1.5">
                 Notes
               </h2>
-              <p className="text-xs text-muted-foreground">Classroom notebooks & lesson summaries</p>
+              <p className="text-[11px] text-muted-foreground leading-none">Classroom notebooks & lesson summaries</p>
             </div>
           </div>
 
-          {/* Right Controls: Tabs + View All */}
-          <div className="flex items-center gap-3 self-start sm:self-auto">
-            <Tabs
-              value={activeTab}
-              onValueChange={(val) => setActiveTab(val as "recents" | "suggested")}
-              className="w-auto"
-            >
-              <TabsList className="bg-muted/70 p-1 rounded-xl border border-border/40 h-9">
-                <TabsTrigger
-                  value="recents"
-                  className="rounded-lg text-xs font-semibold px-3 py-1 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs transition-all"
-                >
-                  <Clock className="h-3.5 w-3.5 mr-1.5 opacity-70" />
-                  Recents
-                </TabsTrigger>
-                <TabsTrigger
-                  value="suggested"
-                  className="rounded-lg text-xs font-semibold px-3 py-1 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-xs transition-all"
-                >
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-500 opacity-90" />
-                  Suggested
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-
-            <button
-              onClick={() => router.push(username ? `/student/${username}/notes` : "/student")}
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors px-2.5 py-1.5 rounded-lg hover:bg-accent/50 cursor-pointer"
-            >
-              All Notes <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          {/* Right Control: View All Link */}
+          <button
+            onClick={() => router.push(username ? `/student/${username}/notes` : "/student")}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors px-2 py-1 rounded-lg hover:bg-accent/50 cursor-pointer shrink-0"
+          >
+            All Notes <ArrowRight className="h-3.5 w-3.5" />
+          </button>
         </div>
 
         {/* Horizontally Scrollable Cards Container */}
         {loading ? (
-          <div className="flex gap-5 overflow-x-auto pb-4 pt-2 scrollbar-none">
+          <div className="flex gap-4 overflow-x-auto pb-2 pt-1 scrollbar-none">
             {[...Array(3)].map((_, i) => (
               <div
                 key={i}
-                className="min-w-[290px] max-w-[290px] sm:min-w-[320px] sm:max-w-[320px] shrink-0 rounded-2xl border border-border/50 bg-card p-5 space-y-4 animate-pulse"
+                className="min-w-[240px] max-w-[240px] sm:min-w-[260px] sm:max-w-[260px] shrink-0 rounded-xl border border-border/50 bg-card p-4 space-y-3 animate-pulse"
               >
                 <div className="flex justify-between items-center">
-                  <div className="h-4 bg-muted rounded w-1/3" />
+                  <div className="h-3.5 bg-muted rounded w-1/3" />
                   <div className="h-3 bg-muted rounded w-1/4" />
                 </div>
-                <div className="h-6 bg-muted rounded w-4/5" />
-                <div className="space-y-2 pt-2">
-                  <div className="h-3.5 bg-muted rounded w-full" />
-                  <div className="h-3.5 bg-muted rounded w-5/6" />
-                  <div className="h-3.5 bg-muted rounded w-4/6" />
+                <div className="h-5 bg-muted rounded w-4/5" />
+                <div className="space-y-1.5 pt-1">
+                  <div className="h-3 bg-muted rounded w-full" />
+                  <div className="h-3 bg-muted rounded w-5/6" />
                 </div>
               </div>
             ))}
           </div>
         ) : (
           <motion.div
-            key={activeTab}
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="flex gap-5 overflow-x-auto pb-4 pt-2 scrollbar-none snap-x snap-mandatory focus:outline-none"
+            className="flex gap-4 overflow-x-auto pb-2 pt-1 scrollbar-none snap-x snap-mandatory focus:outline-none"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             <AnimatePresence mode="popLayout">
-              {displayedNotebooks.map((nb) => (
+              {notebooks.map((nb) => (
                 <motion.div
                   key={nb.id}
                   variants={cardVariants}
-                  whileHover={{ y: -6, scale: 1.015 }}
+                  whileHover={{ y: -4, scale: 1.01 }}
                   whileTap={{ scale: 0.985 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
                   onClick={() => {
                     if (username) {
                       router.push(`/student/${username}/notes/${nb.id}`)
@@ -363,59 +324,59 @@ export function StudentNotes() {
                       setSelectedNote(nb)
                     }
                   }}
-                  className="min-w-[285px] max-w-[285px] sm:min-w-[320px] sm:max-w-[320px] shrink-0 snap-start cursor-pointer"
+                  className="min-w-[245px] max-w-[245px] sm:min-w-[265px] sm:max-w-[265px] shrink-0 snap-start cursor-pointer"
                 >
-                  <Card className="h-full border border-border/70 bg-card text-card-foreground shadow-xs hover:shadow-xl hover:border-primary/40 transition-all duration-300 rounded-2xl flex flex-col justify-between overflow-hidden group">
-                    <CardHeader className="pb-3 pt-5 px-5 space-y-2.5">
+                  <Card className="h-full border border-border/70 bg-card text-card-foreground shadow-2xs hover:shadow-md hover:border-primary/40 transition-all duration-250 rounded-xl flex flex-col justify-between overflow-hidden group">
+                    <CardHeader className="pb-2 pt-3.5 px-4 space-y-2">
                       
                       {/* Row 1: Notebook Icon + "Notebook" Label + Subject Badge + Relative Timestamp */}
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
-                            <BookOpen className="h-3.5 w-3.5" />
+                      <div className="flex items-center justify-between text-[11px]">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div className="p-1 rounded-md bg-primary/10 text-primary shrink-0">
+                            <BookOpen className="h-3 w-3" />
                           </div>
-                          <span className="font-semibold text-muted-foreground uppercase tracking-wider text-[11px] truncate">
+                          <span className="font-semibold text-muted-foreground uppercase tracking-wider text-[10px] truncate">
                             {nb.notebookLabel}
                           </span>
                           <span className="text-muted-foreground/40">•</span>
-                          <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.2 bg-muted/50 border-border/60 shrink-0">
+                          <Badge variant="outline" className="text-[9px] font-semibold px-1.5 py-0 bg-muted/50 border-border/60 shrink-0">
                             {nb.notebookSubject}
                           </Badge>
                         </div>
-                        <span className="text-[11px] font-medium text-muted-foreground/70 shrink-0 ml-2">
+                        <span className="text-[10px] font-medium text-muted-foreground/70 shrink-0 ml-1">
                           {nb.timestamp}
                         </span>
                       </div>
 
                       {/* Row 2: Large Notebook Title */}
-                      <h3 className="text-base sm:text-lg font-bold tracking-tight text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors pt-1">
+                      <h3 className="text-sm font-bold tracking-tight text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                         {nb.title}
                       </h3>
                     </CardHeader>
 
-                    <CardContent className="px-5 pb-5 pt-0 flex flex-col justify-between flex-1 gap-4">
+                    <CardContent className="px-4 pb-3.5 pt-0 flex flex-col justify-between flex-1 gap-3">
                       {/* Bullet list of tasks / highlights */}
-                      <ul className="space-y-2 flex-1">
+                      <ul className="space-y-1.5 flex-1">
                         {nb.bullets.map((bullet, idx) => (
-                          <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-foreground/80 leading-snug">
-                            <span className="mt-[6px] h-1.5 w-1.5 rounded-full bg-primary/70 shrink-0" />
+                          <li key={idx} className="flex items-start gap-2 text-xs text-foreground/80 leading-snug">
+                            <span className="mt-[5px] h-1.5 w-1.5 rounded-full bg-primary/70 shrink-0" />
                             <span className="line-clamp-2">{bullet}</span>
                           </li>
                         ))}
                       </ul>
 
                       {/* Bottom Footer: Small faded preview text & Teacher attribution */}
-                      <div className="pt-3 border-t border-border/50 flex flex-col gap-1">
-                        <p className="text-[11px] text-muted-foreground/70 line-clamp-1 italic">
+                      <div className="pt-2 border-t border-border/40 flex flex-col gap-0.5">
+                        <p className="text-[10px] text-muted-foreground/70 line-clamp-1 italic">
                           "{nb.previewText}"
                         </p>
-                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-0.5">
                           <span className="flex items-center gap-1 font-medium truncate">
-                            <User className="h-3 w-3 text-primary/80 shrink-0" />
+                            <User className="h-2.5 w-2.5 text-primary/80 shrink-0" />
                             <span className="truncate">{nb.teacherName}</span>
                           </span>
                           {nb.className && (
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
+                            <span className="text-[9px] font-semibold px-1 py-0.2 rounded bg-muted text-muted-foreground shrink-0">
                               Class {nb.className}{nb.sectionName ? `-${nb.sectionName}` : ""}
                             </span>
                           )}
