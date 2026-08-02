@@ -24,24 +24,25 @@ export const authClient = createAuthClient({
 
 export const { signIn, signUp, signOut, useSession } = authClient
 
-export async function logoutUser() {
-  try {
-    await fetch("/api/auth/logout", { method: "POST" })
-  } catch (e) {}
-
-  try {
-    await authClient.signOut()
-  } catch (e) {}
-
+export function logoutUser() {
+  // 1. Immediately expire cookies client-side so middleware sees empty session on next page load
   if (typeof document !== 'undefined') {
     document.cookie = "better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
     document.cookie = "__Secure-better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
   }
 
+  // 2. Clear local and session storage instantly
   try {
     if (typeof localStorage !== 'undefined') localStorage.clear()
     if (typeof sessionStorage !== 'undefined') sessionStorage.clear()
   } catch (e) {}
 
+  // 3. Non-blocking background server cleanup with keepalive
+  try {
+    fetch("/api/auth/logout", { method: "POST", keepalive: true }).catch(() => {})
+    authClient.signOut().catch(() => {})
+  } catch (e) {}
+
+  // 4. Redirect to /login instantly (< 10ms)
   window.location.href = "/login"
 }
