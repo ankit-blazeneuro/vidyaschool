@@ -35,19 +35,31 @@ export function NavUser() {
   const { isMobile } = useSidebar()
   const { setTheme } = useTheme()
   const { data: session, isPending } = useSession()
+  const [fetchedUser, setFetchedUser] = React.useState<any>(null)
   const [username, setUsername] = React.useState<string | null>(null)
+  const [loading, setLoading] = React.useState(true)
 
   React.useEffect(() => {
-    if (isPending) return
-    fetch('/api/profile/username')
-      .then(res => res.json())
-      .then(data => {
-        if (data.username) setUsername(data.username)
+    fetch('/api/account')
+      .then(res => {
+        if (!res.ok) return null
+        return res.json()
       })
-      .catch(() => setUsername(null))
-  }, [isPending])
+      .then(data => {
+        if (data?.user) {
+          setFetchedUser(data.user)
+          if (data.profile?.username) {
+            setUsername(data.profile.username)
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
-  if (isPending) {
+  const currentUser = session?.user || fetchedUser
+
+  if (isPending && loading && !currentUser) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
@@ -63,7 +75,7 @@ export function NavUser() {
     )
   }
 
-  if (!session?.user) {
+  if (!currentUser) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
@@ -75,7 +87,7 @@ export function NavUser() {
     )
   }
 
-  const user = session.user
+  const user = currentUser
 
   const handleSignOut = async () => {
     await authClient.signOut()
