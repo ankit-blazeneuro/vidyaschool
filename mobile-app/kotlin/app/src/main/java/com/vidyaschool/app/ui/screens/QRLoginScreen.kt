@@ -41,6 +41,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.addPathNodes
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.painterResource
+import com.vidyaschool.app.R
 import androidx.core.content.ContextCompat
 import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
@@ -335,43 +340,14 @@ fun QRLoginScreen(
                         // Scanning overlay
                         if (scanState is ScanState.Scanning) {
                             Box(modifier = Modifier.fillMaxSize()) {
-                                // Corner marks
-                                val cornerSize = 24.dp
-                                val cornerWidth = 3.dp
-                                // Top-left
-                                Box(
-                                    Modifier.size(cornerSize).align(Alignment.TopStart).padding(8.dp)
-                                        .border(
-                                            androidx.compose.foundation.BorderStroke(
-                                                cornerWidth,
-                                                Brush.linearGradient(listOf(teal, tealLight))
-                                            ),
-                                            RoundedCornerShape(topStart = 6.dp)
-                                        )
-                                )
-                                // Top-right
-                                Box(
-                                    Modifier.size(cornerSize).align(Alignment.TopEnd).padding(8.dp)
-                                        .border(
-                                            androidx.compose.foundation.BorderStroke(
-                                                cornerWidth,
-                                                Brush.linearGradient(listOf(tealLight, teal))
-                                            ),
-                                            RoundedCornerShape(topEnd = 6.dp)
-                                        )
-                                )
-                                // Scanning line
+                                // Simple straight white scanning line
                                 Box(
                                     Modifier
                                         .align(Alignment.TopStart)
                                         .fillMaxWidth()
                                         .height(2.dp)
                                         .graphicsLayer { translationY = 280.dp.toPx() * scanLineY }
-                                        .background(
-                                            Brush.horizontalGradient(
-                                                listOf(Color.Transparent, teal, tealLight, teal, Color.Transparent)
-                                            )
-                                        )
+                                        .background(Color.White)
                                 )
                             }
                         }
@@ -406,10 +382,8 @@ fun QRLoginScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint = Color(0xFF22C55E),
+                                SolarVerifiedCheckIcon(
+                                    color = Color(0xFF22C55E),
                                     modifier = Modifier.size(64.dp)
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
@@ -536,3 +510,339 @@ fun QRLoginScreen(
         }
     }
 }
+
+// ── Bottom-sheet QR scanner drawer ───────────────────────────────────────────
+// Opened from sidebar. Pure black & white — just the scanner, nothing extra.
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun QRLoginDrawer(
+    onDismiss: () -> Unit
+) {
+    val context        = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val scope          = rememberCoroutineScope()
+    val sessionManager = remember { SessionManager(context) }
+    val sheetState     = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    var scanState by remember { mutableStateOf<ScanState>(ScanState.Scanning) }
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+                    == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> hasCameraPermission = granted }
+
+    LaunchedEffect(Unit) {
+        if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    val cameraExecutor: ExecutorService = remember { Executors.newSingleThreadExecutor() }
+    DisposableEffect(Unit) { onDispose { cameraExecutor.shutdown() } }
+
+    fun onQRDetected(raw: String) {
+        if (scanState !is ScanState.Scanning) return
+        val payload = parseQRPayload(raw) ?: return
+        scanState = ScanState.Confirming
+        val token = sessionManager.getSessionToken()
+        if (token.isNullOrBlank()) {
+            scanState = ScanState.Error("Please log in on your mobile app first")
+            return
+        }
+        scope.launch {
+            try {
+                val res = withContext(Dispatchers.IO) {
+                    RetrofitClient.authApi.confirmQRToken(
+                        authHeader = "Bearer $token",
+                        request    = QRConfirmRequest(qrToken = payload.token)
+                    )
+                }
+                if (res.isSuccessful) {
+                    scanState = ScanState.Success((res.body()?.get("message") as? String) ?: "User")
+                    delay(1400)
+                    onDismiss()
+                } else {
+                    scanState = ScanState.Error(
+                        when (res.code()) {
+                            404  -> "QR code expired or invalid"
+                            409  -> "QR code already used"
+                            else -> "Confirmation failed (${res.code()})"
+                        }
+                    )
+                }
+            } catch (e: Exception) {
+                scanState = ScanState.Error("Network error: ${e.message}")
+            }
+        }
+    }
+
+    val scanLineAnim = rememberInfiniteTransition(label = "scan")
+    val scanLineY by scanLineAnim.animateFloat(
+        initialValue  = 0f,
+        targetValue   = 1f,
+        animationSpec = infiniteRepeatable(
+            animation  = tween(1800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scanY"
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState       = sheetState,
+        containerColor   = Color(0xFF0D0D0D),
+        contentColor     = Color.White,
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp, bottom = 8.dp)
+                    .width(36.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color.White.copy(alpha = 0.2f))
+            )
+        },
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 36.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        "Scan to Login",
+                        fontSize   = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color      = Color.White
+                    )
+                    Text(
+                        "Point at the QR code on your browser",
+                        fontSize = 12.sp,
+                        color    = Color.White.copy(alpha = 0.38f)
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.08f))
+                        .clickable(
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            indication        = null
+                        ) { onDismiss() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector        = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint               = Color.White.copy(alpha = 0.55f),
+                        modifier           = Modifier.size(15.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(22.dp))
+
+            // Scanner viewport — 260×260, black fill, white borders
+            Box(
+                modifier = Modifier
+                    .size(260.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.Black)
+                    .border(1.dp, Color.White.copy(alpha = 0.10f), RoundedCornerShape(16.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                when {
+                    !hasCameraPermission -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(20.dp)
+                        ) {
+                            Text("📷", fontSize = 32.sp)
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                "Camera access required",
+                                color     = Color.White.copy(alpha = 0.55f),
+                                fontSize  = 12.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            OutlinedButton(
+                                onClick = { permissionLauncher.launch(Manifest.permission.CAMERA) },
+                                border  = BorderStroke(1.dp, Color.White.copy(alpha = 0.25f)),
+                                colors  = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                            ) { Text("Allow Camera", fontSize = 12.sp) }
+                        }
+                    }
+
+                    scanState is ScanState.Scanning || scanState is ScanState.Confirming -> {
+                        AndroidView(
+                            factory = { ctx ->
+                                val previewView = PreviewView(ctx)
+                                val future = ProcessCameraProvider.getInstance(ctx)
+                                future.addListener({
+                                    val provider = future.get()
+                                    val preview = Preview.Builder().build().also {
+                                        it.setSurfaceProvider(previewView.surfaceProvider)
+                                    }
+                                    val analysis = ImageAnalysis.Builder()
+                                        .setTargetResolution(Size(1280, 720))
+                                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                        .build().also { ia ->
+                                            ia.setAnalyzer(cameraExecutor, QRAnalyzer { raw -> onQRDetected(raw) })
+                                        }
+                                    try {
+                                        provider.unbindAll()
+                                        provider.bindToLifecycle(
+                                            lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis
+                                        )
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("QRDrawer", "Bind failed", e)
+                                    }
+                                }, ContextCompat.getMainExecutor(ctx))
+                                previewView
+                            },
+                            onRelease = {
+                                try {
+                                    val f = ProcessCameraProvider.getInstance(context)
+                                    f.addListener({ f.get().unbindAll() }, ContextCompat.getMainExecutor(context))
+                                } catch (e: Exception) { /* ignored */ }
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        // White scanning line
+                        if (scanState is ScanState.Scanning) {
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                // Simple straight white scanning line
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopStart)
+                                        .fillMaxWidth()
+                                        .height(2.dp)
+                                        .graphicsLayer { translationY = 260.dp.toPx() * scanLineY }
+                                        .background(Color.White)
+                                )
+                            }
+                        }
+
+                        if (scanState is ScanState.Confirming) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black.copy(alpha = 0.72f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    CircularProgressIndicator(
+                                        color       = Color.White,
+                                        strokeWidth = 2.dp,
+                                        modifier    = Modifier.size(28.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text("Confirming…", color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+
+                    scanState is ScanState.Success -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize().background(Color.Black),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            SolarVerifiedCheckIcon(
+                                color = Color.White,
+                                modifier = Modifier.size(56.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Login approved", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                            Text("Browser is now signed in", color = Color.White.copy(alpha = 0.38f), fontSize = 11.sp)
+                        }
+                    }
+
+                    scanState is ScanState.Error -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize().background(Color.Black).padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text("✕", fontSize = 36.sp, color = Color.White.copy(alpha = 0.4f))
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                (scanState as ScanState.Error).message,
+                                color     = Color.White.copy(alpha = 0.65f),
+                                fontSize  = 12.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(14.dp))
+                            OutlinedButton(
+                                onClick = { scanState = ScanState.Scanning },
+                                border  = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+                                colors  = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                            ) { Text("Try Again", fontSize = 12.sp) }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                "vidyaschool.vercel.app → Login with QR Code",
+                fontSize  = 11.sp,
+                color     = Color.White.copy(alpha = 0.25f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun SolarVerifiedCheckIcon(
+    modifier: Modifier = Modifier,
+    color: Color = Color.White
+) {
+    val vector = remember(color) {
+        ImageVector.Builder(
+            name = "SolarCheckCircleBoldDuotone",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            addPath(
+                pathData = addPathNodes("M22,12C22,17.5228 17.5228,22 12,22C6.47715,22 2,17.5228 2,12C2,6.47715 6.47715,2 12,2C17.5228,2 22,6.47715 22,12Z"),
+                fill = SolidColor(color),
+                fillAlpha = 0.35f
+            )
+            addPath(
+                pathData = addPathNodes("M16.0303,8.96967C16.3232,9.26256 16.3232,9.73744 16.0303,10.0303L11.0303,15.0303C10.7374,15.3232 10.2626,15.3232 9.96967,15.0303L7.96967,13.0303C7.67678,12.7374 7.67678,12.2626 7.96967,11.9697C8.26256,11.6768 8.73744,11.6768 9.03033,11.9697L10.5,13.4393L12.7348,11.2045L14.9697,8.96967C15.2626,8.67678 15.7374,8.67678 16.0303,8.96967Z"),
+                fill = SolidColor(color),
+                fillAlpha = 1.0f
+            )
+        }.build()
+    }
+    Icon(
+        imageVector = vector,
+        contentDescription = "Verified Check",
+        tint = Color.Unspecified,
+        modifier = modifier
+    )
+}
+
+

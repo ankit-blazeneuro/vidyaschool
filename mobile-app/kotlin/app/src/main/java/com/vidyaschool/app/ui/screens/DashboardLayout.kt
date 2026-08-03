@@ -1408,24 +1408,11 @@ fun DashboardLayout(
         )
     }
 
-    // ── QR Code Login overlay ───────────────────────────────────────────────
+    // ── QR Code Login drawer bottom sheet ───────────────────────────────────
     if (showQRLogin) {
-        androidx.compose.ui.window.Dialog(
-            onDismissRequest = { showQRLogin = false },
-            properties = androidx.compose.ui.window.DialogProperties(
-                usePlatformDefaultWidth = false,
-                dismissOnBackPress = true,
-                dismissOnClickOutside = false
-            )
-        ) {
-            QRLoginScreen(
-                onClose = { showQRLogin = false },
-                onLoginSuccess = { token, user ->
-                    // QR login is for web — just close the scanner after confirming
-                    showQRLogin = false
-                }
-            )
-        }
+        QRLoginDrawer(
+            onDismiss = { showQRLogin = false }
+        )
     }
 
     // Note detail screen (opened in new full screen when note is clicked)
