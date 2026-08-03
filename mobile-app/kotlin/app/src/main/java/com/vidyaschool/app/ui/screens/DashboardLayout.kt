@@ -23,6 +23,9 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.animation.AnimatedVisibility
@@ -2446,6 +2449,8 @@ fun ProfileTabContent(
     var userProfile by remember { mutableStateOf<UserProfileData?>(null) }
     var isLoadingProfile by remember { mutableStateOf(false) }
     var isLoadingSection by remember { mutableStateOf(false) }
+    var showUserAccountDrawer by remember { mutableStateOf(false) }
+    var showAvatarUploadDrawer by remember { mutableStateOf(false) }
 
     // Editable state fields
     var editPhoneNumber by remember { mutableStateOf("") }
@@ -2598,307 +2603,449 @@ fun ProfileTabContent(
                         .padding(horizontal = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Top Profile Card: Left Avatar, Right Name & Role
-                    Card(
+                // Top Profile User Info: Transparent Column (No BG Card), Bigger Square Avatar
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Square Avatar (96dp Big with 20dp Rounded Border)
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f), RoundedCornerShape(16.dp)),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            .size(96.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .clickable { showAvatarUploadDrawer = true }
+                            .border(2.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                            .padding(4.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            // Left Avatar
+                        if (!avatarUrl.isNullOrEmpty()) {
+                            AsyncImage(
+                                model = avatarUrl,
+                                contentDescription = "Avatar",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(16.dp))
+                            )
+                        } else {
                             Box(
                                 modifier = Modifier
-                                    .size(68.dp)
-                                    .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), CircleShape)
-                                    .padding(3.dp),
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(MaterialTheme.colorScheme.primary),
                                 contentAlignment = Alignment.Center
                             ) {
-                                if (!avatarUrl.isNullOrEmpty()) {
-                                    AsyncImage(
-                                        model = avatarUrl,
-                                        contentDescription = "Avatar",
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(CircleShape)
-                                    )
-                                } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primary),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = name.firstOrNull()?.uppercase() ?: "?",
-                                            fontSize = 24.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Right User Details
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
                                 Text(
-                                    text = name,
-                                    fontSize = 18.sp,
+                                    text = name.firstOrNull()?.uppercase() ?: "?",
+                                    fontSize = 32.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    color = Color.White
                                 )
-                                Text(
-                                    text = if (username.isNotEmpty()) "@$username" else email,
-                                    fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(100.dp))
-                                        .padding(horizontal = 10.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = role.uppercase(),
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        letterSpacing = 0.5.sp
-                                    )
-                                }
                             }
                         }
                     }
 
-                    Text(
-                        text = "ACCOUNT & DETAILS",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                        letterSpacing = 1.sp,
-                        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
-                    )
-
-                    // Option Buttons List
-                    ProfileOptionRow(
-                        icon = Icons.Default.Person,
-                        title = "Personal Details",
-                        subtitle = "Name, Phone, Class & Section",
-                        onClick = { openSection("personal") }
-                    )
-
-                    if (role.equals("student", ignoreCase = true)) {
-                        ProfileOptionRow(
-                            icon = Icons.Default.Person,
-                            title = "Parent / Guardian Details",
-                            subtitle = "Guardian contact details & email",
-                            onClick = { openSection("parent") }
+                    // Student Name just below Avatar with Expand Combobox Button on right
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { showUserAccountDrawer = true }
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = name,
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Expand Account Info",
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                     }
+                }
 
+                Text(
+                    text = "ACCOUNT & DETAILS",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                )
+
+                // Option Buttons List using Solar vector icons matching Sidebar style
+                ProfileOptionRow(
+                    iconRes = com.vidyaschool.app.R.drawable.ic_solar_user,
+                    title = "Personal Details",
+                    onClick = { openSection("personal") }
+                )
+
+                if (role.equals("student", ignoreCase = true)) {
                     ProfileOptionRow(
-                        icon = Icons.Default.Home,
-                        title = "Address Details",
-                        subtitle = "Street address, City, State & Pincode",
-                        onClick = { openSection("address") }
+                        iconRes = com.vidyaschool.app.R.drawable.ic_solar_parent,
+                        title = "Parent / Guardian Details",
+                        onClick = { openSection("parent") }
                     )
+                }
 
-                    ProfileOptionRow(
-                        icon = Icons.Default.Info,
-                        title = "Documents & Status",
-                        subtitle = "Admission ID & Verification status",
-                        onClick = { openSection("documents") }
-                    )
+                ProfileOptionRow(
+                    iconRes = com.vidyaschool.app.R.drawable.ic_solar_address,
+                    title = "Address Details",
+                    onClick = { openSection("address") }
+                )
 
-                    ProfileOptionRow(
-                        icon = Icons.Default.Info,
-                        title = "Appearance",
-                        subtitle = "App theme preferences",
-                        badgeText = themeMode.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.ROOT) else it.toString() },
-                        onClick = { openSection("appearance") }
-                    )
+                ProfileOptionRow(
+                    iconRes = com.vidyaschool.app.R.drawable.ic_solar_document,
+                    title = "Documents & Status",
+                    onClick = { openSection("documents") }
+                )
 
-                    ProfileOptionRow(
-                        icon = Icons.Default.Delete,
-                        title = "Clear App Cache",
-                        subtitle = "Clear temporary cache files",
-                        onClick = {
-                            try {
-                                context.cacheDir.deleteRecursively()
-                                android.widget.Toast.makeText(context, "App cache cleared successfully!", android.widget.Toast.LENGTH_SHORT).show()
-                            } catch (e: Exception) {
-                                android.widget.Toast.makeText(context, "Cache cleared", android.widget.Toast.LENGTH_SHORT).show()
-                            }
+                ProfileOptionRow(
+                    iconRes = com.vidyaschool.app.R.drawable.ic_solar_appearance,
+                    title = "Appearance",
+                    onClick = { openSection("appearance") }
+                )
+
+                ProfileOptionRow(
+                    iconRes = com.vidyaschool.app.R.drawable.ic_solar_trash,
+                    title = "Clear App Cache",
+                    onClick = {
+                        try {
+                            context.cacheDir.deleteRecursively()
+                            android.widget.Toast.makeText(context, "App cache cleared successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            android.widget.Toast.makeText(context, "Cache cleared", android.widget.Toast.LENGTH_SHORT).show()
                         }
-                    )
+                    }
+                )
 
-                    ProfileOptionRow(
-                        icon = Icons.Default.Info,
-                        title = "Version & Build",
-                        subtitle = "v2.4.0 (Build 42)",
-                        onClick = { openSection("version") }
-                    )
+                ProfileOptionRow(
+                    iconRes = com.vidyaschool.app.R.drawable.ic_solar_info,
+                    title = "Version & Build",
+                    onClick = { openSection("version") }
+                )
 
-                    ProfileOptionRow(
-                        icon = Icons.Default.Lock,
-                        title = "Log Out",
-                        subtitle = "Sign out of your account session",
-                        isDanger = true,
-                        onClick = onLogout
-                    )
+                ProfileOptionRow(
+                    iconRes = com.vidyaschool.app.R.drawable.ic_solar_logout,
+                    title = "Log Out",
+                    isDanger = true,
+                    onClick = onLogout
+                )
                 }
             }
         }
 
-    // Separate Screen Modal for Details
+    // Expandable Bottom Sheet Drawer for Details
     if (activeSection != null) {
         val sec = activeSection!!
-        Dialog(
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = false
+        )
+        val drawerScrollState = rememberScrollState()
+
+        // Expand to full screen when user scrolls inside the drawer
+        LaunchedEffect(drawerScrollState.value) {
+            if (drawerScrollState.value > 0 && sheetState.currentValue != SheetValue.Expanded) {
+                sheetState.expand()
+            }
+        }
+
+        val isExpanded = sheetState.currentValue == SheetValue.Expanded || sheetState.targetValue == SheetValue.Expanded
+        val dragHandleAlpha by animateFloatAsState(
+            targetValue = if (isExpanded) 0f else 1f,
+            animationSpec = tween(durationMillis = 300),
+            label = "dragHandleAlpha"
+        )
+        val topPaddingDp by animateDpAsState(
+            targetValue = if (isExpanded) 36.dp else 12.dp,
+            animationSpec = tween(durationMillis = 300),
+            label = "topPaddingDp"
+        )
+
+        ModalBottomSheet(
             onDismissRequest = { activeSection = null },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+            scrimColor = Color.Black.copy(alpha = 0.5f),
+            dragHandle = {
+                if (dragHandleAlpha > 0.01f) {
+                    Box(modifier = Modifier.graphicsLayer { alpha = dragHandleAlpha }) {
+                        BottomSheetDefaults.DragHandle()
+                    }
+                }
+            }
         ) {
-            Surface(
+            Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .padding(
+                        start = 20.dp,
+                        end = 20.dp,
+                        top = topPaddingDp,
+                        bottom = 8.dp
+                    )
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .statusBarsPadding()
-                        .padding(20.dp)
+                // Drawer Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Sub-screen Header
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            IconButton(onClick = { activeSection = null }) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
-                            }
-                            Text(
-                                text = when (sec) {
-                                    "personal" -> "Personal Details"
-                                    "parent" -> "Parent Details"
-                                    "address" -> "Address Details"
-                                    "documents" -> "Documents & Status"
-                                    "appearance" -> "Appearance"
-                                    "version" -> "App Version & Info"
-                                    else -> "Details"
-                                },
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                        if (sec in listOf("personal", "parent", "address")) {
-                            Button(
-                                onClick = { saveSectionSettings(sec) },
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                            ) {
-                                Text("Save", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                            }
+                    Text(
+                        text = when (sec) {
+                            "personal" -> "Personal Details"
+                            "parent" -> "Parent Details"
+                            "address" -> "Address Details"
+                            "documents" -> "Documents & Status"
+                            "appearance" -> "Appearance"
+                            "version" -> "App Version & Info"
+                            else -> "Details"
+                        },
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (sec in listOf("personal", "parent", "address")) {
+                        Button(
+                            onClick = {
+                                saveSectionSettings(sec)
+                                coroutineScope.launch { sheetState.hide() }.invokeOnCompletion {
+                                    activeSection = null
+                                }
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
+                            modifier = Modifier.height(30.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("Save", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-                    Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    if (isLoadingSection) {
-                        Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
-                        }
-                    } else {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            when (sec) {
-                                "personal" -> {
-                                    Input(value = tempUsername, onValueChange = { tempUsername = it }, label = "Username", placeholder = "e.g. jondoe")
-                                    Input(value = editPhoneNumber, onValueChange = { editPhoneNumber = it }, label = "Phone Number", placeholder = "e.g. 9876543210")
-                                    Select(
-                                        selectedValue = editClass.ifBlank { "none" },
-                                        onValueChange = { editClass = it },
-                                        options = listOf(SelectOption("none", "Not assigned")) +
-                                                listOf("Nursery", "KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12").map { c ->
-                                                    SelectOption(value = c, label = if (c == "Nursery" || c == "KG") c else "Class $c")
-                                                },
-                                        label = "Class", placeholder = "Select class"
-                                    )
-                                    Select(
-                                        selectedValue = editSection.ifBlank { "none" },
-                                        onValueChange = { editSection = it },
-                                        options = listOf(SelectOption("none", "Not assigned")) + listOf("A", "B", "C", "D", "E", "F").map { SelectOption(it, it) },
-                                        label = "Section", placeholder = "Select section"
-                                    )
-                                }
-                                "parent" -> {
-                                    Input(value = editParentName, onValueChange = { editParentName = it }, label = "Parent Name", placeholder = "e.g. Rajesh Kumar")
-                                    Input(value = editParentPhone, onValueChange = { editParentPhone = it }, label = "Parent Phone", placeholder = "e.g. 9876543210")
-                                    Input(value = editParentEmail, onValueChange = { editParentEmail = it }, label = "Parent Email", placeholder = "e.g. parent@email.com")
-                                }
-                                "address" -> {
-                                    Input(value = editAddress, onValueChange = { editAddress = it }, label = "Street Address", placeholder = "e.g. 42 MG Road")
-                                    Input(value = editCity, onValueChange = { editCity = it }, label = "City", placeholder = "e.g. Delhi")
-                                    Input(value = editState, onValueChange = { editState = it }, label = "State", placeholder = "e.g. Delhi")
-                                    Input(value = editPincode, onValueChange = { editPincode = it }, label = "Pincode", placeholder = "e.g. 110001")
-                                }
-                                "documents" -> {
-                                    ProfileDetailRow(label = "Admission No", value = userProfile?.admissionNumber ?: "2024/STU/102")
-                                    ProfileDetailRow(label = "Verification", value = if (userProfile?.onboardingCompleted == true) "VERIFIED ✓" else "PENDING")
-                                    ProfileDetailRow(label = "Commute Mode", value = userProfile?.transportMode ?: "Walking")
-                                }
-                                "appearance" -> {
-                                    Text("Select Theme", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                                    listOf("system" to "System Default", "light" to "Light Mode", "dark" to "Dark Mode").forEach { (valKey, label) ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(if (themeMode == valKey) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface)
-                                                .border(1.dp, if (themeMode == valKey) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
-                                                .clickable { onThemeChange(valKey) }
-                                                .padding(16.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-                                            if (themeMode == valKey) {
-                                                Icon(Icons.Default.Info, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary)
-                                            }
+                if (isLoadingSection) {
+                    Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(drawerScrollState),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        when (sec) {
+                            "personal" -> {
+                                Input(value = tempUsername, onValueChange = { tempUsername = it }, label = "Username", placeholder = "e.g. jondoe")
+                                Input(value = editPhoneNumber, onValueChange = { editPhoneNumber = it }, label = "Phone Number", placeholder = "e.g. 9876543210")
+                                Select(
+                                    selectedValue = editClass.ifBlank { "none" },
+                                    onValueChange = { editClass = it },
+                                    options = listOf(SelectOption("none", "Not assigned")) +
+                                            listOf("Nursery", "KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12").map { c ->
+                                                SelectOption(value = c, label = if (c == "Nursery" || c == "KG") c else "Class $c")
+                                            },
+                                    label = "Class", placeholder = "Select class"
+                                )
+                                Select(
+                                    selectedValue = editSection.ifBlank { "none" },
+                                    onValueChange = { editSection = it },
+                                    options = listOf(SelectOption("none", "Not assigned")) + listOf("A", "B", "C", "D", "E", "F").map { SelectOption(it, it) },
+                                    label = "Section", placeholder = "Select section"
+                                )
+                            }
+                            "parent" -> {
+                                Input(value = editParentName, onValueChange = { editParentName = it }, label = "Parent Name", placeholder = "e.g. Rajesh Kumar")
+                                Input(value = editParentPhone, onValueChange = { editParentPhone = it }, label = "Parent Phone", placeholder = "e.g. 9876543210")
+                                Input(value = editParentEmail, onValueChange = { editParentEmail = it }, label = "Parent Email", placeholder = "e.g. parent@email.com")
+                            }
+                            "address" -> {
+                                Input(value = editAddress, onValueChange = { editAddress = it }, label = "Street Address", placeholder = "e.g. 42 MG Road")
+                                Input(value = editCity, onValueChange = { editCity = it }, label = "City", placeholder = "e.g. Delhi")
+                                Input(value = editState, onValueChange = { editState = it }, label = "State", placeholder = "e.g. Delhi")
+                                Input(value = editPincode, onValueChange = { editPincode = it }, label = "Pincode", placeholder = "e.g. 110001")
+                            }
+                            "documents" -> {
+                                ProfileDetailRow(label = "Admission No", value = userProfile?.admissionNumber ?: "2024/STU/102")
+                                ProfileDetailRow(label = "Verification", value = if (userProfile?.onboardingCompleted == true) "VERIFIED ✓" else "PENDING")
+                                ProfileDetailRow(label = "Commute Mode", value = userProfile?.transportMode ?: "Walking")
+                            }
+                            "appearance" -> {
+                                Text("Select Theme", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                listOf("system" to "System Default", "light" to "Light Mode", "dark" to "Dark Mode").forEach { (valKey, label) ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(if (themeMode == valKey) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface)
+                                            .border(1.dp, if (themeMode == valKey) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                                            .clickable { onThemeChange(valKey) }
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                                        if (themeMode == valKey) {
+                                            Icon(
+                                                painter = painterResource(id = com.vidyaschool.app.R.drawable.ic_solar_check_circle),
+                                                contentDescription = "Selected",
+                                                modifier = Modifier.size(20.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
                                         }
                                     }
                                 }
-                                "version" -> {
-                                    ProfileDetailRow(label = "App Name", value = "VidyaSchool Portal")
-                                    ProfileDetailRow(label = "Version", value = "2.4.0")
-                                    ProfileDetailRow(label = "Build Number", value = "42")
-                                    ProfileDetailRow(label = "Environment", value = "Production")
-                                    ProfileDetailRow(label = "Status", value = "Up to date ✓")
-                                }
                             }
+                            "version" -> {
+                                ProfileDetailRow(label = "App Name", value = "VidyaSchool Portal")
+                                ProfileDetailRow(label = "Version", value = "2.4.0")
+                                ProfileDetailRow(label = "Build Number", value = "42")
+                                ProfileDetailRow(label = "Environment", value = "Production")
+                                ProfileDetailRow(label = "Status", value = "Up to date ✓")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Account Info Drawer when clicking Name
+    if (showUserAccountDrawer) {
+        val accountSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showUserAccountDrawer = false },
+            sheetState = accountSheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+            scrimColor = Color.Black.copy(alpha = 0.5f),
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Account Information",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+
+                ProfileDetailRow(label = "Name", value = name.ifEmpty { "N/A" })
+                ProfileDetailRow(label = "Role", value = role.uppercase())
+                ProfileDetailRow(label = "Email", value = email.ifEmpty { "N/A" })
+                ProfileDetailRow(label = "Provider", value = provider.ifEmpty { "Email/Password" })
+            }
+        }
+    }
+
+    // Avatar Image Upload Drawer
+    if (showAvatarUploadDrawer) {
+        val avatarSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showAvatarUploadDrawer = false },
+            sheetState = avatarSheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+            scrimColor = Color.Black.copy(alpha = 0.5f),
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Update Profile Picture",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Button 1: Take a Pic
+                    OutlinedButton(
+                        onClick = {
+                            showAvatarUploadDrawer = false
+                            android.widget.Toast.makeText(context, "Opening Camera...", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = com.vidyaschool.app.R.drawable.ic_solar_camera),
+                                contentDescription = "Take a Pic",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Take a Pic",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    // Button 2: Upload from Gallery
+                    Button(
+                        onClick = {
+                            showAvatarUploadDrawer = false
+                            android.widget.Toast.makeText(context, "Opening Gallery...", android.widget.Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = com.vidyaschool.app.R.drawable.ic_solar_gallery),
+                                contentDescription = "Upload from Gallery",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                            Text(
+                                text = "Upload from Gallery",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
                         }
                     }
                 }
@@ -2919,92 +3066,86 @@ fun ProfileTabContent(
 
 @Composable
 fun ProfileOptionRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
-    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    iconRes: Int? = null,
+    subtitle: String? = null,
     badgeText: String? = null,
     isDanger: Boolean = false,
     onClick: () -> Unit
 ) {
-    Surface(
+    val textColor = when {
+        isDanger -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f)
+    }
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 2.dp, vertical = 2.dp)
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() },
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)),
-        shape = RoundedCornerShape(12.dp)
+            .background(Color.Transparent)
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp)
+            .height(44.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(
-                            if (isDanger) MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
-                            else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = title,
-                        modifier = Modifier.size(20.dp),
-                        tint = if (isDanger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                    )
-                }
+        if (iconRes != null) {
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = title,
+                modifier = Modifier.size(18.dp),
+                tint = textColor
+            )
+        } else if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                modifier = Modifier.size(18.dp),
+                tint = textColor
+            )
+        }
 
-                Column {
-                    Text(
-                        text = title,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isDanger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = subtitle,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (badgeText != null) {
-                    Box(
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = badgeText,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                Icon(
-                    imageVector = Icons.Default.ArrowForward,
-                    contentDescription = "Open",
-                    modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = textColor
+            )
+            if (!subtitle.isNullOrEmpty()) {
+                Text(
+                    text = subtitle,
+                    fontSize = 11.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
+
+        if (badgeText != null) {
+            Box(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), RoundedCornerShape(6.dp))
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = badgeText,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = "Open",
+            modifier = Modifier.size(18.dp),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+        )
     }
 }
 
