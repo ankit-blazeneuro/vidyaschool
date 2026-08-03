@@ -2484,7 +2484,10 @@ fun ProfileTabContent(
             isDocumentsLoading = true
             try {
                 val token = sessionManager.getSessionToken() ?: ""
-                val res = RetrofitClient.authApi.getDocuments("Bearer $token")
+                var res = RetrofitClient.frontendApi.getDocuments("Bearer $token")
+                if (!res.isSuccessful || res.body() == null) {
+                    res = RetrofitClient.authApi.getDocuments("Bearer $token")
+                }
                 if (res.isSuccessful && res.body() != null) {
                     userDocuments = res.body()!!.associateBy { it.docType }
                 }
@@ -2534,7 +2537,10 @@ fun ProfileTabContent(
                 val docTypePart = docType.toRequestBody("text/plain".toMediaTypeOrNull())
                 val docNamePart = docName.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                val res = RetrofitClient.authApi.uploadDocumentFile("Bearer $token", bodyPart, docTypePart, docNamePart)
+                var res = RetrofitClient.frontendApi.uploadDocumentFile("Bearer $token", bodyPart, docTypePart, docNamePart)
+                if (!res.isSuccessful) {
+                    res = RetrofitClient.authApi.uploadDocumentFile("Bearer $token", bodyPart, docTypePart, docNamePart)
+                }
                 if (res.isSuccessful) {
                     android.widget.Toast.makeText(context, "$docName uploaded successfully!", android.widget.Toast.LENGTH_SHORT).show()
                     fetchDocumentsList()
@@ -2554,7 +2560,10 @@ fun ProfileTabContent(
             isDocumentsLoading = true
             try {
                 val token = sessionManager.getSessionToken() ?: ""
-                val res = RetrofitClient.authApi.deleteDocument("Bearer $token", docType)
+                var res = RetrofitClient.frontendApi.deleteDocument("Bearer $token", docType)
+                if (!res.isSuccessful) {
+                    res = RetrofitClient.authApi.deleteDocument("Bearer $token", docType)
+                }
                 if (res.isSuccessful) {
                     android.widget.Toast.makeText(context, "$docName removed", android.widget.Toast.LENGTH_SHORT).show()
                     fetchDocumentsList()

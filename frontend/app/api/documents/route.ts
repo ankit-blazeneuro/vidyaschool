@@ -31,9 +31,18 @@ async function getAuthenticatedSession() {
   }
 
   if (!session?.user) {
-    const rawCookie = hdrs.get("cookie")
-    const cookieMatch = rawCookie?.match(/(?:__Secure-better-auth\.session_token|better-auth\.session_token)=([^;]+)/)
-    const tokenVal = cookieMatch ? cookieMatch[1] : null
+    const authHeader = hdrs.get("authorization") || hdrs.get("Authorization") || ""
+    const rawCookie = hdrs.get("cookie") || ""
+    const cookieMatch = rawCookie.match(/(?:__Secure-better-auth\.session_token|better-auth\.session_token)=([^;]+)/)
+    
+    let tokenVal: string | null = null
+    if (authHeader.startsWith("Bearer ") || authHeader.startsWith("bearer ")) {
+      tokenVal = authHeader.replace(/^Bearer\s+/i, "").trim()
+    } else if (authHeader.trim().length > 0) {
+      tokenVal = authHeader.trim()
+    } else if (cookieMatch) {
+      tokenVal = cookieMatch[1]
+    }
 
     if (tokenVal) {
       const cleanToken = decodeURIComponent(tokenVal).split(".")[0]
