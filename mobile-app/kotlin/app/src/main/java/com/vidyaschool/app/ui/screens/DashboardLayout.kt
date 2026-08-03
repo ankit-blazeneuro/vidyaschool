@@ -2601,9 +2601,9 @@ fun ProfileTabContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                // Top Profile User Info: Transparent Column (No BG Card), Bigger Square Avatar
+                // Top Profile User Info: Transparent Column (No BG Card), Bigger Square Avatar & Green Status Dot
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2611,43 +2611,53 @@ fun ProfileTabContent(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Square Avatar (96dp Big with 20dp Rounded Border)
+                    // Square Avatar (116dp Big with 22dp Rounded Border & Green Status Indicator)
                     Box(
                         modifier = Modifier
-                            .size(96.dp)
-                            .clip(RoundedCornerShape(20.dp))
+                            .size(116.dp)
                             .clickable { showAvatarUploadDrawer = true }
-                            .border(2.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
-                            .padding(4.dp),
-                        contentAlignment = Alignment.Center
                     ) {
-                        if (!avatarUrl.isNullOrEmpty()) {
-                            AsyncImage(
-                                model = avatarUrl,
-                                contentDescription = "Avatar",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(16.dp))
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.primary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = name.firstOrNull()?.uppercase() ?: "?",
-                                    fontSize = 32.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(RoundedCornerShape(22.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (!avatarUrl.isNullOrEmpty()) {
+                                AsyncImage(
+                                    model = avatarUrl,
+                                    contentDescription = "Avatar",
+                                    modifier = Modifier.fillMaxSize()
                                 )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.primary),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = name.firstOrNull()?.uppercase() ?: "?",
+                                        fontSize = 40.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
                             }
                         }
+
+                        // Green Dot in Bottom Right Corner of Avatar
+                        Box(
+                            modifier = Modifier
+                                .size(22.dp)
+                                .align(Alignment.BottomEnd)
+                                .offset(x = 4.dp, y = 4.dp)
+                                .background(Color(0xFF22C55E), CircleShape)
+                                .border(2.5.dp, MaterialTheme.colorScheme.background, CircleShape)
+                        )
                     }
 
-                    // Student Name just below Avatar with Expand Combobox Button on right
+                    // Student Name just below Avatar with Expand Combobox Button on right (Matching Button Text Style: 14sp Medium)
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
@@ -2658,17 +2668,17 @@ fun ProfileTabContent(
                     ) {
                         Text(
                             text = name,
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
+                            painter = painterResource(id = com.vidyaschool.app.R.drawable.ic_chevrons_up_down),
                             contentDescription = "Expand Account Info",
-                            modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                         )
                     }
                 }
@@ -2766,7 +2776,7 @@ fun ProfileTabContent(
             label = "dragHandleAlpha"
         )
         val topPaddingDp by animateDpAsState(
-            targetValue = if (isExpanded) 36.dp else 12.dp,
+            targetValue = if (isExpanded) 52.dp else 12.dp,
             animationSpec = tween(durationMillis = 300),
             label = "topPaddingDp"
         )
@@ -2839,7 +2849,11 @@ fun ProfileTabContent(
 
                 if (isLoadingSection) {
                     Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.5.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 } else {
                     Column(
@@ -2994,8 +3008,8 @@ fun ProfileTabContent(
                         },
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
+                            .height(56.dp),
+                        shape = RoundedCornerShape(14.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Row(
@@ -3005,12 +3019,12 @@ fun ProfileTabContent(
                             Icon(
                                 painter = painterResource(id = com.vidyaschool.app.R.drawable.ic_solar_camera),
                                 contentDescription = "Take a Pic",
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(22.dp),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                             Text(
                                 text = "Take a Pic",
-                                fontSize = 13.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -3025,8 +3039,8 @@ fun ProfileTabContent(
                         },
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp),
-                        shape = RoundedCornerShape(12.dp),
+                            .height(56.dp),
+                        shape = RoundedCornerShape(14.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
@@ -3037,12 +3051,12 @@ fun ProfileTabContent(
                             Icon(
                                 painter = painterResource(id = com.vidyaschool.app.R.drawable.ic_solar_gallery),
                                 contentDescription = "Upload from Gallery",
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(22.dp),
                                 tint = MaterialTheme.colorScheme.onPrimary
                             )
                             Text(
                                 text = "Upload from Gallery",
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
