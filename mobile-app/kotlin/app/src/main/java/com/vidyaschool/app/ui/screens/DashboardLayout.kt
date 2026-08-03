@@ -3022,7 +3022,11 @@ fun ProfileTabContent(
                                     DocSlot("parent_pan", "Parent PAN Card", "Father/Mother/Guardian Permanent Account Number (PAN) card (PDF or Image)", false)
                                 )
 
-                                val uploadedCount = slots.count { userDocuments.containsKey(it.type) }
+                                val uploadedCount = slots.count { slot ->
+                                    userDocuments.containsKey(slot.type) ||
+                                    (slot.type == "10th_certificate" && (userDocuments.containsKey("marksheet_10") || userDocuments.containsKey("10th_marksheet"))) ||
+                                    (slot.type == "student_aadhar" && userDocuments.containsKey("aadhar"))
+                                }
                                 val totalCount = slots.size
                                 val progressFraction = uploadedCount.toFloat() / totalCount
 
@@ -3092,6 +3096,9 @@ fun ProfileTabContent(
                                 // Document Slots List
                                 slots.forEach { slot ->
                                     val uploadedDoc = userDocuments[slot.type]
+                                        ?: if (slot.type == "10th_certificate") (userDocuments["marksheet_10"] ?: userDocuments["10th_marksheet"])
+                                        else if (slot.type == "student_aadhar") (userDocuments["aadhar"] ?: userDocuments["student_aadhar"])
+                                        else null
 
                                     Card(
                                         modifier = Modifier

@@ -18,15 +18,28 @@ def get_user_documents(
     docs = db.exec(statement).all()
     result = []
     for doc in docs:
+        file_url = doc.file_url or ""
+        if file_url and not (file_url.startswith("http") or file_url.startswith("data:")):
+            if file_url.startswith("/uploads/"):
+                file_url = f"https://vidyaschool.vercel.app/api/documents/serve?docId={doc.id}"
+            else:
+                file_url = f"https://vidyaschool.vercel.app{file_url}"
+
         result.append({
             "id": doc.id,
             "docType": doc.doc_type,
+            "doc_type": doc.doc_type,
             "docName": doc.doc_name,
-            "fileUrl": doc.file_url,
+            "doc_name": doc.doc_name,
+            "fileUrl": file_url,
+            "file_url": file_url,
             "fileName": doc.file_name,
+            "file_name": doc.file_name,
             "fileType": doc.file_type,
+            "file_type": doc.file_type,
             "fileSize": doc.file_size,
-            "status": doc.status
+            "file_size": doc.file_size,
+            "status": doc.status or "Uploaded"
         })
     return result
 

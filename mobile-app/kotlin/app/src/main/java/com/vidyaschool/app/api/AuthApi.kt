@@ -598,12 +598,12 @@ data class StudentExamResult(
 
 data class UserDocumentItem(
     val id: String? = null,
-    val docType: String,
-    val docName: String? = null,
-    val fileUrl: String? = null,
-    val fileName: String? = null,
-    val fileType: String? = null,
-    val fileSize: Long? = null,
+    @SerializedName(value = "docType", alternate = ["doc_type"]) val docType: String,
+    @SerializedName(value = "docName", alternate = ["doc_name"]) val docName: String? = null,
+    @SerializedName(value = "fileUrl", alternate = ["file_url"]) val fileUrl: String? = null,
+    @SerializedName(value = "fileName", alternate = ["file_name"]) val fileName: String? = null,
+    @SerializedName(value = "fileType", alternate = ["file_type"]) val fileType: String? = null,
+    @SerializedName(value = "fileSize", alternate = ["file_size"]) val fileSize: Long? = null,
     val status: String? = "Uploaded"
 )
 
