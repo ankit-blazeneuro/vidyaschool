@@ -2534,8 +2534,8 @@ fun ProfileTabContent(
                 val mediaType = mimeType.toMediaTypeOrNull()
                 val requestFile = bytes.toRequestBody(mediaType)
                 val bodyPart = MultipartBody.Part.createFormData("file", fileName, requestFile)
-                val docTypePart = docType.toRequestBody("text/plain".toMediaTypeOrNull())
-                val docNamePart = docName.toRequestBody("text/plain".toMediaTypeOrNull())
+                val docTypePart = MultipartBody.Part.createFormData("docType", docType)
+                val docNamePart = MultipartBody.Part.createFormData("docName", docName)
 
                 var res = RetrofitClient.frontendApi.uploadDocumentFile("Bearer $token", bodyPart, docTypePart, docNamePart)
                 if (!res.isSuccessful) {
@@ -2545,7 +2545,9 @@ fun ProfileTabContent(
                     android.widget.Toast.makeText(context, "$docName uploaded successfully!", android.widget.Toast.LENGTH_SHORT).show()
                     fetchDocumentsList()
                 } else {
-                    android.widget.Toast.makeText(context, "Failed to upload $docName", android.widget.Toast.LENGTH_SHORT).show()
+                    val errBody = res.errorBody()?.string() ?: ""
+                    android.util.Log.e("ProfileTab", "Upload failed (${res.code()}): $errBody")
+                    android.widget.Toast.makeText(context, "Upload failed: ${res.message()}", android.widget.Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 android.widget.Toast.makeText(context, "Upload error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()

@@ -400,8 +400,8 @@ interface AuthApi {
     suspend fun uploadDocumentFile(
         @Header("Authorization") authHeader: String,
         @retrofit2.http.Part file: okhttp3.MultipartBody.Part,
-        @retrofit2.http.Part("docType") docType: okhttp3.RequestBody,
-        @retrofit2.http.Part("docName") docName: okhttp3.RequestBody
+        @retrofit2.http.Part docType: okhttp3.MultipartBody.Part,
+        @retrofit2.http.Part docName: okhttp3.MultipartBody.Part
     ): Response<Map<String, Any>>
 
     @DELETE("api/documents")

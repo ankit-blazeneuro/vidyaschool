@@ -214,8 +214,11 @@ export async function POST(req: NextRequest) {
     // Mode 2: Direct File Upload (FormData) - Stored Privately
     const formData = await req.formData()
     const file = formData.get("file") as File | null
-    const docType = formData.get("docType") as string
-    const docName = formData.get("docName") as string
+    const rawDocType = formData.get("docType") || formData.get("doc_type")
+    const rawDocName = formData.get("docName") || formData.get("doc_name")
+
+    const docType = typeof rawDocType === "string" ? rawDocType.trim() : (rawDocType ? String(rawDocType).trim() : "")
+    const docName = typeof rawDocName === "string" ? rawDocName.trim() : (rawDocName ? String(rawDocName).trim() : docType)
 
     if (!file || file.size === 0 || !docType) {
       return NextResponse.json(
