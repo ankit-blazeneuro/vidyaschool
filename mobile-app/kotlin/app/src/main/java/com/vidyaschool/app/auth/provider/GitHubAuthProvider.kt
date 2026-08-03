@@ -22,6 +22,9 @@ class GitHubAuthProvider(
     private val clientId: String,
     private val redirectUri: String
 ) {
+    companion object {
+        private val sharedClient = OkHttpClient()
+    }
     private val serviceConfig = AuthorizationServiceConfiguration(
         Uri.parse("https://github.com/login/oauth/authorize"),
         Uri.parse("https://github.com/login/oauth/access_token")
@@ -67,10 +70,9 @@ class GitHubAuthProvider(
             response != null -> {
                 val authCode = response.authorizationCode ?: ""
                 try {
-                    val client = OkHttpClient()
-                    
                     val formBody = FormBody.Builder()
                         .add("client_id", clientId)
+                        // SECURITY: Move this to BuildConfig or server-side token exchange
                         .add("client_secret", "b7b41a2985169a37372e9771f8bdcfa47d1e8e41")
                         .add("code", authCode)
                         .add("redirect_uri", redirectUri)
@@ -82,15 +84,17 @@ class GitHubAuthProvider(
                         .addHeader("Accept", "application/json")
                         .build()
                         
-                    val tokenResponse = client.newCall(tokenRequest).execute()
-                    if (!tokenResponse.isSuccessful) {
-                        return@withContext AuthResult.Error("Failed to exchange code: ${tokenResponse.message}")
-                    }
-                    
-                    val tokenJson = JSONObject(tokenResponse.body?.string() ?: "")
-                    val accessToken = tokenJson.optString("access_token")
-                    if (accessToken.isNullOrEmpty()) {
-                        return@withContext AuthResult.Error("Access token not found in response")
+                    val accessToken = sharedClient.newCall(tokenRequest).execute().use { tokenResponse ->
+                        if (!tokenResponse.isSuccessful) {
+                            return@withContext AuthResult.Error("Failed to exchange code: ${tokenResponse.message}")
+                        }
+                        
+                        val tokenJson = JSONObject(tokenResponse.body?.string() ?: "")
+                        val token = tokenJson.optString("access_token")
+                        if (token.isNullOrEmpty()) {
+                            return@withContext AuthResult.Error("Access token not found in response")
+                        }
+                        token
                     }
                     
                     // Fetch user profile
@@ -100,16 +104,22 @@ class GitHubAuthProvider(
                         .addHeader("Accept", "application/json")
                         .build()
                         
-                    val userResponse = client.newCall(userRequest).execute()
-                    if (!userResponse.isSuccessful) {
-                        return@withContext AuthResult.Error("Failed to fetch user profile: ${userResponse.message}")
+                    var id = ""
+                    var name: String? = null
+                    var email = ""
+                    var avatarUrl: String? = null
+                        
+                    sharedClient.newCall(userRequest).execute().use { userResponse ->
+                        if (!userResponse.isSuccessful) {
+                            return@withContext AuthResult.Error("Failed to fetch user profile: ${userResponse.message}")
+                        }
+                        
+                        val userJson = JSONObject(userResponse.body?.string() ?: "")
+                        id = userJson.optString("id", "")
+                        name = userJson.optString("name").takeIf { it.isNotEmpty() }
+                        email = userJson.optString("email", "")
+                        avatarUrl = userJson.optString("avatar_url").takeIf { it.isNotEmpty() }
                     }
-                    
-                    val userJson = JSONObject(userResponse.body?.string() ?: "")
-                    val id = userJson.optString("id", "")
-                    val name = userJson.optString("name").takeIf { it.isNotEmpty() }
-                    var email = userJson.optString("email", "")
-                    val avatarUrl = userJson.optString("avatar_url").takeIf { it.isNotEmpty() }
                     
                     // If email is empty, fetch user emails
                     if (email.isEmpty() || email == "null") {
@@ -119,18 +129,19 @@ class GitHubAuthProvider(
                             .addHeader("Accept", "application/json")
                             .build()
                             
-                        val emailsResponse = client.newCall(emailsRequest).execute()
-                        if (emailsResponse.isSuccessful) {
-                            val emailsArray = JSONArray(emailsResponse.body?.string() ?: "[]")
-                            for (i in 0 until emailsArray.length()) {
-                                val emailObj = emailsArray.getJSONObject(i)
-                                if (emailObj.optBoolean("primary", false)) {
-                                    email = emailObj.optString("email", "")
-                                    break
+                        sharedClient.newCall(emailsRequest).execute().use { emailsResponse ->
+                            if (emailsResponse.isSuccessful) {
+                                val emailsArray = JSONArray(emailsResponse.body?.string() ?: "[]")
+                                for (i in 0 until emailsArray.length()) {
+                                    val emailObj = emailsArray.getJSONObject(i)
+                                    if (emailObj.optBoolean("primary", false)) {
+                                        email = emailObj.optString("email", "")
+                                        break
+                                    }
                                 }
-                            }
-                            if (email.isEmpty() && emailsArray.length() > 0) {
-                                email = emailsArray.getJSONObject(0).optString("email", "")
+                                if (email.isEmpty() && emailsArray.length() > 0) {
+                                    email = emailsArray.getJSONObject(0).optString("email", "")
+                                }
                             }
                         }
                     }

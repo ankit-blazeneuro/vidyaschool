@@ -12,11 +12,7 @@ class AuthRepositoryImpl(
     private val githubProvider: GitHubAuthProvider
 ) : AuthRepository {
     
-    override suspend fun signInWithGoogle(context: Context): AuthResult {
-        throw UnsupportedOperationException("Use signInWithGoogle(context, activityLauncher) instead")
-    }
-    
-    suspend fun signInWithGoogle(
+    override suspend fun signInWithGoogle(
         context: Context,
         activityLauncher: ActivityResultLauncher<Intent>
     ): AuthResult {
@@ -28,11 +24,7 @@ class AuthRepositoryImpl(
         onResult(result)
     }
     
-    override suspend fun signInWithGitHub(context: Context): AuthResult {
-        throw UnsupportedOperationException("Use signInWithGitHub(context, activityLauncher) instead")
-    }
-    
-    suspend fun signInWithGitHub(
+    override suspend fun signInWithGitHub(
         context: Context,
         activityLauncher: ActivityResultLauncher<Intent>
     ): AuthResult {

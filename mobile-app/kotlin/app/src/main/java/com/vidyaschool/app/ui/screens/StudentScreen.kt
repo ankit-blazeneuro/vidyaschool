@@ -49,7 +49,6 @@ import coil.compose.AsyncImage
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import kotlinx.coroutines.delay
-import androidx.compose.foundation.border
 import androidx.compose.ui.platform.LocalContext
 import com.vidyaschool.app.auth.SessionManager
 import kotlinx.coroutines.launch
@@ -109,7 +108,6 @@ fun StudentScreen(
         if (showOnboarding) return@LaunchedEffect
         isLoadingSlider = true
         try {
-            delay(2000) // Deliberate delay to show skeleton shimmer
             val response = RetrofitClient.authApi.getSliderImages(
                 role = "student",
                 studentClass = currentStudentClass.takeIf { it.isNotEmpty() }
@@ -326,6 +324,11 @@ fun AdmobBannerAd() {
                     )
                 )
                 container
+            },
+            onRelease = { container ->
+                // Destroy AdView to prevent memory leaks
+                val adView = (container as? android.widget.FrameLayout)?.getChildAt(0) as? AdView
+                adView?.destroy()
             }
         )
     }

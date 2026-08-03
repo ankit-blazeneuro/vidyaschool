@@ -14,7 +14,7 @@ object RetrofitClient {
         level = HttpLoggingInterceptor.Level.HEADERS
     }
 
-    val okHttpClient = OkHttpClient.Builder()
+    private val baseHttpClient = OkHttpClient.Builder()
         .addInterceptor(loggingInterceptor)
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
@@ -24,28 +24,16 @@ object RetrofitClient {
         }
         .build()
 
-    private val socketLoggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.HEADERS
-    }
+    val okHttpClient: OkHttpClient = baseHttpClient
 
-    val socketOkHttpClient = OkHttpClient.Builder()
-        .addInterceptor(socketLoggingInterceptor)
-        .addInterceptor { chain ->
-            val request = chain.request().newBuilder()
-                .header("User-Agent", "VidyaSchool Android App v1.0")
-                .build()
-            chain.proceed(request)
-        }
-        .build()
+    val socketOkHttpClient: OkHttpClient = baseHttpClient.newBuilder().build()
 
-    val streamingOkHttpClient = OkHttpClient.Builder()
+    val streamingOkHttpClient: OkHttpClient = baseHttpClient.newBuilder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(180, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS)
-        .addInterceptor(socketLoggingInterceptor)
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
-                .header("User-Agent", "VidyaSchool Android App v1.0")
                 .header("Accept", "text/event-stream")
                 .build()
             chain.proceed(request)

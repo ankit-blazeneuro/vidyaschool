@@ -175,7 +175,10 @@ fun AgentScreen(
             activeJob = scope.launch(Dispatchers.IO) {
                 withContext(Dispatchers.Main) {
                     delay(50)
-                    listState.animateScrollToItem(messages.size - 1)
+                    val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                    if (lastVisible >= messages.size - 3) {
+                        listState.animateScrollToItem(messages.size - 1)
+                    }
                 }
 
                 var aiMsgIndex = -1
@@ -250,7 +253,10 @@ fun AgentScreen(
                                         } else {
                                             messages[aiMsgIndex] = messages[aiMsgIndex].copy(text = currentText)
                                         }
-                                        listState.animateScrollToItem(messages.size - 1)
+                                        val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                                        if (lastVisible >= messages.size - 3) {
+                                            listState.animateScrollToItem(messages.size - 1)
+                                        }
                                     }
                                 }
                             }
@@ -404,6 +410,7 @@ fun AgentScreen(
                 }
 
                 items(messages, key = { it.id }) { msg ->
+                    val primaryColor = MaterialTheme.colorScheme.primary
                     if (msg.sender == MessageSender.USER) {
                         // User Message (Right aligned, no background, no border)
                         Row(
@@ -417,7 +424,7 @@ fun AgentScreen(
                                     .padding(vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = parseMarkdownToAnnotatedString(msg.text, MaterialTheme.colorScheme.primary),
+                                    text = remember(msg.text, primaryColor) { parseMarkdownToAnnotatedString(msg.text, primaryColor) },
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onBackground,
@@ -450,7 +457,7 @@ fun AgentScreen(
                                     )
                                 } else {
                                     Text(
-                                        text = parseMarkdownToAnnotatedString(msg.text, MaterialTheme.colorScheme.primary),
+                                        text = remember(msg.text, primaryColor) { parseMarkdownToAnnotatedString(msg.text, primaryColor) },
                                         fontSize = 14.sp,
                                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.9f),
                                         lineHeight = 20.sp
@@ -632,6 +639,10 @@ private fun MarkdownMathMessageView(
         },
         update = { webView ->
             webView.loadDataWithBaseURL("https://localhost", htmlData, "text/html", "UTF-8", null)
+        },
+        onRelease = { webView ->
+            webView.stopLoading()
+            webView.destroy()
         },
         modifier = modifier
     )

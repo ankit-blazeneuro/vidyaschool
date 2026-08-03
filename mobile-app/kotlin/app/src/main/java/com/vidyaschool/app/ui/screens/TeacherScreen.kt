@@ -275,7 +275,7 @@ fun TeacherCalendarWidget(
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
             } else {
-                val accentColors = listOf(Purple, OrangeRed, TodayAccent, Purple)
+                val accentColors = remember { listOf(Purple, OrangeRed, TodayAccent, Purple) }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     tomorrowEvents.take(4).forEachIndexed { idx, ev ->
                         EventRow(
@@ -322,7 +322,6 @@ fun TeacherScreen(
         // Fetch slider images
         isLoadingSlider = true
         try {
-            delay(2000) // Deliberate delay to show skeleton shimmer
             val response = RetrofitClient.authApi.getSliderImages(role = "teacher")
             if (response.isSuccessful) {
                 sliderImages = response.body() ?: emptyList()

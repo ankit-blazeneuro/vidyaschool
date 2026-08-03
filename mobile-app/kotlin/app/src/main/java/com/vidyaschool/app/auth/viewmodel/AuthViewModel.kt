@@ -55,7 +55,7 @@ class AuthViewModel(
         }
     }
     
-    fun handleGitHubCallback(intent: Intent, backendUrl: String = "http://localhost:3000/api/auth/github/exchange") {
+    fun handleGitHubCallback(intent: Intent, backendUrl: String = "https://api.blazeneuro.com/api/auth/github/exchange") {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             val result = repository.handleGitHubCallback(intent, backendUrl)

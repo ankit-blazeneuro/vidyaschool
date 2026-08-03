@@ -327,6 +327,7 @@ fun DashboardLayout(
     var showAgentScreen by remember { mutableStateOf(false) }
     var selectedChatId by remember { mutableStateOf<String?>(null) }
     var userChats by remember { mutableStateOf<List<com.vidyaschool.app.api.ChatItem>>(emptyList()) }
+    var userChatsLoaded by remember { mutableStateOf(false) }
     var sidebarNotes by remember { mutableStateOf<List<ParsedNote>>(emptyList()) }
     var sidebarNotesLoading by remember { mutableStateOf(false) }
     var selectedSidebarNote by remember { mutableStateOf<ParsedNote?>(null) }
@@ -351,13 +352,14 @@ fun DashboardLayout(
 
     // Fetch user recent chats when sidebar opens
     LaunchedEffect(drawerState.isOpen) {
-        if (drawerState.isOpen) {
+        if (drawerState.isOpen && !userChatsLoaded) {
             try {
                 val token = sessionManager.getSessionToken()
                 if (!token.isNullOrEmpty()) {
                     val res = RetrofitClient.authApi.getUserChats("Bearer $token")
                     if (res.isSuccessful && res.body() != null) {
                         userChats = res.body()!!
+                        userChatsLoaded = true
                     }
                 }
             } catch (e: Exception) {

@@ -92,18 +92,18 @@ fun PaymentSuccessScreen(
     val onSurface   = MaterialTheme.colorScheme.onSurface
     val outlineVar  = MaterialTheme.colorScheme.outlineVariant
 
+    // Entrance slide-up
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { delay(80); visible = true }
+
     // Lottie
     val composition by rememberLottieComposition(LottieCompositionSpec.Asset("payment_success.json"))
     val progress by animateLottieCompositionAsState(
         composition  = composition,
         iterations   = 1,
-        isPlaying    = true,
+        isPlaying    = visible,
         speed        = 1.2f
     )
-
-    // Entrance slide-up
-    var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { delay(80); visible = true }
 
     val formattedDate = remember(installment.paidDate) {
         try {
@@ -115,16 +115,18 @@ fun PaymentSuccessScreen(
 
     val amount = "₹%,d".format(installment.amount.toInt())
 
-    val rows = listOf(
-        "Student"      to studentName,
-        "Admission No" to admissionNo.ifBlank { "—" },
-        "Month"        to "${installment.month} ${installment.year}",
-        "Amount Paid"  to amount,
-        "Paid On"      to formattedDate,
-        "Method"       to (installment.paymentMethod ?: "Razorpay"),
-        "Receipt No."  to (installment.receiptNo ?: "—"),
-        "Status"       to "Verified ✓"
-    )
+    val rows = remember(installment, studentName, admissionNo, formattedDate, amount) {
+        listOf(
+            "Student"      to studentName,
+            "Admission No" to admissionNo.ifBlank { "—" },
+            "Month"        to "${installment.month} ${installment.year}",
+            "Amount Paid"  to amount,
+            "Paid On"      to formattedDate,
+            "Method"       to (installment.paymentMethod ?: "Razorpay"),
+            "Receipt No."  to (installment.receiptNo ?: "—"),
+            "Status"       to "Verified ✓"
+        )
+    }
 
     AnimatedVisibility(
         visible = visible,

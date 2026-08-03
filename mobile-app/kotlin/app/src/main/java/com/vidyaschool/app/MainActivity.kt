@@ -48,6 +48,17 @@ import com.vidyaschool.app.api.UpdateInfo
 import android.net.Uri
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.ads.MobileAds
+import android.content.Context
+import androidx.lifecycle.lifecycleScope
+
+private fun Context.findActivity(): MainActivity? {
+    var ctx = this
+    while (ctx is android.content.ContextWrapper) {
+        if (ctx is MainActivity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
 
 class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
     private lateinit var viewModel: AuthViewModel
@@ -65,13 +76,15 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
         super.onCreate(savedInstanceState)
         
         // Clean up any downloaded update APKs on startup
-        try {
-            val updateApk = java.io.File(cacheDir, "update.apk")
-            if (updateApk.exists()) {
-                updateApk.delete()
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val updateApk = java.io.File(cacheDir, "update.apk")
+                if (updateApk.exists()) {
+                    updateApk.delete()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
         
         sessionManager = SessionManager(this)
@@ -176,7 +189,7 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
                 val token = task.result ?: return@addOnCompleteListener
                 android.util.Log.d("FCM", "Current FCM token: $token")
                 
-                CoroutineScope(Dispatchers.IO).launch {
+                lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         val response = RetrofitClient.authApi.registerFcmToken(
                             authHeader = "Bearer $sessionToken",
@@ -222,7 +235,7 @@ class MainActivity : AppCompatActivity(), PaymentResultWithDataListener {
         val orderId = pendingOrderId
         val isMock = pendingIsMock
         pendingInstallmentId = ""; pendingOrderId = ""; pendingIsMock = false
-        CoroutineScope(Dispatchers.IO).launch {
+        lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val token = sessionManager.getSessionToken() ?: return@launch
                 if (isMock) {
@@ -298,7 +311,7 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
 
         // Handle deep link receipt after nav is ready
         androidx.compose.runtime.LaunchedEffect(Unit) {
-            val activity = context as? MainActivity
+            val activity = context.findActivity()
             val receiptNo = activity?.pendingReceiptNo
             if (!receiptNo.isNullOrEmpty()) {
                 activity.pendingReceiptNo = null
@@ -335,7 +348,7 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                     onSignupClick = { navController.navigate("signup") },
                     onLoginSuccess = { provider, email, name, role, avatarUrl, sessionToken, studentClass ->
                         sessionManager.saveSession(provider, email, name, role, avatarUrl, sessionToken, studentClass)
-                        (context as? MainActivity)?.retrieveAndRegisterFcmToken()
+                        context.findActivity()?.retrieveAndRegisterFcmToken()
                         val destination = when (role.lowercase()) {
                             "admin" -> "admin"
                             "teacher" -> "teacher"

@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
@@ -318,6 +319,16 @@ fun QRLoginScreen(
                                 }, ContextCompat.getMainExecutor(ctx))
                                 previewView
                             },
+                            onRelease = {
+                                try {
+                                    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+                                    cameraProviderFuture.addListener({
+                                        cameraProviderFuture.get().unbindAll()
+                                    }, ContextCompat.getMainExecutor(context))
+                                } catch (e: Exception) {
+                                    android.util.Log.e("QRLogin", "Camera release failed", e)
+                                }
+                            },
                             modifier = Modifier.fillMaxSize()
                         )
 
@@ -355,7 +366,7 @@ fun QRLoginScreen(
                                         .align(Alignment.TopStart)
                                         .fillMaxWidth()
                                         .height(2.dp)
-                                        .offset(y = (280.dp * scanLineY))
+                                        .graphicsLayer { translationY = 280.dp.toPx() * scanLineY }
                                         .background(
                                             Brush.horizontalGradient(
                                                 listOf(Color.Transparent, teal, tealLight, teal, Color.Transparent)

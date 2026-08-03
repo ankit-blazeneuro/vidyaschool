@@ -15,26 +15,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vidyaschool.app.api.RetrofitClient
-import kotlinx.coroutines.launch
 
 @Composable
 fun FeeReceiptScreen(receiptNo: String, onBack: () -> Unit) {
-    val scope = rememberCoroutineScope()
     var receipt by remember { mutableStateOf<Map<String, Any?>?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(receiptNo) {
-        scope.launch {
-            try {
-                val response = RetrofitClient.authApi.verifyReceipt(receiptNo)
-                if (response.isSuccessful) receipt = response.body()
-                else error = "Receipt not found"
-            } catch (e: Exception) {
-                error = "Failed to load receipt"
-            } finally {
-                isLoading = false
-            }
+        try {
+            val response = RetrofitClient.authApi.verifyReceipt(receiptNo)
+            if (response.isSuccessful) receipt = response.body()
+            else error = "Receipt not found"
+        } catch (e: Exception) {
+            error = "Failed to load receipt"
+        } finally {
+            isLoading = false
         }
     }
 
@@ -115,7 +111,7 @@ fun FeeReceiptScreen(receiptNo: String, onBack: () -> Unit) {
                                     } else append("N/A")
                                 },
                                 "Month" to "${r["month"]} ${r["year"]}",
-                                "Amount Paid" to "₹${(r["amount"] as? Double)?.toInt()?.let { "%,d".format(it) } ?: r["amount"]}",
+                                "Amount Paid" to "₹${(r["amount"] as? Number)?.toInt()?.let { "%,d".format(it) } ?: r["amount"]}",
                                 "Paid On" to (r["paid_date"] as? String ?: "—"),
                                 "Payment Mode" to (r["payment_method"] as? String ?: "—"),
                             ).forEach { (label, value) ->

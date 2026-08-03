@@ -3,8 +3,6 @@ package com.vidyaschool.app.auth
 import android.content.Context
 import android.content.SharedPreferences
 import com.vidyaschool.app.api.TopPerformerItem
-import org.json.JSONArray
-import org.json.JSONObject
 
 class SessionManager(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("user_session", Context.MODE_PRIVATE)
@@ -61,19 +59,8 @@ class SessionManager(context: Context) {
 
     fun saveTopPerformers(performers: List<TopPerformerItem>) {
         try {
-            val array = JSONArray()
-            performers.forEach { p ->
-                val obj = JSONObject()
-                obj.put("id", p.id ?: "")
-                obj.put("name", p.name ?: "")
-                obj.put("avatarUrl", p.avatarUrl ?: "")
-                obj.put("studentClass", p.studentClass ?: "")
-                obj.put("section", p.section ?: "")
-                obj.put("percentage", p.percentage ?: 0.0)
-                obj.put("rank", p.rank ?: 0)
-                array.put(obj)
-            }
-            prefs.edit().putString(KEY_TOP_PERFORMERS_CACHE, array.toString()).apply()
+            val json = com.google.gson.Gson().toJson(performers)
+            prefs.edit().putString(KEY_TOP_PERFORMERS_CACHE, json).apply()
         } catch (e: Exception) {
             android.util.Log.e("SessionManager", "Failed to cache top performers", e)
         }
@@ -82,23 +69,8 @@ class SessionManager(context: Context) {
     fun getCachedTopPerformers(): List<TopPerformerItem> {
         val jsonStr = prefs.getString(KEY_TOP_PERFORMERS_CACHE, null) ?: return emptyList()
         return try {
-            val array = JSONArray(jsonStr)
-            val list = mutableListOf<TopPerformerItem>()
-            for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                list.add(
-                    TopPerformerItem(
-                        id = obj.optString("id").ifEmpty { null },
-                        name = obj.optString("name").ifEmpty { null },
-                        avatarUrl = obj.optString("avatarUrl").ifEmpty { null },
-                        studentClass = obj.optString("studentClass").ifEmpty { null },
-                        section = obj.optString("section").ifEmpty { null },
-                        percentage = if (obj.has("percentage")) obj.optDouble("percentage") else null,
-                        rank = if (obj.has("rank")) obj.optInt("rank") else null
-                    )
-                )
-            }
-            list
+            val type = object : com.google.gson.reflect.TypeToken<List<TopPerformerItem>>() {}.type
+            com.google.gson.Gson().fromJson(jsonStr, type) ?: emptyList()
         } catch (e: Exception) {
             emptyList()
         }

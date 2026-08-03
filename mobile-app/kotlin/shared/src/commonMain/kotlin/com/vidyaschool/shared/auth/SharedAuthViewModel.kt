@@ -7,6 +7,7 @@ import com.vidyaschool.shared.models.LoginRequest
 import com.vidyaschool.shared.network.ApiClient
 import com.vidyaschool.shared.session.SessionStorage
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -204,6 +205,10 @@ class SharedAuthViewModel(
 
     fun resetError() {
         _authState.value = SharedAuthState.Idle
+    }
+
+    fun onCleared() {
+        viewModelScope.cancel()
     }
 
     // -----------------------------------------------------------------------

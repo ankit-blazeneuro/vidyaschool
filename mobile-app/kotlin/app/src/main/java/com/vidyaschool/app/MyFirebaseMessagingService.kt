@@ -28,7 +28,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         val sessionManager = SessionManager(applicationContext)
         val sessionToken = sessionManager.getSessionToken()
         if (!sessionToken.isNullOrEmpty()) {
-            CoroutineScope(Dispatchers.IO).launch {
+            kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
                 try {
                     val response = RetrofitClient.authApi.registerFcmToken(
                         authHeader = "Bearer $sessionToken",

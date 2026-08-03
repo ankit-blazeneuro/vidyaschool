@@ -33,7 +33,7 @@ object UpdateChecker {
     val isDownloadingState = androidx.compose.runtime.mutableStateOf(false)
     val downloadProgressState = androidx.compose.runtime.mutableStateOf(0f)
 
-    private val client = OkHttpClient()
+    private val client = RetrofitClient.okHttpClient
     private val gson = Gson()
 
     suspend fun checkForUpdates(context: Context): UpdateInfo? = withContext(Dispatchers.IO) {
