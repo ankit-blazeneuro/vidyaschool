@@ -105,6 +105,26 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(doc.fileUrl, 307)
     }
 
+    // Data URI Fallback (base64 encoded files)
+    if (doc.fileUrl && doc.fileUrl.startsWith("data:")) {
+      const commaIdx = doc.fileUrl.indexOf(",")
+      if (commaIdx !== -1) {
+        const header = doc.fileUrl.substring(0, commaIdx)
+        const base64Data = doc.fileUrl.substring(commaIdx + 1)
+        const mimeMatch = header.match(/data:(.*?);base64/)
+        const mimeType = mimeMatch ? mimeMatch[1] : doc.fileType || "application/pdf"
+        
+        const buffer = Buffer.from(base64Data, "base64")
+        return new NextResponse(buffer, {
+          headers: {
+            "Content-Type": mimeType,
+            "Content-Length": buffer.length.toString(),
+            "Content-Disposition": `inline; filename="${doc.fileName || 'document'}"`,
+          },
+        })
+      }
+    }
+
     // Step 5: Local File Storage Handling
     let filePath: string | null = null
 
@@ -119,6 +139,24 @@ export async function GET(req: NextRequest) {
         filePath = privatePath
       } catch {
         filePath = path.join(process.cwd(), "public", "uploads", relativePath)
+      }
+    }
+
+    // Fallback: check candidate directories if not matched above
+    if (!filePath && doc.fileUrl && !doc.fileUrl.startsWith("data:")) {
+      const cleanUrl = doc.fileUrl.replace(/^\/+/, "")
+      const candidates = [
+        path.join(process.cwd(), "private_uploads", "documents", cleanUrl),
+        path.join(process.cwd(), "private_uploads", cleanUrl),
+        path.join(process.cwd(), "public", cleanUrl),
+        path.join(process.cwd(), "public", "uploads", cleanUrl),
+      ]
+      for (const candidate of candidates) {
+        try {
+          await stat(candidate)
+          filePath = candidate
+          break
+        } catch {}
       }
     }
 
