@@ -37,6 +37,7 @@ from app.routes.email import router as email_router
 from app.routes.sessions import router as sessions_router
 from app.routes.auth_device import router as auth_device_router
 from app.routes.qr_auth import router as qr_auth_router
+from app.routes.documents import router as documents_router
 from models import User
 
 # Load database URL and adjust for SQLAlchemy PostgreSQL driver
@@ -423,6 +424,7 @@ app.include_router(email_router)
 app.include_router(sessions_router)
 app.include_router(auth_device_router)
 app.include_router(qr_auth_router)
+app.include_router(documents_router)
 
 # Admin endpoints for teacher approval and subject requests
 @app.get("/api/health")

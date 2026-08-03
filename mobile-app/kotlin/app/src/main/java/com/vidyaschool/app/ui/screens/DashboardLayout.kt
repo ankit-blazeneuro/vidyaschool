@@ -26,6 +26,11 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.animation.AnimatedVisibility
@@ -2442,6 +2447,9 @@ fun ProfileTabContent(
     onLogout: () -> Unit,
     onNotificationClick: () -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
     var isEditing by remember { mutableStateOf(false) }
     var tempUsername by remember { mutableStateOf(username) }
 
@@ -2462,12 +2470,115 @@ fun ProfileTabContent(
     var editParentName by remember { mutableStateOf("") }
     var editParentPhone by remember { mutableStateOf("") }
     var editParentEmail by remember { mutableStateOf("") }
+
+    // Document Upload Manager state
+    var userDocuments by remember { mutableStateOf<Map<String, com.vidyaschool.app.api.UserDocumentItem>>(emptyMap()) }
+    var isDocumentsLoading by remember { mutableStateOf(false) }
+    var activeUploadSlotType by remember { mutableStateOf<String?>(null) }
+    var activeUploadSlotTitle by remember { mutableStateOf<String?>(null) }
+    var previewDocUrl by remember { mutableStateOf<String?>(null) }
+    var previewDocName by remember { mutableStateOf<String?>(null) }
+
+    fun fetchDocumentsList() {
+        coroutineScope.launch {
+            isDocumentsLoading = true
+            try {
+                val token = sessionManager.getSessionToken() ?: ""
+                val res = RetrofitClient.authApi.getDocuments("Bearer $token")
+                if (res.isSuccessful && res.body() != null) {
+                    userDocuments = res.body()!!.associateBy { it.docType }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ProfileTab", "Error fetching documents: ${e.message}")
+            } finally {
+                isDocumentsLoading = false
+            }
+        }
+    }
+
+    fun uploadDocumentUri(uri: Uri, docType: String, docName: String) {
+        coroutineScope.launch {
+            isDocumentsLoading = true
+            try {
+                val token = sessionManager.getSessionToken() ?: ""
+                val contentResolver = context.contentResolver
+                val mimeType = contentResolver.getType(uri) ?: "application/pdf"
+                
+                var fileName = "$docType.pdf"
+                val cursor = contentResolver.query(uri, null, null, null, null)
+                cursor?.use {
+                    if (it.moveToFirst()) {
+                        val nameIdx = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                        if (nameIdx >= 0) {
+                            fileName = it.getString(nameIdx) ?: fileName
+                        }
+                    }
+                }
+
+                val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                if (bytes == null || bytes.isEmpty()) {
+                    android.widget.Toast.makeText(context, "Could not read file", android.widget.Toast.LENGTH_SHORT).show()
+                    isDocumentsLoading = false
+                    return@launch
+                }
+
+                if (bytes.size > 10 * 1024 * 1024) {
+                    android.widget.Toast.makeText(context, "File size must be under 10MB", android.widget.Toast.LENGTH_SHORT).show()
+                    isDocumentsLoading = false
+                    return@launch
+                }
+
+                val mediaType = mimeType.toMediaTypeOrNull()
+                val requestFile = bytes.toRequestBody(mediaType)
+                val bodyPart = MultipartBody.Part.createFormData("file", fileName, requestFile)
+                val docTypePart = docType.toRequestBody("text/plain".toMediaTypeOrNull())
+                val docNamePart = docName.toRequestBody("text/plain".toMediaTypeOrNull())
+
+                val res = RetrofitClient.authApi.uploadDocumentFile("Bearer $token", bodyPart, docTypePart, docNamePart)
+                if (res.isSuccessful) {
+                    android.widget.Toast.makeText(context, "$docName uploaded successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                    fetchDocumentsList()
+                } else {
+                    android.widget.Toast.makeText(context, "Failed to upload $docName", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(context, "Upload error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+            } finally {
+                isDocumentsLoading = false
+            }
+        }
+    }
+
+    fun deleteDocumentItem(docType: String, docName: String) {
+        coroutineScope.launch {
+            isDocumentsLoading = true
+            try {
+                val token = sessionManager.getSessionToken() ?: ""
+                val res = RetrofitClient.authApi.deleteDocument("Bearer $token", docType)
+                if (res.isSuccessful) {
+                    android.widget.Toast.makeText(context, "$docName removed", android.widget.Toast.LENGTH_SHORT).show()
+                    fetchDocumentsList()
+                } else {
+                    android.widget.Toast.makeText(context, "Failed to delete document", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(context, "Delete error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+            } finally {
+                isDocumentsLoading = false
+            }
+        }
+    }
+
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null && activeUploadSlotType != null && activeUploadSlotTitle != null) {
+            uploadDocumentUri(uri, activeUploadSlotType!!, activeUploadSlotTitle!!)
+        }
+    }
     
     var editClass by remember { mutableStateOf("") }
     var editSection by remember { mutableStateOf("") }
-
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     LaunchedEffect(username) {
         tempUsername = username
@@ -2547,8 +2658,10 @@ fun ProfileTabContent(
 
     fun openSection(sec: String) {
         activeSection = sec
-        if (sec in listOf("personal", "parent", "address", "documents")) {
+        if (sec in listOf("personal", "parent", "address")) {
             fetchSectionProfile(sec)
+        } else if (sec == "documents") {
+            fetchDocumentsList()
         }
     }
 
@@ -2715,7 +2828,7 @@ fun ProfileTabContent(
 
                 ProfileOptionRow(
                     iconRes = com.vidyaschool.app.R.drawable.ic_solar_document,
-                    title = "Documents & Status",
+                    title = "Documents",
                     onClick = { openSection("documents") }
                 )
 
@@ -2816,7 +2929,7 @@ fun ProfileTabContent(
                             "personal" -> "Personal Details"
                             "parent" -> "Parent Details"
                             "address" -> "Address Details"
-                            "documents" -> "Documents & Status"
+                            "documents" -> "Documents"
                             "appearance" -> "Appearance"
                             "version" -> "App Version & Info"
                             else -> "Details"
@@ -2893,10 +3006,305 @@ fun ProfileTabContent(
                                 Input(value = editState, onValueChange = { editState = it }, label = "State", placeholder = "e.g. Delhi")
                                 Input(value = editPincode, onValueChange = { editPincode = it }, label = "Pincode", placeholder = "e.g. 110001")
                             }
-                            "documents" -> {
-                                ProfileDetailRow(label = "Admission No", value = userProfile?.admissionNumber ?: "2024/STU/102")
-                                ProfileDetailRow(label = "Verification", value = if (userProfile?.onboardingCompleted == true) "VERIFIED ✓" else "PENDING")
-                                ProfileDetailRow(label = "Commute Mode", value = userProfile?.transportMode ?: "Walking")
+                             "documents" -> {
+                                data class DocSlot(
+                                    val type: String,
+                                    val title: String,
+                                    val description: String,
+                                    val required: Boolean
+                                )
+
+                                val slots = listOf(
+                                    DocSlot("10th_certificate", "10th Certificate", "Class 10th passing certificate or official board marksheet (PDF or Image)", true),
+                                    DocSlot("student_aadhar", "Student Aadhar Card", "Student's Aadhaar identification card front & back scan (PDF or Image)", true),
+                                    DocSlot("parent_aadhar", "Parent Aadhar Card", "Father/Mother/Guardian Aadhaar identification card scan (PDF or Image)", true),
+                                    DocSlot("birth_certificate", "Birth Certificate", "Official municipal birth registration certificate (PDF or Image)", true),
+                                    DocSlot("parent_pan", "Parent PAN Card", "Father/Mother/Guardian Permanent Account Number (PAN) card (PDF or Image)", false)
+                                )
+
+                                val uploadedCount = slots.count { userDocuments.containsKey(it.type) }
+                                val totalCount = slots.size
+                                val progressFraction = uploadedCount.toFloat() / totalCount
+
+                                // Summary Card
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), RoundedCornerShape(14.dp)),
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = "Required Profile Documents",
+                                                    fontSize = 15.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    text = "Upload clear PDF documents or scanned images (JPEG, PNG up to 10MB).",
+                                                    fontSize = 11.sp,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                                                )
+                                            }
+                                            Box(
+                                                modifier = Modifier
+                                                    .background(
+                                                        if (uploadedCount == totalCount) Color(0xFF22C55E).copy(alpha = 0.15f)
+                                                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                                                        RoundedCornerShape(100.dp)
+                                                    )
+                                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                                            ) {
+                                                Text(
+                                                    text = "$uploadedCount of $totalCount Uploaded",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (uploadedCount == totalCount) Color(0xFF22C55E) else MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        }
+
+                                        // Progress Bar
+                                        LinearProgressIndicator(
+                                            progress = { progressFraction },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(6.dp)
+                                                .clip(RoundedCornerShape(100.dp)),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                // Document Slots List
+                                slots.forEach { slot ->
+                                    val uploadedDoc = userDocuments[slot.type]
+
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .border(
+                                                1.dp,
+                                                if (uploadedDoc != null) Color(0xFF22C55E).copy(alpha = 0.4f)
+                                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                                RoundedCornerShape(14.dp)
+                                            ),
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(16.dp),
+                                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        ) {
+                                            // Title + Required/Uploaded Badge Row
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.Top
+                                            ) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    modifier = Modifier.weight(1f)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(36.dp)
+                                                            .background(
+                                                                if (uploadedDoc != null) Color(0xFF22C55E).copy(alpha = 0.12f)
+                                                                else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                                                                RoundedCornerShape(10.dp)
+                                                            ),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(
+                                                                id = if (uploadedDoc != null) com.vidyaschool.app.R.drawable.ic_solar_check_circle
+                                                                else com.vidyaschool.app.R.drawable.ic_solar_document
+                                                            ),
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(20.dp),
+                                                            tint = if (uploadedDoc != null) Color(0xFF22C55E) else MaterialTheme.colorScheme.primary
+                                                        )
+                                                    }
+
+                                                    Column {
+                                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                                            Text(
+                                                                text = slot.title,
+                                                                fontSize = 14.sp,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = MaterialTheme.colorScheme.onSurface
+                                                            )
+                                                            if (slot.required) {
+                                                                Box(
+                                                                    modifier = Modifier
+                                                                        .background(MaterialTheme.colorScheme.error.copy(alpha = 0.12f), RoundedCornerShape(4.dp))
+                                                                        .padding(horizontal = 6.dp, vertical = 1.dp)
+                                                                ) {
+                                                                    Text(
+                                                                        text = "Required",
+                                                                        fontSize = 9.sp,
+                                                                        fontWeight = FontWeight.Bold,
+                                                                        color = MaterialTheme.colorScheme.error
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                        Text(
+                                                            text = slot.description,
+                                                            fontSize = 11.sp,
+                                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                                            maxLines = 2
+                                                        )
+                                                    }
+                                                }
+
+                                                Box(
+                                                    modifier = Modifier
+                                                        .background(
+                                                            if (uploadedDoc != null) Color(0xFF22C55E).copy(alpha = 0.15f)
+                                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                                                            RoundedCornerShape(6.dp)
+                                                        )
+                                                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                                                ) {
+                                                    Text(
+                                                        text = if (uploadedDoc != null) "Uploaded ✓" else "Pending",
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = if (uploadedDoc != null) Color(0xFF22C55E) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                                    )
+                                                }
+                                            }
+
+                                            // If Uploaded: File Details & Action Buttons
+                                            if (uploadedDoc != null) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f), RoundedCornerShape(10.dp))
+                                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text(
+                                                            text = uploadedDoc.fileName ?: "${slot.title}.pdf",
+                                                            fontSize = 12.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            color = MaterialTheme.colorScheme.onSurface,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                        Text(
+                                                            text = if (uploadedDoc.fileType?.contains("pdf", ignoreCase = true) == true) "PDF Document" else "Image File",
+                                                            fontSize = 10.sp,
+                                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                                                        )
+                                                    }
+
+                                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                        // View / Preview Button
+                                                        if (!uploadedDoc.fileUrl.isNullOrEmpty()) {
+                                                            IconButton(
+                                                                onClick = {
+                                                                    previewDocUrl = uploadedDoc.fileUrl
+                                                                    previewDocName = slot.title
+                                                                },
+                                                                modifier = Modifier.size(32.dp)
+                                                            ) {
+                                                                Icon(
+                                                                    painter = painterResource(id = com.vidyaschool.app.R.drawable.ic_solar_info),
+                                                                    contentDescription = "View",
+                                                                    modifier = Modifier.size(16.dp),
+                                                                    tint = MaterialTheme.colorScheme.primary
+                                                                )
+                                                            }
+                                                        }
+
+                                                        // Replace Button
+                                                        IconButton(
+                                                            onClick = {
+                                                                activeUploadSlotType = slot.type
+                                                                activeUploadSlotTitle = slot.title
+                                                                documentPickerLauncher.launch("*/*")
+                                                            },
+                                                            modifier = Modifier.size(32.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Edit,
+                                                                contentDescription = "Replace",
+                                                                modifier = Modifier.size(16.dp),
+                                                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                                            )
+                                                        }
+
+                                                        // Delete Button
+                                                        IconButton(
+                                                            onClick = {
+                                                                deleteDocumentItem(slot.type, slot.title)
+                                                            },
+                                                            modifier = Modifier.size(32.dp)
+                                                        ) {
+                                                            Icon(
+                                                                painter = painterResource(id = com.vidyaschool.app.R.drawable.ic_solar_trash),
+                                                                contentDescription = "Delete",
+                                                                modifier = Modifier.size(16.dp),
+                                                                tint = MaterialTheme.colorScheme.error
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                // Upload Button
+                                                OutlinedButton(
+                                                    onClick = {
+                                                        activeUploadSlotType = slot.type
+                                                        activeUploadSlotTitle = slot.title
+                                                        documentPickerLauncher.launch("*/*")
+                                                    },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(44.dp),
+                                                    shape = RoundedCornerShape(10.dp),
+                                                    colors = ButtonDefaults.outlinedButtonColors(
+                                                        contentColor = MaterialTheme.colorScheme.primary
+                                                    )
+                                                ) {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(id = com.vidyaschool.app.R.drawable.ic_solar_gallery),
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                        Text(
+                                                            text = "Upload ${slot.title}",
+                                                            fontSize = 12.sp,
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                             "appearance" -> {
                                 Text("Select Theme", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
@@ -3059,6 +3467,93 @@ fun ProfileTabContent(
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Document Preview Dialog Modal
+    if (previewDocUrl != null) {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { previewDocUrl = null },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = previewDocName ?: "Document Preview",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        IconButton(onClick = { previewDocUrl = null }) {
+                            Icon(Icons.Default.Close, contentDescription = "Close", tint = MaterialTheme.colorScheme.onSurface)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surface),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (previewDocUrl!!.endsWith(".pdf", ignoreCase = true) || previewDocUrl!!.contains(".pdf", ignoreCase = true)) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = com.vidyaschool.app.R.drawable.ic_solar_document),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "PDF Document",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Button(
+                                    onClick = {
+                                        try {
+                                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(previewDocUrl))
+                                            context.startActivity(intent)
+                                        } catch (e: Exception) {
+                                            android.widget.Toast.makeText(context, "Cannot open PDF viewer", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text("Open PDF File", fontSize = 13.sp)
+                                }
+                            }
+                        } else {
+                            AsyncImage(
+                                model = previewDocUrl,
+                                contentDescription = "Document Preview",
+                                modifier = Modifier.fillMaxSize()
                             )
                         }
                     }

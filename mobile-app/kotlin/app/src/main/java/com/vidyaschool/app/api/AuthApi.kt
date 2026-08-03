@@ -387,6 +387,28 @@ interface AuthApi {
     suspend fun pollQRStatus(
         @Path("qrToken") qrToken: String
     ): Response<QRStatusResponse>
+
+    // ── Document Management Endpoints ────────────────────────────────────────
+
+    @GET("api/documents")
+    suspend fun getDocuments(
+        @Header("Authorization") authHeader: String
+    ): Response<List<UserDocumentItem>>
+
+    @retrofit2.http.Multipart
+    @POST("api/documents")
+    suspend fun uploadDocumentFile(
+        @Header("Authorization") authHeader: String,
+        @retrofit2.http.Part file: okhttp3.MultipartBody.Part,
+        @retrofit2.http.Part("docType") docType: okhttp3.RequestBody,
+        @retrofit2.http.Part("docName") docName: okhttp3.RequestBody
+    ): Response<Map<String, Any>>
+
+    @DELETE("api/documents")
+    suspend fun deleteDocument(
+        @Header("Authorization") authHeader: String,
+        @Query("docType") docType: String
+    ): Response<ResponseBody>
 }
 
 data class InitChatRequest(
@@ -572,6 +594,27 @@ data class StudentExamResult(
     val termName: String? = null,
     val gpa: String? = null,
     val subjects: List<StudentSubjectMark>? = null
+)
+
+data class UserDocumentItem(
+    val id: String? = null,
+    val docType: String,
+    val docName: String? = null,
+    val fileUrl: String? = null,
+    val fileName: String? = null,
+    val fileType: String? = null,
+    val fileSize: Long? = null,
+    val status: String? = "Uploaded"
+)
+
+data class ConfirmDocumentUploadRequest(
+    val action: String = "confirm_upload",
+    val docType: String,
+    val docName: String,
+    val fileUrl: String,
+    val fileName: String,
+    val fileType: String,
+    val fileSize: Long
 )
 
 // ── QR Login models ─────────────────────────────────────────────────────────
