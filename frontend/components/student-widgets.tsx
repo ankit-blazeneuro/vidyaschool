@@ -3,7 +3,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ChevronUp, ChevronDown, Maximize2, Plus, Type, Pen, Ruler } from "lucide-react"
+import { ChevronUp, ChevronDown, Maximize2, Plus, Type, Pen, Ruler, Trash2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -17,28 +17,74 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip"
 
-export function StudentWidgets() {
-  const [tasks, setTasks] = React.useState([
-    { id: "1", label: "Submit Chemistry Lab report", completed: false },
-    { id: "2", label: "Read Chapter 4 of History textbook", completed: true },
-    { id: "3", label: "Solve Mathematics worksheet 3", completed: false },
-    { id: "4", label: "Prepare for Spanish vocabulary quiz", completed: false },
-  ])
+const TASKS_STORAGE_KEY = "student_dashboard_tasks"
+const SCRATCHPAD_STORAGE_KEY = "student_dashboard_scratchpad"
 
+const DEFAULT_TASKS = [
+  { id: "1", label: "Submit Chemistry Lab report", completed: false },
+  { id: "2", label: "Read Chapter 4 of History textbook", completed: true },
+  { id: "3", label: "Solve Mathematics worksheet 3", completed: false },
+  { id: "4", label: "Prepare for Spanish vocabulary quiz", completed: false },
+]
+
+export function StudentWidgets() {
+  const [tasks, setTasks] = React.useState<Array<{ id: string; label: string; completed: boolean }>>(DEFAULT_TASKS)
   const [scratchText, setScratchText] = React.useState("")
+  const [isLoaded, setIsLoaded] = React.useState(false)
+
   const [isAddOpen, setIsAddOpen] = React.useState(false)
   const [newTaskLabel, setNewTaskLabel] = React.useState("")
   const [activeTool, setActiveTool] = React.useState<"text" | "pen" | "ruler">("text")
 
+  // Load from localStorage on client mount
+  React.useEffect(() => {
+    try {
+      const savedTasks = localStorage.getItem(TASKS_STORAGE_KEY)
+      if (savedTasks) {
+        setTasks(JSON.parse(savedTasks))
+      }
+      const savedScratch = localStorage.getItem(SCRATCHPAD_STORAGE_KEY)
+      if (savedScratch !== null) {
+        setScratchText(savedScratch)
+      }
+    } catch (e) {
+      // Fallback to defaults
+    } finally {
+      setIsLoaded(true)
+    }
+  }, [])
+
+  // Save tasks to localStorage
+  React.useEffect(() => {
+    if (isLoaded) {
+      try {
+        localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks))
+      } catch (e) {}
+    }
+  }, [tasks, isLoaded])
+
+  // Save scratchpad text to localStorage
+  React.useEffect(() => {
+    if (isLoaded) {
+      try {
+        localStorage.setItem(SCRATCHPAD_STORAGE_KEY, scratchText)
+      } catch (e) {}
+    }
+  }, [scratchText, isLoaded])
+
   const toggleTask = (id: string) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t))
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t))
+  }
+
+  const deleteTask = (id: string) => {
+    setTasks(prev => prev.filter(t => t.id !== id))
   }
 
   const handleAddTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (newTaskLabel.trim()) {
-      setTasks([
-        ...tasks,
+      setTasks(prev => [
+        ...prev,
         { id: String(Date.now()), label: newTaskLabel.trim(), completed: false }
       ])
       setNewTaskLabel("")
@@ -67,7 +113,7 @@ export function StudentWidgets() {
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
               <button
-                className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+                className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title="Add Task"
               >
                 <Plus className="size-4" />
@@ -105,47 +151,61 @@ export function StudentWidgets() {
             </DialogContent>
           </Dialog>
         </div>
-        <div className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800/60 flex-1 overflow-y-auto pr-1">
-          {tasks.map((task, index) => (
-            <div key={task.id} className="flex items-center justify-between group py-2.5 first:pt-0 last:pb-0">
-              <div className="flex items-center space-x-3 flex-1 min-w-0">
-                <Checkbox
-                  id={task.id}
-                  checked={task.completed}
-                  onCheckedChange={() => toggleTask(task.id)}
-                  className="size-4.5 border-muted-foreground/50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-                />
-                <label
-                  htmlFor={task.id}
-                  className={`text-base font-normal leading-tight cursor-pointer select-none transition-colors duration-150 truncate flex-1 ${
-                    task.completed ? "line-through text-muted-foreground/80" : "text-foreground"
-                  }`}
-                >
-                  {task.label}
-                </label>
-              </div>
 
-              {/* Rank Changer (Up/Down Buttons) */}
-              <div className="flex items-center space-x-1 opacity-60 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
-                <button
-                  onClick={() => moveTask(index, "up")}
-                  disabled={index === 0}
-                  className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-muted-foreground hover:text-foreground transition-colors"
-                  title="Move Up"
-                >
-                  <ChevronUp className="size-4" />
-                </button>
-                <button
-                  onClick={() => moveTask(index, "down")}
-                  disabled={index === tasks.length - 1}
-                  className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-muted-foreground hover:text-foreground transition-colors"
-                  title="Move Down"
-                >
-                  <ChevronDown className="size-4" />
-                </button>
-              </div>
+        <div className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800/60 flex-1 overflow-y-auto pr-1">
+          {tasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center flex-1 py-8 text-center text-xs text-muted-foreground">
+              No tasks added yet. Click "+" to create a task!
             </div>
-          ))}
+          ) : (
+            tasks.map((task, index) => (
+              <div key={task.id} className="flex items-center justify-between group py-2.5 first:pt-0 last:pb-0">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <Checkbox
+                    id={task.id}
+                    checked={task.completed}
+                    onCheckedChange={() => toggleTask(task.id)}
+                    className="size-4.5 border-muted-foreground/50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground cursor-pointer"
+                  />
+                  <label
+                    htmlFor={task.id}
+                    className={`text-base font-normal leading-tight cursor-pointer select-none transition-colors duration-150 truncate flex-1 ${
+                      task.completed ? "line-through text-muted-foreground/80" : "text-foreground"
+                    }`}
+                  >
+                    {task.label}
+                  </label>
+                </div>
+
+                {/* Task controls */}
+                <div className="flex items-center space-x-1 opacity-60 group-hover:opacity-100 transition-opacity ml-2 shrink-0">
+                  <button
+                    onClick={() => moveTask(index, "up")}
+                    disabled={index === 0}
+                    className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    title="Move Up"
+                  >
+                    <ChevronUp className="size-4" />
+                  </button>
+                  <button
+                    onClick={() => moveTask(index, "down")}
+                    disabled={index === tasks.length - 1}
+                    className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 disabled:opacity-30 disabled:pointer-events-none text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    title="Move Down"
+                  >
+                    <ChevronDown className="size-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteTask(task.id)}
+                    className="p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors cursor-pointer"
+                    title="Delete Task"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -159,7 +219,7 @@ export function StudentWidgets() {
           {/* Full Screen Dialog */}
           <Dialog>
             <DialogTrigger asChild>
-              <button className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors">
+              <button className="p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
                 <Maximize2 className="size-4" />
               </button>
             </DialogTrigger>
@@ -194,7 +254,7 @@ export function StudentWidgets() {
                 <button
                   onClick={() => setActiveTool("text")}
                   className={cn(
-                    "p-1.5 rounded-full transition-all duration-150",
+                    "p-1.5 rounded-full transition-all duration-150 cursor-pointer",
                     activeTool === "text"
                       ? "bg-zinc-100 dark:bg-zinc-800 text-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
@@ -213,7 +273,7 @@ export function StudentWidgets() {
                 <button
                   onClick={() => setActiveTool("pen")}
                   className={cn(
-                    "p-1.5 rounded-full transition-all duration-150",
+                    "p-1.5 rounded-full transition-all duration-150 cursor-pointer",
                     activeTool === "pen"
                       ? "bg-zinc-100 dark:bg-zinc-800 text-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"
@@ -232,7 +292,7 @@ export function StudentWidgets() {
                 <button
                   onClick={() => setActiveTool("ruler")}
                   className={cn(
-                    "p-1.5 rounded-full transition-all duration-150",
+                    "p-1.5 rounded-full transition-all duration-150 cursor-pointer",
                     activeTool === "ruler"
                       ? "bg-zinc-100 dark:bg-zinc-800 text-foreground shadow-xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5"

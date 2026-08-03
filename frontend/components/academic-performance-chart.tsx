@@ -101,22 +101,6 @@ export function AcademicPerformanceChart() {
       })
   }, [])
 
-  if (loading) {
-    return (
-      <div className="px-4 lg:px-6 py-1.5">
-        <Card className="@container/card">
-          <CardHeader>
-            <CardTitle>Academic Performance</CardTitle>
-            <CardDescription>Overall score trend across exams</CardDescription>
-          </CardHeader>
-          <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-            <Skeleton className="h-[250px] w-full rounded-lg" />
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   if (error || chartData.length === 0) {
     return (
       <div className="px-4 lg:px-6 py-1.5">

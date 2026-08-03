@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { GraduationCapIcon, BookOpenIcon, UserIcon } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -17,14 +16,12 @@ interface ClassInfo {
 
 export function ClassInfoWidget() {
   const [info, setInfo] = React.useState<ClassInfo | null>(null)
-  const [loading, setLoading] = React.useState(true)
 
   React.useEffect(() => {
     fetch("/api/student/class-info")
       .then(r => r.json())
       .then(setInfo)
       .catch(() => setInfo(null))
-      .finally(() => setLoading(false))
   }, [])
 
   return (
@@ -35,9 +32,7 @@ export function ClassInfoWidget() {
             <GraduationCapIcon className="h-4 w-4 text-primary" />
             My Class
           </CardTitle>
-          {loading ? (
-            <Skeleton className="h-6 w-24 rounded-full" />
-          ) : info?.class ? (
+          {info?.class ? (
             <Badge variant="secondary" className="px-3 py-1 font-semibold text-xs rounded-full">
               Class {info.class} – {info.section}
             </Badge>
@@ -59,13 +54,7 @@ export function ClassInfoWidget() {
 
             {/* Subject Teachers Tab */}
             <TabsContent value="subjects" className="mt-0 focus-visible:outline-hidden">
-              {loading ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {[...Array(4)].map((_, i) => (
-                    <Skeleton key={i} className="h-14 rounded-xl" />
-                  ))}
-                </div>
-              ) : !info?.subjects?.length ? (
+              {!info?.subjects?.length ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   No subjects assigned yet.
                 </p>
@@ -89,17 +78,7 @@ export function ClassInfoWidget() {
 
             {/* Class Teacher Tab */}
             <TabsContent value="classteacher" className="mt-0 focus-visible:outline-hidden">
-              {loading ? (
-                <Card size="sm" className="bg-muted/30 border-muted-foreground/10">
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full" />
-                    <div className="flex flex-col gap-1.5">
-                      <Skeleton className="h-3 w-20 rounded" />
-                      <Skeleton className="h-4 w-36 rounded" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : info?.classTeacher ? (
+              {info?.classTeacher ? (
                 <Card size="sm" className="bg-muted/30 border-muted-foreground/10 hover:bg-muted/50 transition-colors">
                   <CardContent className="p-4 flex items-center gap-4">
                     <Avatar size="lg" className="border border-border">
