@@ -249,16 +249,21 @@ export async function POST(req: NextRequest) {
         throw new Error("Failed to upload document to AWS S3")
       }
     } else {
-      // Local Private Storage: Stores outside public/ directory in private_uploads/
-      const uploadDir = path.join(process.cwd(), "private_uploads", "documents", session.user.id)
-      await mkdir(uploadDir, { recursive: true })
+      // Data URI for universal serverless/mobile compatibility + local private storage fallback
+      const mimeType = file.type || "application/pdf"
+      const base64Data = buffer.toString("base64")
+      fileUrl = `data:${mimeType};base64,${base64Data}`
 
-      const ext = file.name.split(".").pop() || "pdf"
-      const uniqueFilename = `${docType}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`
-      const filePath = path.join(uploadDir, uniqueFilename)
-
-      await writeFile(filePath, buffer)
-      fileUrl = `/uploads/private/${session.user.id}/${uniqueFilename}`
+      try {
+        const uploadDir = path.join(process.cwd(), "private_uploads", "documents", session.user.id)
+        await mkdir(uploadDir, { recursive: true })
+        const ext = file.name.split(".").pop() || "pdf"
+        const uniqueFilename = `${docType}-${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`
+        const filePath = path.join(uploadDir, uniqueFilename)
+        await writeFile(filePath, buffer)
+      } catch (err) {
+        console.warn("[documents] Local disk write skipped:", err)
+      }
     }
 
     // Upsert record into DB

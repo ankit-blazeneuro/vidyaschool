@@ -130,7 +130,11 @@ export async function GET(req: NextRequest) {
 
     if (doc.fileUrl.startsWith("/uploads/private/")) {
       const relativePath = doc.fileUrl.replace("/uploads/private/", "")
-      filePath = path.join(process.cwd(), "private_uploads", "documents", relativePath)
+      const p = path.join(process.cwd(), "private_uploads", "documents", relativePath)
+      try {
+        await stat(p)
+        filePath = p
+      } catch {}
     } else if (doc.fileUrl.startsWith("/uploads/")) {
       const relativePath = doc.fileUrl.replace("/uploads/", "")
       const privatePath = path.join(process.cwd(), "private_uploads", "documents", relativePath)
@@ -138,7 +142,11 @@ export async function GET(req: NextRequest) {
         await stat(privatePath)
         filePath = privatePath
       } catch {
-        filePath = path.join(process.cwd(), "public", "uploads", relativePath)
+        const publicPath = path.join(process.cwd(), "public", "uploads", relativePath)
+        try {
+          await stat(publicPath)
+          filePath = publicPath
+        } catch {}
       }
     }
 
@@ -161,7 +169,8 @@ export async function GET(req: NextRequest) {
     }
 
     if (!filePath) {
-      return NextResponse.json({ error: "File path unresolvable" }, { status: 404 })
+      console.warn(`[documents/serve] File unresolvable on disk for docId=${docId}, fileUrl=${doc.fileUrl}`)
+      return NextResponse.json({ error: "File path unresolvable", docId, fileUrl: doc.fileUrl }, { status: 404 })
     }
 
     // Path Traversal Security Verification
