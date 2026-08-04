@@ -1,6 +1,6 @@
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { SectionCards } from "@/components/section-cards"
-import { TeacherCalendarWidget } from "@/components/teacher-calendar-widget"
+import { StudentCalendar } from "@/components/student-calendar"
 import { TeacherComplaintsWidget } from "@/components/teacher-complaints-widget"
 import { requireRole } from "@/lib/auth-helpers"
 import { headers } from "next/headers"
@@ -99,7 +99,7 @@ export default async function TeacherDashboardPage() {
         <p className="text-sm text-muted-foreground">Role: {user.role}</p>
       </div>
       <SectionCards card1={card1} card2={card2} card3={card3} card4={card4} />
-      <TeacherCalendarWidget />
+      <StudentCalendar apiUrl="/api/teacher/timetable/today" title="Today's Classes" />
       <TeacherComplaintsWidget />
       <div className="px-4 lg:px-6">
         <ChartAreaInteractive
