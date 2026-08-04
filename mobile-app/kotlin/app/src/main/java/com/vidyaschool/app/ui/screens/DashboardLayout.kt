@@ -1332,6 +1332,7 @@ fun DashboardLayout(
                             sessionManager = sessionManager,
                             isRefreshing = isRefreshing,
                             onRefresh = triggerRefresh,
+                            onNotificationClick = { showNotifications = true },
                             onPaymentSuccess = { inst ->
                                 paymentSuccessInstallment = inst
                             }
@@ -5123,6 +5124,7 @@ fun FeesTabContent(
     sessionManager: SessionManager,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
+    onNotificationClick: () -> Unit = {},
     onPaymentSuccess: (FeeInstallment) -> Unit
 ) {
     val context = LocalContext.current
@@ -5254,6 +5256,8 @@ fun FeesTabContent(
         animationSpec = androidx.compose.animation.core.tween(220), label = "feeHeaderSlide"
     )
 
+    val menuClick = LocalMenuClickHandler.current
+
     Box(modifier = Modifier.fillMaxSize()) {
     PullToRefreshBox(
         isRefreshing = isRefreshing || isLoading,
@@ -5276,7 +5280,7 @@ fun FeesTabContent(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         IconButton(
-                            onClick = { },
+                            onClick = { menuClick?.invoke() },
                             modifier = Modifier
                                 .size(36.dp)
                                 .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
@@ -5290,7 +5294,7 @@ fun FeesTabContent(
                         }
                     }
                     IconButton(
-                        onClick = { },
+                        onClick = onNotificationClick,
                         modifier = Modifier
                             .size(36.dp)
                             .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
@@ -5481,7 +5485,7 @@ fun FeesTabContent(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     IconButton(
-                        onClick = { },
+                        onClick = { menuClick?.invoke() },
                         modifier = Modifier
                             .size(36.dp)
                             .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
@@ -5491,7 +5495,7 @@ fun FeesTabContent(
                     }
                     Text("Pay Fees", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                     IconButton(
-                        onClick = { },
+                        onClick = onNotificationClick,
                         modifier = Modifier
                             .size(36.dp)
                             .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f), CircleShape)
