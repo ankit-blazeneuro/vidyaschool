@@ -93,6 +93,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import com.vidyaschool.app.api.RetrofitClient
+import com.vidyaschool.app.auth.BiometricHelper
 import com.vidyaschool.app.auth.SessionManager
 import com.vidyaschool.app.api.UpdateChecker
 import com.vidyaschool.app.api.UpdateInfo
@@ -335,6 +336,7 @@ fun DashboardLayout(
     var sidebarSessionsCount by remember { mutableStateOf<Int?>(null) }
     var paymentSuccessInstallment by remember { mutableStateOf<FeeInstallment?>(null) }
     var showQRLogin by remember { mutableStateOf(false) }
+    var biometricError by remember { mutableStateOf<String?>(null) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     
     // Check initial notification history on launch to set unread badge dot
@@ -1013,7 +1015,19 @@ fun DashboardLayout(
                         iconRes = R.drawable.ic_custom_qr_code
                     ) {
                         scope.launch { drawerState.close() }
-                        showQRLogin = true
+                        val activity = context as? androidx.fragment.app.FragmentActivity
+                        if (activity != null && BiometricHelper.isAvailable(activity)) {
+                            BiometricHelper.showPrompt(
+                                activity  = activity,
+                                title     = "QR Login — Verify Identity",
+                                subtitle  = "Use fingerprint or face to open the QR scanner",
+                                onSuccess = { showQRLogin = true },
+                                onFailure = { reason -> biometricError = reason }
+                            )
+                        } else {
+                            // No biometric hardware / enrollment — open directly
+                            showQRLogin = true
+                        }
                     }
 
                     DrawerLink(
@@ -1414,6 +1428,58 @@ fun DashboardLayout(
         QRLoginDrawer(
             onDismiss = { showQRLogin = false }
         )
+    }
+
+    // ── Biometric error snackbar ─────────────────────────────────────────────
+    if (biometricError != null) {
+        LaunchedEffect(biometricError) {
+            kotlinx.coroutines.delay(3000)
+            biometricError = null
+        }
+        Box(
+            modifier = androidx.compose.ui.Modifier
+                .fillMaxSize()
+                .padding(horizontal = 24.dp, vertical = 32.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            androidx.compose.material3.Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shadowElevation = 8.dp,
+                modifier = androidx.compose.ui.Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = androidx.compose.ui.Modifier
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        modifier = androidx.compose.ui.Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = biometricError ?: "",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = androidx.compose.ui.Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = { biometricError = null },
+                        modifier = androidx.compose.ui.Modifier.size(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Dismiss",
+                            modifier = androidx.compose.ui.Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            }
+        }
     }
 
     // Note detail screen (opened in new full screen when note is clicked)

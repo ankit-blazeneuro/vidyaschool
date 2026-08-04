@@ -133,6 +133,9 @@ dependencies {
     // Lottie for Compose animations
     implementation("com.airbnb.android:lottie-compose:6.4.0")
 
+    // Biometric authentication (fingerprint / face unlock)
+    implementation("androidx.biometric:biometric:1.1.0")
+
     // CameraX + ZXing for QR code scanning
     implementation("androidx.camera:camera-core:1.3.1")
     implementation("androidx.camera:camera-camera2:1.3.1")
