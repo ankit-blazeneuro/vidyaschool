@@ -823,7 +823,7 @@ export default function TeacherTaskChatPage() {
   }
 
   return (
-    <div className="relative flex flex-col h-[calc(100vh-var(--header-height,64px))] bg-background text-foreground w-full overflow-hidden">
+    <div className="relative flex flex-col h-[calc(100dvh-var(--header-height,48px))] max-h-[calc(100dvh-var(--header-height,48px))] bg-background text-foreground w-full overflow-hidden">
       
       {/* ── Chat Messages Pane ── */}
       <div className="relative flex-1 min-h-0">
@@ -1057,93 +1057,12 @@ export default function TeacherTaskChatPage() {
 
         <form
           onSubmit={handleSend}
-          className="w-full flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 pl-2 sm:pl-3 rounded-full border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-black shadow-lg dark:shadow-2xl focus-within:border-zinc-500 dark:focus-within:border-zinc-600 min-h-[46px] sm:min-h-[52px]"
+          className="w-full flex flex-col justify-between p-2.5 sm:p-3 rounded-2xl border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-black shadow-lg dark:shadow-2xl focus-within:border-zinc-500 dark:focus-within:border-zinc-600 min-h-[96px] sm:min-h-[108px] transition-all"
         >
-          {/* Hidden file input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,.pdf,video/*"
-            className="hidden"
-            onChange={handleFileSelect}
-          />
-
-          {/* Attach button */}
-          <button
-            type="button"
-            disabled={isUploading}
-            onClick={() => fileInputRef.current?.click()}
-            title="Attach image, PDF, or video"
-            className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 transition-all active:scale-95 cursor-pointer my-auto"
-          >
-            {isUploading
-              ? <Loader2 className="h-4 w-4 animate-spin" />
-              : <Paperclip className="h-4 w-4" />}
-          </button>
-
-          {/* Model combobox selector */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 shrink-0 rounded-full px-2 py-1 text-[10px] sm:text-[11px] font-semibold tracking-tight border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 select-none my-auto cursor-pointer"
-              >
-                {useThinking
-                  ? <><BrainCircuit className="size-3 shrink-0 text-violet-500" /><span>Thinking</span></>
-                  : <><Zap className="size-3 shrink-0 text-amber-500" /><span>Fast</span></>}
-                <ChevronDown className="size-2.5 shrink-0 text-zinc-400" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              side="top"
-              className="w-56 p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-xl"
-            >
-              <p className="px-2 pb-1.5 pt-0.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Model Mode</p>
-              {/* Thinking option */}
-              <button
-                type="button"
-                onClick={() => setUseThinking(true)}
-                className={`w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
-                  useThinking
-                    ? "bg-violet-50 dark:bg-violet-500/10"
-                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
-                }`}
-              >
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-500/20">
-                  <BrainCircuit className="size-3.5 text-violet-600 dark:text-violet-400" />
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="block text-xs font-semibold text-zinc-900 dark:text-zinc-100">Thinking</span>
-                  <span className="block text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">Deep reasoning · slower</span>
-                </span>
-                {useThinking && <Check className="size-3.5 mt-1 text-violet-500 shrink-0" />}
-              </button>
-              {/* Fast option */}
-              <button
-                type="button"
-                onClick={() => setUseThinking(false)}
-                className={`w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
-                  !useThinking
-                    ? "bg-amber-50 dark:bg-amber-500/10"
-                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
-                }`}
-              >
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20">
-                  <Zap className="size-3.5 text-amber-600 dark:text-amber-400" />
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="block text-xs font-semibold text-zinc-900 dark:text-zinc-100">Fast</span>
-                  <span className="block text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">Instant replies · no reasoning</span>
-                </span>
-                {!useThinking && <Check className="size-3.5 mt-1 text-amber-500 shrink-0" />}
-              </button>
-            </PopoverContent>
-          </Popover>
-
+          {/* Textarea field (Doubled height) */}
           <textarea
             ref={textareaRef}
-            rows={1}
+            rows={3}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -1153,27 +1072,114 @@ export default function TeacherTaskChatPage() {
               }
             }}
             placeholder={attachedFile ? `Ask about ${attachedFile.name}...` : "Message AI Assistant..."}
-            className="flex-1 bg-transparent text-xs sm:text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-1 sm:px-2 py-1.5 sm:py-2 resize-none max-h-32 min-h-[30px] my-auto scrollbar-none"
+            className="w-full bg-transparent text-xs sm:text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-1.5 py-1 resize-none min-h-[54px] max-h-40 scrollbar-none"
           />
 
-          {/* Send / Pause button */}
-          {genStatus !== "idle" ? (
-            <button
-              type="button"
-              onClick={handlePause}
-              className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all active:scale-95 cursor-pointer my-auto"
-            >
-              <Pause className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={!input.trim() && !attachedFile}
-              className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 dark:disabled:text-zinc-600 transition-all active:scale-95 cursor-pointer my-auto"
-            >
-              <ArrowUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </button>
-          )}
+          {/* Bottom Toolbar - Buttons sticked to bottom */}
+          <div className="flex items-center justify-between pt-1.5 border-t border-zinc-100 dark:border-zinc-900/60 mt-1">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.pdf,video/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+
+              {/* Attach button */}
+              <button
+                type="button"
+                disabled={isUploading}
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach image, PDF, or video"
+                className="flex h-8 w-8 sm:h-8.5 sm:w-8.5 shrink-0 items-center justify-center rounded-xl text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 transition-all active:scale-95 cursor-pointer"
+              >
+                {isUploading
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Paperclip className="h-4 w-4" />}
+              </button>
+
+              {/* Model combobox selector */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1 shrink-0 rounded-xl px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold tracking-tight border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 select-none cursor-pointer"
+                  >
+                    {useThinking
+                      ? <><BrainCircuit className="size-3 shrink-0 text-violet-500" /><span>Thinking</span></>
+                      : <><Zap className="size-3 shrink-0 text-amber-500" /><span>Fast</span></>}
+                    <ChevronDown className="size-2.5 shrink-0 text-zinc-400" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  side="top"
+                  className="w-56 p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-xl"
+                >
+                  <p className="px-2 pb-1.5 pt-0.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Model Mode</p>
+                  {/* Thinking option */}
+                  <button
+                    type="button"
+                    onClick={() => setUseThinking(true)}
+                    className={`w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                      useThinking
+                        ? "bg-violet-50 dark:bg-violet-500/10"
+                        : "hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    }`}
+                  >
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-500/20">
+                      <BrainCircuit className="size-3.5 text-violet-600 dark:text-violet-400" />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-xs font-semibold text-zinc-900 dark:text-zinc-100">Thinking</span>
+                      <span className="block text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">Deep reasoning · slower</span>
+                    </span>
+                    {useThinking && <Check className="size-3.5 mt-1 text-violet-500 shrink-0" />}
+                  </button>
+                  {/* Fast option */}
+                  <button
+                    type="button"
+                    onClick={() => setUseThinking(false)}
+                    className={`w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                      !useThinking
+                        ? "bg-amber-50 dark:bg-amber-500/10"
+                        : "hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    }`}
+                  >
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20">
+                      <Zap className="size-3.5 text-amber-600 dark:text-amber-400" />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-xs font-semibold text-zinc-900 dark:text-zinc-100">Fast</span>
+                      <span className="block text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">Instant replies · no reasoning</span>
+                    </span>
+                    {!useThinking && <Check className="size-3.5 mt-1 text-amber-500 shrink-0" />}
+                  </button>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Send / Pause button sticked to bottom right */}
+            {genStatus !== "idle" ? (
+              <button
+                type="button"
+                onClick={handlePause}
+                className="flex h-8 w-8 sm:h-8.5 sm:w-8.5 shrink-0 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all active:scale-95 cursor-pointer"
+              >
+                <Pause className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!input.trim() && !attachedFile}
+                className="flex h-8 w-8 sm:h-8.5 sm:w-8.5 shrink-0 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-200 dark:disabled:bg-zinc-800 disabled:text-zinc-400 dark:disabled:text-zinc-600 transition-all active:scale-95 cursor-pointer"
+              >
+                <ArrowUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              </button>
+            )}
+          </div>
         </form>
         </div>{/* /max-w-4xl */}
       </div>
