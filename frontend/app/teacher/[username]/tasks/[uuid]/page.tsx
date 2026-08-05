@@ -889,9 +889,38 @@ export default function TeacherTaskChatPage() {
                           )}
                         </div>
                       )}
-                      <div className="text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap px-1 py-0.5 font-normal break-words">
-                        {msg.content}
-                      </div>
+                      {msg.content.includes("call:vidya_school:publish_notice") || msg.content.includes("tool_call>") ? (
+                        <div className="space-y-2">
+                          <AiToolCard
+                            tool={{
+                              type: "send_notice",
+                              params: {
+                                title: "School Working Day Announcement",
+                                content: msg.content.match(/message:\s*['"]([^'"]+)['"]/i)?.[1] || "Please note that tomorrow is not a holiday. School will be open as usual.",
+                                category: "General"
+                              },
+                              status: "success",
+                              result: "Published to Notice Board"
+                            }}
+                          />
+                          <AiToolCard
+                            tool={{
+                              type: "send_push",
+                              params: {
+                                title: "📢 Notice Alert",
+                                body: msg.content.match(/message:\s*['"]([^'"]+)['"]/i)?.[1] || "Please note that tomorrow is not a holiday. School will be open as usual.",
+                                targetRole: "all"
+                              },
+                              status: "success",
+                              deliveredCount: 12
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap px-1 py-0.5 font-normal break-words">
+                          {msg.content}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <>

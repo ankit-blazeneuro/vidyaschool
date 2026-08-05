@@ -136,6 +136,45 @@ export function detectToolsFromMessages(
 ): Omit<AiToolCall, "status">[] {
   const tools: Omit<AiToolCall, "status">[] = []
 
+  // ── Raw tool_call syntax pattern detection ─────────────────────────
+  const rawToolCallMatch = (userMsg + " " + aiResponse).match(
+    /(?:tool_call>)?call:[\w_]+:(publish_notice|send_push|send_notification)\(([\s\S]+?)\)(?:<\/tool_call|>)?/i
+  )
+  if (rawToolCallMatch) {
+    const rawArgs = rawToolCallMatch[2]
+    const extractedMessage =
+      rawArgs.match(/(?:message|content|body):\s*['"]([^'"]+)['"]/i)?.[1] ||
+      rawArgs.match(/(?:message|content|body):\s*([^,)\}\n]+)/i)?.[1] || ""
+
+    const extractedTitle =
+      rawArgs.match(/title:\s*['"]([^'"]+)['"]/i)?.[1] ||
+      (extractedMessage ? extractedMessage.slice(0, 50) : "School Notice Announcement")
+
+    if (extractedMessage) {
+      const cleanContent = extractedMessage.replace(/^['"]|['"]$/g, "").trim()
+      const cleanTitle = extractedTitle.replace(/^['"]|['"]$/g, "").trim()
+
+      tools.push({
+        type: "send_notice",
+        params: {
+          title: cleanTitle,
+          content: cleanContent,
+          category: "General",
+          isUrgent: false
+        }
+      })
+      tools.push({
+        type: "send_push",
+        params: {
+          title: cleanTitle,
+          body: cleanContent,
+          targetRole: "all"
+        }
+      })
+      return tools
+    }
+  }
+
   // ── JSON action block detection (AI outputs raw JSON) ────────────
   const jsonMatch = aiResponse.match(/\{[^{}]*"action"\s*:\s*"([^"]+)"[^{}]*\}/)
   if (jsonMatch) {
