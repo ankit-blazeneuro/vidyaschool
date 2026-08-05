@@ -402,6 +402,60 @@ NVIDIA_TOOLS = [
 ]
 
 
+# ── Notification Dispatch Helper ───────────────────────────────────────────────
+
+def dispatch_push_and_history_notifications(
+    title: str, body: str, target_role: str, target_class: str, target_section: str, db: Session
+) -> int:
+    try:
+        from models import User, UserProfile, FCMToken, NotificationHistory
+        query = select(User, UserProfile).join(UserProfile, User.id == UserProfile.user_id)
+        
+        if target_class:
+            clean_c = str(target_class).replace("Class", "").replace("class", "").strip()
+            query = query.where((UserProfile.class_ == target_class) | (UserProfile.class_ == clean_c))
+        if target_section:
+            query = query.where(UserProfile.section == target_section)
+        if target_role and target_role != "all":
+            query = query.where(User.role == target_role)
+
+        target_users = db.exec(query).all()
+        if not target_users:
+            target_users = db.exec(select(User, UserProfile).join(UserProfile, User.id == UserProfile.user_id).where(User.role == "student")).all()
+
+        user_ids = list(set([u.id for u, _ in target_users]))
+        if not user_ids:
+            return 0
+
+        # 1. Log notification history for in-app feeds
+        for uid in user_ids:
+            h = NotificationHistory(
+                id=f"notif_{uuid.uuid4().hex[:12]}",
+                user_id=uid,
+                title=title,
+                body=body,
+                created_at=datetime.utcnow()
+            )
+            db.add(h)
+        db.commit()
+
+        # 2. Dispatch FCM Push Notifications
+        tokens = db.exec(select(FCMToken).where(FCMToken.user_id.in_(user_ids))).all() if user_ids else []
+        token_strings = list(set([t.token for t in tokens if t.token]))
+        if token_strings:
+            try:
+                from main import send_fcm_notification
+                send_fcm_notification(token_strings, title, body)
+                print(f"[Notice Push] Sent FCM push to {len(token_strings)} device token(s) for {len(user_ids)} student(s).")
+            except Exception as fcm_err:
+                print(f"[FCM Push Warning]: {fcm_err}")
+
+        return len(user_ids)
+    except Exception as e:
+        print(f"[Dispatch Notification Error]: {e}")
+        return 0
+
+
 # ── Database Tool Execution ────────────────────────────────────────────────────
 
 def execute_tool_call(name: str, args: dict, current_user: User, db: Session) -> str:
@@ -685,16 +739,17 @@ def execute_tool_call(name: str, args: dict, current_user: User, db: Session) ->
         elif name == "publish_notice":
             title = args.get("title")
             content = args.get("content")
-            category = args.get("category")
+            category = args.get("category", "General")
             target_class = args.get("target_class")
             target_section = args.get("target_section")
+            target_role = "student" if target_class else "all"
             notice = Notice(
                 id=f"notice_{uuid.uuid4().hex[:10]}",
                 title=title,
                 content=content,
                 category=category,
                 sender_id=current_user.id,
-                target_role="student" if target_class else "all",
+                target_role=target_role,
                 target_class=target_class,
                 target_section=target_section,
                 created_at=datetime.utcnow(),
@@ -702,7 +757,18 @@ def execute_tool_call(name: str, args: dict, current_user: User, db: Session) ->
             )
             db.add(notice)
             db.commit()
-            return f"Success: Published notice '{title}' for target: {target_class or 'All'}."
+
+            # Dispatch FCM Push Notification + NotificationHistory feed entry
+            delivered_count = dispatch_push_and_history_notifications(
+                title=f"📢 Notice: {title}",
+                body=content,
+                target_role=target_role,
+                target_class=target_class or "",
+                target_section=target_section or "",
+                db=db
+            )
+
+            return f"Success: Published notice '{title}' and dispatched push notification to {delivered_count} target user(s)."
 
         elif name == "manage_notes":
             action = args.get("action", "").lower()
