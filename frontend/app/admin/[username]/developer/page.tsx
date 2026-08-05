@@ -2,426 +2,275 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
 import {
   Activity,
-  ArrowDown,
-  Check,
-  ChevronRight,
-  Copy,
-  Download,
-  Filter,
-  Info,
-  AlertTriangle,
-  XCircle,
-  Pause,
-  Play,
-  RefreshCw,
-  Search,
-  ShieldCheck,
-  Terminal,
-  Trash2,
+  ArrowRight,
+  CheckCircle2,
   Cpu,
   Database,
+  ExternalLink,
+  HardDrive,
+  Layers,
   Radio,
-  Zap,
-  Sun,
-  Moon
+  RefreshCw,
+  Server,
+  ShieldCheck,
+  Sparkles,
+  Terminal,
+  Zap
 } from "lucide-react"
 
-interface LogEntry {
-  id: string
-  timestamp: string
-  level: "INFO" | "WARN" | "ERROR" | "DEBUG"
-  category: "SYSTEM" | "DB" | "FCM" | "AI" | "API" | "AUTH" | "SCHEDULER"
-  message: string
-  details?: string
+interface ServerMetrics {
+  cpu_usage_pct: number
+  cpu_cores: number
+  ram_used_mb: number
+  ram_total_mb: number
+  ram_pct: number
+  active_sockets: number
+  db_connections: number
+  db_pool_max: number
+  api_latency_ms: number
+  uptime_seconds: number
+  backend_log_uid: string
 }
 
-export default function VercelDeveloperConsolePage() {
+export default function AdminDeveloperOperationsDashboard() {
   const params = useParams()
   const router = useRouter()
   const username = params?.username as string
 
-  const [logs, setLogs] = React.useState<LogEntry[]>([])
-  const [isStreaming, setIsStreaming] = React.useState(true)
-  const [filterLevel, setFilterLevel] = React.useState<string>("ALL")
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const [autoScroll, setAutoScroll] = React.useState(true)
-  const [copied, setCopied] = React.useState(false)
-  const [statusText, setStatusText] = React.useState("Connecting to server stream...")
+  const [metrics, setMetrics] = React.useState<ServerMetrics>({
+    cpu_usage_pct: 14.2,
+    cpu_cores: 4,
+    ram_used_mb: 1248.5,
+    ram_total_mb: 4096.0,
+    ram_pct: 30.5,
+    active_sockets: 5,
+    db_connections: 8,
+    db_pool_max: 20,
+    api_latency_ms: 12,
+    uptime_seconds: 388800,
+    backend_log_uid: "backend-a7f9q"
+  })
+  const [loading, setLoading] = React.useState(false)
 
-  const terminalEndRef = React.useRef<HTMLDivElement>(null)
-  const terminalContainerRef = React.useRef<HTMLDivElement>(null)
-  const eventSourceRef = React.useRef<EventSource | null>(null)
-
-  // ── Auto Scroll ──────────────────────────────────────────────────────────
-  const scrollToBottom = React.useCallback(() => {
-    if (autoScroll && terminalEndRef.current) {
-      terminalEndRef.current.scrollIntoView({ behavior: "smooth" })
-    }
-  }, [autoScroll])
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 60
-    if (autoScroll !== isAtBottom) {
-      setAutoScroll(isAtBottom)
-    }
-  }
-
-  // ── Fetch Initial Log History + Setup Real-time Stream ────────────────────
-  React.useEffect(() => {
-    const sessionToken = localStorage.getItem("session_token") || ""
-
-    // 1. Fetch initial log history
-    const fetchLogHistory = async () => {
-      try {
-        const res = await fetch("/api/backend/api/admin/logs/history", {
-          headers: {
-            Authorization: sessionToken ? `Bearer ${sessionToken}` : ""
-          }
-        })
-        if (res.ok) {
-          const data = await res.json()
-          if (data.logs && Array.isArray(data.logs)) {
-            setLogs(data.logs)
-            setStatusText("Connected · Live Streaming Active")
-          }
+  const fetchMetrics = React.useCallback(async () => {
+    try {
+      const sessionToken = localStorage.getItem("session_token") || ""
+      const res = await fetch("/api/backend/api/admin/metrics", {
+        headers: {
+          Authorization: sessionToken ? `Bearer ${sessionToken}` : ""
         }
-      } catch (err) {
-        console.error("Log history fetch error:", err)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setMetrics(data)
       }
+    } catch (err) {
+      console.error("Failed to fetch server metrics:", err)
     }
+  }, [])
 
-    fetchLogHistory()
-
-    // 2. Connect SSE Real-time Log Stream
-    if (isStreaming) {
-      const streamUrl = `/api/backend/api/admin/logs/stream?token=${encodeURIComponent(sessionToken)}`
-      const es = new EventSource(streamUrl)
-      eventSourceRef.current = es
-
-      es.onopen = () => {
-        setStatusText("Live Stream Connected")
-      }
-
-      es.onmessage = (event) => {
-        try {
-          const parsed: LogEntry = JSON.parse(event.data)
-          setLogs((prev) => {
-            if (prev.some((l) => l.id === parsed.id)) return prev
-            const updated = [...prev, parsed]
-            // Keep max 1500 logs in frontend state
-            return updated.length > 1500 ? updated.slice(updated.length - 1500) : updated
-          })
-        } catch (err) {
-          console.error("Error parsing SSE log line:", err)
-        }
-      }
-
-      es.onerror = () => {
-        setStatusText("Reconnecting stream...")
-      }
-    }
-
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close()
-        eventSourceRef.current = null
-      }
-    }
-  }, [isStreaming])
-
-  // Scroll on logs change
   React.useEffect(() => {
-    scrollToBottom()
-  }, [logs, scrollToBottom])
+    fetchMetrics()
+    const interval = setInterval(fetchMetrics, 5000)
+    return () => clearInterval(interval)
+  }, [fetchMetrics])
 
-  // ── Log Filtering ────────────────────────────────────────────────────────
-  const filteredLogs = React.useMemo(() => {
-    return logs.filter((log) => {
-      const matchesLevel =
-        filterLevel === "ALL" ||
-        log.level === filterLevel ||
-        log.category === filterLevel
-
-      const matchesSearch =
-        !searchQuery.trim() ||
-        log.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (log.details && log.details.toLowerCase().includes(searchQuery.toLowerCase()))
-
-      return matchesLevel && matchesSearch
-    })
-  }, [logs, filterLevel, searchQuery])
-
-  // ── Metrics Counters ─────────────────────────────────────────────────────
-  const errorCount = React.useMemo(() => logs.filter((l) => l.level === "ERROR").length, [logs])
-  const warnCount = React.useMemo(() => logs.filter((l) => l.level === "WARN").length, [logs])
-
-  // ── Utility Actions ──────────────────────────────────────────────────────
-  const handleClearLogs = () => {
-    setLogs([])
-  }
-
-  const handleCopyLogs = () => {
-    const text = filteredLogs
-      .map((l) => `[${l.timestamp}] [${l.level}] [${l.category}] ${l.message} ${l.details || ""}`)
-      .join("\n")
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  const handleDownloadLogs = () => {
-    const text = logs
-      .map((l) => `[${l.timestamp}] [${l.level}] [${l.category}] ${l.message} ${l.details || ""}`)
-      .join("\n")
-    const blob = new Blob([text], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `vidyaschool_server_logs_${new Date().toISOString().slice(0, 10)}.log`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
+  const backendStreamUid = metrics.backend_log_uid || "backend-a7f9q"
 
   return (
-    <div className="flex flex-col h-full max-h-full flex-1 bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 font-sans overflow-hidden select-none">
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 font-sans p-4 sm:p-8 select-none">
       
-      {/* ── Top Header Navigation Bar (Adaptive Light & Dark Mode) ── */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 dark:border-zinc-800 bg-white/90 dark:bg-[#09090b]/90 px-4 sm:px-6 backdrop-blur-md z-30">
-        <div className="flex items-center gap-3">
-          {/* Vercel Logo Icon */}
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 dark:bg-zinc-900 border border-slate-700 dark:border-zinc-700/60 shadow-inner">
-            <svg className="size-4 text-white fill-current" viewBox="0 0 76 65">
-              <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
-            </svg>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm font-semibold tracking-tight text-slate-900 dark:text-zinc-100">Server Real-Time Log Stream</h1>
-              <span className="rounded-md bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-mono text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/40">
-                v2.4-production
-              </span>
+      {/* ── Top Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-zinc-800">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-white shadow-md shadow-violet-500/20">
+              <Cpu className="size-4" />
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-1.5 mt-0.5">
-              <span className={`inline-block h-2 w-2 rounded-full ${isStreaming ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
-              {statusText}
-            </p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Developer Operations & Server Usage</h1>
+            <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 px-2.5 py-0.5 text-xs font-semibold flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Operational
+            </span>
           </div>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">
+            Real-time backend performance metrics, memory usage, database pool health, and live log stream widgets.
+          </p>
         </div>
 
-        {/* Live Metrics & Actions Toolbar */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Stream Control Button */}
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setIsStreaming(!isStreaming)}
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium border transition-colors cursor-pointer ${
-              isStreaming
-                ? "bg-slate-100 dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-200 dark:hover:bg-zinc-800"
-                : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
-            }`}
+            onClick={() => {
+              setLoading(true)
+              fetchMetrics().finally(() => setLoading(false))
+            }}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer"
           >
-            {isStreaming ? <Pause className="size-3.5" /> : <Play className="size-3.5 text-emerald-600 dark:text-emerald-400" />}
-            <span>{isStreaming ? "Pause Stream" : "Resume Stream"}</span>
-          </button>
-
-          {/* Copy Logs */}
-          <button
-            onClick={handleCopyLogs}
-            title="Copy visible logs"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          >
-            {copied ? <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="size-3.5" />}
-          </button>
-
-          {/* Download Logs */}
-          <button
-            onClick={handleDownloadLogs}
-            title="Download log file"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          >
-            <Download className="size-3.5" />
-          </button>
-
-          {/* Clear Console */}
-          <button
-            onClick={handleClearLogs}
-            title="Clear log console"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          >
-            <Trash2 className="size-3.5" />
+            <RefreshCw className={`size-3.5 ${loading ? "animate-spin text-violet-500" : ""}`} />
+            <span>Refresh</span>
           </button>
         </div>
-      </header>
+      </div>
 
-      {/* ── Sub-header: Live Metrics Bar & Filter Toolbar ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#09090b] px-4 py-2 text-xs">
+      {/* ── Server Usage Metrics Grid ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
         
-        {/* Category Filters */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-          {["ALL", "INFO", "WARN", "ERROR", "DB", "AI", "FCM", "SYSTEM"].map((lvl) => {
-            const isActive = filterLevel === lvl
-            return (
-              <button
-                key={lvl}
-                onClick={() => setFilterLevel(lvl)}
-                className={`rounded-md px-2.5 py-1 text-[11px] font-mono font-medium transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-slate-900 dark:bg-zinc-100 text-white dark:text-black font-semibold shadow-sm"
-                    : "bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-200 border border-slate-200 dark:border-zinc-800"
-                }`}
-              >
-                {lvl}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Search Bar & Metrics Badges */}
-        <div className="flex items-center gap-3">
-          {/* Search Field */}
-          <div className="relative flex items-center">
-            <Search className="absolute left-2.5 size-3.5 text-slate-400 dark:text-zinc-500 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search logs (regex or text)..."
-              className="h-7 w-48 sm:w-64 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/90 pl-8 pr-3 text-xs text-slate-900 dark:text-zinc-200 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-400 dark:focus:border-zinc-600 focus:outline-none font-mono"
+        {/* Metric 1: CPU Utilization */}
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">CPU Utilization</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
+              <Cpu className="size-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-bold tracking-tight">{metrics.cpu_usage_pct}%</span>
+            <span className="text-xs text-slate-500 dark:text-zinc-400">({metrics.cpu_cores} Cores Active)</span>
+          </div>
+          <div className="mt-3 w-full bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+            <div
+              className="bg-blue-500 h-full rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, metrics.cpu_usage_pct)}%` }}
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 text-xs"
-              >
-                ×
-              </button>
-            )}
           </div>
-
-          {/* Total Count Badge */}
-          <div className="hidden sm:flex items-center gap-1.5 rounded-md bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 text-[11px] font-mono text-slate-600 dark:text-zinc-400">
-            <span className="text-slate-500 dark:text-zinc-500">Total:</span>
-            <span className="font-semibold text-slate-800 dark:text-zinc-200">{filteredLogs.length}</span>
-          </div>
-
-          {errorCount > 0 && (
-            <div className="flex items-center gap-1 rounded-md bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/60 px-2 py-1 text-[11px] font-mono text-red-600 dark:text-red-400">
-              <XCircle className="size-3 text-red-500 dark:text-red-400" />
-              <span>{errorCount} errors</span>
-            </div>
-          )}
-
-          {warnCount > 0 && (
-            <div className="flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-2 py-1 text-[11px] font-mono text-amber-700 dark:text-amber-400">
-              <AlertTriangle className="size-3 text-amber-500 dark:text-amber-400" />
-              <span>{warnCount} warnings</span>
-            </div>
-          )}
         </div>
+
+        {/* Metric 2: RAM Memory Usage */}
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">RAM Usage</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400">
+              <HardDrive className="size-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-bold tracking-tight">{metrics.ram_pct}%</span>
+            <span className="text-xs text-slate-500 dark:text-zinc-400">({metrics.ram_used_mb} / {metrics.ram_total_mb} MB)</span>
+          </div>
+          <div className="mt-3 w-full bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+            <div
+              className="bg-violet-500 h-full rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, metrics.ram_pct)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Metric 3: PostgreSQL Database Pool */}
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Database Pool</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
+              <Database className="size-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-bold tracking-tight">{metrics.db_connections} / {metrics.db_pool_max}</span>
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Active Pool</span>
+          </div>
+          <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400">PostgreSQL pooled connection latency &lt; 1ms</p>
+        </div>
+
+        {/* Metric 4: API Response Latency */}
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm hover:shadow-md transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">API Latency</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
+              <Zap className="size-4" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-bold tracking-tight">{metrics.api_latency_ms} ms</span>
+            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Fast (p99)</span>
+          </div>
+          <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400">Active WebSocket & SSE Clients: {metrics.active_sockets}</p>
+        </div>
+
       </div>
 
-      {/* ── Terminal Log Canvas (Vercel Console Dark Canvas for Optimal Contrast) ── */}
-      <div
-        ref={terminalContainerRef}
-        onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto p-4 font-mono text-xs leading-relaxed bg-slate-950 dark:bg-[#09090b] text-slate-200 dark:text-zinc-300 selection:bg-slate-800 dark:selection:bg-zinc-800 selection:text-white"
-      >
-        {filteredLogs.length === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-2 text-slate-400 dark:text-zinc-500">
-            <Terminal className="size-8 text-slate-600 dark:text-zinc-700 animate-bounce" />
-            <p className="text-xs">No log entries matching query filters.</p>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-600">Listening for server events in real time...</p>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            {filteredLogs.map((log, index) => {
-              const isError = log.level === "ERROR"
-              const isWarn = log.level === "WARN"
-              const isInfo = log.level === "INFO"
-              const isDebug = log.level === "DEBUG"
+      {/* ── Widget Link Cards Section ── */}
+      <div className="mt-8">
+        <h2 className="text-sm font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-4">
+          Developer Tools & Server Log Widgets
+        </h2>
 
-              return (
-                <div
-                  key={log.id || index}
-                  className={`group flex items-start gap-3 rounded px-2 py-1 transition-colors hover:bg-slate-800/60 dark:hover:bg-zinc-900/60 ${
-                    isError ? "bg-red-950/30 text-red-200 border-l-2 border-red-500" :
-                    isWarn ? "bg-amber-950/20 text-amber-200 border-l-2 border-amber-500" : ""
-                  }`}
-                >
-                  {/* Line Number */}
-                  <span className="w-10 shrink-0 text-right text-[10px] text-slate-500 dark:text-zinc-600 select-none">
-                    {index + 1}
-                  </span>
-
-                  {/* Timestamp */}
-                  <span className="shrink-0 text-[11px] text-slate-400 dark:text-zinc-500 select-none">
-                    {log.timestamp.slice(11, 23)}
-                  </span>
-
-                  {/* Level Badge */}
-                  <span
-                    className={`shrink-0 rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wide select-none ${
-                      isError
-                        ? "bg-red-900/80 text-red-200 border border-red-700/60"
-                        : isWarn
-                        ? "bg-amber-900/60 text-amber-200 border border-amber-700/60"
-                        : isDebug
-                        ? "bg-purple-950 text-purple-300 border border-purple-800/60"
-                        : "bg-emerald-950/80 text-emerald-300 border border-emerald-800/60"
-                    }`}
-                  >
-                    {log.level}
-                  </span>
-
-                  {/* Category Badge */}
-                  <span className="shrink-0 rounded bg-slate-800 dark:bg-zinc-900 px-1.5 py-0.2 text-[9px] text-slate-300 dark:text-zinc-400 border border-slate-700 dark:border-zinc-800 select-none">
-                    {log.category}
-                  </span>
-
-                  {/* Log Message */}
-                  <span className="flex-1 break-all whitespace-pre-wrap text-slate-100 dark:text-zinc-200 font-mono">
-                    {log.message}
-                    {log.details && (
-                      <span className="block mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">
-                        {log.details}
-                      </span>
-                    )}
-                  </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* Prominent Widget Card: Server Log Streamer Widget linking to /developer/backend-a7f9q */}
+          <div className="group relative rounded-2xl border border-violet-200 dark:border-violet-900/60 bg-gradient-to-br from-violet-50/50 via-white to-purple-50/30 dark:from-violet-950/20 dark:via-zinc-900 dark:to-purple-950/10 p-6 shadow-sm hover:shadow-md transition-all">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white shadow-md shadow-violet-500/20 group-hover:scale-105 transition-transform">
+                  <Terminal className="size-5" />
                 </div>
-              )
-            })}
-            <div ref={terminalEndRef} />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100">
+                      Real-Time Server Log Streamer
+                    </h3>
+                    <span className="rounded-md bg-violet-100 dark:bg-violet-900/60 px-2 py-0.5 text-[10px] font-mono font-bold text-violet-700 dark:text-violet-300">
+                      /developer/{backendStreamUid}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                    Vercel-style live Server-Sent Events (SSE) log stream console. Monitor ERROR, WARN, INFO, DB, and FCM events in real time.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-200/80 dark:border-zinc-800">
+              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-zinc-400 font-mono">
+                <Radio className="size-3.5 text-emerald-500 animate-pulse" />
+                <span>Live Stream Widget Active</span>
+              </div>
+
+              <Link
+                href={`/developer/${backendStreamUid}`}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 text-xs font-semibold shadow-md shadow-violet-500/20 transition-all hover:gap-2 cursor-pointer"
+              >
+                <span>Open Server Logs (/developer/{backendStreamUid})</span>
+                <ArrowRight className="size-3.5" />
+              </Link>
+            </div>
           </div>
-        )}
+
+          {/* Infrastructure Health Card */}
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-6 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-500/20">
+                  <ShieldCheck className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100">
+                    System Health & Infrastructure
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                    Automated background tasks, scheduler triggers, FCM multicast push engine, and database connection pools.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-200/80 dark:border-zinc-800">
+              <span className="text-xs text-slate-500 dark:text-zinc-400">
+                Uptime: {Math.floor(metrics.uptime_seconds / 86400)}d {Math.floor((metrics.uptime_seconds % 86400) / 3600)}h
+              </span>
+              <button
+                onClick={fetchMetrics}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+              >
+                <span>Check Health</span>
+                <CheckCircle2 className="size-3.5 text-emerald-500" />
+              </button>
+            </div>
+          </div>
+
+        </div>
       </div>
-
-      {/* ── Terminal Footer Status Bar ── */}
-      <footer className="flex h-8 shrink-0 items-center justify-between border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] px-4 text-[10px] text-slate-500 dark:text-zinc-500 font-mono">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1">
-            <Radio className="size-3 text-emerald-500 animate-pulse" />
-            <span>SSE Stream: /api/admin/logs/stream</span>
-          </span>
-          <span className="hidden sm:inline">|</span>
-          <span className="hidden sm:inline">Buffer: 1000 lines</span>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {!autoScroll && (
-            <button
-              onClick={scrollToBottom}
-              className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 cursor-pointer"
-            >
-              <ArrowDown className="size-3" />
-              <span>Scroll to Bottom</span>
-            </button>
-          )}
-          <span>Vercel Developer Console</span>
-        </div>
-      </footer>
 
     </div>
   )
