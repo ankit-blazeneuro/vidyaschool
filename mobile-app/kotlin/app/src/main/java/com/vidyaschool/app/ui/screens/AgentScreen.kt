@@ -240,6 +240,9 @@ fun AgentScreen(
                                     }
                                     if (json.has("content") && !json.isNull("content")) {
                                         chunkText = json.getString("content")
+                                        withContext(Dispatchers.Main) {
+                                            isThinking = false
+                                        }
                                     } else if (json.has("choices") && !json.isNull("choices")) {
                                         val choices = json.optJSONArray("choices")
                                         if (choices != null && choices.length() > 0) {
@@ -248,6 +251,11 @@ fun AgentScreen(
                                             val contentStr = if (delta != null && !delta.isNull("content")) delta.optString("content") else null
                                             val textStr = if (firstChoice != null && !firstChoice.isNull("text")) firstChoice.optString("text") else null
                                             chunkText = contentStr ?: textStr
+                                            if (!chunkText.isNullOrEmpty()) {
+                                                withContext(Dispatchers.Main) {
+                                                    isThinking = false
+                                                }
+                                            }
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -292,6 +300,7 @@ fun AgentScreen(
                 } finally {
                     withContext(Dispatchers.Main) {
                         isThinking = false
+                        activeJob = null
                     }
                 }
             }
