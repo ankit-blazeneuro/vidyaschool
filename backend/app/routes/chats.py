@@ -290,17 +290,45 @@ NVIDIA_TOOLS = [
         "type": "function",
         "function": {
             "name": "submit_student_marks",
-            "description": "Submit or update examination marks for a student.",
+            "description": "Submit or update examination marks for a single student.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "student_email": {"type": "string", "description": "Student email"},
+                    "student_email": {"type": "string", "description": "Student email or full name"},
                     "exam_name": {"type": "string", "description": "Exam name"},
                     "subject": {"type": "string", "description": "Subject name"},
                     "score": {"type": "number", "description": "Score value"},
                     "max_score": {"type": "number", "description": "Max possible score (defaults to 100.0)"},
                 },
                 "required": ["student_email", "exam_name", "subject", "score"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "batch_submit_student_marks",
+            "description": "Batch submit or update examination marks for multiple students parsed from an uploaded PDF, document, or grade list.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "exam_name": {"type": "string", "description": "Exam name (e.g. 'Mid-Term', 'Annual Exams')"},
+                    "subject": {"type": "string", "description": "Subject name (e.g. 'Mathematics', 'Science')"},
+                    "max_score": {"type": "number", "description": "Maximum score threshold (defaults to 100.0)"},
+                    "entries": {
+                        "type": "array",
+                        "description": "Array of student mark records",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "student_identifier": {"type": "string", "description": "Student name, email, or admission number"},
+                                "score": {"type": "number", "description": "Marks obtained by the student"}
+                            },
+                            "required": ["student_identifier", "score"]
+                        }
+                    }
+                },
+                "required": ["exam_name", "subject", "entries"]
             },
         },
     },
@@ -557,6 +585,99 @@ def execute_tool_call(name: str, args: dict, current_user: User, db: Session) ->
                 db.add(marks)
             db.commit()
             return f"Success: Submitted marks for {student.name} in {subject}: {score}/{max_score}."
+
+        elif name == "batch_submit_student_marks":
+            exam_name = args.get("exam_name", "General Exam")
+            subject = args.get("subject", "General Subject")
+            max_score = float(args.get("max_score", 100.0))
+            entries = args.get("entries", [])
+            
+            if not entries:
+                return "Error: No student mark entries provided in batch payload."
+
+            updated_summary = []
+            failed_summary = []
+
+            for entry in entries:
+                identifier = str(entry.get("student_identifier", "")).strip()
+                score_val = float(entry.get("score", 0.0))
+                if not identifier:
+                    continue
+
+                # Find student by email, name match, or admission number
+                student = db.exec(
+                    select(User).where((User.email == identifier) | (User.name.ilike(f"%{identifier}%")))
+                ).first()
+                if not student:
+                    # Try matching via UserProfile admission number
+                    profile = db.exec(select(UserProfile).where(UserProfile.admission_number == identifier)).first()
+                    if profile:
+                        student = db.exec(select(User).where(User.id == profile.user_id)).first()
+
+                if not student:
+                    failed_summary.append(f"{identifier} (student not found)")
+                    continue
+
+                profile = db.exec(select(UserProfile).where(UserProfile.user_id == student.id)).first()
+                student_class = profile.class_ if profile and profile.class_ else "12"
+                student_section = profile.section if profile and profile.section else "A"
+
+                exam = db.exec(
+                    select(Exam).where(
+                        Exam.name == exam_name,
+                        Exam.class_ == student_class,
+                        Exam.section == student_section,
+                    )
+                ).first()
+                if not exam:
+                    exam = Exam(
+                        id=f"exam_{uuid.uuid4().hex[:10]}",
+                        name=exam_name,
+                        class_=student_class,
+                        section=student_section,
+                        created_at=datetime.utcnow(),
+                    )
+                    db.add(exam)
+                    db.commit()
+                    db.refresh(exam)
+
+                marks = db.exec(
+                    select(StudentSubjectMarks).where(
+                        StudentSubjectMarks.student_id == student.id,
+                        StudentSubjectMarks.exam_id == exam.id,
+                        StudentSubjectMarks.subject == subject,
+                    )
+                ).first()
+
+                if marks:
+                    marks.score = score_val
+                    marks.max_score = max_score
+                    marks.updated_at = datetime.utcnow()
+                else:
+                    marks = StudentSubjectMarks(
+                        id=f"marks_{uuid.uuid4().hex[:10]}",
+                        student_id=student.id,
+                        exam_id=exam.id,
+                        subject=subject,
+                        score=score_val,
+                        max_score=max_score,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow(),
+                    )
+                    db.add(marks)
+
+                updated_summary.append(f"{student.name}: {score_val}/{max_score}")
+
+            db.commit()
+
+            result_lines = [
+                f"✅ Successfully updated examination marks for {len(updated_summary)} student(s) in '{subject}' ({exam_name}):",
+                *([f"- {item}" for item in updated_summary])
+            ]
+            if failed_summary:
+                result_lines.append(f"\n⚠️ Unmatched entries ({len(failed_summary)}): " + ", ".join(failed_summary))
+
+            return "\n".join(result_lines)
 
         elif name == "publish_notice":
             title = args.get("title")
