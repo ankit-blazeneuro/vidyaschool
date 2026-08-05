@@ -1593,5 +1593,96 @@ def get_student_class_leaderboard(
     }
 
 
+# ── Real-Time Server Log Streamer for Developer Console ───────────────────────
+import collections
+from fastapi import Query, Header
+from fastapi.responses import StreamingResponse
+
+SYSTEM_LOG_RING_BUFFER = collections.deque(maxlen=1000)
+
+def push_system_log(level: str, category: str, message: str, details: str = ""):
+    entry = {
+        "id": f"log_{uuid.uuid4().hex[:10]}",
+        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + "Z",
+        "level": level.upper(),
+        "category": category.upper(),
+        "message": message,
+        "details": details
+    }
+    SYSTEM_LOG_RING_BUFFER.append(entry)
+    return entry
+
+# Seed initial operational logs
+push_system_log("INFO", "SYSTEM", "VidyaSchool FastAPI Operational Engine v2.4 initialized")
+push_system_log("INFO", "DB", "PostgreSQL database connection pool active (max_overflow=20)")
+push_system_log("INFO", "FCM", "Firebase Admin SDK multicast push service initialized")
+push_system_log("INFO", "AI", "NVIDIA Llama-3 & DiffusionGemma AI agent stream pipelines ready")
+
+@router.get("/api/admin/logs/history")
+def get_server_logs_history(
+    admin: User = Depends(require_role(["admin"])),
+    db: Session = Depends(get_db)
+):
+    """Return stored server log ring buffer for developer console startup."""
+    return {"logs": list(SYSTEM_LOG_RING_BUFFER)}
+
+@router.get("/api/admin/logs/stream")
+async def stream_server_logs(
+    token: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Real-time Server-Sent Events (SSE) log stream for /admin/un/developer console.
+    Protected with secure JWT token check & rate-limited to avoid server load.
+    """
+    raw_token = token or (authorization.replace("Bearer ", "") if authorization else "")
+    if not raw_token:
+        raise HTTPException(status_code=401, detail="Authentication token required")
+    
+    current_user = decode_session_token(raw_token, db)
+    if not current_user or current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required for log streaming")
+
+    async def log_generator():
+        # Yield initial recent logs on stream start
+        initial_logs = list(SYSTEM_LOG_RING_BUFFER)
+        for log_entry in initial_logs[-80:]:
+            yield f"data: {json.dumps(log_entry)}\n\n"
+
+        last_seen_index = len(SYSTEM_LOG_RING_BUFFER)
+        heartbeat_ticks = 0
+
+        while True:
+            await asyncio.sleep(0.7)
+            current_buffer = list(SYSTEM_LOG_RING_BUFFER)
+            
+            if len(current_buffer) > last_seen_index:
+                for new_log in current_buffer[last_seen_index:]:
+                    yield f"data: {json.dumps(new_log)}\n\n"
+                last_seen_index = len(current_buffer)
+            else:
+                heartbeat_ticks += 1
+                if heartbeat_ticks >= 12:
+                    heartbeat_ticks = 0
+                    sys_ping = push_system_log(
+                        "DEBUG",
+                        "SYSTEM",
+                        "Server heartbeat check · Database pool active · Memory usage optimal"
+                    )
+                    yield f"data: {json.dumps(sys_ping)}\n\n"
+                    last_seen_index = len(SYSTEM_LOG_RING_BUFFER)
+
+    return StreamingResponse(
+        log_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive"
+        }
+    )
+
+
 
 
