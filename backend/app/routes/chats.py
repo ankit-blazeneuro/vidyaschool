@@ -276,12 +276,13 @@ NVIDIA_TOOLS = [
         "type": "function",
         "function": {
             "name": "get_student_leaderboard",
-            "description": "Retrieve top student rankings, best performer of the class, toppers, highest scorers, and leaderboard sorted by average exam score.",
+            "description": "Retrieve top or worst student rankings, best/lowest performers of the class, toppers, lowest scorers, and leaderboard sorted by average exam score.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "class_name": {"type": "string", "description": "Optional class filter (e.g. 'Class 10')"},
                     "section": {"type": "string", "description": "Optional section filter (e.g. 'A')"},
+                    "sort_order": {"type": "string", "description": "Sort order: 'asc' for worst/lowest performers, 'desc' for best/top performers (defaults to 'desc')"}
                 },
             },
         },
@@ -408,6 +409,7 @@ def execute_tool_call(name: str, args: dict, current_user: User, db: Session) ->
         if name == "get_student_leaderboard":
             class_name = args.get("class_name")
             section = args.get("section")
+            sort_order = args.get("sort_order", "desc")
             
             clean_class = ""
             if class_name:
@@ -458,12 +460,13 @@ def execute_tool_call(name: str, args: dict, current_user: User, db: Session) ->
                         "exams_count": len(set(m.exam_id for m in student_marks)),
                     })
 
-            # Sort students with marks first by average percentage descending
-            leaderboard_data.sort(key=lambda x: x["average"], reverse=True)
+            is_asc = str(sort_order).lower().startswith("asc") or "worst" in str(sort_order).lower() or "lowest" in str(sort_order).lower()
+            leaderboard_data.sort(key=lambda x: x["average"], reverse=not is_asc)
             if not leaderboard_data:
                 return "No student examination marks recorded yet in the system."
 
-            res = ["🏆 Current Student Leaderboard:"]
+            title_prefix = "⚠️ Lowest Performing Students:" if is_asc else "🏆 Current Student Leaderboard:"
+            res = [title_prefix]
             for rank, entry in enumerate(leaderboard_data[:10], 1):
                 res.append(
                     f"{rank}. {entry['name']} (Class {entry['class']}-{entry['section']}): "

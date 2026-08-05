@@ -148,6 +148,10 @@ fun AgentScreen(
 
     var inputText by remember { mutableStateOf("") }
     var isThinking by remember { mutableStateOf(false) }
+    var useThinking by remember { mutableStateOf(true) }
+    var liveReasoning by remember { mutableStateOf("") }
+    var attachedBase64 by remember { mutableStateOf<String?>(null) }
+    var attachedMime by remember { mutableStateOf<String?>(null) }
     var activeJob by remember { mutableStateOf<Job?>(null) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -183,6 +187,7 @@ fun AgentScreen(
 
                 var aiMsgIndex = -1
                 var accumulatedText = ""
+                var accumulatedReasoning = ""
 
                 try {
                     val authHeader = if (!sessionToken.isNullOrEmpty()) "Bearer $sessionToken" else ""
@@ -192,7 +197,10 @@ fun AgentScreen(
                             request = com.vidyaschool.app.api.InitChatRequest(
                                 uuid = effectiveRoomId,
                                 message = trimmedPrompt,
-                                title = ""
+                                title = "",
+                                use_thinking = useThinking,
+                                attachment_data_url = attachedBase64,
+                                attachment_mime = attachedMime
                             )
                         )
                     } else {
@@ -201,7 +209,10 @@ fun AgentScreen(
                             chatId = effectiveRoomId,
                             request = com.vidyaschool.app.api.SendChatMessageRequest(
                                 message = trimmedPrompt,
-                                title = ""
+                                title = "",
+                                use_thinking = useThinking,
+                                attachment_data_url = attachedBase64,
+                                attachment_mime = attachedMime
                             )
                         )
                     }
@@ -219,12 +230,16 @@ fun AgentScreen(
                                 var chunkText: String? = null
                                 try {
                                     val json = org.json.JSONObject(dataStr)
-                                    if (json.has("content") && !json.isNull("content")) {
-                                        chunkText = json.getString("content")
-                                    } else if (json.has("thinking") && !json.isNull("thinking")) {
+                                    if (json.has("thinking") && !json.isNull("thinking")) {
+                                        val thinkingChunk = json.getString("thinking")
+                                        accumulatedReasoning += thinkingChunk
                                         withContext(Dispatchers.Main) {
+                                            liveReasoning = accumulatedReasoning
                                             isThinking = true
                                         }
+                                    }
+                                    if (json.has("content") && !json.isNull("content")) {
+                                        chunkText = json.getString("content")
                                     } else if (json.has("choices") && !json.isNull("choices")) {
                                         val choices = json.optJSONArray("choices")
                                         if (choices != null && choices.length() > 0) {
@@ -330,6 +345,26 @@ fun AgentScreen(
                                 modifier = Modifier.size(22.dp),
                                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                             )
+                        }
+
+                        // Model Mode Switcher chip (Thinking vs Fast)
+                        Surface(
+                            onClick = { useThinking = !useThinking },
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (useThinking) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.padding(start = 2.dp, end = 2.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = if (useThinking) "🧠 Thinking" else "⚡ Fast",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = if (useThinking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
 
                         Box(

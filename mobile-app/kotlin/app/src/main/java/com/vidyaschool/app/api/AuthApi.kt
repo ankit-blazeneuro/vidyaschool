@@ -414,12 +414,18 @@ interface AuthApi {
 data class InitChatRequest(
     val uuid: String,
     val message: String,
-    val title: String = "AI Teaching Assistant"
+    val title: String = "AI Teaching Assistant",
+    val use_thinking: Boolean = true,
+    val attachment_data_url: String? = null,
+    val attachment_mime: String? = null
 )
 
 data class SendChatMessageRequest(
     val message: String,
-    val title: String = "AI Teaching Assistant"
+    val title: String = "AI Teaching Assistant",
+    val use_thinking: Boolean = true,
+    val attachment_data_url: String? = null,
+    val attachment_mime: String? = null
 )
 
 data class ChatItem(
