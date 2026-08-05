@@ -191,8 +191,8 @@ export default function BackendLogStreamerShadcnPage() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => router.push("/developer")}
-            title="Back to Developer Metrics"
+            onClick={() => router.back()}
+            title="Back to Admin Developer Console"
             className="h-8 w-8 cursor-pointer"
           >
             <ArrowLeft className="size-4" />
