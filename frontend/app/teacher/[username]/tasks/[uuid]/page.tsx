@@ -2,13 +2,14 @@
 
 import * as React from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { ArrowUp, User, Brain, ArrowLeft, Loader2, Copy, Check, ArrowDown, Pause, Paperclip, X, FileText, ImageIcon, Video, ChevronDown } from "lucide-react"
+import { ArrowUp, User, Brain, ArrowLeft, Loader2, Copy, Check, ArrowDown, Pause, Paperclip, X, FileText, ImageIcon, Video, ChevronDown, ChevronsUpDown, File, Zap, BrainCircuit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Marker, MarkerContent, MarkerIcon, MarkerLabel } from "@/components/ui/marker"
 import { Spinner } from "@/components/ui/spinner"
 import { AiToolCard, AiToolCall, useAutoDetectTools } from "@/components/ui/ai-tool-card"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
@@ -17,6 +18,11 @@ interface Message {
   content: string
   createdAt: string
   thinking?: string
+  attachment?: {
+    kind: "image" | "pdf" | "video" | "text"
+    name: string
+    s3_url: string
+  }
 }
 
 interface ChatSession {
@@ -26,7 +32,7 @@ interface ChatSession {
   createdAt: string
 }
 
-type GenerationStatus = "idle" | "thinking" | "generating"
+type GenerationStatus = "idle" | "sending" | "thinking" | "generating"
 
 function CodeBlockWrapper({ code, children }: { code: string; children: React.ReactNode }) {
   const [copied, setCopied] = React.useState(false)
@@ -69,7 +75,7 @@ function CodeBlockWrapper({ code, children }: { code: string; children: React.Re
   )
 }
 
-// ── ChatGPT-style collapsible Thinking block ──
+// ── Collapsible Thinking / Reasoning block ──
 function ThinkingBlock({ content, isStreaming }: { content: string; isStreaming: boolean }) {
   const [open, setOpen] = React.useState(false)
   const [elapsed, setElapsed] = React.useState(0)
@@ -89,49 +95,69 @@ function ThinkingBlock({ content, isStreaming }: { content: string; isStreaming:
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [isStreaming])
 
-  const label = isStreaming
-    ? `Thinking${elapsed > 0 ? ` · ${elapsed}s` : "…"}`
-    : `Thought for ${elapsed > 0 ? elapsed : "a few"}s`
+  const durationLabel = elapsed > 0 ? `${elapsed}s` : "a few seconds"
+  const cleanContent = (content || "").trim()
 
   return (
     <div className="mb-3">
+      {/* ── Pill trigger button ── */}
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="group flex items-center gap-2 text-xs hover:text-zinc-300 transition-colors duration-150 select-none cursor-pointer"
+        className="
+          group inline-flex items-center gap-2 rounded-full px-3 py-1.5
+          border border-zinc-200 dark:border-zinc-800
+          bg-zinc-100 dark:bg-zinc-900/80
+          text-zinc-600 dark:text-zinc-400
+          hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200
+          text-[11px] font-medium tracking-tight select-none cursor-pointer
+          transition-all duration-200
+        "
       >
-        {/* Animated orb */}
-        <span className="relative flex h-3.5 w-3.5 shrink-0 items-center justify-center">
-          {isStreaming ? (
-            <>
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-500 opacity-40" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-400" />
-            </>
-          ) : (
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-zinc-600" />
-          )}
+        {/* Spinner for streaming / static dot for finished */}
+        {isStreaming ? (
+          <Spinner size="sm" className="h-3 w-3 border-t-primary border-primary/20 shrink-0" />
+        ) : (
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-zinc-400 dark:bg-zinc-500 shrink-0" />
+        )}
+
+        <span className={isStreaming ? "shimmer text-muted-foreground" : ""}>
+          {isStreaming
+            ? `Thinking${elapsed > 0 ? ` · ${elapsed}s` : "…"}`
+            : `Thought for ${durationLabel}`}
         </span>
 
-        <span className={`font-medium tracking-tight ${isStreaming ? "text-violet-400" : "text-zinc-500"}`}>
-          {label}
-        </span>
-
-        <ChevronDown
-          className={`size-3 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""} ${isStreaming ? "text-violet-400" : "text-zinc-600"}`}
-        />
+        {/* Expand / collapse icon */}
+        <ChevronsUpDown className="size-3 shrink-0 text-zinc-400 dark:text-zinc-500 transition-transform duration-200" />
       </button>
 
-      {/* Expandable reasoning content */}
+      {/* ── Expandable reasoning panel ── */}
       {open && (
-        <div className="mt-2 ml-1 pl-4 border-l-2 border-zinc-800/80 max-h-72 overflow-y-auto">
-          <pre className="text-[11px] leading-relaxed text-zinc-500 font-mono whitespace-pre-wrap break-words">
-            {content || "(no reasoning content)"}
-          </pre>
+        <div className="
+          mt-2 rounded-xl border border-zinc-200 dark:border-zinc-800
+          bg-zinc-50 dark:bg-zinc-950/90
+          overflow-hidden shadow-sm
+          animate-in fade-in slide-in-from-top-1 duration-200
+        ">
+          {/* Panel header */}
+          <div className="flex items-center gap-2 px-3.5 py-2 border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-100/60 dark:bg-zinc-900/40">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Reasoning</span>
+            {!isStreaming && elapsed > 0 && (
+              <span className="ml-auto text-[10px] text-zinc-400 dark:text-zinc-500">{durationLabel}</span>
+            )}
+          </div>
+          {/* Scrollable content */}
+          <div className="max-h-64 overflow-y-auto px-3.5 py-3 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800">
+            <pre className="text-[11px] leading-relaxed text-zinc-700 dark:text-zinc-300 font-mono whitespace-pre-wrap break-words select-text">
+              {cleanContent || "(No reasoning trace available for this response)"}
+            </pre>
+          </div>
         </div>
       )}
     </div>
   )
 }
+
 
 // ── Per-message component: tool cards + markdown ─────────────────
 function AssistantMessageContent({ content, userMsg = "" }: { content: string; userMsg?: string }) {
@@ -171,17 +197,17 @@ function AssistantMessageContent({ content, userMsg = "" }: { content: string; u
             },
             br: () => <br />,
             table: ({ children }) => (
-              <div className="overflow-x-auto my-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/20 text-xs text-left text-zinc-700 dark:text-zinc-300 border-collapse">
+              <div className="w-full overflow-x-auto my-3 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-xs scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-800">
+                <table className="w-full min-w-[480px] divide-y divide-zinc-200 dark:divide-zinc-800 bg-white dark:bg-zinc-950 text-xs text-left text-zinc-700 dark:text-zinc-300 border-collapse">
                   {children}
                 </table>
               </div>
             ),
-            thead: ({ children }) => <thead className="bg-zinc-100/80 dark:bg-zinc-900/60 text-zinc-800 dark:text-zinc-100 uppercase tracking-wider font-semibold">{children}</thead>,
+            thead: ({ children }) => <thead className="bg-zinc-100/80 dark:bg-zinc-900/60 text-zinc-900 dark:text-zinc-100 font-semibold">{children}</thead>,
             tbody: ({ children }) => <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800/40">{children}</tbody>,
             tr: ({ children }) => <tr className="hover:bg-zinc-100/50 dark:hover:bg-zinc-900/25 transition-colors">{children}</tr>,
-            th: ({ children }) => <th className="px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 font-bold">{children}</th>,
-            td: ({ children }) => <td className="px-4 py-2 border-r border-zinc-200 dark:border-zinc-800 last:border-r-0">{children}</td>,
+            th: ({ children }) => <th className="px-3.5 py-2.5 sm:px-4 sm:py-3 border-b border-zinc-200 dark:border-zinc-800 font-bold whitespace-nowrap bg-zinc-100/80 dark:bg-zinc-900/60 text-zinc-900 dark:text-zinc-100">{children}</th>,
+            td: ({ children }) => <td className="px-3.5 py-2 sm:px-4 sm:py-2.5 border-b border-zinc-200 dark:border-zinc-800/40 whitespace-nowrap">{children}</td>,
           }}
         >
           {content}
@@ -209,9 +235,18 @@ export default function TeacherTaskChatPage() {
   const activeReaderRef = React.useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null)
   const localIntervalRef = React.useRef<NodeJS.Timeout | null>(null)
 
+  // ── Model toggle: thinking vs fast ──
+  const [useThinking, setUseThinking] = React.useState(true)
+
   // ── File attachment state ──
   const fileInputRef = React.useRef<HTMLInputElement>(null)
-  const [attachedFile, setAttachedFile] = React.useState<{ name: string; type: string; content: string; kind: "image" | "pdf" | "video" | "text" } | null>(null)
+  const [attachedFile, setAttachedFile] = React.useState<{
+    name: string
+    type: string
+    content: string
+    kind: "image" | "pdf" | "video" | "text"
+    s3_url: string
+  } | null>(null)
   const [isUploading, setIsUploading] = React.useState(false)
 
   // ── Thinking / reasoning state ──
@@ -258,7 +293,8 @@ export default function TeacherTaskChatPage() {
         name: data.filename,
         type: file.type,
         content: data.content,
-        kind: data.type
+        kind: data.type,
+        s3_url: data.s3_url || ""
       })
     } catch (err) {
       console.error("File upload failed:", err)
@@ -292,9 +328,16 @@ export default function TeacherTaskChatPage() {
   const searchParams = useSearchParams()
 
   // Start a brand new chat session with backend API and stream initial response
-  const startNewBackendChat = async (roomUuid: string, roomTitle: string, userMsgText: string, baseSession: ChatSession) => {
+  const startNewBackendChat = async (
+    roomUuid: string,
+    roomTitle: string,
+    userMsgText: string,
+    baseSession: ChatSession,
+    attachmentDataUrl?: string,
+    attachmentMime?: string
+  ) => {
     setIsTyping(true)
-    setGenStatus("thinking")
+    setGenStatus("sending")
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 180000) // 3min timeout
@@ -303,7 +346,13 @@ export default function TeacherTaskChatPage() {
       const res = await fetch("/api/backend/api/chats", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uuid: roomUuid, title: roomTitle, message: userMsgText }),
+        body: JSON.stringify({
+          uuid: roomUuid,
+          title: roomTitle,
+          message: userMsgText,
+          use_thinking: useThinking,
+          ...(attachmentDataUrl ? { attachment_data_url: attachmentDataUrl, attachment_mime: attachmentMime } : {})
+        }),
         signal: controller.signal,
       })
       clearTimeout(timeoutId)
@@ -359,6 +408,7 @@ export default function TeacherTaskChatPage() {
           try {
             const parsed = JSON.parse(dataStr)
             if (parsed.thinking) {
+              setGenStatus("thinking")
               liveThinkingRef.current += parsed.thinking
               setLiveThinking(liveThinkingRef.current)
               continue
@@ -394,8 +444,20 @@ export default function TeacherTaskChatPage() {
 
     } catch (err) {
       clearTimeout(timeoutId)
-      console.warn("Start chat error, falling back:", err)
-      handleLocalSimulation(userMsgText, baseSession.messages, baseSession)
+      console.error("Start chat backend API error:", err)
+      setIsTyping(false)
+      setGenStatus("idle")
+      setSession({
+        ...baseSession,
+        messages: [
+          ...baseSession.messages,
+          {
+            role: "assistant",
+            content: "⚠️ Unable to connect to the AI model. Please check your connection or try again.",
+            createdAt: new Date().toISOString()
+          }
+        ]
+      })
     }
   }
 
@@ -413,7 +475,7 @@ export default function TeacherTaskChatPage() {
         createdAt: new Date().toISOString()
       }
       setSession(freshSession)
-      startNewBackendChat(uuid, title, initialText, freshSession)
+      startNewBackendChat(uuid, title, initialText, freshSession, undefined, undefined)
       return
     }
 
@@ -546,18 +608,37 @@ export default function TeacherTaskChatPage() {
     const userMessageText = input.trim()
     setInput("")
 
-    // Prepend extracted file content to message if attached
+    // Capture attachment before clearing
+    const sentAttachment = attachedFile
+      ? { kind: attachedFile.kind, name: attachedFile.name, s3_url: attachedFile.s3_url }
+      : undefined
+
+    // For images: send directly to AI via multimodal (no text prefix).
+    // For PDFs/videos/text: prepend extracted content as context.
     let finalMessageText = userMessageText
+    let attachmentDataUrl: string | undefined
+    let attachmentMime: string | undefined
+
     if (attachedFile) {
-      const filePrefix = `[Attached ${attachedFile.kind.toUpperCase()}: ${attachedFile.name}]\n\nExtracted content:\n${attachedFile.content}\n\n---\n\nUser message: `
-      finalMessageText = filePrefix + userMessageText
+      if (attachedFile.kind === "image") {
+        // content is the base64 data URL — send directly to model
+        attachmentDataUrl = attachedFile.content
+        attachmentMime = attachedFile.type
+        // finalMessageText stays as the user's plain text
+      } else {
+        // PDF / video / text: prepend extracted content
+        const s3Ref = attachedFile.s3_url ? `\nFile URL: ${attachedFile.s3_url}` : ""
+        const filePrefix = `[Attached ${attachedFile.kind.toUpperCase()}: ${attachedFile.name}]${s3Ref}\n\nExtracted content:\n${attachedFile.content}\n\n---\n\nUser message: `
+        finalMessageText = filePrefix + userMessageText
+      }
       setAttachedFile(null)
     }
 
     const userMessage: Message = {
       role: "user",
       content: userMessageText,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      attachment: sentAttachment
     }
 
     const updatedMessages = [...session.messages, userMessage]
@@ -581,7 +662,7 @@ export default function TeacherTaskChatPage() {
     }
 
     setIsTyping(true)
-    setGenStatus("thinking")
+    setGenStatus("sending")
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 180000) // 3min timeout
@@ -590,7 +671,12 @@ export default function TeacherTaskChatPage() {
       const res = await fetch(`/api/backend/api/chats/${uuid}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: finalMessageText, title: currentTitle }),
+        body: JSON.stringify({
+          message: finalMessageText,
+          title: currentTitle,
+          use_thinking: useThinking,
+          ...(attachmentDataUrl ? { attachment_data_url: attachmentDataUrl, attachment_mime: attachmentMime } : {})
+        }),
         signal: controller.signal,
       })
       clearTimeout(timeoutId)
@@ -649,6 +735,7 @@ export default function TeacherTaskChatPage() {
             const parsed = JSON.parse(dataStr)
 
             if (parsed.thinking) {
+              setGenStatus("thinking")
               liveThinkingRef.current += parsed.thinking
               setLiveThinking(liveThinkingRef.current)
               continue
@@ -692,9 +779,20 @@ export default function TeacherTaskChatPage() {
 
     } catch (err) {
       clearTimeout(timeoutId)
-      console.warn("Backend API call failed during chat submit:", err)
-      // Only fall back to simulation for genuine network errors, not auth/server errors
-      handleLocalSimulation(userMessageText, updatedMessages, updatedSession)
+      console.error("Backend API call failed during chat submit:", err)
+      setIsTyping(false)
+      setGenStatus("idle")
+      setSession({
+        ...updatedSession,
+        messages: [
+          ...updatedMessages,
+          {
+            role: "assistant",
+            content: "⚠️ Unable to process request. The AI server may be overloaded or unreachable. Please try again.",
+            createdAt: new Date().toISOString()
+          }
+        ]
+      })
     }
   }
 
@@ -725,7 +823,7 @@ export default function TeacherTaskChatPage() {
   }
 
   return (
-    <div className="relative flex flex-col h-[calc(100dvh-var(--header-height,64px)-8px)] sm:h-[calc(100vh-var(--header-height,64px)-16px)] bg-background text-foreground w-full overflow-hidden">
+    <div className="relative flex flex-col h-[calc(100vh-var(--header-height,64px))] bg-background text-foreground w-full overflow-hidden">
       
       {/* ── Chat Messages Pane ── */}
       <div className="relative flex-1 min-h-0">
@@ -758,14 +856,64 @@ export default function TeacherTaskChatPage() {
                 {/* Bubble */}
                 <div className="space-y-1 flex-1 min-w-0">
                   {isUser ? (
-                    <div className="text-zinc-900 dark:text-zinc-100 ml-auto w-fit max-w-[95%] sm:max-w-[85%] text-xs sm:text-sm leading-relaxed whitespace-pre-wrap px-1 py-0.5 font-normal break-words">
-                      {msg.content}
+                    <div className="ml-auto w-fit max-w-[95%] sm:max-w-[85%] space-y-1.5">
+                      {/* Attachment preview in sent message */}
+                      {msg.attachment && (
+                        <div className="mb-1">
+                          {msg.attachment.kind === "image" && msg.attachment.s3_url ? (
+                            <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 max-w-[220px] sm:max-w-xs shadow-sm">
+                              <img
+                                src={msg.attachment.s3_url}
+                                alt={msg.attachment.name}
+                                className="w-full object-cover max-h-48"
+                              />
+                              <div className="px-2.5 py-1 bg-zinc-50 dark:bg-zinc-900/60 border-t border-zinc-200 dark:border-zinc-700">
+                                <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">{msg.attachment.name}</p>
+                              </div>
+                            </div>
+                          ) : msg.attachment.kind === "pdf" ? (
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/40">
+                              <FileText className="size-3.5 text-rose-500 dark:text-rose-400 shrink-0" />
+                              <span className="text-[11px] text-rose-700 dark:text-rose-300 truncate max-w-[140px]">{msg.attachment.name}</span>
+                            </div>
+                          ) : msg.attachment.kind === "video" ? (
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800/40">
+                              <Video className="size-3.5 text-violet-500 dark:text-violet-400 shrink-0" />
+                              <span className="text-[11px] text-violet-700 dark:text-violet-300 truncate max-w-[140px]">{msg.attachment.name}</span>
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+                              <File className="size-3.5 text-zinc-500 shrink-0" />
+                              <span className="text-[11px] text-zinc-600 dark:text-zinc-300 truncate max-w-[140px]">{msg.attachment.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap px-1 py-0.5 font-normal break-words">
+                        {msg.content}
+                      </div>
                     </div>
                   ) : (
-                    <AssistantMessageContent
-                      content={msg.content}
-                      userMsg={index > 0 && session.messages[index - 1]?.role === "user" ? session.messages[index - 1].content : ""}
-                    />
+                    <>
+                      {/* Show saved thinking block for this message if it exists */}
+                      {thinkingMap[index] && (
+                        <ThinkingBlock
+                          content={thinkingMap[index]}
+                          isStreaming={false}
+                        />
+                      )}
+                      {/* Show live thinking during active streaming on the last assistant message */}
+                      {!thinkingMap[index] && liveThinking && index === session.messages.length - 1 && (
+                        <ThinkingBlock
+                          content={liveThinking}
+                          isStreaming={genStatus === "thinking" || genStatus === "generating"}
+                        />
+                      )}
+                      <AssistantMessageContent
+                        content={msg.content}
+                        userMsg={index > 0 && session.messages[index - 1]?.role === "user" ? session.messages[index - 1].content : ""}
+                      />
+                    </>
                   )}
                   <p className={`text-[9px] text-muted-foreground/60 ${isUser ? "text-right" : "text-left"}`}>
                     {new Date(msg.createdAt).toLocaleTimeString("en-US", {
@@ -780,15 +928,22 @@ export default function TeacherTaskChatPage() {
           })}
 
           {/* Shimmer loading / Generation Status */}
-          {(isTyping && genStatus === "thinking") || genStatus === "generating" ? (
+          {genStatus !== "idle" ? (
             <div className="max-w-[95%] sm:max-w-[80%] mr-auto w-full space-y-2.5 py-1">
-              {/* Row 1 — spinner + Thinking label */}
+              {liveThinking && genStatus === "thinking" && (
+                <ThinkingBlock content={liveThinking} isStreaming={true} />
+              )}
+              {/* Row 1 — spinner + dynamic status label */}
               <Marker role="status">
                 <MarkerIcon>
                   <Spinner size="sm" className="border-t-primary border-primary/20" />
                 </MarkerIcon>
                 <MarkerLabel className="shimmer text-muted-foreground">
-                  {genStatus === "thinking" ? "Thinking\u2026" : "Generating response\u2026"}
+                  {genStatus === "sending"
+                    ? "Sending\u2026"
+                    : genStatus === "thinking"
+                    ? "Thinking\u2026"
+                    : "Generating\u2026"}
                 </MarkerLabel>
               </Marker>
               {/* Row 2 — separator shimmer (only while actively generating) */}
@@ -801,6 +956,7 @@ export default function TeacherTaskChatPage() {
               )}
             </div>
           ) : null}
+
           
           <div ref={messagesEndRef} />
         </div>
@@ -821,20 +977,48 @@ export default function TeacherTaskChatPage() {
       <div className="w-full shrink-0 px-2.5 sm:px-5 pb-3 sm:pb-4 pt-1 bg-gradient-to-t from-background via-background/95 to-transparent">
         <div className="max-w-4xl mx-auto w-full">
 
-        {/* File attachment preview badge */}
+        {/* ── Rich file attachment preview ── */}
         {attachedFile && (
-          <div className="mb-1.5 sm:mb-2 flex items-center gap-2 px-1">
-            <div className="flex items-center gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-300 dark:border-zinc-700/60 text-[11px] sm:text-xs text-zinc-800 dark:text-zinc-300 max-w-[200px] sm:max-w-xs">
-              {attachedFile.kind === "image" && <ImageIcon className="size-3 sm:size-3.5 text-sky-500 dark:text-sky-400 shrink-0" />}
-              {attachedFile.kind === "pdf" && <FileText className="size-3 sm:size-3.5 text-rose-500 dark:text-rose-400 shrink-0" />}
-              {attachedFile.kind === "video" && <Video className="size-3 sm:size-3.5 text-violet-500 dark:text-violet-400 shrink-0" />}
-              {attachedFile.kind === "text" && <FileText className="size-3 sm:size-3.5 text-zinc-500 shrink-0" />}
-              <span className="truncate max-w-[110px] sm:max-w-[180px]">{attachedFile.name}</span>
-              <span className="text-zinc-400 dark:text-zinc-500 shrink-0">· extracted</span>
+          <div className="mb-2 px-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="group relative inline-flex items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-900/80 p-2 sm:p-2.5 shadow-sm max-w-[280px] sm:max-w-sm backdrop-blur-sm">
+              {/* Thumbnail or icon */}
+              {attachedFile.kind === "image" && attachedFile.s3_url ? (
+                <div className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                  <img
+                    src={attachedFile.s3_url}
+                    alt={attachedFile.name}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : attachedFile.kind === "image" ? (
+                <div className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-sky-100 dark:bg-sky-900/40 border border-sky-200 dark:border-sky-800/60 flex items-center justify-center">
+                  <ImageIcon className="size-5 sm:size-6 text-sky-500 dark:text-sky-400" />
+                </div>
+              ) : attachedFile.kind === "pdf" ? (
+                <div className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-rose-100 dark:bg-rose-900/40 border border-rose-200 dark:border-rose-800/60 flex items-center justify-center">
+                  <FileText className="size-5 sm:size-6 text-rose-500 dark:text-rose-400" />
+                </div>
+              ) : attachedFile.kind === "video" ? (
+                <div className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-violet-100 dark:bg-violet-900/40 border border-violet-200 dark:border-violet-800/60 flex items-center justify-center">
+                  <Video className="size-5 sm:size-6 text-violet-500 dark:text-violet-400" />
+                </div>
+              ) : (
+                <div className="shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+                  <File className="size-5 sm:size-6 text-zinc-500 dark:text-zinc-400" />
+                </div>
+              )}
+              {/* File info */}
+              <div className="flex flex-col justify-center min-w-0 flex-1 pr-5">
+                <p className="text-[11px] sm:text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate leading-tight">{attachedFile.name}</p>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5 capitalize">
+                  {attachedFile.kind}{attachedFile.s3_url ? " · uploaded" : " · extracted"}
+                </p>
+              </div>
+              {/* Remove button */}
               <button
                 type="button"
                 onClick={() => setAttachedFile(null)}
-                className="ml-1 text-zinc-400 hover:text-zinc-800 dark:hover:text-white transition-colors shrink-0"
+                className="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-300 dark:hover:bg-zinc-600 hover:text-zinc-900 dark:hover:text-white transition-all"
               >
                 <X className="size-3" />
               </button>
@@ -844,7 +1028,7 @@ export default function TeacherTaskChatPage() {
 
         <form
           onSubmit={handleSend}
-          className="w-full flex items-center gap-1.5 sm:gap-2 p-1 sm:p-1.5 pl-2 sm:pl-3 rounded-full border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-black shadow-lg dark:shadow-2xl focus-within:border-zinc-500 dark:focus-within:border-zinc-600 min-h-[46px] sm:min-h-[52px]"
+          className="w-full flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 pl-2 sm:pl-3 rounded-full border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-black shadow-lg dark:shadow-2xl focus-within:border-zinc-500 dark:focus-within:border-zinc-600 min-h-[46px] sm:min-h-[52px]"
         >
           {/* Hidden file input */}
           <input
@@ -864,9 +1048,69 @@ export default function TeacherTaskChatPage() {
             className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 transition-all active:scale-95 cursor-pointer my-auto"
           >
             {isUploading
-              ? <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
-              : <Paperclip className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : <Paperclip className="h-4 w-4" />}
           </button>
+
+          {/* Model combobox selector */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 shrink-0 rounded-full px-2 py-1 text-[10px] sm:text-[11px] font-semibold tracking-tight border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 select-none my-auto cursor-pointer"
+              >
+                {useThinking
+                  ? <><BrainCircuit className="size-3 shrink-0 text-violet-500" /><span>Thinking</span></>
+                  : <><Zap className="size-3 shrink-0 text-amber-500" /><span>Fast</span></>}
+                <ChevronDown className="size-2.5 shrink-0 text-zinc-400" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              side="top"
+              className="w-56 p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-xl"
+            >
+              <p className="px-2 pb-1.5 pt-0.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-600">Model Mode</p>
+              {/* Thinking option */}
+              <button
+                type="button"
+                onClick={() => setUseThinking(true)}
+                className={`w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                  useThinking
+                    ? "bg-violet-50 dark:bg-violet-500/10"
+                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                }`}
+              >
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-500/20">
+                  <BrainCircuit className="size-3.5 text-violet-600 dark:text-violet-400" />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-xs font-semibold text-zinc-900 dark:text-zinc-100">Thinking</span>
+                  <span className="block text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">Deep reasoning · slower</span>
+                </span>
+                {useThinking && <Check className="size-3.5 mt-1 text-violet-500 shrink-0" />}
+              </button>
+              {/* Fast option */}
+              <button
+                type="button"
+                onClick={() => setUseThinking(false)}
+                className={`w-full flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                  !useThinking
+                    ? "bg-amber-50 dark:bg-amber-500/10"
+                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                }`}
+              >
+                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/20">
+                  <Zap className="size-3.5 text-amber-600 dark:text-amber-400" />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-xs font-semibold text-zinc-900 dark:text-zinc-100">Fast</span>
+                  <span className="block text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">Instant replies · no reasoning</span>
+                </span>
+                {!useThinking && <Check className="size-3.5 mt-1 text-amber-500 shrink-0" />}
+              </button>
+            </PopoverContent>
+          </Popover>
 
           <textarea
             ref={textareaRef}
@@ -880,8 +1124,10 @@ export default function TeacherTaskChatPage() {
               }
             }}
             placeholder={attachedFile ? `Ask about ${attachedFile.name}...` : "Message AI Assistant..."}
-            className="flex-1 bg-transparent text-xs sm:text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-1 sm:px-2 py-1.5 sm:py-2 resize-none max-h-24 sm:max-h-32 min-h-[30px] sm:min-h-[36px] my-auto scrollbar-none"
+            className="flex-1 bg-transparent text-xs sm:text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-1 sm:px-2 py-1.5 sm:py-2 resize-none max-h-32 min-h-[30px] my-auto scrollbar-none"
           />
+
+          {/* Send / Pause button */}
           {genStatus !== "idle" ? (
             <button
               type="button"
