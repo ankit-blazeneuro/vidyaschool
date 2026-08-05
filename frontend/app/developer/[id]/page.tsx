@@ -3,28 +3,33 @@
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
   Activity,
   ArrowDown,
+  ArrowLeft,
   Check,
-  ChevronRight,
   Copy,
   Download,
   Filter,
-  Info,
   AlertTriangle,
   XCircle,
   Pause,
   Play,
-  RefreshCw,
   Search,
-  ShieldCheck,
   Terminal,
   Trash2,
-  Cpu,
-  Database,
-  Radio,
-  Zap,
-  ArrowLeft
+  Radio
 } from "lucide-react"
 
 interface LogEntry {
@@ -36,7 +41,7 @@ interface LogEntry {
   details?: string
 }
 
-export default function BackendLogStreamerPage() {
+export default function BackendLogStreamerShadcnPage() {
   const params = useParams()
   const router = useRouter()
   const logStreamId = (params?.id as string) || "backend-a7f9q"
@@ -50,7 +55,6 @@ export default function BackendLogStreamerPage() {
   const [statusText, setStatusText] = React.useState("Connecting to server stream...")
 
   const terminalEndRef = React.useRef<HTMLDivElement>(null)
-  const terminalContainerRef = React.useRef<HTMLDivElement>(null)
   const eventSourceRef = React.useRef<EventSource | null>(null)
 
   // ── Auto Scroll ──────────────────────────────────────────────────────────
@@ -179,190 +183,184 @@ export default function BackendLogStreamerPage() {
   }
 
   return (
-    <div className="flex flex-col h-full max-h-full flex-1 bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 font-sans overflow-hidden select-none">
+    <div className="flex flex-col h-full max-h-full flex-1 bg-background text-foreground font-sans overflow-hidden select-none">
       
-      {/* ── Top Header Navigation Bar ── */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 dark:border-zinc-800 bg-white/90 dark:bg-[#09090b]/90 px-4 sm:px-6 backdrop-blur-md z-30">
+      {/* ── Header Navigation ── */}
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 sm:px-6 backdrop-blur-md z-30">
         <div className="flex items-center gap-3">
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => router.push("/developer")}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             title="Back to Developer Metrics"
+            className="h-8 w-8 cursor-pointer"
           >
             <ArrowLeft className="size-4" />
-          </button>
+          </Button>
           
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 dark:bg-zinc-900 border border-slate-700 dark:border-zinc-700/60 shadow-inner">
-            <Terminal className="size-4 text-white" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+            <Terminal className="size-4" />
           </div>
 
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-semibold tracking-tight text-slate-900 dark:text-zinc-100">
+              <h1 className="text-sm font-semibold tracking-tight text-foreground">
                 Server Log Streamer
               </h1>
-              <span className="rounded-md bg-violet-100 dark:bg-violet-950/80 px-2 py-0.5 text-[10px] font-mono font-bold text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60">
+              <Badge variant="secondary" className="font-mono text-xs">
                 {logStreamId}
-              </span>
+              </Badge>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-1.5 mt-0.5">
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
               <span className={`inline-block h-2 w-2 rounded-full ${isStreaming ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
               {statusText}
             </p>
           </div>
         </div>
 
-        {/* Live Metrics & Actions Toolbar */}
+        {/* Action Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <button
+          <Button
+            variant={isStreaming ? "outline" : "default"}
+            size="sm"
             onClick={() => setIsStreaming(!isStreaming)}
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium border transition-colors cursor-pointer ${
-              isStreaming
-                ? "bg-slate-100 dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-200 dark:hover:bg-zinc-800"
-                : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
-            }`}
+            className="gap-1.5 text-xs cursor-pointer"
           >
-            {isStreaming ? <Pause className="size-3.5" /> : <Play className="size-3.5 text-emerald-600 dark:text-emerald-400" />}
+            {isStreaming ? <Pause className="size-3.5" /> : <Play className="size-3.5 text-emerald-500" />}
             <span>{isStreaming ? "Pause Stream" : "Resume Stream"}</span>
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={handleCopyLogs}
             title="Copy visible logs"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="h-8 w-8 cursor-pointer"
           >
-            {copied ? <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="size-3.5" />}
-          </button>
+            {copied ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
+          </Button>
 
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={handleDownloadLogs}
             title="Download log file"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="h-8 w-8 cursor-pointer"
           >
             <Download className="size-3.5" />
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={handleClearLogs}
             title="Clear log console"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="h-8 w-8 text-destructive hover:bg-destructive/10 cursor-pointer"
           >
             <Trash2 className="size-3.5" />
-          </button>
+          </Button>
         </div>
       </header>
 
-      {/* ── Sub-header Toolbar ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#09090b] px-4 py-2 text-xs">
+      {/* ── Filter Toolbar ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-4 py-2 text-xs">
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
           {["ALL", "INFO", "WARN", "ERROR", "DB", "AI", "FCM", "SYSTEM"].map((lvl) => {
             const isActive = filterLevel === lvl
             return (
-              <button
+              <Button
                 key={lvl}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
                 onClick={() => setFilterLevel(lvl)}
-                className={`rounded-md px-2.5 py-1 text-[11px] font-mono font-medium transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-slate-900 dark:bg-zinc-100 text-white dark:text-black font-semibold shadow-sm"
-                    : "bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-200 border border-slate-200 dark:border-zinc-800"
-                }`}
+                className="h-7 text-[11px] font-mono font-medium cursor-pointer"
               >
                 {lvl}
-              </button>
+              </Button>
             )
           })}
         </div>
 
         <div className="flex items-center gap-3">
           <div className="relative flex items-center">
-            <Search className="absolute left-2.5 size-3.5 text-slate-400 dark:text-zinc-500 pointer-events-none" />
-            <input
+            <Search className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none" />
+            <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search logs (regex or text)..."
-              className="h-7 w-48 sm:w-64 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/90 pl-8 pr-3 text-xs text-slate-900 dark:text-zinc-200 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-400 dark:focus:border-zinc-600 focus:outline-none font-mono"
+              placeholder="Search logs..."
+              className="h-7 w-48 sm:w-64 pl-8 pr-3 text-xs font-mono"
             />
           </div>
 
-          <div className="hidden sm:flex items-center gap-1.5 rounded-md bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 text-[11px] font-mono text-slate-600 dark:text-zinc-400">
-            <span className="text-slate-500 dark:text-zinc-500">Total:</span>
-            <span className="font-semibold text-slate-800 dark:text-zinc-200">{filteredLogs.length}</span>
-          </div>
+          <Badge variant="outline" className="hidden sm:inline-flex text-[11px] font-mono">
+            Total: {filteredLogs.length}
+          </Badge>
 
           {errorCount > 0 && (
-            <div className="flex items-center gap-1 rounded-md bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/60 px-2 py-1 text-[11px] font-mono text-red-600 dark:text-red-400">
-              <XCircle className="size-3 text-red-500 dark:text-red-400" />
+            <Badge variant="destructive" className="gap-1 text-[11px] font-mono">
+              <XCircle className="size-3" />
               <span>{errorCount} errors</span>
-            </div>
+            </Badge>
           )}
 
           {warnCount > 0 && (
-            <div className="flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-2 py-1 text-[11px] font-mono text-amber-700 dark:text-amber-400">
-              <AlertTriangle className="size-3 text-amber-500 dark:text-amber-400" />
+            <Badge variant="outline" className="gap-1 text-[11px] font-mono border-amber-500/40 text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="size-3" />
               <span>{warnCount} warnings</span>
-            </div>
+            </Badge>
           )}
         </div>
       </div>
 
-      {/* ── Terminal Log Canvas ── */}
+      {/* ── Terminal Console Canvas (Shadcn Dark Terminal View) ── */}
       <div
-        ref={terminalContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto p-4 font-mono text-xs leading-relaxed bg-slate-950 dark:bg-[#09090b] text-slate-200 dark:text-zinc-300 selection:bg-slate-800 dark:selection:bg-zinc-800 selection:text-white"
+        className="flex-1 min-h-0 overflow-y-auto p-4 font-mono text-xs leading-relaxed bg-zinc-950 text-zinc-100 selection:bg-zinc-800"
       >
         {filteredLogs.length === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-2 text-slate-400 dark:text-zinc-500">
-            <Terminal className="size-8 text-slate-600 dark:text-zinc-700 animate-bounce" />
+          <div className="flex h-64 flex-col items-center justify-center gap-2 text-zinc-500">
+            <Terminal className="size-8 text-zinc-700 animate-bounce" />
             <p className="text-xs">No log entries matching query filters.</p>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-600">Listening for server events in real time...</p>
+            <p className="text-[11px] text-zinc-600">Listening for server events in real time...</p>
           </div>
         ) : (
           <div className="space-y-1">
             {filteredLogs.map((log, index) => {
               const isError = log.level === "ERROR"
               const isWarn = log.level === "WARN"
-              const isDebug = log.level === "DEBUG"
 
               return (
                 <div
                   key={log.id || index}
-                  className={`group flex items-start gap-3 rounded px-2 py-1 transition-colors hover:bg-slate-800/60 dark:hover:bg-zinc-900/60 ${
-                    isError ? "bg-red-950/30 text-red-200 border-l-2 border-red-500" :
-                    isWarn ? "bg-amber-950/20 text-amber-200 border-l-2 border-amber-500" : ""
+                  className={`group flex items-start gap-3 rounded px-2 py-1 transition-colors hover:bg-zinc-900/80 ${
+                    isError ? "bg-red-950/40 text-red-200 border-l-2 border-red-500" :
+                    isWarn ? "bg-amber-950/30 text-amber-200 border-l-2 border-amber-500" : ""
                   }`}
                 >
-                  <span className="w-10 shrink-0 text-right text-[10px] text-slate-500 dark:text-zinc-600 select-none">
+                  <span className="w-10 shrink-0 text-right text-[10px] text-zinc-600 select-none">
                     {index + 1}
                   </span>
 
-                  <span className="shrink-0 text-[11px] text-slate-400 dark:text-zinc-500 select-none">
+                  <span className="shrink-0 text-[11px] text-zinc-500 select-none">
                     {log.timestamp.slice(11, 23)}
                   </span>
 
-                  <span
-                    className={`shrink-0 rounded px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wide select-none ${
-                      isError
-                        ? "bg-red-900/80 text-red-200 border border-red-700/60"
-                        : isWarn
-                        ? "bg-amber-900/60 text-amber-200 border border-amber-700/60"
-                        : isDebug
-                        ? "bg-purple-950 text-purple-300 border border-purple-800/60"
-                        : "bg-emerald-950/80 text-emerald-300 border border-emerald-800/60"
-                    }`}
+                  <Badge
+                    variant={isError ? "destructive" : isWarn ? "outline" : "secondary"}
+                    className="shrink-0 px-1.5 py-0 text-[9px] font-bold uppercase select-none"
                   >
                     {log.level}
-                  </span>
+                  </Badge>
 
-                  <span className="shrink-0 rounded bg-slate-800 dark:bg-zinc-900 px-1.5 py-0.2 text-[9px] text-slate-300 dark:text-zinc-400 border border-slate-700 dark:border-zinc-800 select-none">
+                  <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-[9px] text-zinc-400 select-none">
                     {log.category}
-                  </span>
+                  </Badge>
 
-                  <span className="flex-1 break-all whitespace-pre-wrap text-slate-100 dark:text-zinc-200 font-mono">
+                  <span className="flex-1 break-all whitespace-pre-wrap text-zinc-200 font-mono">
                     {log.message}
                     {log.details && (
-                      <span className="block mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">
+                      <span className="block mt-0.5 text-[11px] text-zinc-500">
                         {log.details}
                       </span>
                     )}
@@ -375,8 +373,8 @@ export default function BackendLogStreamerPage() {
         )}
       </div>
 
-      {/* ── Terminal Footer ── */}
-      <footer className="flex h-8 shrink-0 items-center justify-between border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] px-4 text-[10px] text-slate-500 dark:text-zinc-500 font-mono">
+      {/* ── Footer ── */}
+      <footer className="flex h-8 shrink-0 items-center justify-between border-t border-border bg-card px-4 text-[10px] text-muted-foreground font-mono">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
             <Radio className="size-3 text-emerald-500 animate-pulse" />
@@ -386,15 +384,17 @@ export default function BackendLogStreamerPage() {
 
         <div className="flex items-center gap-3">
           {!autoScroll && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={scrollToBottom}
-              className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 cursor-pointer"
+              className="h-6 text-[10px] gap-1 text-emerald-600 dark:text-emerald-400 cursor-pointer"
             >
               <ArrowDown className="size-3" />
               <span>Scroll to Bottom</span>
-            </button>
+            </Button>
           )}
-          <span>Vercel Developer Console</span>
+          <span>Shadcn Developer Console</span>
         </div>
       </footer>
 

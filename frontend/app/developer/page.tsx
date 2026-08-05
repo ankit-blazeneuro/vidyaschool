@@ -4,19 +4,28 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
+import {
   Activity,
   ArrowRight,
   CheckCircle2,
   Cpu,
   Database,
-  ExternalLink,
   HardDrive,
-  Layers,
   Radio,
   RefreshCw,
   Server,
   ShieldCheck,
-  Sparkles,
   Terminal,
   Zap
 } from "lucide-react"
@@ -35,7 +44,7 @@ interface ServerMetrics {
   backend_log_uid: string
 }
 
-export default function DeveloperOperationsDashboard() {
+export default function DeveloperOperationsShadcnPage() {
   const router = useRouter()
   const [metrics, setMetrics] = React.useState<ServerMetrics>({
     cpu_usage_pct: 14.2,
@@ -78,193 +87,219 @@ export default function DeveloperOperationsDashboard() {
   const backendStreamUid = metrics.backend_log_uid || "backend-a7f9q"
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 font-sans p-4 sm:p-8 select-none">
+    <div className="flex flex-col flex-1 h-full w-full bg-background text-foreground p-4 sm:p-6 space-y-6">
       
-      {/* ── Top Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-zinc-800">
-        <div>
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-white shadow-md shadow-violet-500/20">
-              <Cpu className="size-4" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <Cpu className="size-5" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Developer Operations & Server Metrics</h1>
-            <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 px-2.5 py-0.5 text-xs font-semibold flex items-center gap-1.5">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Developer Operations & Server Usage</h1>
+            <Badge variant="outline" className="gap-1.5 font-medium border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               Healthy
-            </span>
+            </Badge>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Real-time backend performance metrics, database pool health, and live log stream widgets.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              setLoading(true)
-              fetchMetrics().finally(() => setLoading(false))
-            }}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer"
-          >
-            <RefreshCw className={`size-3.5 ${loading ? "animate-spin text-violet-500" : ""}`} />
-            <span>Refresh</span>
-          </button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setLoading(true)
+            fetchMetrics().finally(() => setLoading(false))
+          }}
+          className="gap-2 cursor-pointer self-start sm:self-auto"
+        >
+          <RefreshCw className={`size-3.5 ${loading ? "animate-spin text-primary" : ""}`} />
+          <span>Refresh</span>
+        </Button>
       </div>
 
-      {/* ── Server Usage Metrics Grid ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+      <Separator />
+
+      {/* ── Metrics Cards Grid (Shadcn UI Cards) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Metric 1: CPU Utilization */}
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">CPU Utilization</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400">
-              <Cpu className="size-4" />
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              CPU Utilization
+            </CardTitle>
+            <Cpu className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-baseline justify-between">
+              <div className="text-2xl sm:text-3xl font-bold">{metrics.cpu_usage_pct}%</div>
+              <Badge variant="secondary" className="text-[10px] font-mono">
+                {metrics.cpu_cores} Cores
+              </Badge>
             </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold tracking-tight">{metrics.cpu_usage_pct}%</span>
-            <span className="text-xs text-slate-500 dark:text-zinc-400">({metrics.cpu_cores} Cores Active)</span>
-          </div>
-          <div className="mt-3 w-full bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
-            <div
-              className="bg-blue-500 h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, metrics.cpu_usage_pct)}%` }}
-            />
-          </div>
-        </div>
+            <Progress value={metrics.cpu_usage_pct} className="h-2" />
+          </CardContent>
+        </Card>
 
         {/* Metric 2: RAM Memory Usage */}
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">RAM Usage</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400">
-              <HardDrive className="size-4" />
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              RAM Memory Usage
+            </CardTitle>
+            <HardDrive className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-baseline justify-between">
+              <div className="text-2xl sm:text-3xl font-bold">{metrics.ram_pct}%</div>
+              <span className="text-xs text-muted-foreground font-mono">
+                {metrics.ram_used_mb} / {metrics.ram_total_mb} MB
+              </span>
             </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold tracking-tight">{metrics.ram_pct}%</span>
-            <span className="text-xs text-slate-500 dark:text-zinc-400">({metrics.ram_used_mb} / {metrics.ram_total_mb} MB)</span>
-          </div>
-          <div className="mt-3 w-full bg-slate-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
-            <div
-              className="bg-violet-500 h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, metrics.ram_pct)}%` }}
-            />
-          </div>
-        </div>
+            <Progress value={metrics.ram_pct} className="h-2" />
+          </CardContent>
+        </Card>
 
         {/* Metric 3: PostgreSQL Database Pool */}
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Database Pool</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
-              <Database className="size-4" />
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Database Pool
+            </CardTitle>
+            <Database className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <div className="flex items-baseline gap-2">
+              <div className="text-2xl sm:text-3xl font-bold">{metrics.db_connections} / {metrics.db_pool_max}</div>
+              <Badge variant="outline" className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 border-emerald-500/40">
+                Active Pool
+              </Badge>
             </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold tracking-tight">{metrics.db_connections} / {metrics.db_pool_max}</span>
-            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Active Pool</span>
-          </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400">PostgreSQL pooled connection latency &lt; 1ms</p>
-        </div>
+            <p className="text-xs text-muted-foreground pt-1">
+              PostgreSQL pooled connection latency &lt; 1ms
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Metric 4: API Response Latency */}
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-5 shadow-sm hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">API Latency</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
-              <Zap className="size-4" />
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              API Latency
+            </CardTitle>
+            <Zap className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <div className="flex items-baseline gap-2">
+              <div className="text-2xl sm:text-3xl font-bold">{metrics.api_latency_ms} ms</div>
+              <Badge variant="secondary" className="text-[10px] font-mono">
+                p99 fast
+              </Badge>
             </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold tracking-tight">{metrics.api_latency_ms} ms</span>
-            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Fast (p99)</span>
-          </div>
-          <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400">Active WebSocket & SSE Clients: {metrics.active_sockets}</p>
-        </div>
+            <p className="text-xs text-muted-foreground pt-1">
+              Active Sockets & SSE Clients: {metrics.active_sockets}
+            </p>
+          </CardContent>
+        </Card>
 
       </div>
 
       {/* ── Widget Link Cards Section ── */}
-      <div className="mt-8">
-        <h2 className="text-sm font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider mb-4">
-          Developer Operations Widgets & Console Links
-        </h2>
+      <div className="space-y-4 pt-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Developer Operations Widgets & Console Links
+          </h2>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          {/* Prominent Widget Card 1: Server Log Streamer Widget */}
-          <div className="group relative rounded-2xl border border-violet-200 dark:border-violet-900/60 bg-gradient-to-br from-violet-50/50 via-white to-purple-50/30 dark:from-violet-950/20 dark:via-zinc-900 dark:to-purple-950/10 p-6 shadow-sm hover:shadow-md transition-all">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 text-white shadow-md shadow-violet-500/20 group-hover:scale-105 transition-transform">
-                  <Terminal className="size-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100">
-                      Real-Time Server Log Streamer
-                    </h3>
-                    <span className="rounded-md bg-violet-100 dark:bg-violet-900/60 px-2 py-0.5 text-[10px] font-mono font-bold text-violet-700 dark:text-violet-300">
-                      /{backendStreamUid}
-                    </span>
+          {/* Prominent Widget Card 1: Server Log Streamer Widget linking to /developer/backend-a7f9q */}
+          <Card className="border-primary/30 bg-card shadow-sm hover:shadow-md transition-all relative overflow-hidden">
+            <CardHeader className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                    <Terminal className="size-5" />
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-                    Vercel-style live Server-Sent Events (SSE) log stream console. Filter ERROR, WARN, INFO, DB, and FCM events in real time.
-                  </p>
+                  <div>
+                    <CardTitle className="text-base font-bold">
+                      Real-Time Server Log Streamer
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-0.5">
+                      Vercel-style live Server-Sent Events (SSE) log stream console.
+                    </CardDescription>
+                  </div>
                 </div>
+                <Badge variant="secondary" className="font-mono text-xs">
+                  /developer/{backendStreamUid}
+                </Badge>
               </div>
-            </div>
+            </CardHeader>
 
-            <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-200/80 dark:border-zinc-800">
-              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-zinc-400 font-mono">
+            <CardContent>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Inspect live ERROR, WARN, INFO, DB, and FCM log events in real time. Features instant search, level filtering, log copy/download, and pause controls.
+              </p>
+            </CardContent>
+
+            <Separator />
+
+            <CardFooter className="flex items-center justify-between pt-4 pb-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
                 <Radio className="size-3.5 text-emerald-500 animate-pulse" />
-                <span>Live SSE Stream Ready</span>
+                <span>Live Stream Widget Ready</span>
               </div>
 
-              <Link
-                href={`/developer/${backendStreamUid}`}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 text-xs font-semibold shadow-md shadow-violet-500/20 transition-all hover:gap-2 cursor-pointer"
-              >
-                <span>Launch Console ({backendStreamUid})</span>
-                <ArrowRight className="size-3.5" />
-              </Link>
-            </div>
-          </div>
+              <Button asChild size="sm" className="gap-2 cursor-pointer">
+                <Link href={`/developer/${backendStreamUid}`}>
+                  <span>Open Server Logs (/developer/{backendStreamUid})</span>
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
 
-          {/* Widget Card 2: System Health & Maintenance */}
-          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-6 shadow-sm">
-            <div className="flex items-start justify-between">
+          {/* Widget Card 2: System Health & Infrastructure */}
+          <Card className="shadow-sm">
+            <CardHeader className="space-y-2">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-500/20">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
                   <ShieldCheck className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-zinc-100">
+                  <CardTitle className="text-base font-bold">
                     System Health & Infrastructure
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-                    Automated background tasks, scheduler triggers, FCM multicast push engine, and database connection pools.
-                  </p>
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-0.5">
+                    Automated background tasks and DB pool manager.
+                  </CardDescription>
                 </div>
               </div>
-            </div>
+            </CardHeader>
 
-            <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-200/80 dark:border-zinc-800">
-              <span className="text-xs text-slate-500 dark:text-zinc-400">
+            <CardContent>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Monitors operational engines, FCM multicast push token health, automated scheduler jobs, and socket connection state.
+              </p>
+            </CardContent>
+
+            <Separator />
+
+            <CardFooter className="flex items-center justify-between pt-4 pb-4">
+              <span className="text-xs text-muted-foreground font-mono">
                 Uptime: {Math.floor(metrics.uptime_seconds / 86400)}d {Math.floor((metrics.uptime_seconds % 86400) / 3600)}h
               </span>
-              <button
-                onClick={fetchMetrics}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
-              >
-                <span>Check Status</span>
+              <Button variant="outline" size="sm" onClick={fetchMetrics} className="gap-1.5 cursor-pointer">
+                <span>Check Health</span>
                 <CheckCircle2 className="size-3.5 text-emerald-500" />
-              </button>
-            </div>
-          </div>
+              </Button>
+            </CardFooter>
+          </Card>
 
         </div>
       </div>
