@@ -33,7 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, MoonIcon, CircleUserRoundIcon, ChevronsUpDown, SunIcon, Laptop, ChevronRight, LogOut, CalendarIcon, NotebookPenIcon, Trophy, Mail } from "lucide-react"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon, BookOpenIcon, GraduationCapIcon, BellIcon, GitPullRequest, MessageSquare, AlertTriangle, MoonIcon, CircleUserRoundIcon, ChevronsUpDown, SunIcon, Laptop, ChevronRight, LogOut, CalendarIcon, NotebookPenIcon, Trophy, Mail, Terminal } from "lucide-react"
 import { useSession, signOut, logoutUser } from "@/lib/auth-client"
 import { io } from "socket.io-client"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -122,6 +122,7 @@ function buildAdminUrls(username: string | null) {
     dashboard: base, students: `${base}/students`, teachers: `${base}/teacher`,
     requests: `${base}/requests`, feeManagement: `${base}/fee-management`,
     notices: `${base}/notice`, slider: `${base}/slider`, pageBuilder: `${base}/page-builder`,
+    developer: `${base}/developer`,
   }
 }
 function buildAccountUrls(username: string | null) {
@@ -760,6 +761,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Page Builder",
           url: adminUrls.pageBuilder,
           icon: <LayoutDashboardIcon />,
+        },
+        {
+          title: "Developer Console",
+          url: adminUrls.developer,
+          icon: <Terminal />,
         },
       ]
     : [
