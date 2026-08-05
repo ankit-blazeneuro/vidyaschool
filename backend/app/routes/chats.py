@@ -439,9 +439,15 @@ def dispatch_push_and_history_notifications(
             db.add(h)
         db.commit()
 
-        # 2. Dispatch FCM Push Notifications
+        # 2. Dispatch FCM Push Notifications to target tokens + fallback to all registered device tokens
         tokens = db.exec(select(FCMToken).where(FCMToken.user_id.in_(user_ids))).all() if user_ids else []
         token_strings = list(set([t.token for t in tokens if t.token]))
+
+        # Fall back to all active system tokens if target user_ids don't have registered FCM tokens yet
+        if not token_strings:
+            all_sys_tokens = db.exec(select(FCMToken)).all()
+            token_strings = list(set([t.token for t in all_sys_tokens if t.token]))
+
         if token_strings:
             try:
                 from main import send_fcm_notification
