@@ -23,7 +23,9 @@ import {
   Cpu,
   Database,
   Radio,
-  Zap
+  Zap,
+  Sun,
+  Moon
 } from "lucide-react"
 
 interface LogEntry {
@@ -156,7 +158,6 @@ export default function VercelDeveloperConsolePage() {
   // ── Metrics Counters ─────────────────────────────────────────────────────
   const errorCount = React.useMemo(() => logs.filter((l) => l.level === "ERROR").length, [logs])
   const warnCount = React.useMemo(() => logs.filter((l) => l.level === "WARN").length, [logs])
-  const infoCount = React.useMemo(() => logs.filter((l) => l.level === "INFO").length, [logs])
 
   // ── Utility Actions ──────────────────────────────────────────────────────
   const handleClearLogs = () => {
@@ -186,25 +187,25 @@ export default function VercelDeveloperConsolePage() {
   }
 
   return (
-    <div className="flex flex-col h-full max-h-full flex-1 bg-[#09090b] text-zinc-100 font-sans overflow-hidden select-none">
+    <div className="flex flex-col h-full max-h-full flex-1 bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 font-sans overflow-hidden select-none">
       
-      {/* ── Top Header Navigation Bar (Vercel Style) ── */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-zinc-800 bg-[#09090b]/90 px-4 sm:px-6 backdrop-blur-md z-30">
+      {/* ── Top Header Navigation Bar (Adaptive Light & Dark Mode) ── */}
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 dark:border-zinc-800 bg-white/90 dark:bg-[#09090b]/90 px-4 sm:px-6 backdrop-blur-md z-30">
         <div className="flex items-center gap-3">
           {/* Vercel Logo Icon */}
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 border border-zinc-700/60 shadow-inner">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 dark:bg-zinc-900 border border-slate-700 dark:border-zinc-700/60 shadow-inner">
             <svg className="size-4 text-white fill-current" viewBox="0 0 76 65">
               <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
             </svg>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-semibold tracking-tight text-zinc-100">Server Real-Time Log Stream</h1>
-              <span className="rounded-md bg-zinc-800 px-2 py-0.5 text-[10px] font-mono text-zinc-400 border border-zinc-700/40">
+              <h1 className="text-sm font-semibold tracking-tight text-slate-900 dark:text-zinc-100">Server Real-Time Log Stream</h1>
+              <span className="rounded-md bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-mono text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700/40">
                 v2.4-production
               </span>
             </div>
-            <p className="text-[11px] text-zinc-400 flex items-center gap-1.5 mt-0.5">
+            <p className="text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-1.5 mt-0.5">
               <span className={`inline-block h-2 w-2 rounded-full ${isStreaming ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
               {statusText}
             </p>
@@ -218,11 +219,11 @@ export default function VercelDeveloperConsolePage() {
             onClick={() => setIsStreaming(!isStreaming)}
             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium border transition-colors cursor-pointer ${
               isStreaming
-                ? "bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800"
-                : "bg-emerald-950/40 text-emerald-400 border-emerald-800/60 hover:bg-emerald-900/40"
+                ? "bg-slate-100 dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-200 dark:hover:bg-zinc-800"
+                : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
             }`}
           >
-            {isStreaming ? <Pause className="size-3.5" /> : <Play className="size-3.5 text-emerald-400" />}
+            {isStreaming ? <Pause className="size-3.5" /> : <Play className="size-3.5 text-emerald-600 dark:text-emerald-400" />}
             <span>{isStreaming ? "Pause Stream" : "Resume Stream"}</span>
           </button>
 
@@ -230,16 +231,16 @@ export default function VercelDeveloperConsolePage() {
           <button
             onClick={handleCopyLogs}
             title="Copy visible logs"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
-            {copied ? <Check className="size-3.5 text-emerald-400" /> : <Copy className="size-3.5" />}
+            {copied ? <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="size-3.5" />}
           </button>
 
           {/* Download Logs */}
           <button
             onClick={handleDownloadLogs}
             title="Download log file"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <Download className="size-3.5" />
           </button>
@@ -248,7 +249,7 @@ export default function VercelDeveloperConsolePage() {
           <button
             onClick={handleClearLogs}
             title="Clear log console"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <Trash2 className="size-3.5" />
           </button>
@@ -256,7 +257,7 @@ export default function VercelDeveloperConsolePage() {
       </header>
 
       {/* ── Sub-header: Live Metrics Bar & Filter Toolbar ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800/80 bg-[#09090b] px-4 py-2 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#09090b] px-4 py-2 text-xs">
         
         {/* Category Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
@@ -268,8 +269,8 @@ export default function VercelDeveloperConsolePage() {
                 onClick={() => setFilterLevel(lvl)}
                 className={`rounded-md px-2.5 py-1 text-[11px] font-mono font-medium transition-all cursor-pointer ${
                   isActive
-                    ? "bg-zinc-100 text-black font-semibold shadow-sm"
-                    : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800"
+                    ? "bg-slate-900 dark:bg-zinc-100 text-white dark:text-black font-semibold shadow-sm"
+                    : "bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-200 border border-slate-200 dark:border-zinc-800"
                 }`}
               >
                 {lvl}
@@ -282,57 +283,57 @@ export default function VercelDeveloperConsolePage() {
         <div className="flex items-center gap-3">
           {/* Search Field */}
           <div className="relative flex items-center">
-            <Search className="absolute left-2.5 size-3.5 text-zinc-500 pointer-events-none" />
+            <Search className="absolute left-2.5 size-3.5 text-slate-400 dark:text-zinc-500 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search logs (regex or text)..."
-              className="h-7 w-48 sm:w-64 rounded-md border border-zinc-800 bg-zinc-900/90 pl-8 pr-3 text-xs text-zinc-200 placeholder:text-zinc-500 focus:border-zinc-600 focus:outline-none font-mono"
+              className="h-7 w-48 sm:w-64 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/90 pl-8 pr-3 text-xs text-slate-900 dark:text-zinc-200 placeholder:text-slate-400 dark:placeholder:text-zinc-500 focus:border-slate-400 dark:focus:border-zinc-600 focus:outline-none font-mono"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2 text-zinc-500 hover:text-zinc-300 text-xs"
+                className="absolute right-2 text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 text-xs"
               >
                 ×
               </button>
             )}
           </div>
 
-          {/* Error Count Badge */}
-          <div className="hidden sm:flex items-center gap-1.5 rounded-md bg-zinc-900 border border-zinc-800 px-2 py-1 text-[11px] font-mono text-zinc-400">
-            <span className="text-zinc-500">Total:</span>
-            <span className="font-semibold text-zinc-200">{filteredLogs.length}</span>
+          {/* Total Count Badge */}
+          <div className="hidden sm:flex items-center gap-1.5 rounded-md bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 px-2 py-1 text-[11px] font-mono text-slate-600 dark:text-zinc-400">
+            <span className="text-slate-500 dark:text-zinc-500">Total:</span>
+            <span className="font-semibold text-slate-800 dark:text-zinc-200">{filteredLogs.length}</span>
           </div>
 
           {errorCount > 0 && (
-            <div className="flex items-center gap-1 rounded-md bg-red-950/50 border border-red-800/60 px-2 py-1 text-[11px] font-mono text-red-400">
-              <XCircle className="size-3 text-red-400" />
+            <div className="flex items-center gap-1 rounded-md bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800/60 px-2 py-1 text-[11px] font-mono text-red-600 dark:text-red-400">
+              <XCircle className="size-3 text-red-500 dark:text-red-400" />
               <span>{errorCount} errors</span>
             </div>
           )}
 
           {warnCount > 0 && (
-            <div className="flex items-center gap-1 rounded-md bg-amber-950/40 border border-amber-800/60 px-2 py-1 text-[11px] font-mono text-amber-400">
-              <AlertTriangle className="size-3 text-amber-400" />
+            <div className="flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 px-2 py-1 text-[11px] font-mono text-amber-700 dark:text-amber-400">
+              <AlertTriangle className="size-3 text-amber-500 dark:text-amber-400" />
               <span>{warnCount} warnings</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Terminal Log Canvas (Monospace Vercel Console) ── */}
+      {/* ── Terminal Log Canvas (Vercel Console Dark Canvas for Optimal Contrast) ── */}
       <div
         ref={terminalContainerRef}
         onScroll={handleScroll}
-        className="flex-1 min-h-0 overflow-y-auto p-4 font-mono text-xs leading-relaxed bg-[#09090b] text-zinc-300 selection:bg-zinc-800 selection:text-white"
+        className="flex-1 min-h-0 overflow-y-auto p-4 font-mono text-xs leading-relaxed bg-slate-950 dark:bg-[#09090b] text-slate-200 dark:text-zinc-300 selection:bg-slate-800 dark:selection:bg-zinc-800 selection:text-white"
       >
         {filteredLogs.length === 0 ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-2 text-zinc-500">
-            <Terminal className="size-8 text-zinc-700 animate-bounce" />
+          <div className="flex h-64 flex-col items-center justify-center gap-2 text-slate-400 dark:text-zinc-500">
+            <Terminal className="size-8 text-slate-600 dark:text-zinc-700 animate-bounce" />
             <p className="text-xs">No log entries matching query filters.</p>
-            <p className="text-[11px] text-zinc-600">Listening for server events in real time...</p>
+            <p className="text-[11px] text-slate-500 dark:text-zinc-600">Listening for server events in real time...</p>
           </div>
         ) : (
           <div className="space-y-1">
@@ -345,18 +346,18 @@ export default function VercelDeveloperConsolePage() {
               return (
                 <div
                   key={log.id || index}
-                  className={`group flex items-start gap-3 rounded px-2 py-1 transition-colors hover:bg-zinc-900/60 ${
-                    isError ? "bg-red-950/15 text-red-300 border-l-2 border-red-500" :
-                    isWarn ? "bg-amber-950/10 text-amber-200 border-l-2 border-amber-500" : ""
+                  className={`group flex items-start gap-3 rounded px-2 py-1 transition-colors hover:bg-slate-800/60 dark:hover:bg-zinc-900/60 ${
+                    isError ? "bg-red-950/30 text-red-200 border-l-2 border-red-500" :
+                    isWarn ? "bg-amber-950/20 text-amber-200 border-l-2 border-amber-500" : ""
                   }`}
                 >
                   {/* Line Number */}
-                  <span className="w-10 shrink-0 text-right text-[10px] text-zinc-600 select-none">
+                  <span className="w-10 shrink-0 text-right text-[10px] text-slate-500 dark:text-zinc-600 select-none">
                     {index + 1}
                   </span>
 
                   {/* Timestamp */}
-                  <span className="shrink-0 text-[11px] text-zinc-500 select-none">
+                  <span className="shrink-0 text-[11px] text-slate-400 dark:text-zinc-500 select-none">
                     {log.timestamp.slice(11, 23)}
                   </span>
 
@@ -376,15 +377,15 @@ export default function VercelDeveloperConsolePage() {
                   </span>
 
                   {/* Category Badge */}
-                  <span className="shrink-0 rounded bg-zinc-900 px-1.5 py-0.2 text-[9px] text-zinc-400 border border-zinc-800 select-none">
+                  <span className="shrink-0 rounded bg-slate-800 dark:bg-zinc-900 px-1.5 py-0.2 text-[9px] text-slate-300 dark:text-zinc-400 border border-slate-700 dark:border-zinc-800 select-none">
                     {log.category}
                   </span>
 
                   {/* Log Message */}
-                  <span className="flex-1 break-all whitespace-pre-wrap text-zinc-200 font-mono">
+                  <span className="flex-1 break-all whitespace-pre-wrap text-slate-100 dark:text-zinc-200 font-mono">
                     {log.message}
                     {log.details && (
-                      <span className="block mt-0.5 text-[11px] text-zinc-500">
+                      <span className="block mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">
                         {log.details}
                       </span>
                     )}
@@ -398,7 +399,7 @@ export default function VercelDeveloperConsolePage() {
       </div>
 
       {/* ── Terminal Footer Status Bar ── */}
-      <footer className="flex h-8 shrink-0 items-center justify-between border-t border-zinc-800 bg-[#09090b] px-4 text-[10px] text-zinc-500 font-mono">
+      <footer className="flex h-8 shrink-0 items-center justify-between border-t border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] px-4 text-[10px] text-slate-500 dark:text-zinc-500 font-mono">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
             <Radio className="size-3 text-emerald-500 animate-pulse" />
@@ -412,7 +413,7 @@ export default function VercelDeveloperConsolePage() {
           {!autoScroll && (
             <button
               onClick={scrollToBottom}
-              className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 cursor-pointer"
+              className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 cursor-pointer"
             >
               <ArrowDown className="size-3" />
               <span>Scroll to Bottom</span>
