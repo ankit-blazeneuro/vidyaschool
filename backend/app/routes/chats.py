@@ -290,6 +290,21 @@ NVIDIA_TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "get_top_performers",
+            "description": "Retrieve top or worst student rankings, best/lowest performers of the class, toppers, and leaderboard.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "class": {"type": "string", "description": "Class filter (e.g. 'Class 10' or '12-A')"},
+                    "section": {"type": "string", "description": "Section filter (e.g. 'A')"},
+                    "sort_order": {"type": "string", "description": "Sort order: 'asc' or 'desc'"}
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "submit_student_marks",
             "description": "Submit or update examination marks for a single student.",
             "parameters": {
@@ -466,14 +481,22 @@ def dispatch_push_and_history_notifications(
 
 def execute_tool_call(name: str, args: dict, current_user: User, db: Session) -> str:
     try:
+        # Tool name aliases
+        if name in ("get_top_performers", "get_toppers", "get_best_performers", "get_student_rankings", "get_class_performance"):
+            name = "get_student_leaderboard"
+        elif name in ("send_push_notification", "send_push", "broadcast_push", "push_notification"):
+            name = "publish_notice"
+        elif name in ("send_notice", "post_notice", "create_notice"):
+            name = "publish_notice"
+
         if name == "get_student_leaderboard":
-            class_name = args.get("class_name")
+            class_name = args.get("class_name") or args.get("class") or args.get("class_id")
             section = args.get("section")
-            sort_order = args.get("sort_order", "desc")
+            sort_order = args.get("sort_order") or ("asc" if "worst" in name or "lowest" in name else "desc")
             
             clean_class = ""
             if class_name:
-                clean_class = str(class_name).replace("Class", "").replace("class", "").strip()
+                clean_class = str(class_name).replace("Class", "").replace("class", "").replace("-A", "").replace("-B", "").strip()
 
             query = select(User, UserProfile).join(UserProfile, User.id == UserProfile.user_id).where(User.role == "student")
             all_students = db.exec(query).all()
@@ -1211,6 +1234,7 @@ async def run_agent_loop(messages_payload: list, room_id: str, current_user: Use
                 ]
 
     if needs_tool_check:
+        yield f"data: {json.dumps({'thinking': 'Analyzing request & inspecting portal database...'})}\n\n"
         tool_payload = {
             "model": TOOL_MODEL,
             "messages": full_history,
@@ -1252,17 +1276,12 @@ async def run_agent_loop(messages_payload: list, room_id: str, current_user: Use
                             "role": "user",
                             "content": f"[Tool Result]: Real performance data retrieved from database:\n\n{t_result}\n\nAnswer the user's question directly using this real database data."
                         })
+                    yield f"data: {json.dumps({'thinking': 'Database records retrieved. Generating final response...'})}\n\n"
         except Exception as err:
             print(f"[Agent Tool Error]: {err}")
 
-    return StreamingResponse(
-        response_stream_generator(full_history, room_id, use_thinking),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-        },
-    )
+    async for chunk in response_stream_generator(full_history, room_id, use_thinking):
+        yield chunk
 
 
 # ── AI title generation ────────────────────────────────────────────────────────
