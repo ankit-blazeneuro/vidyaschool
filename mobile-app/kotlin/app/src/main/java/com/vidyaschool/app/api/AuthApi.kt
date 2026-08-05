@@ -409,7 +409,22 @@ interface AuthApi {
         @Header("Authorization") authHeader: String,
         @Query("docType") docType: String
     ): Response<ResponseBody>
+
+    @retrofit2.http.Multipart
+    @POST("api/chats/upload")
+    suspend fun uploadChatFile(
+        @Header("Authorization") authHeader: String,
+        @retrofit2.http.Part file: okhttp3.MultipartBody.Part
+    ): Response<ChatFileUploadResponse>
 }
+
+data class ChatFileUploadResponse(
+    val filename: String? = null,
+    val type: String? = null,
+    val s3_url: String? = null,
+    val data_url: String? = null,
+    val content: String? = null
+)
 
 data class InitChatRequest(
     val uuid: String,

@@ -14,6 +14,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Stop
 import kotlinx.coroutines.Job
 import androidx.compose.material3.*
@@ -36,6 +38,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import com.vidyaschool.app.R
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -150,11 +154,60 @@ fun AgentScreen(
     var isThinking by remember { mutableStateOf(false) }
     var useThinking by remember { mutableStateOf(true) }
     var liveReasoning by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
     var attachedBase64 by remember { mutableStateOf<String?>(null) }
     var attachedMime by remember { mutableStateOf<String?>(null) }
+    var attachedFileName by remember { mutableStateOf<String?>(null) }
+    var isUploadingFile by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    val filePickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        uri?.let { selectedUri ->
+            isUploadingFile = true
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val contentResolver = context.contentResolver
+                    val mimeType = contentResolver.getType(selectedUri) ?: "application/octet-stream"
+                    val inputStream = contentResolver.openInputStream(selectedUri) ?: return@launch
+                    val bytes = inputStream.readBytes()
+                    inputStream.close()
+
+                    val ext = if (mimeType.contains("pdf")) "pdf" else if (mimeType.contains("png")) "png" else if (mimeType.contains("jpg") || mimeType.contains("jpeg")) "jpg" else "file"
+                    val fileName = "upload_${System.currentTimeMillis()}.$ext"
+
+                    val requestFile = bytes.toRequestBody(mimeType.toMediaTypeOrNull())
+                    val bodyPart = okhttp3.MultipartBody.Part.createFormData("file", fileName, requestFile)
+
+                    val authHeader = if (!sessionToken.isNullOrEmpty()) "Bearer $sessionToken" else ""
+                    val uploadRes = com.vidyaschool.app.api.RetrofitClient.authApi.uploadChatFile(authHeader, bodyPart)
+
+                    if (uploadRes.isSuccessful && uploadRes.body() != null) {
+                        val data = uploadRes.body()!!
+                        withContext(Dispatchers.Main) {
+                            attachedFileName = data.filename ?: fileName
+                            attachedBase64 = data.data_url
+                            attachedMime = mimeType
+                            isUploadingFile = false
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            isUploadingFile = false
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("AgentScreen", "Upload error: ${e.message}")
+                    withContext(Dispatchers.Main) {
+                        isUploadingFile = false
+                    }
+                }
+            }
+        }
+    }
+
     var activeJob by remember { mutableStateOf<Job?>(null) }
     val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
 
     val stopGeneration = {
         activeJob?.cancel()
@@ -336,24 +389,79 @@ fun AgentScreen(
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
                     )
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 6.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Column {
+                        if (!attachedFileName.isNullOrEmpty() || isUploadingFile) {
+                            Surface(
+                                shape = RoundedCornerShape(14.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 10.dp, end = 10.dp, top = 8.dp, bottom = 2.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AttachFile,
+                                        contentDescription = "Attachment",
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (isUploadingFile) "Uploading securely to S3..." else (attachedFileName ?: "Attached File"),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    if (!isUploadingFile) {
+                                        IconButton(
+                                            onClick = {
+                                                attachedFileName = null
+                                                attachedBase64 = null
+                                                attachedMime = null
+                                            },
+                                            modifier = Modifier.size(20.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Remove attachment",
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 6.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                         IconButton(
                             onClick = {
-                                sendMessage("Create a quick teaching summary for today's topic.")
+                                filePickerLauncher.launch("*/*")
                             },
                             modifier = Modifier.size(36.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Add",
-                                modifier = Modifier.size(22.dp),
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
+                            if (isUploadingFile) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Upload File to S3",
+                                    modifier = Modifier.size(22.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            }
                         }
 
                         // Model Mode Switcher chip (Thinking vs Fast)
@@ -439,12 +547,13 @@ fun AgentScreen(
                     }
                 }
             }
-        ) { innerPadding ->
+        }
+    ) { innerPadding ->
             LazyColumn(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .padding(bottom = innerPadding.calculateBottomPadding())
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
@@ -582,7 +691,7 @@ fun AgentScreen(
 }
 
 @Composable
-private fun MarkdownMathMessageView(
+fun MarkdownMathMessageView(
     markdownContent: String,
     textAlignRight: Boolean = false,
     modifier: Modifier = Modifier
