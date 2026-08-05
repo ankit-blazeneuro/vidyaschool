@@ -823,7 +823,7 @@ export default function TeacherTaskChatPage() {
   }
 
   return (
-    <div className="relative flex flex-col h-[calc(100dvh-var(--header-height,48px))] max-h-[calc(100dvh-var(--header-height,48px))] bg-background text-foreground w-full overflow-hidden">
+    <div className="relative flex flex-col h-full max-h-full flex-1 bg-background text-foreground w-full overflow-hidden">
       
       {/* ── Chat Messages Pane ── */}
       <div className="relative flex-1 min-h-0">

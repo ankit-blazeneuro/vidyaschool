@@ -11,8 +11,8 @@ export function TeacherLayoutWrapper({ children }: { children: React.ReactNode }
   const hideAIInput = isChatPage || isEmailPage
 
   return (
-    <div className={`flex flex-1 flex-col relative ${hideAIInput ? "pb-0" : "pb-20"}`}>
-      <div className="@container/main flex flex-1 flex-col gap-2">
+    <div className={`flex flex-1 flex-col relative min-h-0 overflow-hidden ${hideAIInput ? "pb-0" : "pb-20"}`}>
+      <div className={`@container/main flex flex-1 flex-col min-h-0 overflow-hidden ${isChatPage ? "gap-0" : "gap-2"}`}>
         {children}
       </div>
       <TeacherAIInput />
