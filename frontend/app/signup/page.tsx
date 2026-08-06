@@ -361,7 +361,7 @@ export default function SignUpPage() {
       <div className="relative hidden bg-muted lg:block">
         <div className="absolute inset-0 flex items-center justify-center">
           <Image
-            src="/assets/vidyaschool/Logo/restored_no_bg_with_title.png"
+            src="/assets/illustrations/kid.svg"
             alt="VidyaSchool Logo"
             width={400}
             height={400}
