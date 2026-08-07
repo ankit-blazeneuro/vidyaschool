@@ -110,7 +110,7 @@ struct HomeTabView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Dashboard")
                             .font(AppTheme.Font.headline)
@@ -120,12 +120,12 @@ struct HomeTabView: View {
                             .foregroundColor(AppTheme.Color.darkSecondary)
                     }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: 10) {
                         Button(action: { showingAgentSheet = true }) {
                             ZStack {
                                 Circle()
-                                    .fill(LinearGradient(colors: [Color(0xFF6366F1), Color(0xFFA855F7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                    .fill(LinearGradient(colors: [Color(hex: 0x6366F1), Color(hex: 0xA855F7)], startPoint: .topLeading, endPoint: .bottomTrailing))
                                     .frame(width: 28, height: 28)
                                 Image(systemName: "sparkles")
                                     .font(.system(size: 13, weight: .bold))
@@ -258,7 +258,7 @@ private struct StudentHomeSection: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())],
                       spacing: AppTheme.Spacing.sm) {
                 QuickActionCard(icon: "sparkles",                  title: "VidyaAI Agent",
-                                subtitle: "Smart AI Assistant", color: Color(0xFF818CF8),
+                                subtitle: "Smart AI Assistant", color: Color(hex: 0x818CF8),
                                 action: onShowAgent)
                 QuickActionCard(icon: "qrcode.viewfinder",         title: "QR Login",
                                 subtitle: "Pair with Desktop",  color: AppTheme.Color.accent,
@@ -631,7 +631,7 @@ struct CoursesTabView: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [Color(0xFF6366F1), Color(0xFFA855F7)],
+                                colors: [Color(hex: 0x6366F1), Color(hex: 0xA855F7)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )

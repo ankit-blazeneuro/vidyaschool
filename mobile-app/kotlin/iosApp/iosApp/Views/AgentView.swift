@@ -17,7 +17,7 @@ struct AgentView: View {
         )
     ]
     @State private var inputText: String = ""
-    @State private var isThinking: Boolean = false
+    @State private var isThinking: Bool = false
     @State private var selectedModel: String = "VidyaAI GPT-4o"
     @State private var activeToolStatus: String? = nil
     @State private var showAttachmentPicker: Bool = false
@@ -97,7 +97,7 @@ struct AgentView: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [Color(0xFF6366F1), Color(0xFFA855F7)],
+                                colors: [Color(hex: 0x6366F1), Color(hex: 0xA855F7)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -292,7 +292,7 @@ private struct ChatBubbleView: View {
             if message.sender == .agent {
                 ZStack {
                     Circle()
-                        .fill(LinearGradient(colors: [Color(0xFF6366F1), Color(0xFFA855F7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .fill(LinearGradient(colors: [Color(hex: 0x6366F1), Color(hex: 0xA855F7)], startPoint: .topLeading, endPoint: .bottomTrailing))
                         .frame(width: 28, height: 28)
                     Image(systemName: "sparkles")
                         .font(.system(size: 12, weight: .bold))
@@ -369,7 +369,7 @@ private struct ThinkingIndicatorView: View {
         HStack(spacing: 6) {
             ZStack {
                 Circle()
-                    .fill(LinearGradient(colors: [Color(0xFF6366F1), Color(0xFFA855F7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(LinearGradient(colors: [Color(hex: 0x6366F1), Color(hex: 0xA855F7)], startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 28, height: 28)
                 Image(systemName: "sparkles")
                     .font(.system(size: 12, weight: .bold))
