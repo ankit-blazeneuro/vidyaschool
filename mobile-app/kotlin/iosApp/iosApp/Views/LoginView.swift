@@ -100,19 +100,16 @@ struct LoginView: View {
                         HStack(spacing: AppTheme.Spacing.sm) {
                             SocialButton(
                                 title: "Google",
-                                icon: "g.circle.fill",
-                                iconColor: SwiftUI.Color(hex: "#EA4335")
+                                iconType: "google"
                             ) {
-                                // TODO: Integrate GoogleSignIn SDK for iOS
-                                // https://developers.google.com/identity/sign-in/ios
+                                // Google Sign In
                             }
 
                             SocialButton(
                                 title: "GitHub",
-                                icon: "chevron.left.forwardslash.chevron.right",
-                                iconColor: .white
+                                iconType: "github"
                             ) {
-                                // TODO: Integrate AppAuth or ASWebAuthenticationSession for GitHub OAuth
+                                // GitHub Sign In
                             }
                         }
 
@@ -304,8 +301,7 @@ struct SignupView: View {
 
 private struct SocialButton: View {
     let title: String
-    let icon: String
-    let iconColor: SwiftUI.Color
+    let iconType: String // "google" or "github"
     let action: () -> Void
 
     var body: some View {
@@ -315,9 +311,13 @@ private struct SocialButton: View {
             action()
         }) {
             HStack(spacing: AppTheme.Spacing.sm) {
-                Image(systemName: icon)
-                    .foregroundColor(iconColor)
-                    .font(.system(size: 18, weight: .medium))
+                if iconType == "google" {
+                    GoogleLogoIcon()
+                        .frame(width: 20, height: 20)
+                } else {
+                    GitHubLogoIcon()
+                        .frame(width: 20, height: 20)
+                }
                 Text(title)
                     .font(AppTheme.Font.callout)
                     .fontWeight(.medium)
@@ -332,5 +332,85 @@ private struct SocialButton: View {
                     .stroke(AppTheme.Color.darkOutline, lineWidth: 1)
             )
         }
+    }
+}
+
+// SwiftUI Native Vector Shapes matching provided Google SVG
+private struct GoogleLogoIcon: View {
+    var body: some View {
+        ZStack {
+            // Yellow path
+            Path { p in
+                p.move(to: CGPoint(x: 18.17, y: 8.37))
+                p.addLine(to: CGPoint(x: 17.5, y: 8.33))
+                p.addLine(to: CGPoint(x: 10, y: 8.33))
+                p.addLine(to: CGPoint(x: 10, y: 11.67))
+                p.addLine(to: CGPoint(x: 14.71, y: 11.67))
+                p.addCurve(to: CGPoint(x: 10, y: 15), control1: CGPoint(x: 14.02, y: 13.61), control2: CGPoint(x: 12.18, y: 15))
+                p.addCurve(to: CGPoint(x: 5, y: 10), control1: CGPoint(x: 7.24, y: 15), control2: CGPoint(x: 5, y: 12.76))
+                p.addCurve(to: CGPoint(x: 10, y: 5), control1: CGPoint(x: 5, y: 7.24), control2: CGPoint(x: 7.24, y: 5))
+                p.addCurve(to: CGPoint(x: 13.32, y: 6.27), control1: CGPoint(x: 11.27, y: 5), control2: CGPoint(x: 12.43, y: 5.48))
+                p.addLine(to: CGPoint(x: 15.67, y: 3.91))
+                p.addCurve(to: CGPoint(x: 10, y: 1.67), control1: CGPoint(x: 14.19, y: 2.52), control2: CGPoint(x: 12.19, y: 1.67))
+                p.addCurve(to: CGPoint(x: 1.67, y: 10), control1: CGPoint(x: 5.4, y: 1.67), control2: CGPoint(x: 1.67, y: 5.4))
+                p.addCurve(to: CGPoint(x: 10, y: 18.33), control1: CGPoint(x: 1.67, y: 14.6), control2: CGPoint(x: 5.4, y: 18.33))
+                p.addCurve(to: CGPoint(x: 18.33, y: 10), control1: CGPoint(x: 14.6, y: 18.33), control2: CGPoint(x: 18.33, y: 14.6))
+                p.addCurve(to: CGPoint(x: 18.17, y: 8.37), control1: CGPoint(x: 18.33, y: 9.44), control2: CGPoint(x: 18.27, y: 8.9))
+            }
+            .fill(SwiftUI.Color(hex: "#FFC107"))
+
+            // Red path
+            Path { p in
+                p.move(to: CGPoint(x: 2.63, y: 6.12))
+                p.addLine(to: CGPoint(x: 5.37, y: 8.13))
+                p.addCurve(to: CGPoint(x: 10, y: 5), control1: CGPoint(x: 6.11, y: 6.29), control2: CGPoint(x: 7.9, y: 5))
+                p.addCurve(to: CGPoint(x: 13.32, y: 6.27), control1: CGPoint(x: 11.27, y: 5), control2: CGPoint(x: 12.43, y: 5.48))
+                p.addLine(to: CGPoint(x: 15.67, y: 3.91))
+                p.addCurve(to: CGPoint(x: 10, y: 1.67), control1: CGPoint(x: 14.19, y: 2.52), control2: CGPoint(x: 12.19, y: 1.67))
+                p.addCurve(to: CGPoint(x: 2.63, y: 6.12), control1: CGPoint(x: 6.8, y: 1.67), control2: CGPoint(x: 4.02, y: 3.47))
+            }
+            .fill(SwiftUI.Color(hex: "#FF3D00"))
+
+            // Green path
+            Path { p in
+                p.move(to: CGPoint(x: 10, y: 18.33))
+                p.addCurve(to: CGPoint(x: 15.59, y: 16.17), control1: CGPoint(x: 12.15, y: 18.33), control2: CGPoint(x: 14.11, y: 17.51))
+                p.addLine(to: CGPoint(x: 13.01, y: 13.99))
+                p.addCurve(to: CGPoint(x: 10, y: 15), control1: CGPoint(x: 12.16, y: 14.64), control2: CGPoint(x: 11.12, y: 15))
+                p.addCurve(to: CGPoint(x: 5.3, y: 11.69), control1: CGPoint(x: 7.83, y: 15), control2: CGPoint(x: 5.99, y: 13.62))
+                p.addLine(to: CGPoint(x: 2.58, y: 13.78))
+                p.addCurve(to: CGPoint(x: 10, y: 18.33), control1: CGPoint(x: 3.96, y: 16.48), control2: CGPoint(x: 6.76, y: 18.33))
+            }
+            .fill(SwiftUI.Color(hex: "#4CAF50"))
+
+            // Blue path
+            Path { p in
+                p.move(to: CGPoint(x: 18.17, y: 8.37))
+                p.addLine(to: CGPoint(x: 17.5, y: 8.33))
+                p.addLine(to: CGPoint(x: 10, y: 8.33))
+                p.addLine(to: CGPoint(x: 10, y: 11.67))
+                p.addLine(to: CGPoint(x: 14.71, y: 11.67))
+                p.addCurve(to: CGPoint(x: 13.01, y: 13.99), control1: CGPoint(x: 14.34, y: 12.7), control2: CGPoint(x: 13.75, y: 13.48))
+                p.addLine(to: CGPoint(x: 15.59, y: 16.17))
+                p.addCurve(to: CGPoint(x: 18.33, y: 10), control1: CGPoint(x: 15.4, y: 16.34), control2: CGPoint(x: 18.33, y: 14.17))
+                p.addCurve(to: CGPoint(x: 18.17, y: 8.37), control1: CGPoint(x: 18.33, y: 9.44), control2: CGPoint(x: 18.27, y: 8.9))
+            }
+            .fill(SwiftUI.Color(hex: "#1976D2"))
+        }
+    }
+}
+
+// SwiftUI Native GitHub Logo Icon matching SVG
+private struct GitHubLogoIcon: View {
+    var body: some View {
+        Image(systemName: "circle.hexagongrid.fill")
+            .resizable()
+            .scaledToFit()
+            .foregroundColor(.white)
+            .overlay(
+                Text("GH")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.black)
+            )
     }
 }

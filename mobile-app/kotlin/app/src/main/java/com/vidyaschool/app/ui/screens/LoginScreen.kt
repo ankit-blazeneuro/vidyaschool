@@ -1,5 +1,6 @@
 package com.vidyaschool.app.ui.screens
 
+import com.vidyaschool.app.R
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -320,6 +321,7 @@ fun LoginScreen(
                     text = "Continue with Google",
                     onClick = { viewModel.signInWithGoogle(context, googleLauncher) },
                     loading = authState is AuthState.Loading,
+                    iconRes = R.drawable.ic_google_logo,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
@@ -327,6 +329,7 @@ fun LoginScreen(
                     text = "Continue with GitHub",
                     onClick = { viewModel.signInWithGitHub(context, githubLauncher) },
                     loading = authState is AuthState.Loading,
+                    iconRes = R.drawable.ic_github_logo,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 

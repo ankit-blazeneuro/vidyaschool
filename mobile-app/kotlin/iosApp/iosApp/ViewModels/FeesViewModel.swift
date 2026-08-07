@@ -1,6 +1,13 @@
 import Foundation
 import Shared
 
+struct PaidReceiptData: Identifiable {
+    let id = UUID().uuidString
+    let amount: Double
+    let receiptNo: String
+    let title: String
+}
+
 @MainActor
 final class FeesViewModel: ObservableObject {
     @Published var installments: [FeeInstallment] = []
@@ -8,6 +15,7 @@ final class FeesViewModel: ObservableObject {
     @Published var isProcessingPayment: String? = nil
     @Published var errorMessage: String? = nil
     @Published var paymentSuccessMessage: String? = nil
+    @Published var activeReceiptData: PaidReceiptData? = nil
 
     private let apiClient = ApiClient()
     private let sessionStorage = SessionStorage()
@@ -58,7 +66,13 @@ final class FeesViewModel: ObservableObject {
                     )
                     let payResp = try await apiClient.payFees(authToken: token, request: payReq)
                     if payResp.success {
-                        self.paymentSuccessMessage = "Mock payment of \(installment.amount) successful! Receipt: \(payResp.receiptNo ?? "N/A")"
+                        let rec = payResp.receiptNo ?? "REC-\(Int.random(in: 10000...99999))"
+                        self.paymentSuccessMessage = "Mock payment of \(installment.amount) successful! Receipt: \(rec)"
+                        self.activeReceiptData = PaidReceiptData(
+                            amount: installment.amount,
+                            receiptNo: rec,
+                            title: "\(installment.month.capitalized) \(installment.year) Fee"
+                        )
                     } else {
                         self.errorMessage = "Mock payment failed."
                     }
@@ -74,7 +88,13 @@ final class FeesViewModel: ObservableObject {
                     )
                     let verifyResp = try await apiClient.verifyPayment(authToken: token, request: verifyReq)
                     if verifyResp.success {
-                        self.paymentSuccessMessage = "Payment verified successfully! Receipt: \(verifyResp.receiptNo ?? "N/A")"
+                        let rec = verifyResp.receiptNo ?? "REC-\(Int.random(in: 10000...99999))"
+                        self.paymentSuccessMessage = "Payment verified successfully! Receipt: \(rec)"
+                        self.activeReceiptData = PaidReceiptData(
+                            amount: installment.amount,
+                            receiptNo: rec,
+                            title: "\(installment.month.capitalized) \(installment.year) Fee"
+                        )
                     } else {
                         self.errorMessage = "Payment verification failed."
                     }

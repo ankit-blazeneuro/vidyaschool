@@ -31,9 +31,15 @@ struct DashboardView: View {
                     .tag(2)
             }
 
-            SearchTabView(user: user, onTabSelect: { selectedTab = $0 })
-                .tabItem { Label("Search",  systemImage: "magnifyingglass") }
-                .tag(3)
+            if user.role.lowercased() == "student" {
+                CoursesTabView()
+                    .tabItem { Label("Courses", systemImage: "atom") }
+                    .tag(3)
+            } else {
+                SearchTabView(user: user, onTabSelect: { selectedTab = $0 })
+                    .tabItem { Label("Search",  systemImage: "magnifyingglass") }
+                    .tag(3)
+            }
 
             ProfileTabView(user: user)
                 .tabItem { Label("Profile", systemImage: "person.circle") }
@@ -63,6 +69,8 @@ struct HomeTabView: View {
     @State private var showingCreateNoticeSheet    = false
     @State private var showingStudentSearchSheet   = false
     @State private var showingReceiptVerificationSheet = false
+    @State private var showingAgentSheet           = false
+    @State private var showingQRLoginSheet         = false
 
     var body: some View {
         NavigationStack {
@@ -89,7 +97,12 @@ struct HomeTabView: View {
                                 onShowVerifyReceipt: { showingReceiptVerificationSheet = true }
                             )
                         default:
-                            StudentHomeSection(user: user, selectedTab: $selectedTab)
+                            StudentHomeSection(
+                                user: user,
+                                selectedTab: $selectedTab,
+                                onShowAgent: { showingAgentSheet = true },
+                                onShowQRLogin: { showingQRLoginSheet = true }
+                            )
                         }
                     }
                     .padding(AppTheme.Spacing.md)
@@ -108,9 +121,28 @@ struct HomeTabView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { authViewModel.logout() }) {
-                        Image(systemName: "rectangle.portrait.and.arrow.right")
-                            .foregroundColor(AppTheme.Color.darkSecondary)
+                    HStack(spacing: 10) {
+                        Button(action: { showingAgentSheet = true }) {
+                            ZStack {
+                                Circle()
+                                    .fill(LinearGradient(colors: [Color(0xFF6366F1), Color(0xFFA855F7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                    .frame(width: 28, height: 28)
+                                Image(systemName: "sparkles")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+
+                        Button(action: { showingQRLoginSheet = true }) {
+                            Image(systemName: "qrcode.viewfinder")
+                                .font(.system(size: 17))
+                                .foregroundColor(.white)
+                        }
+
+                        Button(action: { authViewModel.logout() }) {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .foregroundColor(AppTheme.Color.darkSecondary)
+                        }
                     }
                 }
             }
@@ -118,6 +150,8 @@ struct HomeTabView: View {
             .sheet(isPresented: $showingCreateNoticeSheet)    { CreateNoticeView() }
             .sheet(isPresented: $showingStudentSearchSheet)   { StudentSearchView() }
             .sheet(isPresented: $showingReceiptVerificationSheet) { ReceiptVerificationView() }
+            .sheet(isPresented: $showingAgentSheet)           { AgentView() }
+            .sheet(isPresented: $showingQRLoginSheet)         { QRLoginView() }
         }
     }
 }
@@ -211,6 +245,8 @@ struct QuickActionCard: View {
 private struct StudentHomeSection: View {
     let user: AppUser
     @Binding var selectedTab: Int
+    let onShowAgent: () -> Void
+    let onShowQRLogin: () -> Void
     @StateObject private var libraryVM = LibraryViewModel()
 
     var body: some View {
@@ -221,6 +257,12 @@ private struct StudentHomeSection: View {
             SectionHeader(title: "Quick Actions")
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())],
                       spacing: AppTheme.Spacing.sm) {
+                QuickActionCard(icon: "sparkles",                  title: "VidyaAI Agent",
+                                subtitle: "Smart AI Assistant", color: Color(0xFF818CF8),
+                                action: onShowAgent)
+                QuickActionCard(icon: "qrcode.viewfinder",         title: "QR Login",
+                                subtitle: "Pair with Desktop",  color: AppTheme.Color.accent,
+                                action: onShowQRLogin)
                 QuickActionCard(icon: "indianrupeesign.circle.fill", title: "My Fees",
                                 subtitle: "View & pay fees",    color: AppTheme.Color.warning,
                                 action: { selectedTab = 2 })
@@ -571,6 +613,44 @@ struct SectionHeader: View {
         HStack {
             Text(title).font(AppTheme.Font.headline).foregroundColor(.white)
             Spacer()
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Courses Tab View (Student Dashboard)
+// ---------------------------------------------------------------------------
+
+struct CoursesTabView: View {
+    var body: some View {
+        ZStack {
+            AppTheme.Color.darkBackground.ignoresSafeArea()
+
+            VStack(spacing: AppTheme.Spacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(0xFF6366F1), Color(0xFFA855F7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 80, height: 80)
+                    Image(systemName: "atom")
+                        .font(.system(size: 38, weight: .bold))
+                        .foregroundColor(.white)
+                }
+
+                Text("Courses")
+                    .font(AppTheme.Font.title1)
+                    .foregroundColor(.white)
+
+                Text("Coming Soon")
+                    .font(AppTheme.Font.headline)
+                    .foregroundColor(AppTheme.Color.accent)
+            }
+            .padding()
         }
     }
 }

@@ -157,39 +157,31 @@ private struct SearchResultRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: AppTheme.Spacing.sm) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.white.opacity(0.06))
-                        .frame(width: 34, height: 34)
-                    Image(systemName: icon)
-                        .font(.system(size: 14))
-                        .foregroundColor(Color.white.opacity(0.7))
-                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 13.5, weight: .semibold))
-                        .foregroundColor(.white).lineLimit(1)
-                    Text(subtitle)
-                        .font(.system(size: 11.5))
-                        .foregroundColor(AppTheme.Color.darkSecondary).lineLimit(1)
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.system(size: 11.5))
+                            .foregroundColor(AppTheme.Color.darkSecondary)
+                            .lineLimit(1)
+                    }
                 }
                 Spacer()
-                Text(category)
-                    .font(.system(size: 8.5, weight: .bold))
+                Text(category.uppercased())
+                    .font(.system(size: 9, weight: .bold))
                     .foregroundColor(Color.white.opacity(0.7))
-                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.white.opacity(0.04))
+                    .cornerRadius(4)
                     .overlay(RoundedRectangle(cornerRadius: 4)
                         .stroke(AppTheme.Color.darkOutline, lineWidth: 1))
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11))
-                    .foregroundColor(AppTheme.Color.darkSecondary)
             }
-            .padding(.horizontal, AppTheme.Spacing.md)
-            .padding(.vertical, 12)
-            .background(AppTheme.Color.darkSurface)
-            .cornerRadius(AppTheme.Radius.md)
-            .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.md)
-                .stroke(AppTheme.Color.darkOutline.opacity(0.5), lineWidth: 1))
+            .padding(.horizontal, AppTheme.Spacing.sm)
+            .padding(.vertical, 8)
         }
         .buttonStyle(.plain)
     }

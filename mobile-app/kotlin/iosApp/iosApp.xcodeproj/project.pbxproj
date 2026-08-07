@@ -29,6 +29,9 @@
 		0763EA3F11234D3F9B5E9A67 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E94D9ABD8CDF4A7B9BA1B1BC /* UpdateChecker.swift */; };
 		7716BDC8DA3E4B79847880B2 /* VidyaSchoolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6965D21949B4B71A663A7EC /* VidyaSchoolApp.swift */; };
 		40F487367BB84F8D811DA51B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE639B239EB400CB8FFA6E4 /* ContentView.swift */; };
+		A11100012345678901234567 /* AgentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11100012345678901234567 /* AgentView.swift */; };
+		A22200012345678901234567 /* QRLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F22200012345678901234567 /* QRLoginView.swift */; };
+		A33300012345678901234567 /* PaymentSuccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33300012345678901234567 /* PaymentSuccessView.swift */; };
 		E3A17CE235D3443795513376 /* Shared.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45E211EB814D46E2835E3E9E /* Shared.xcframework */; };
 /* End PBXBuildFile section */
 
@@ -45,6 +48,9 @@
 		7D6622A2BB404181A45D6B04 /* NoticesTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "NoticesTabView.swift"; path = "iosApp/Views/NoticesTabView.swift"; sourceTree = "<group>"; };
 		B3C4D5E6F7A8B9C0D1E2F3A4 /* SearchTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "SearchTabView.swift"; path = "iosApp/Views/SearchTabView.swift"; sourceTree = "<group>"; };
 		797648687DCE46D0B3D68D72 /* UpdateBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UpdateBannerView.swift"; path = "iosApp/Views/UpdateBannerView.swift"; sourceTree = "<group>"; };
+		F11100012345678901234567 /* AgentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "AgentView.swift"; path = "iosApp/Views/AgentView.swift"; sourceTree = "<group>"; };
+		F22200012345678901234567 /* QRLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "QRLoginView.swift"; path = "iosApp/Views/QRLoginView.swift"; sourceTree = "<group>"; };
+		F33300012345678901234567 /* PaymentSuccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "PaymentSuccessView.swift"; path = "iosApp/Views/PaymentSuccessView.swift"; sourceTree = "<group>"; };
 		9CCC736BB0F94F5BA2B97184 /* LibraryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "LibraryViewModel.swift"; path = "iosApp/ViewModels/LibraryViewModel.swift"; sourceTree = "<group>"; };
 		DF459D0356DA4F6289A32E60 /* NoticesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "NoticesViewModel.swift"; path = "iosApp/ViewModels/NoticesViewModel.swift"; sourceTree = "<group>"; };
 		5B0A4BC543DE434CAF87417B /* FeesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "FeesViewModel.swift"; path = "iosApp/ViewModels/FeesViewModel.swift"; sourceTree = "<group>"; };
@@ -107,6 +113,9 @@
 			7D6622A2BB404181A45D6B04 /* NoticesTabView.swift */,
 			B3C4D5E6F7A8B9C0D1E2F3A4 /* SearchTabView.swift */,
 			797648687DCE46D0B3D68D72 /* UpdateBannerView.swift */,
+			F11100012345678901234567 /* AgentView.swift */,
+			F22200012345678901234567 /* QRLoginView.swift */,
+			F33300012345678901234567 /* PaymentSuccessView.swift */,
 		);
 		name = Views;
 		sourceTree = "<group>";
@@ -240,6 +249,9 @@
 			0763EA3F11234D3F9B5E9A67 /* UpdateChecker.swift in Sources */,
 			7716BDC8DA3E4B79847880B2 /* VidyaSchoolApp.swift in Sources */,
 			40F487367BB84F8D811DA51B /* ContentView.swift in Sources */,
+			A11100012345678901234567 /* AgentView.swift in Sources */,
+			A22200012345678901234567 /* QRLoginView.swift in Sources */,
+			A33300012345678901234567 /* PaymentSuccessView.swift in Sources */,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 	};

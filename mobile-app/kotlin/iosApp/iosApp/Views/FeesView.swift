@@ -88,6 +88,14 @@ struct FeesView: View {
             .onAppear {
                 viewModel.fetchFees()
             }
+            .sheet(item: $viewModel.activeReceiptData) { data in
+                PaymentSuccessView(
+                    amount: data.amount,
+                    receiptNo: data.receiptNo,
+                    installmentTitle: data.title,
+                    paymentMethod: "Razorpay / UPI"
+                )
+            }
         }
     }
 }

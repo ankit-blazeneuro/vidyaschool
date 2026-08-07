@@ -84,7 +84,8 @@ fun SecondaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    loading: Boolean = false
+    loading: Boolean = false,
+    iconRes: Int? = null
 ) {
     OutlinedButton(
         onClick = onClick,
@@ -105,13 +106,27 @@ fun SecondaryButton(
                 strokeWidth = 2.dp
             )
         } else {
-            Text(
-                text, 
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 15.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                if (iconRes != null) {
+                    Icon(
+                        painter = androidx.compose.ui.res.painterResource(id = iconRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = Color.Unspecified
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
+                Text(
+                    text,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 15.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                    )
                 )
-            )
+            }
         }
     }
 }
