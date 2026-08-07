@@ -231,3 +231,10 @@
   -webkit-text-fill-color: transparent;
   animation: shimmer-text 1.6s linear infinite;
 }
+
+/* Next.js style partial viewport rendering helper */
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 350px;
+}
+

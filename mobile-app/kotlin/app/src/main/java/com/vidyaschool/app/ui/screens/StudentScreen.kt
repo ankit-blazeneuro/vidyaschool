@@ -1258,44 +1258,37 @@ fun TopPerformersBanner(
 
     val podiumOrdered = listOfNotNull(rank2, rank1, rank3)
 
-    // Outer Container Colors (Dark vs Light mode)
-    val outerBgBrush = if (isDark) {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFF0F172A),
-                Color(0xFF161E36),
-                Color(0xFF0B0F19)
+    // Grainy Noise points for authentic grainy texture over #374798
+    val grainNoisePoints = remember {
+        val rng = kotlin.random.Random(2026)
+        List(380) {
+            Triple(
+                rng.nextFloat(), // x position ratio
+                rng.nextFloat(), // y position ratio
+                rng.nextFloat()  // particle alpha / size factor
             )
-        )
-    } else {
-        Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFFFFFFFF),
-                Color(0xFFF8FAFC),
-                Color(0xFFF1F5F9)
-            )
-        )
+        }
     }
 
-    val outerBorderBrush = if (isDark) {
-        Brush.linearGradient(
-            colors = listOf(
-                Color.White.copy(alpha = 0.16f),
-                Color.White.copy(alpha = 0.05f),
-                Color.White.copy(alpha = 0.12f)
-            )
+    // Outer Container Colors (Grainy Gradient #374798)
+    val outerBgBrush = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFF374798),
+            Color(0xFF283677),
+            Color(0xFF4354A8),
+            Color(0xFF1E2856)
         )
-    } else {
-        Brush.linearGradient(
-            colors = listOf(
-                Color(0xFFE2E8F0),
-                Color(0xFFCBD5E1),
-                Color(0xFFE2E8F0)
-            )
-        )
-    }
+    )
 
-    val headerTextColor = if (isDark) Color.White.copy(alpha = 0.9f) else Color(0xFF0F172A)
+    val outerBorderBrush = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFF8192E6).copy(alpha = 0.5f),
+            Color(0xFF374798).copy(alpha = 0.3f),
+            Color(0xFFC084FC).copy(alpha = 0.4f)
+        )
+    )
+
+    val headerTextColor = Color.White
 
     Card(
         modifier = modifier
@@ -1309,24 +1302,52 @@ fun TopPerformersBanner(
             width = 1.dp,
             brush = outerBorderBrush
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 0.dp else 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(brush = outerBgBrush)
                 .drawBehind {
+                    // Random / Organic color pattern spots over #374798 background
                     drawCircle(
                         brush = Brush.radialGradient(
-                            colors = listOf(
-                                (if (isDark) Color(0xFF6366F1) else Color(0xFF818CF8)).copy(alpha = if (isDark) 0.22f else 0.15f),
-                                (if (isDark) Color(0xFFA855F7) else Color(0xFFC084FC)).copy(alpha = if (isDark) 0.10f else 0.08f),
-                                Color.Transparent
-                            ),
-                            center = androidx.compose.ui.geometry.Offset(size.width * 0.5f, size.height * 0.45f),
+                            colors = listOf(Color(0xFF38BDF8).copy(alpha = 0.32f), Color.Transparent),
+                            center = androidx.compose.ui.geometry.Offset(size.width * 0.12f, size.height * 0.20f),
+                            radius = size.width * 0.55f
+                        )
+                    )
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color(0xFFC084FC).copy(alpha = 0.30f), Color.Transparent),
+                            center = androidx.compose.ui.geometry.Offset(size.width * 0.88f, size.height * 0.35f),
+                            radius = size.width * 0.50f
+                        )
+                    )
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color(0xFFFBBF24).copy(alpha = 0.25f), Color.Transparent),
+                            center = androidx.compose.ui.geometry.Offset(size.width * 0.40f, size.height * 0.82f),
                             radius = size.width * 0.45f
                         )
                     )
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(Color(0xFFF43F5E).copy(alpha = 0.22f), Color.Transparent),
+                            center = androidx.compose.ui.geometry.Offset(size.width * 0.75f, size.height * 0.88f),
+                            radius = size.width * 0.40f
+                        )
+                    )
+
+                    // Grainy noise texture overlay
+                    grainNoisePoints.forEach { (xFrac, yFrac, noiseVal) ->
+                        val alpha = 0.03f + noiseVal * 0.10f
+                        drawCircle(
+                            color = if (noiseVal > 0.45f) Color.White.copy(alpha = alpha) else Color.Black.copy(alpha = alpha * 0.4f),
+                            radius = 1.2f,
+                            center = androidx.compose.ui.geometry.Offset(size.width * xFrac, size.height * yFrac)
+                        )
+                    }
                 }
                 .padding(top = 16.dp, bottom = 18.dp, start = 14.dp, end = 14.dp)
         ) {
