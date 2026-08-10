@@ -47,10 +47,11 @@ const LiquidMetalHero = dynamic(() => import("@/components/liquid-metal-hero"), 
 })
 
 const sections = [
-  { id: "hero", name: "Welcome to VidyaSchool", num: "01" },
-  { id: "about", name: "A Little About Us", num: "02" },
-  { id: "students", name: "Our Students", num: "03" },
-  { id: "partners", name: "Empowering Partners", num: "04" },
+  { id: "hero", name: "Home", num: "01" },
+  { id: "about", name: "About Us", num: "02" },
+  { id: "students", name: "Our School", num: "03" },
+  { id: "partners", name: "Sponsors & Partners", num: "04" },
+  { id: "mobile-app", name: "Mobile App", num: "05" },
 ]
 
 export function HeroSection() {
@@ -117,8 +118,11 @@ export function HeroSection() {
           </div>
         </div>
 
-      {/* Right Side Horizontal Section Indicator */}
-      <div className="fixed right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-40 hidden sm:flex flex-col items-end gap-4">
+      {/* Right Side Floating Page Content Scroller */}
+      <nav
+        aria-label="Page content navigation"
+        className="fixed right-3 md:right-5 top-1/2 -translate-y-1/2 z-40 hidden sm:flex flex-col items-center gap-2 p-2 rounded-full border border-border/50 bg-background/70 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:border-border/80"
+      >
         {sections.map((sec) => {
           const isActive = activeSection === sec.id
           return (
@@ -126,25 +130,28 @@ export function HeroSection() {
               <TooltipTrigger asChild>
                 <a
                   href={`#${sec.id}`}
-                  className="group py-2 outline-none flex items-center justify-end"
+                  className={cn(
+                    "group relative flex items-center justify-center rounded-full transition-all duration-300 outline-none",
+                    isActive
+                      ? "h-9 w-9 bg-foreground text-background shadow-lg scale-105"
+                      : "h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  )}
                 >
-                  <div
-                    className={cn(
-                      "h-[3px] w-6 rounded-full transition-colors duration-300",
-                      isActive
-                        ? "bg-foreground"
-                        : "bg-muted-foreground/35 group-hover:bg-foreground"
-                    )}
-                  />
+                  <span className="text-[11px] font-bold tracking-tighter leading-none">
+                    {sec.num}
+                  </span>
+                  {isActive && (
+                    <span className="absolute -inset-1 rounded-full border border-foreground/30 animate-pulse pointer-events-none" />
+                  )}
                 </a>
               </TooltipTrigger>
-              <TooltipContent side="left" className="font-medium shadow-md">
-                <p className="text-xs">{sec.name}</p>
+              <TooltipContent side="left" className="font-semibold text-xs shadow-xl px-3 py-1.5 rounded-lg">
+                <p>{sec.name}</p>
               </TooltipContent>
             </Tooltip>
           )
         })}
-      </div>
+      </nav>
     </section>
   )
 }
