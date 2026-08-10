@@ -74,7 +74,7 @@ export function Header() {
         ? "bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 border-b border-border"
         : "bg-transparent border-b border-transparent"
     )}>
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 w-full max-w-[1380px] items-center justify-between px-4 sm:px-6 lg:px-8">
         
         {/* Brand/Logo */}
         <div className="flex items-center gap-6">
@@ -154,8 +154,7 @@ export function Header() {
               {/* Direct Links */}
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/downloads" className="text-foreground/80 hover:text-foreground text-sm font-medium flex items-center gap-1.5">
-                    <Smartphone className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <Link href="/downloads" className="text-foreground/80 hover:text-foreground text-sm font-medium">
                     Mobile App
                   </Link>
                 </NavigationMenuLink>
@@ -273,8 +272,7 @@ export function Header() {
 
           {/* Direct Links Panel */}
           <div className="border-t border-border pt-3 space-y-1">
-            <Link href="/downloads" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md flex items-center gap-2">
-              <Smartphone className="h-4 w-4 text-primary shrink-0" />
+            <Link href="/downloads" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">
               Mobile App Download
             </Link>
             <Link href="/student/notice" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md">

@@ -5,24 +5,24 @@ import dynamic from "next/dynamic"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Sparkles } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 const LiquidMetalHero = dynamic(() => import("@/components/liquid-metal-hero"), {
   loading: () => (
-    <div className="absolute inset-0" aria-hidden>
+    <div className="absolute inset-0 translate-y-4 sm:translate-y-6" aria-hidden>
       <Image
         src="/assets/vidyaschool/Logo/restored_no_bg_with_title.png"
         alt=""
         fill
-        className="object-contain scale-[0.7] grayscale opacity-50"
+        className="object-contain scale-[0.40] grayscale opacity-50"
         priority
         sizes="(max-width: 768px) 90vw, (max-width: 1024px) 50vw, 40vw"
       />
       {/* Shimmer masked to logo shape via PNG alpha channel */}
       <div
-        className="absolute inset-0 scale-[0.7] overflow-hidden"
+        className="absolute inset-0 scale-[0.40] overflow-hidden"
         style={{
           maskImage: "url('/assets/vidyaschool/Logo/restored_no_bg_with_title.png')",
           WebkitMaskImage: "url('/assets/vidyaschool/Logo/restored_no_bg_with_title.png')",
@@ -85,40 +85,13 @@ export function HeroSection() {
       aria-label="Welcome to VidyaSchool"
       className="relative flex h-[95dvh] min-h-[95dvh] w-full items-center overflow-x-clip py-6 sm:py-0"
     >
-      {/* Decorative Background SVG — Left */}
-      <div className="absolute -left-20 top-[-10%] w-[500px] h-[500px] sm:w-[650px] sm:h-[650px] lg:w-[850px] lg:h-[850px] pointer-events-none select-none z-0 animate-[spin_240s_linear_infinite]">
-        <img
-          src="/globe-backdrop.svg"
-          alt=""
-          className="w-full h-full object-contain"
-        />
-      </div>
-
-      {/* Decorative Background SVG — Right (slightly smaller, reverse spin) */}
-      <div
-        className="absolute -right-24 bottom-[-8%] w-[380px] h-[380px] sm:w-[480px] sm:h-[480px] lg:w-[620px] lg:h-[620px] pointer-events-none select-none z-0 animate-[spin_300s_linear_infinite]"
-        style={{ animationDirection: "reverse" }}
-      >
-        <img
-          src="/globe-backdrop.svg"
-          alt=""
-          className="w-full h-full object-contain"
-        />
-      </div>
-
-      {/* Glassmorphism Card */}
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl sm:rounded-3xl bg-white/40 dark:bg-background/60 backdrop-blur-[2px] overflow-hidden lg:h-[85dvh]">
-          <div
-            className="grid w-full h-full grid-cols-1 items-center gap-8 p-8 sm:gap-10 sm:p-12 lg:grid-cols-12 lg:gap-12 lg:p-16"
-          >
+      {/* Hero Content */}
+      <div className="relative z-10 mx-auto max-w-[1380px] w-full px-4 sm:px-6 lg:px-8">
+        <div
+          className="grid w-full h-full grid-cols-1 items-center gap-8 py-8 sm:gap-10 sm:py-12 lg:grid-cols-12 lg:gap-12 lg:py-16"
+        >
             <div className="order-2 flex flex-col justify-center lg:order-1 lg:col-span-6">
               <div className="space-y-3 text-center sm:space-y-5 lg:space-y-6 lg:text-left">
-                <div className="inline-flex max-w-full items-center gap-1.5 self-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground sm:text-xs lg:self-start">
-                  <Sparkles className="h-4 w-4 shrink-0" />
-                  <span className="truncate">Welcome to VidyaSchool</span>
-                </div>
-
                 <h1 className="text-[clamp(1.75rem,5vw+0.75rem,4.5rem)] tracking-tight text-foreground leading-[1.08] text-balance">
                   Empowering Minds, Shaping Futures
                 </h1>
@@ -128,25 +101,21 @@ export function HeroSection() {
                 </p>
 
                 <div className="flex w-full flex-col items-stretch gap-3 pt-1 sm:flex-row sm:items-center sm:justify-center lg:justify-start">
-                  <Button asChild variant="default" size="md" className="w-full sm:w-auto">
-                    <Link href="/student">
-                      <span>Student Portal</span>
+                  <Button asChild variant="default" size="md" className="w-full sm:w-auto px-6 py-2.5">
+                    <Link href="/signup">
+                      <span>Continue</span>
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
-                  </Button>
-                  <Button asChild variant="outline" size="md" className="w-full sm:w-auto">
-                    <Link href="/teacher">Teacher Portal</Link>
                   </Button>
                 </div>
               </div>
             </div>
 
-            <div className="order-1 relative aspect-[4/3] max-h-[42dvh] w-full sm:max-h-[50dvh] sm:aspect-[16/10] lg:order-2 lg:col-span-6 lg:aspect-auto lg:h-full">
+            <div className="order-1 relative aspect-[4/3] w-full min-h-[300px] sm:min-h-[420px] lg:order-2 lg:col-span-6 lg:aspect-auto lg:h-[75dvh]">
               <LiquidMetalHero />
             </div>
           </div>
         </div>
-      </div>
 
       {/* Right Side Horizontal Section Indicator */}
       <div className="fixed right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-40 hidden sm:flex flex-col items-end gap-4">

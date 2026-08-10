@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
 import Image from "next/image"
 import { X } from "lucide-react"
 
@@ -14,6 +15,11 @@ interface ImageLightboxProps {
 
 export default function ImageLightbox({ src, alt, width, height, priority }: ImageLightboxProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <>
@@ -32,28 +38,29 @@ export default function ImageLightbox({ src, alt, width, height, priority }: Ima
         </div>
       </div>
 
-      {isOpen && (
+      {isOpen && mounted && createPortal(
         <div 
           onClick={() => setIsOpen(false)} 
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
+          className="fixed inset-0 z-[9999] w-screen h-screen bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 cursor-zoom-out animate-fade-in"
         >
           <div 
             onClick={(e) => e.stopPropagation()} 
-            className="relative max-w-5xl w-full aspect-[3/2] max-h-[85vh] rounded-2xl overflow-hidden border border-border/10 bg-black shadow-2xl animate-zoom-in"
+            className="relative max-w-5xl w-full max-h-[85vh] flex flex-col items-center justify-center rounded-2xl overflow-hidden border border-border/10 bg-black/95 shadow-2xl animate-zoom-in cursor-default"
           >
-            <img src={src} alt={alt} className="w-full h-full object-contain" />
+            <img src={src} alt={alt} className="w-full h-auto max-h-[85vh] object-contain" />
             <button 
               onClick={() => setIsOpen(false)} 
-              className="absolute top-4 right-4 z-20 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 hover:border-white/30 text-white p-2 transition-all hover:rotate-90 duration-300" 
+              className="absolute top-4 right-4 z-20 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 hover:border-white/30 text-white p-2.5 transition-all hover:rotate-90 duration-300 shadow-lg" 
               aria-label="Close"
             >
               <X className="h-5 w-5" />
             </button>
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-              <p className="text-white text-sm">{alt}</p>
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6">
+              <p className="text-white text-sm font-semibold text-center">{alt}</p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       
       <style jsx>{`

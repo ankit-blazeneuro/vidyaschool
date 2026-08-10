@@ -88,17 +88,28 @@ export default function LiquidMetalHero() {
   const shouldAnimate = isReady && isPlaying && isInView && isTabVisible && !reducedMotion
 
   return (
-    <div ref={containerRef} className="relative h-full w-full overflow-hidden">
+    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center translate-x-5 sm:translate-x-8">
+      {/* Background Illustration behind logo */}
+      <div className="absolute inset-0 pointer-events-none select-none z-0 flex items-center justify-center">
+        <Image
+          src="/assets/illustrations/hero_section.png"
+          alt="Hero Illustration"
+          fill
+          className="object-contain p-2 sm:p-4"
+          priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 60vw, 50vw"
+        />
+      </div>
 
       {/* Shimmer placeholder — stays mounted until shader paints its first frame */}
       {showPlaceholder && (
-        <div className="absolute inset-0" aria-hidden>
+        <div className="absolute inset-0 z-10 translate-y-4 sm:translate-y-6" aria-hidden>
           {/* Grayscale logo at same scale as the shader */}
           <Image
             src={LOGO_SRC}
             alt=""
             fill
-            className="object-contain scale-[0.7] grayscale opacity-50"
+            className="object-contain scale-[0.40] grayscale opacity-50"
             priority
             sizes="(max-width: 768px) 90vw, (max-width: 1024px) 50vw, 40vw"
           />
@@ -108,7 +119,7 @@ export default function LiquidMetalHero() {
             Kept separate so transforms never conflict.
           */}
           <div
-            className="absolute inset-0 scale-[0.7] overflow-hidden"
+            className="absolute inset-0 scale-[0.40] overflow-hidden"
             style={{
               maskImage: `url('${LOGO_SRC}')`,
               WebkitMaskImage: `url('${LOGO_SRC}')`,
@@ -133,7 +144,7 @@ export default function LiquidMetalHero() {
 
       {/* Animated shader — mounted at isReady, overlaps placeholder for ~150ms */}
       {isReady && (
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 z-10 translate-y-4 sm:translate-y-6">
           <LiquidMetal
             width="100%"
             height="100%"
@@ -148,14 +159,14 @@ export default function LiquidMetalHero() {
             contour={0.55}
             angle={60}
             speed={shouldAnimate ? 0.35 : 0}
-            scale={0.7}
+            scale={0.40}
             fit="contain"
           />
         </div>
       )}
 
       {!reducedMotion && (
-        <div className="absolute bottom-3 right-3 z-10 sm:bottom-4 sm:right-4">
+        <div className="absolute bottom-10 right-10 z-10 sm:bottom-14 sm:right-14">
           <Button
             variant="outline"
             size="default"

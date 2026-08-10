@@ -28,8 +28,8 @@ export default function VideoModal() {
       >
         <Image
           className="w-full h-full object-cover rounded-2xl"
-          src="/assets/vidyaschool/vidya-founder.png"
-          alt="VIDYA Founder"
+          src="/assets/illustrations/thumbnail.png"
+          alt="VIDYA School Video Thumbnail"
           width={1366}
           height={768}
           quality={85}

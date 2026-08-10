@@ -1,7 +1,9 @@
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { HeroSection } from "@/components/hero-section"
+import { SectionSeparator } from "@/components/section-separator"
 import { InViewRender } from "@/components/in-view-render"
+import { Button } from "@/components/ui/button"
 import dynamic from "next/dynamic"
 import type { Metadata } from 'next'
 
@@ -15,6 +17,7 @@ const VideoModal = dynamic(() => import("@/components/video-modal"), {
 })
 const ImageLightbox = dynamic(() => import("@/components/image-lightbox"))
 const AnimatedPartners = dynamic(() => import("@/components/animated-partners"))
+const CollageGallery = dynamic(() => import("@/components/collage-gallery"))
 
 const partners = [
   { name: "WIAUK", logo: "/assets/logos/wiaauk.jpg", width: 32, height: 32 },
@@ -38,78 +41,273 @@ export default function Home() {
       
       <main className="flex-1 flex flex-col">
         <HeroSection />
+        <SectionSeparator />
 
-        <div className="w-full px-4 sm:px-8 md:px-12 lg:px-24 max-w-none">
-          {/* About Section - Viewport Partial Rendered */}
+        <div className="mx-auto w-full max-w-[1380px] px-4 sm:px-6 lg:px-8">
           <InViewRender minHeight="380px" rootMargin="200px 0px">
             <section id="about" className="w-full mt-16 md:mt-24 py-8">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                 <div className="lg:col-span-7"><VideoModal /></div>
-                <div className="lg:col-span-5 flex flex-col justify-center space-y-6">
-                  <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
-                    A Little About Us
-                  </span>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-[1.3] border-l-3 border-rose-600/60 pl-5 py-1">
+                <div className="lg:col-span-5 flex flex-col justify-center space-y-5">
+
+                  <p className="text-lg sm:text-xl font-semibold text-foreground leading-relaxed">
                     "It's like a home to me. It's the place where I grow as a person, get exposed to new ideas, learn and reach for my dreams."
-                  </h2>
+                  </p>
+
                   <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                     Here's a short film with the students, teachers, and staff talking about what makes the VIDYA School different and what it means to them.
                   </p>
-                  <div className="space-y-3.5 pt-2">
-                    <div className="flex items-start gap-2.5 text-sm">
-                      <span className="h-5 w-5 mt-0.5 flex items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 text-xs shrink-0">✓</span>
-                      <div><h4 className="font-semibold text-foreground">Holistic Growth</h4><p className="text-xs text-muted-foreground mt-0.5">Fostering personal development alongside academic excellence.</p></div>
-                    </div>
-                    <div className="flex items-start gap-2.5 text-sm">
-                      <span className="h-5 w-5 mt-0.5 flex items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 text-xs shrink-0">✓</span>
-                      <div><h4 className="font-semibold text-foreground">New Ideas & Exposure</h4><p className="text-xs text-muted-foreground mt-0.5">Broadening horizons through visual and physical digital learning.</p></div>
-                    </div>
-                    <div className="flex items-start gap-2.5 text-sm">
-                      <span className="h-5 w-5 mt-0.5 flex items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500 text-xs shrink-0">✓</span>
-                      <div><h4 className="font-semibold text-foreground">A Nurturing Community</h4><p className="text-xs text-muted-foreground mt-0.5">A second home where students, teachers, and staff grow together.</p></div>
-                    </div>
+
+                  <div className="space-y-2.5 pt-1 text-sm text-muted-foreground">
+                    <p>✓ <span className="font-medium text-foreground">Holistic Growth</span> — Fostering personal development alongside academic excellence.</p>
+                    <p>✓ <span className="font-medium text-foreground">New Ideas & Exposure</span> — Broadening horizons through visual and physical digital learning.</p>
+                    <p>✓ <span className="font-medium text-foreground">A Nurturing Community</span> — A second home where students, teachers, and staff grow together.</p>
                   </div>
+
                 </div>
               </div>
             </section>
           </InViewRender>
 
-          {/* Bento Gallery Section - Viewport Partial Rendered */}
-          <InViewRender minHeight="450px" rootMargin="250px 0px">
-            <section id="students" className="w-full mt-20 md:mt-28 py-6">
-              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8">
-                <h2 className="text-center text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Our Students</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2 p-3.5 rounded-2xl border border-border/80 bg-card/45 overflow-hidden h-[360px]">
-                  <ImageLightbox src="/assets/vidyaschool/student_classical_dance.jpg" alt="Classical & Fusion Dance" width={1200} height={800} priority />
+          {/* Principal Section */}
+          <InViewRender minHeight="380px" rootMargin="200px 0px">
+            <section id="principal" className="w-full mt-28 md:mt-40 py-8">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pt-16 md:pt-24">
+
+                {/* Left — text content */}
+                <div className="lg:col-span-5 flex flex-col justify-center space-y-5 order-2 lg:order-1">
+                  <div>
+                    <p className="text-lg sm:text-xl font-semibold text-foreground leading-snug">Ila Sarin</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">Principal, VidyaSchool · MSc Chemistry · B.Ed</p>
+                  </div>
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                    A highly recognized educator deeply committed to empowering underprivileged youth through modern, practical education.
+                  </p>
+                  <div className="space-y-2.5 pt-1 text-sm text-muted-foreground">
+                    <p>✓ <span className="font-medium text-foreground">National Award Winner</span> — Received the Institutional Leadership in Entrepreneurship Award at the Youth Ideathon Awards Ceremony hosted at IIT Delhi.</p>
+                    <p>✓ <span className="font-medium text-foreground">Innovation Advocate</span> — Under her guidance, students created "Park2Land" — a smart, tech-driven urban parking solution that beat over 1.85 lakh students to reach the Top 125 National Finals.</p>
+                  </div>
                 </div>
-                <div className="p-3.5 rounded-2xl border border-border/80 bg-card/45 overflow-hidden h-[360px]">
-                  <ImageLightbox src="/assets/vidyaschool/student_singing.jpg" alt="Choral & Classical Singing" width={600} height={900} />
+
+                {/* Right — principal placeholder */}
+                <div className="lg:col-span-7 order-1 lg:order-2">
+                  <div
+                    className="relative rounded-3xl border border-border/80 shadow-lg h-64 md:h-80 overflow-visible"
+                  >
+                    {/* Clipped bg layer — gradient + grain stay within rounded corners */}
+                    <div
+                      className="absolute inset-0 rounded-3xl overflow-hidden"
+                      style={{
+                        background: "linear-gradient(135deg, #2a3bbf 0%, #4556d4 35%, #5D6EE2 65%, #6e7fe8 100%)",
+                      }}
+                    >
+                      {/* SVG grain filter */}
+                      <svg className="absolute inset-0 w-full h-full opacity-[0.35] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                        <filter id="grain-filter">
+                          <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch" />
+                          <feColorMatrix type="saturate" values="0" />
+                        </filter>
+                        <rect width="100%" height="100%" filter="url(#grain-filter)" />
+                      </svg>
+                      {/* Radial glow */}
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_25%,rgba(255,255,255,0.15)_0%,transparent_65%)] pointer-events-none" />
+                    </div>
+                    {/* Principal image — overflows above card */}
+                    <img
+                      src="/assets/illustrations/principle.png"
+                      alt="VidyaSchool Principal"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[500px] w-auto object-contain drop-shadow-2xl"
+                    />
+                  </div>
                 </div>
-                <div className="p-3.5 rounded-2xl border border-border/80 bg-card/45 overflow-hidden h-[360px]">
-                  <ImageLightbox src="/assets/vidyaschool/student_playing.jpg" alt="Instrumental Play" width={600} height={900} />
-                </div>
-                <div className="md:col-span-2 p-3.5 rounded-2xl border border-border/80 bg-card/45 overflow-hidden h-[360px]">
-                  <ImageLightbox src="/assets/vidyaschool/student_robotics.jpg" alt="Lego Robotics & Innovation" width={1200} height={800} />
-                </div>
+
               </div>
             </section>
           </InViewRender>
+
+          {/* Separator — Our School */}
+          <div className="w-full flex flex-col items-center justify-center pt-32 pb-6 select-none overflow-hidden my-4 gap-2">
+            {/* Top: two separators side by side — cropped via background-position */}
+            <div className="flex flex-row w-full max-w-5xl">
+              {/* Left: shows left half of SVG (line + left ornament) */}
+              <div
+                className="flex-1 h-7 opacity-80 dark:opacity-90 pointer-events-none dark:invert dark:hue-rotate-180"
+                style={{
+                  backgroundImage: "url('/assets/illustrations/separator.svg')",
+                  backgroundSize: "200% 100%",
+                  backgroundPosition: "left center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+              {/* Right: shows right half of SVG (right ornament + line) */}
+              <div
+                className="flex-1 h-7 opacity-80 dark:opacity-90 pointer-events-none dark:invert dark:hue-rotate-180"
+                style={{
+                  backgroundImage: "url('/assets/illustrations/separator.svg')",
+                  backgroundSize: "200% 100%",
+                  backgroundPosition: "right center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+            </div>
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.25em] text-foreground/80 py-1">
+              Our School
+            </span>
+            {/* Bottom separator — centered */}
+            <img
+              src="/assets/illustrations/separator.svg"
+              alt="Bottom separator"
+              className="w-full max-w-xs h-7 object-contain dark:invert dark:hue-rotate-180 opacity-80 dark:opacity-90 pointer-events-none rotate-180"
+            />
+          </div>
+
+        {/* Collage Gallery Section — full viewport width, outside the constrained wrapper */}
+        </div>
+        <InViewRender minHeight="580px" rootMargin="250px 0px">
+          <section id="students" className="w-full mt-10 py-6">
+            <CollageGallery />
+          </section>
+        </InViewRender>
+        <div className="mx-auto w-full max-w-[1380px] px-4 sm:px-6 lg:px-8">
+
+          {/* Separator — Our Sponsors */}
+          <div className="w-full flex flex-col items-center justify-center pt-16 pb-2 select-none overflow-hidden gap-2">
+            {/* Top: two separators side by side */}
+            <div className="flex flex-row w-full max-w-5xl">
+              <div
+                className="flex-1 h-7 opacity-80 dark:opacity-90 pointer-events-none dark:invert dark:hue-rotate-180"
+                style={{
+                  backgroundImage: "url('/assets/illustrations/separator.svg')",
+                  backgroundSize: "200% 100%",
+                  backgroundPosition: "left center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+              <div
+                className="flex-1 h-7 opacity-80 dark:opacity-90 pointer-events-none dark:invert dark:hue-rotate-180"
+                style={{
+                  backgroundImage: "url('/assets/illustrations/separator.svg')",
+                  backgroundSize: "200% 100%",
+                  backgroundPosition: "right center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+            </div>
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.25em] text-foreground/80 py-1">
+              Our Sponsors
+            </span>
+            {/* Bottom separator — centered */}
+            <img
+              src="/assets/illustrations/separator.svg"
+              alt="Bottom separator"
+              className="w-full max-w-xs h-7 object-contain dark:invert dark:hue-rotate-180 opacity-80 dark:opacity-90 pointer-events-none rotate-180"
+            />
+          </div>
 
           {/* Partners Section - Viewport Partial Rendered */}
           <InViewRender minHeight="200px" rootMargin="300px 0px">
-            <section id="partners" className="w-full mt-16 md:mt-20 py-6 overflow-hidden">
-              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-4">
-                <h2 className="text-center text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">Platforms & Programs Empowering Our Digital Classroom</h2>
-              </div>
+            <section id="partners" className="w-full py-6 overflow-hidden">
               <AnimatedPartners partners={partners} />
             </section>
           </InViewRender>
 
+          {/* Become a Sponsor Card */}
+          <div className="w-full flex justify-center mt-8 mb-2 px-4">
+            <div
+              className="relative w-full overflow-hidden flex flex-col items-center justify-center"
+              style={{
+                maxWidth: "1300px",
+                height: "411px",
+                borderRadius: "67px",
+                background: "linear-gradient(to right, #5400CC 0%, #26308C 50%, #0D0D26 100%)",
+              }}
+            >
+              {/* Grainy Noise Overlay */}
+              <div
+                className="absolute inset-0 pointer-events-none opacity-50 mix-blend-overlay z-0"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2.2' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: "repeat",
+                }}
+              />
+
+              {/* Subtle radial glow top-center */}
+              <div
+                className="absolute pointer-events-none"
+                style={{
+                  top: "-80px", left: "50%", transform: "translateX(-50%)",
+                  width: "500px", height: "500px",
+                  background: "radial-gradient(circle, rgba(140,80,255,0.3) 0%, transparent 70%)",
+                }}
+              />
+
+              {/* Circle illustration — half visible at bottom */}
+              <img
+                src="/assets/illustrations/circle.svg"
+                alt=""
+                aria-hidden="true"
+                className="absolute pointer-events-none select-none sponsor-circle-spin"
+                style={{
+                  bottom: "-350px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  transformOrigin: "center center",
+                  width: "700px",
+                  opacity: 0.8,
+                }}
+              />
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col items-center gap-5 text-center">
+                <div>
+                  <p className="text-white/60 text-sm font-medium uppercase tracking-widest mb-2">Partnership</p>
+                  <h3 className="text-white text-3xl sm:text-4xl font-bold leading-tight">
+                    Become a Sponsor
+                  </h3>
+                  <p className="mt-3 text-white/70 text-sm sm:text-base max-w-md leading-relaxed">
+                    Partner with VidyaSchool and invest in the next generation.<br />Your brand, our mission — together we grow.
+                  </p>
+                </div>
+
+                <a
+                  href="https://pages.razorpay.com/pl_CFFRr3HwNiFEwo/view"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sponsor-join-btn"
+                >
+                  Join as Sponsor →
+                </a>
+                <style>{`
+                  @keyframes spin-slow {
+                    from { transform: translateX(-50%) rotate(0deg); }
+                    to   { transform: translateX(-50%) rotate(360deg); }
+                  }
+                  .sponsor-circle-spin {
+                    animation: spin-slow 80s linear infinite;
+                  }
+                  .sponsor-join-btn {
+                    background: rgba(255,255,255,0.1);
+                    backdrop-filter: blur(4px);
+                    border-radius: 25px;
+                    padding: 16px 46px;
+                    color: white;
+                    font: 600 15px Inter, sans-serif;
+                    display: inline-block;
+                    border: 1px solid rgba(255,255,255,0.15);
+                    text-decoration: none;
+                    transition: background 0.2s;
+                  }
+                  .sponsor-join-btn:hover {
+                    background: rgba(255,255,255,0.18);
+                  }
+                `}</style>
+              </div>
+            </div>
+          </div>
+
           {/* Mobile App Section - Viewport Partial Rendered */}
           <InViewRender minHeight="450px" rootMargin="250px 0px">
-            <section id="mobile-app" className="w-full mt-20 md:mt-28 py-10">
+            <section id="mobile-app" className="w-full mt-20 md:mt-28 pt-10 pb-20 md:pb-32 mb-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
                 {/* Left — mockup cluster */}
@@ -141,68 +339,30 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Right — copy + store buttons */}
+                {/* Right — copy + CTA */}
                 <div className="flex flex-col justify-center space-y-7">
                   <div>
-                    <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
+                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">
                       Now on Mobile
-                    </span>
-                    <h2 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">
-                      Mobile App{" "}
-                      <span className="bg-gradient-to-r from-rose-500 to-orange-400 bg-clip-text text-transparent">
-                        Available
-                      </span>
                     </h2>
                     <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-md">
                       Access assignments, timetables, fee updates, library resources, and live announcements — all from your pocket. The VidyaSchool app keeps students, parents, and teachers seamlessly connected.
                     </p>
                   </div>
 
-                  {/* Feature pills */}
-                  <div className="flex flex-wrap gap-2">
-                    {["Attendance Tracking", "Fee Payments", "Live Notices", "E-Library", "Timetable"].map((f) => (
-                      <span
-                        key={f}
-                        className="px-3 py-1 rounded-full text-[11px] font-medium bg-muted/60 border border-border/60 text-muted-foreground"
-                      >
-                        {f}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Store buttons */}
-                  <div className="flex flex-col sm:flex-row gap-3 pt-1">
-                    {/* Android */}
-                    <a
-                      href="/downloads"
-                      aria-label="Download for Android"
-                      className="group inline-flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-foreground text-background hover:bg-foreground/90 transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 w-full sm:w-auto"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 918.6 515.1" className="w-6 h-6 shrink-0" aria-hidden="true">
-                        <path fill="#3DDC84" d="M918.6 515.1h-918.6c14.7-155.7 103.7-288.7 235.1-359.9l-76.2-132c-4.3-7.4-1.8-16.8 5.6-21.1s16.8-1.8 21.1 5.6l77.2 133.7c58.9-26.9 125.2-41.9 196.5-41.9s137.6 15 196.5 41.9l77.2-133.7c4.2-7.4 13.7-9.9 21-5.6s9.9 13.7 5.6 21.1l-76.2 132c131.5 71.2 220.5 204.2 235.2 359.9zm-248.5-129c21.3 0 38.6-17.3 38.5-38.5 0-21.2-17.2-38.5-38.5-38.5-21.2 0-38.5 17.2-38.5 38.5 0 21.2 17.2 38.5 38.5 38.5zm-421.7 0c21.3 0 38.6-17.3 38.5-38.5 0-21.2-17.2-38.5-38.5-38.5-21.2 0-38.5 17.2-38.5 38.5 0 21.2 17.2 38.5 38.5 38.5z"/>
+                  <Button asChild size="xl" className="rounded-2xl font-bold text-sm uppercase tracking-widest shadow-lg hover:shadow-xl self-start px-8">
+                    <a href="/downloads">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
                       </svg>
-                      <div className="text-left leading-none">
-                        <p className="text-sm font-semibold">Android</p>
-                      </div>
+                      Download Now!
                     </a>
-
-                    {/* App Store */}
-                    <a
-                      href="/downloads"
-                      aria-label="Download on the App Store"
-                      className="group inline-flex items-center gap-3 px-5 py-3.5 rounded-2xl border border-border/80 bg-card/60 hover:bg-card transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 w-full sm:w-auto"
-                    >
-                      <svg viewBox="0 0 24 24" className="w-6 h-6 shrink-0 fill-current text-foreground" aria-hidden="true">
-                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                      </svg>
-                      <div className="text-left leading-none">
-                        <p className="text-sm font-semibold text-foreground">App Store</p>
-                      </div>
-                    </a>
-                  </div>
+                  </Button>
 
                   <p className="text-[11px] text-muted-foreground/50">
-                    Free to download · Available for Android 8+ & iOS 14+
+                    Free to download · Available for Android 8+ &amp; iOS 14+
                   </p>
                 </div>
               </div>
