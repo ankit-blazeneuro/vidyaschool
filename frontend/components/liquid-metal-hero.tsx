@@ -89,7 +89,7 @@ export default function LiquidMetalHero() {
   const shouldAnimate = isReady && isPlaying && isInView && isTabVisible && !reducedMotion
 
   return (
-    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center translate-x-5 sm:translate-x-8">
+    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center translate-x-0 lg:translate-x-6">
       {/* Background Illustration behind logo */}
       <div className="absolute inset-0 pointer-events-none select-none z-0 flex items-center justify-center">
         <BlurImage
@@ -104,7 +104,7 @@ export default function LiquidMetalHero() {
 
       {/* Shimmer placeholder — stays mounted until shader paints its first frame */}
       {showPlaceholder && (
-        <div className="absolute inset-0 z-10 translate-y-4 sm:translate-y-6" aria-hidden>
+        <div className="absolute inset-0 z-10 translate-y-0 sm:translate-y-4 lg:translate-y-6" aria-hidden>
           {/* Grayscale logo at same scale as the shader */}
           <Image
             src={LOGO_SRC}
@@ -145,7 +145,7 @@ export default function LiquidMetalHero() {
 
       {/* Animated shader — mounted at isReady, overlaps placeholder for ~150ms */}
       {isReady && (
-        <div className="absolute inset-0 z-10 translate-y-4 sm:translate-y-6">
+        <div className="absolute inset-0 z-10 translate-y-0 sm:translate-y-4 lg:translate-y-6">
           <LiquidMetal
             width="100%"
             height="100%"

@@ -112,7 +112,7 @@ export function HeroSection() {
               </div>
             </div>
 
-            <div className="order-1 relative aspect-[4/3] w-full min-h-[300px] sm:min-h-[420px] lg:order-2 lg:col-span-6 lg:aspect-auto lg:h-[75dvh]">
+            <div className="order-1 relative aspect-[4/3] w-full min-h-[260px] sm:min-h-[380px] lg:order-2 lg:col-span-6 lg:aspect-auto lg:h-[75dvh] flex items-center justify-center">
               <LiquidMetalHero />
             </div>
           </div>
