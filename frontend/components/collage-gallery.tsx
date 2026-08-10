@@ -54,8 +54,37 @@ export default function CollageGallery() {
 
   return (
     <>
-      {/* Collage container */}
-      <div className="relative mx-auto w-full max-w-[1600px] px-4 sm:px-6 h-[580px] sm:h-[640px]">
+      {/* Mobile Layout (< 640px) — responsive 2-column collage grid */}
+      <div className="grid grid-cols-2 gap-3 px-4 sm:hidden">
+        {images.map((img, i) => {
+          const isWide = i === 0 || i === 5
+          return (
+            <div
+              key={img.src}
+              className={`relative overflow-hidden rounded-2xl shadow-lg cursor-zoom-in group ${
+                isWide ? "col-span-2 aspect-[16/9]" : "col-span-1 aspect-[4/3]"
+              }`}
+              onClick={() => setActive(img)}
+            >
+              <BlurImg
+                src={img.src}
+                alt={img.alt}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 60%)" }}
+              />
+              <span className="absolute bottom-2.5 left-3 text-white text-xs font-semibold tracking-wide drop-shadow">
+                {img.alt}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop/Tablet Layout (>= 640px) — asymmetric overlapping collage */}
+      <div className="hidden sm:block relative mx-auto w-full max-w-[1600px] px-4 sm:px-6 h-[520px] md:h-[600px] lg:h-[660px]">
         {images.map((img) => (
           <div
             key={img.src}

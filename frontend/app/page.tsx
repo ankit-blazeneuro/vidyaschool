@@ -91,9 +91,9 @@ export default function Home() {
                 </div>
 
                 {/* Right — principal placeholder */}
-                <div className="lg:col-span-7 order-1 lg:order-2">
+                <div className="lg:col-span-7 order-1 lg:order-2 mt-16 sm:mt-20 lg:mt-0">
                   <div
-                    className="relative rounded-3xl border border-border/80 shadow-lg h-64 md:h-80 overflow-visible"
+                    className="relative rounded-3xl border border-border/80 shadow-lg h-48 sm:h-64 md:h-80 lg:h-96 overflow-visible"
                   >
                     {/* Clipped bg layer — gradient + grain stay within rounded corners */}
                     <div
@@ -113,11 +113,11 @@ export default function Home() {
                       {/* Radial glow */}
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_25%,rgba(255,255,255,0.15)_0%,transparent_65%)] pointer-events-none" />
                     </div>
-                    {/* Principal image — overflows above card */}
+                    {/* Principal image — overflows above card responsively */}
                     <BlurImg
                       src="/assets/illustrations/principle.png"
                       alt="VidyaSchool Principal"
-                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[500px] w-auto object-contain drop-shadow-2xl"
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[300px] sm:h-[400px] md:h-[480px] lg:h-[530px] w-auto max-w-none object-contain drop-shadow-2xl"
                     />
                   </div>
                 </div>
@@ -127,7 +127,7 @@ export default function Home() {
           </InViewRender>
 
           {/* Separator — Our School */}
-          <div className="w-full flex flex-col items-center justify-center pt-32 pb-6 select-none overflow-hidden my-4 gap-2">
+          <div className="w-full flex flex-col items-center justify-center pt-16 sm:pt-28 pb-6 select-none overflow-hidden my-4 gap-2">
             {/* Top: two separators side by side — cropped via background-position */}
             <div className="flex flex-row w-full max-w-5xl">
               {/* Left: shows left half of SVG (line + left ornament) */}

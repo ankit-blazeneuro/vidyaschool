@@ -118,10 +118,10 @@ export function HeroSection() {
           </div>
         </div>
 
-      {/* Right Side Floating Page Content Scroller */}
+      {/* Right Side Floating Page Content Scroller (Horizontal Lines) */}
       <nav
         aria-label="Page content navigation"
-        className="fixed right-3 md:right-5 top-1/2 -translate-y-1/2 z-40 hidden sm:flex flex-col items-center gap-2 p-2 rounded-full border border-border/50 bg-background/70 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:border-border/80"
+        className="fixed right-3 md:right-6 top-1/2 -translate-y-1/2 z-40 hidden sm:flex flex-col items-end gap-3.5 p-3.5 rounded-2xl border border-border/40 bg-background/65 backdrop-blur-xl shadow-2xl transition-all duration-300 hover:border-border/70"
       >
         {sections.map((sec) => {
           const isActive = activeSection === sec.id
@@ -130,19 +130,16 @@ export function HeroSection() {
               <TooltipTrigger asChild>
                 <a
                   href={`#${sec.id}`}
-                  className={cn(
-                    "group relative flex items-center justify-center rounded-full transition-all duration-300 outline-none",
-                    isActive
-                      ? "h-9 w-9 bg-foreground text-background shadow-lg scale-105"
-                      : "h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  )}
+                  className="group py-1.5 outline-none flex items-center justify-end"
                 >
-                  <span className="text-[11px] font-bold tracking-tighter leading-none">
-                    {sec.num}
-                  </span>
-                  {isActive && (
-                    <span className="absolute -inset-1 rounded-full border border-foreground/30 animate-pulse pointer-events-none" />
-                  )}
+                  <div
+                    className={cn(
+                      "rounded-full transition-all duration-300",
+                      isActive
+                        ? "h-[7px] w-8 bg-foreground shadow-sm"
+                        : "h-[3px] w-4 bg-muted-foreground/30 group-hover:h-[4.5px] group-hover:w-6 group-hover:bg-foreground/70"
+                    )}
+                  />
                 </a>
               </TooltipTrigger>
               <TooltipContent side="left" className="font-semibold text-xs shadow-xl px-3 py-1.5 rounded-lg">
