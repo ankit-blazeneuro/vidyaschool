@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import { BlurImage } from "@/components/blur-image"
 
 interface Partner {
   name: string
@@ -30,7 +30,7 @@ export default function AnimatedPartners({ partners }: AnimatedPartnersProps) {
             >
               <div className="flex items-center gap-3 font-semibold text-foreground/75 text-sm">
                 <div className="relative flex items-center justify-center bg-white p-1 rounded shadow-xs">
-                  <Image 
+                  <BlurImage 
                     src={partner.logo} 
                     width={partner.width} 
                     height={partner.height} 

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useRef } from "react"
-import Image from "next/image"
 import { Play, X } from "lucide-react"
+import { BlurImage } from "@/components/blur-image"
 
 export default function VideoModal() {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -26,7 +26,7 @@ export default function VideoModal() {
         onClick={() => setIsModalOpen(true)}
         className="relative rounded-2xl overflow-hidden border border-border/80 bg-card/45 shadow-lg group aspect-video cursor-pointer"
       >
-        <Image
+        <BlurImage
           className="w-full h-full object-cover rounded-2xl"
           src="/assets/illustrations/thumbnail.png"
           alt="VIDYA School Video Thumbnail"

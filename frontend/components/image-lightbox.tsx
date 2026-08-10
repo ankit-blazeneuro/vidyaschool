@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import Image from "next/image"
 import { X } from "lucide-react"
+import { BlurImage, BlurImg } from "@/components/blur-image"
 
 interface ImageLightboxProps {
   src: string
@@ -24,7 +24,7 @@ export default function ImageLightbox({ src, alt, width, height, priority }: Ima
   return (
     <>
       <div onClick={() => setIsOpen(true)} className="relative w-full h-full rounded-lg overflow-hidden border border-border/60 bg-muted/20 cursor-zoom-in group">
-        <Image 
+        <BlurImage 
           src={src}
           alt={alt}
           fill
@@ -47,7 +47,7 @@ export default function ImageLightbox({ src, alt, width, height, priority }: Ima
             onClick={(e) => e.stopPropagation()} 
             className="relative max-w-5xl w-full max-h-[85vh] flex flex-col items-center justify-center rounded-2xl overflow-hidden border border-border/10 bg-black/95 shadow-2xl animate-zoom-in cursor-default"
           >
-            <img src={src} alt={alt} className="w-full h-auto max-h-[85vh] object-contain" />
+            <BlurImg src={src} alt={alt} className="w-full h-auto max-h-[85vh] object-contain" />
             <button 
               onClick={() => setIsOpen(false)} 
               className="absolute top-4 right-4 z-20 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 hover:border-white/30 text-white p-2.5 transition-all hover:rotate-90 duration-300 shadow-lg" 

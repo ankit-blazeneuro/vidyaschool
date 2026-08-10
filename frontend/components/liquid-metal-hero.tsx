@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useTransition, useCallback } from "react"
 import dynamic from "next/dynamic"
 import Image from "next/image"
+import { BlurImage } from "@/components/blur-image"
 import { Button } from "@/components/ui/button"
 import { Play, Pause } from "lucide-react"
 
@@ -91,7 +92,7 @@ export default function LiquidMetalHero() {
     <div ref={containerRef} className="relative h-full w-full flex items-center justify-center translate-x-5 sm:translate-x-8">
       {/* Background Illustration behind logo */}
       <div className="absolute inset-0 pointer-events-none select-none z-0 flex items-center justify-center">
-        <Image
+        <BlurImage
           src="/assets/illustrations/hero_section.png"
           alt="Hero Illustration"
           fill

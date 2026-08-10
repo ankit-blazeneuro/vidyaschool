@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { X } from "lucide-react"
+import { BlurImg } from "@/components/blur-image"
 
 interface CollageImage {
   src: string
@@ -62,7 +63,7 @@ export default function CollageGallery() {
             style={img.style}
             onClick={() => setActive(img)}
           >
-            <img
+            <BlurImg
               src={img.src}
               alt={img.alt}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -88,7 +89,7 @@ export default function CollageGallery() {
             className="relative max-w-5xl w-full max-h-[85vh] flex flex-col items-center justify-center rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black/95 animate-zoom-in cursor-default"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
+            <BlurImg
               src={active.src}
               alt={active.alt}
               className="w-full h-auto max-h-[85vh] object-contain"

@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/hero-section"
 import { SectionSeparator } from "@/components/section-separator"
 import { InViewRender } from "@/components/in-view-render"
 import { Button } from "@/components/ui/button"
+import { BlurImg } from "@/components/blur-image"
 import dynamic from "next/dynamic"
 import type { Metadata } from 'next'
 
@@ -113,7 +114,7 @@ export default function Home() {
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_25%,rgba(255,255,255,0.15)_0%,transparent_65%)] pointer-events-none" />
                     </div>
                     {/* Principal image — overflows above card */}
-                    <img
+                    <BlurImg
                       src="/assets/illustrations/principle.png"
                       alt="VidyaSchool Principal"
                       className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[500px] w-auto object-contain drop-shadow-2xl"
@@ -314,21 +315,21 @@ export default function Home() {
                 <div className="flex items-center justify-center select-none">
                   <div className="relative flex items-end justify-center w-full max-w-[480px] h-[520px]">
                     {/* Bottom-left mockup */}
-                    <img
+                    <BlurImg
                       src="/assets/mockups/bl.svg"
                       alt="App screen – bottom left"
                       className="absolute bottom-0 left-[2%] w-[37%] drop-shadow-xl rounded-[18px] rotate-[-6deg] translate-y-3 z-10"
                       draggable={false}
                     />
                     {/* Centre / main mockup */}
-                    <img
+                    <BlurImg
                       src="/assets/mockups/wc.svg"
                       alt="App screen – centre"
                       className="relative w-[46%] drop-shadow-2xl rounded-[22px] z-20"
                       draggable={false}
                     />
                     {/* Bottom-right mockup */}
-                    <img
+                    <BlurImg
                       src="/assets/mockups/br.svg"
                       alt="App screen – bottom right"
                       className="absolute bottom-0 right-[2%] w-[37%] drop-shadow-xl rounded-[18px] rotate-[6deg] translate-y-3 z-10"
