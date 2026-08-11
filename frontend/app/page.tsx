@@ -215,11 +215,10 @@ export default function Home() {
           {/* Become a Sponsor Card */}
           <div className="w-full flex justify-center mt-8 mb-2 px-4">
             <div
-              className="relative w-full overflow-hidden flex flex-col items-center justify-center"
+              className="relative w-full overflow-hidden flex flex-col items-center justify-center rounded-[28px] sm:rounded-[67px]"
               style={{
                 maxWidth: "1300px",
                 height: "411px",
-                borderRadius: "67px",
                 background: "linear-gradient(to right, #5400CC 0%, #26308C 50%, #0D0D26 100%)",
               }}
             >
@@ -300,6 +299,12 @@ export default function Home() {
                   }
                   .sponsor-join-btn:hover {
                     background: rgba(255,255,255,0.18);
+                  }
+                  @media (max-width: 639px) {
+                    .sponsor-circle-spin {
+                      width: 360px !important;
+                      bottom: -160px !important;
+                    }
                   }
                 `}</style>
               </div>

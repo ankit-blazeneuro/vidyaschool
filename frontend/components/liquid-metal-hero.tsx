@@ -22,6 +22,7 @@ export default function LiquidMetalHero() {
   const [reducedMotion, setReducedMotion] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const [showPlaceholder, setShowPlaceholder] = useState(true)
+  const [logoScale, setLogoScale] = useState(0.40)
 
   // Non-urgent transitions: these state updates are deprioritised so React
   // never blocks the next user input to process them.
@@ -66,11 +67,16 @@ export default function LiquidMetalHero() {
       return () => clearTimeout(timer)
     })
 
+    const updateScale = () => setLogoScale(window.innerWidth < 640 ? 0.30 : 0.40)
+    updateScale()
+    window.addEventListener("resize", updateScale)
+
     return () => {
       motionQuery.removeEventListener("change", onMotionChange)
       document.removeEventListener("visibilitychange", onVisibilityChange)
       observer?.disconnect()
       cancelAnimationFrame(frame)
+      window.removeEventListener("resize", updateScale)
     }
   }, [])
 
@@ -110,7 +116,8 @@ export default function LiquidMetalHero() {
             src={LOGO_SRC}
             alt=""
             fill
-            className="object-contain scale-[0.40] grayscale opacity-50"
+            className="object-contain grayscale opacity-50"
+            style={{ transform: `scale(${logoScale})` }}
             priority
             sizes="(max-width: 768px) 90vw, (max-width: 1024px) 50vw, 40vw"
           />
@@ -120,8 +127,9 @@ export default function LiquidMetalHero() {
             Kept separate so transforms never conflict.
           */}
           <div
-            className="absolute inset-0 scale-[0.40] overflow-hidden"
+            className="absolute inset-0 overflow-hidden"
             style={{
+              transform: `scale(${logoScale})`,
               maskImage: `url('${LOGO_SRC}')`,
               WebkitMaskImage: `url('${LOGO_SRC}')`,
               maskSize: "contain",
@@ -160,14 +168,14 @@ export default function LiquidMetalHero() {
             contour={0.55}
             angle={60}
             speed={shouldAnimate ? 0.35 : 0}
-            scale={0.40}
+            scale={logoScale}
             fit="contain"
           />
         </div>
       )}
 
       {!reducedMotion && (
-        <div className="absolute bottom-10 right-10 z-10 sm:bottom-14 sm:right-14">
+        <div className="absolute bottom-10 right-16 z-10">
           <Button
             variant="outline"
             size="default"
