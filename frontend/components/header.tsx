@@ -55,7 +55,7 @@ export function Header() {
       // RAF-throttle: at most one setIsScrolled per animation frame
       if (!ticking) {
         requestAnimationFrame(() => {
-          setIsScrolled(window.scrollY > 0)
+          setIsScrolled(window.scrollY > 20)
           ticking = false
         })
         ticking = true
@@ -69,9 +69,9 @@ export function Header() {
 
   return (
     <header className={cn(
-      "sticky top-0 z-50 w-full transition-all duration-300",
+      "sticky top-0 z-50 w-full transition-all duration-300 ease-in-out",
       isScrolled
-        ? "bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 border-b border-border"
+        ? "bg-background/95 backdrop-blur-md border-b border-border shadow-xs"
         : "bg-transparent border-b border-transparent"
     )}>
       <div className="mx-auto flex h-14 w-full max-w-[1380px] items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -290,13 +290,13 @@ export function Header() {
           {/* Action Buttons Panel */}
           <div className="border-t border-border pt-3 grid grid-cols-2 gap-2">
             <Button variant="outline" asChild className="w-full">
-              <Link href="/student" onClick={() => setMobileMenuOpen(false)}>
-                Student Portal
+              <Link id="mobile-login-btn" href="/login" onClick={() => setMobileMenuOpen(false)}>
+                Login
               </Link>
             </Button>
             <Button variant="default" asChild className="w-full">
-              <Link href="/teacher" onClick={() => setMobileMenuOpen(false)}>
-                Teacher Portal
+              <Link id="mobile-signup-btn" href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                Signup
               </Link>
             </Button>
           </div>

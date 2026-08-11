@@ -1,14 +1,30 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { Play, X } from "lucide-react"
 import { BlurImage } from "@/components/blur-image"
 
 export default function VideoModal() {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [isHovered, setIsHovered] = useState(false)
   const imageContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsModalOpen(false)
+    }
+    if (isModalOpen) {
+      window.addEventListener("keydown", handleKeyDown)
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isModalOpen])
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imageContainerRef.current) return
@@ -27,7 +43,7 @@ export default function VideoModal() {
         className="relative rounded-2xl overflow-hidden border border-border/80 bg-card/45 shadow-lg group aspect-video cursor-pointer"
       >
         <BlurImage
-          className="w-full h-full object-cover rounded-2xl"
+          className="w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-105"
           src="/assets/illustrations/thumbnail.png"
           alt="VIDYA School Video Thumbnail"
           width={1366}
@@ -48,8 +64,6 @@ export default function VideoModal() {
             style={{ 
               left: mousePosition.x - 60, 
               top: mousePosition.y - 20,
-              transform: 'scale(1)',
-              opacity: 1
             }}
           >
             <div className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-white animate-pulse">
@@ -60,18 +74,18 @@ export default function VideoModal() {
         )}
       </div>
 
-      {isModalOpen && (
+      {isModalOpen && mounted && createPortal(
         <div 
           onClick={() => setIsModalOpen(false)} 
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 z-[9999] w-screen h-screen bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 cursor-zoom-out animate-fade-in"
         >
           <div 
             onClick={(e) => e.stopPropagation()} 
-            className="relative max-w-4xl w-full aspect-video rounded-2xl overflow-hidden border border-border bg-black shadow-2xl animate-scale-in"
+            className="relative max-w-5xl w-full aspect-video rounded-2xl overflow-hidden border border-white/10 bg-black/95 shadow-2xl animate-zoom-in cursor-default"
           >
             <button 
               onClick={() => setIsModalOpen(false)} 
-              className="absolute top-4 right-4 z-20 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 hover:border-white/30 text-white p-2 transition-all hover:rotate-90 duration-300" 
+              className="absolute top-4 right-4 z-20 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 hover:border-white/30 text-white p-2.5 transition-all hover:rotate-90 duration-300 shadow-lg" 
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -84,7 +98,8 @@ export default function VideoModal() {
               className="w-full h-full border-0"
             />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       
       <style jsx>{`
@@ -92,17 +107,18 @@ export default function VideoModal() {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        @keyframes scale-in {
-          from { transform: scale(0.95); opacity: 0; }
+        @keyframes zoom-in {
+          from { transform: scale(0.9); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
         }
         .animate-fade-in {
           animation: fade-in 0.2s ease-out;
         }
-        .animate-scale-in {
-          animation: scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        .animate-zoom-in {
+          animation: zoom-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
       `}</style>
     </>
   )
 }
+

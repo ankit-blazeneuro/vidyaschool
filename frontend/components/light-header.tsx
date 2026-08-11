@@ -33,15 +33,15 @@ export function LightHeader() {
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 0)
+    const handleScroll = () => setIsScrolled(window.scrollY > 20)
     window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   return (
     <header className={cn(
-      "sticky top-0 z-50 w-full bg-background/95 backdrop-blur-sm transition-colors duration-200",
-      isScrolled ? "border-b border-border" : "border-b border-transparent"
+      "sticky top-0 z-50 w-full bg-background/95 backdrop-blur-md transition-all duration-300 ease-in-out",
+      isScrolled ? "border-b border-border shadow-xs" : "border-b border-transparent"
     )}>
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 font-semibold text-sm">
@@ -69,10 +69,10 @@ export function LightHeader() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t bg-background px-4 py-4 space-y-2">
           <Button variant="outline" asChild className="w-full">
-            <Link href="/student" onClick={() => setMobileMenuOpen(false)}>Student Portal</Link>
+            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>Login</Link>
           </Button>
           <Button variant="default" asChild className="w-full">
-            <Link href="/teacher" onClick={() => setMobileMenuOpen(false)}>Teacher Portal</Link>
+            <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>Signup</Link>
           </Button>
         </div>
       )}

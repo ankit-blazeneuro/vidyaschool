@@ -48,6 +48,7 @@ import { RootProvider } from "fumadocs-ui/provider/next"
 import { PWARegister } from "@/components/pwa-register"
 import { CustomSearchDialog } from "@/components/custom-search-dialog"
 import { Toaster } from "@/components/ui/sonner"
+import { PaperPlanesWrapper } from "@/components/paper-planes-wrapper"
 
 export default async function RootLayout({
   children,
@@ -72,6 +73,9 @@ export default async function RootLayout({
           defaultTheme="light"
           enableSystem
         >
+          {/* PaperPlanes lives here — direct child of body, no overflow-clipping
+              ancestor, so position:fixed on its canvas is always viewport-relative */}
+          {/* <PaperPlanesWrapper /> */}
           <TooltipProvider>
             <RootProvider 
               theme={{ enabled: false }}
