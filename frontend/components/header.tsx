@@ -130,6 +130,9 @@ export function Header() {
                     <ListItem href="/docs/co-curriculars" title="Co-Curricular Activities">
                       Indian performing arts, choral singing, music, and robotics.
                     </ListItem>
+                    <ListItem href="/gallery" title="Photo Gallery">
+                      Explore campus life, student activities, robotics, and school events.
+                    </ListItem>
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>

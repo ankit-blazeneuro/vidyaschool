@@ -308,7 +308,7 @@ export default function DevelopersPage() {
                   <div className="md:col-span-5 relative order-1 md:order-2">
                     <div className="relative aspect-square w-full rounded-none overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-md">
                       <Image
-                        src="https://github.com/surajgola00.png"
+                        src="https://avatars.githubusercontent.com/u/142398597?v=4"
                         alt="Suraj Gola"
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
