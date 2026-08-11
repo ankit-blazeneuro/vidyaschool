@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
-import { Sun, Moon, Menu, X, Smartphone, MapPin } from "lucide-react"
+import { Sun, Moon, Menu, X, Smartphone, MapPin, Code } from "lucide-react"
 
 import {
   NavigationMenu,
@@ -176,6 +176,9 @@ export function Header() {
                     <ListItem href="/contact" title="Contact Us">
                       Find campus coordinates, working hours, maps, and direct phone lines.
                     </ListItem>
+                    <ListItem href="/developers" title="Developers & Creators">
+                      Meet the engineers, designers, and contributors behind VidyaSchool.
+                    </ListItem>
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
@@ -284,6 +287,10 @@ export function Header() {
             <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary shrink-0" />
               Contact Us
+            </Link>
+            <Link href="/developers" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-accent rounded-md flex items-center gap-2">
+              <Code className="h-4 w-4 text-primary shrink-0" />
+              Developers & Creators
             </Link>
           </div>
 

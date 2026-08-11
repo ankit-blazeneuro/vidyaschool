@@ -4,7 +4,12 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
-    remotePatterns: [],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+    ],
     qualities: [75, 85],
   },
   experimental: {

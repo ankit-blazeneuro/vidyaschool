@@ -1,6 +1,7 @@
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import type { Metadata } from "next"
+import Link from "next/link"
 import {
   MapPin,
   Phone,
@@ -9,6 +10,7 @@ import {
   ExternalLink,
   CalendarDays,
   Building2,
+  Code,
 } from "lucide-react"
 
 export const metadata: Metadata = {
@@ -255,13 +257,22 @@ export default function ContactPage() {
             <p className="max-w-md text-sm text-muted-foreground">
               Browse our documentation for step-by-step guides on the student portal, fee payments, library, and more.
             </p>
-            <a
-              href="/docs"
-              className="inline-flex items-center gap-2 rounded-xl border border-primary bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
-            >
-              View Documentation
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <a
+                href="/docs"
+                className="inline-flex items-center gap-2 rounded-xl border border-primary bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
+              >
+                View Documentation
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+              <Link
+                href="/developers"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground shadow-xs hover:bg-accent transition-colors"
+              >
+                <Code className="h-4 w-4 text-primary" />
+                Meet the Developers
+              </Link>
+            </div>
           </div>
         </section>
 
