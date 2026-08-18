@@ -355,6 +355,24 @@ export default function SignUpPage() {
               </form>
             )}
 
+            <p className="px-2 text-center text-xs text-muted-foreground leading-relaxed">
+              By continuing, you agree to our{" "}
+              <Link
+                href="/docs/terms-of-service"
+                className="underline underline-offset-4 hover:text-foreground font-medium transition-colors"
+              >
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="/docs/privacy-policy"
+                className="underline underline-offset-4 hover:text-foreground font-medium transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              .
+            </p>
+
           </div>
         </div>
       </div>
