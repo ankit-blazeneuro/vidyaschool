@@ -41,6 +41,15 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.luminance
+import com.vidyaschool.app.api.TeacherCalendarEvent
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.api.TopPerformerItem
 import com.vidyaschool.app.ui.components.SliderSkeleton
@@ -60,6 +69,18 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.LoadAdError
+
+@Composable
+fun isStudentAppInDarkTheme(): Boolean {
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val isSurfaceDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    return when (sessionManager.getThemeMode()) {
+        "light" -> false
+        "dark" -> true
+        else -> isSurfaceDark
+    }
+}
 
 @Composable
 fun StudentScreen(
@@ -169,34 +190,32 @@ fun StudentScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
                 ) {
-                    // Auto-playing Image Slider at the top
+                    // Auto-playing Carousel Slider with Announcements & Leaderboard Slide
                     if (isLoadingSlider) {
                         SliderSkeleton(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(180.dp)
+                                .height(185.dp)
                         )
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(20.dp))
                     } else {
                         val enabledImages = sliderImages.filter { it.enabled }
-                        if (enabledImages.isNotEmpty()) {
-                            ImageSlider(
-                                images = enabledImages,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(180.dp)
-                            )
-                            Spacer(modifier = Modifier.height(24.dp))
-                        }
+                        StudentDashboardCarousel(
+                            images = enabledImages,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(185.dp)
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
                     }
-                    
-                    TopPerformersBanner()
-                    
-                    Spacer(modifier = Modifier.height(20.dp))
                     
                     AcademicPerformanceCard()
                     
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
+                    
+                    StudentTimetableSection()
+                    
+                    Spacer(modifier = Modifier.height(20.dp))
                     
                     LibraryBooksSection(onShowMore = onShowLibrary)
                 }
@@ -1015,84 +1034,148 @@ fun AttendancePieChart(
 }
 
 @Composable
-fun ImageSlider(
+fun StudentDashboardCarousel(
     images: List<SliderImage>,
     modifier: Modifier = Modifier
 ) {
-    if (images.isEmpty()) return
-    
-    val pagerState = rememberPagerState(pageCount = { images.size })
-    
-    // Auto-scroll loop
-    LaunchedEffect(pagerState) {
-        while (true) {
-            delay(4000)
-            val nextPage = (pagerState.currentPage + 1) % images.size
-            pagerState.animateScrollToPage(nextPage)
+    val isDark = isStudentAppInDarkTheme()
+
+    val defaultSliderImages = remember {
+        listOf(
+            SliderImage(
+                id = 1,
+                title = "Welcome to Vidya School",
+                url = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=800&auto=format&fit=crop",
+                enabled = true
+            ),
+            SliderImage(
+                id = 2,
+                title = "Academic Excellence & Growth",
+                url = "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop",
+                enabled = true
+            )
+        )
+    }
+
+    val effectiveImages = if (images.isNotEmpty()) images else defaultSliderImages
+    val totalPages = effectiveImages.size + 1
+    val pagerState = rememberPagerState(pageCount = { totalPages })
+
+    // Auto-scroll loop with safety against gesture interruptions
+    LaunchedEffect(pagerState, totalPages) {
+        if (totalPages > 1) {
+            while (true) {
+                delay(4500L)
+                if (!pagerState.isScrollInProgress) {
+                    try {
+                        val targetPage = (pagerState.currentPage + 1) % totalPages
+                        pagerState.animateScrollToPage(targetPage)
+                    } catch (e: Exception) {
+                        // ignore gesture cancellation to keep the loop active
+                    }
+                }
+            }
         }
     }
-    
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(18.dp))
     ) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
         ) { page ->
-            val img = images[page]
-            Box(modifier = Modifier.fillMaxSize()) {
-                AsyncImage(
-                    model = img.url,
-                    contentDescription = img.title,
-                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-                
-                // Dark bottom gradient overlay
+            if (page < effectiveImages.size) {
+                // Slides 0 until N-1: Image Banners
+                val img = effectiveImages[page]
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
-                                startY = 150f
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(if (isDark) Color(0xFF18181B) else Color(0xFFF4F4F5))
+                ) {
+                    AsyncImage(
+                        model = img.url,
+                        contentDescription = img.title,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+
+                    // Dark bottom gradient overlay
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)),
+                                    startY = 100f
+                                )
                             )
+                    )
+
+                    // Image title text overlay
+                    if (!img.title.isNullOrEmpty()) {
+                        Text(
+                            text = img.title,
+                            color = Color.White,
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(horizontal = 16.dp, vertical = 14.dp)
                         )
-                )
-                
-                // Image title text overlay
-                Text(
-                    text = img.title,
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(16.dp)
+                    }
+                }
+            } else {
+                // Last Slide: Top Performers Leaderboard
+                LeaderboardSlideContent(
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }
-        
+
         // Progress dot indicators
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            repeat(images.size) { index ->
-                val active = pagerState.currentPage == index
-                Box(
-                    modifier = Modifier
-                        .size(if (active) 12.dp else 6.dp, 6.dp)
-                        .clip(CircleShape)
-                        .background(if (active) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.5f))
-                )
+        if (totalPages > 1) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 14.dp, bottom = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val isLeaderboardActive = pagerState.currentPage == effectiveImages.size
+                repeat(totalPages) { index ->
+                    val active = pagerState.currentPage == index
+                    val dotColor = if (isLeaderboardActive) {
+                        if (active) {
+                            if (isDark) Color(0xFFF4F4F5) else Color(0xFF18181B)
+                        } else {
+                            if (isDark) Color(0xFF3F3F46) else Color(0xFFD4D4D8)
+                        }
+                    } else {
+                        if (active) Color.White else Color.White.copy(alpha = 0.40f)
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(if (active) 12.dp else 5.dp, 5.dp)
+                            .clip(CircleShape)
+                            .background(dotColor)
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+fun ImageSlider(
+    images: List<SliderImage>,
+    modifier: Modifier = Modifier
+) {
+    StudentDashboardCarousel(images = images, modifier = modifier)
 }
 
 @Composable
@@ -1199,12 +1282,12 @@ fun AcademicPerformanceChart(
     }
 }
 @Composable
-fun TopPerformersBanner(
+fun LeaderboardSlideContent(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
-    val isDark = isSystemInDarkTheme()
+    val isDark = isStudentAppInDarkTheme()
 
     // 1. Initialize state with cached data if available
     val cachedPerformers = remember { sessionManager.getCachedTopPerformers() }
@@ -1232,17 +1315,14 @@ fun TopPerformersBanner(
             val response = RetrofitClient.authApi.getTopPerformers("Bearer $token")
             val fetched = response.body()?.leaderboard
             if (response.isSuccessful && !fetched.isNullOrEmpty()) {
-                // Save new leaderboard update to cache
                 sessionManager.saveTopPerformers(fetched)
                 topPerformers = fetched
             } else {
-                android.util.Log.w("TopPerformersBanner", "API returned empty/error: ${response.code()} ${response.message()}")
                 if (topPerformers.isEmpty()) {
                     topPerformers = defaultPerformers
                 }
             }
         } catch (e: Exception) {
-            android.util.Log.e("TopPerformersBanner", "Failed to fetch top performers: ${e.message}")
             if (topPerformers.isEmpty()) {
                 topPerformers = defaultPerformers
             }
@@ -1258,181 +1338,105 @@ fun TopPerformersBanner(
 
     val podiumOrdered = listOfNotNull(rank2, rank1, rank3)
 
-    // Grainy Noise points for authentic grainy texture over #374798
-    val grainNoisePoints = remember {
-        val rng = kotlin.random.Random(2026)
-        List(380) {
-            Triple(
-                rng.nextFloat(), // x position ratio
-                rng.nextFloat(), // y position ratio
-                rng.nextFloat()  // particle alpha / size factor
-            )
-        }
-    }
+    // Bento styling for leaderboard slide
+    val outerBgColor = if (isDark) Color(0xFF18181B) else Color(0xFFFFFFFF)
+    val outerBorderColor = if (isDark) Color(0xFF27272A) else Color(0xFFE4E4E7)
+    val headerTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF18181B)
+    val subtitleTextColor = if (isDark) Color(0xFFA1A1AA) else Color(0xFF71717A)
 
-    // Outer Container Colors (Grainy Gradient #374798)
-    val outerBgBrush = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF374798),
-            Color(0xFF283677),
-            Color(0xFF4354A8),
-            Color(0xFF1E2856)
-        )
-    )
-
-    val outerBorderBrush = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFF8192E6).copy(alpha = 0.5f),
-            Color(0xFF374798).copy(alpha = 0.3f),
-            Color(0xFFC084FC).copy(alpha = 0.4f)
-        )
-    )
-
-    val headerTextColor = Color.White
-
-    Card(
+    Box(
         modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = 1.dp,
-            brush = outerBorderBrush
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            .fillMaxSize()
+            .clip(RoundedCornerShape(18.dp))
+            .background(outerBgColor)
+            .border(1.dp, outerBorderColor, RoundedCornerShape(18.dp))
+            .padding(top = 10.dp, bottom = 8.dp, start = 12.dp, end = 12.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(brush = outerBgBrush)
-                .drawBehind {
-                    // Random / Organic color pattern spots over #374798 background
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(Color(0xFF38BDF8).copy(alpha = 0.32f), Color.Transparent),
-                            center = androidx.compose.ui.geometry.Offset(size.width * 0.12f, size.height * 0.20f),
-                            radius = size.width * 0.55f
-                        )
-                    )
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(Color(0xFFC084FC).copy(alpha = 0.30f), Color.Transparent),
-                            center = androidx.compose.ui.geometry.Offset(size.width * 0.88f, size.height * 0.35f),
-                            radius = size.width * 0.50f
-                        )
-                    )
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(Color(0xFFFBBF24).copy(alpha = 0.25f), Color.Transparent),
-                            center = androidx.compose.ui.geometry.Offset(size.width * 0.40f, size.height * 0.82f),
-                            radius = size.width * 0.45f
-                        )
-                    )
-                    drawCircle(
-                        brush = Brush.radialGradient(
-                            colors = listOf(Color(0xFFF43F5E).copy(alpha = 0.22f), Color.Transparent),
-                            center = androidx.compose.ui.geometry.Offset(size.width * 0.75f, size.height * 0.88f),
-                            radius = size.width * 0.40f
-                        )
-                    )
-
-                    // Grainy noise texture overlay
-                    grainNoisePoints.forEach { (xFrac, yFrac, noiseVal) ->
-                        val alpha = 0.03f + noiseVal * 0.10f
-                        drawCircle(
-                            color = if (noiseVal > 0.45f) Color.White.copy(alpha = alpha) else Color.Black.copy(alpha = alpha * 0.4f),
-                            radius = 1.2f,
-                            center = androidx.compose.ui.geometry.Offset(size.width * xFrac, size.height * yFrac)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Header Bar
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isDark) Color(0xFF33270A) else Color(0xFFFEF3C7)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_medal_star),
+                            contentDescription = null,
+                            tint = if (isDark) Color(0xFFFFD700) else Color(0xFFD97706),
+                            modifier = Modifier.size(12.dp)
                         )
                     }
+
+                    Text(
+                        text = "Leaderboard",
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = headerTextColor
+                    )
                 }
-                .padding(top = 16.dp, bottom = 18.dp, start = 14.dp, end = 14.dp)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Minimal Header Bar
+
+                Text(
+                    text = "Top Performers",
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = subtitleTextColor
+                )
+            }
+
+            // Podium Row (2nd, 1st, 3rd)
+            if (isLoading) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Bottom
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    repeat(3) { index ->
+                        val heightFraction = when (index) {
+                            1 -> 1.0f
+                            0 -> 0.88f
+                            else -> 0.85f
+                        }
                         Box(
                             modifier = Modifier
-                                .size(26.dp)
-                                .clip(CircleShape)
+                                .weight(1f)
+                                .fillMaxHeight(heightFraction)
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(
-                                    Brush.linearGradient(
-                                        listOf(Color(0xFFFFD700), Color(0xFFFF9900))
-                                    )
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_medal_star),
-                                contentDescription = null,
-                                tint = Color(0xFF1E1000),
-                                modifier = Modifier.size(15.dp)
-                            )
-                        }
-
-                        Text(
-                            text = "Leaderboard",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = headerTextColor
+                                    if (isDark) Color.White.copy(alpha = 0.05f)
+                                    else Color(0xFFF4F4F5)
+                                )
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Podium Row
-                if (isLoading) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(170.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        repeat(3) { index ->
-                            val heightFraction = when (index) {
-                                1 -> 1.0f
-                                0 -> 0.85f
-                                else -> 0.78f
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight(heightFraction)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(
-                                        if (isDark) Color.White.copy(alpha = 0.06f)
-                                        else Color(0xFF64748B).copy(alpha = 0.08f)
-                                    )
-                            )
-                        }
-                    }
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        podiumOrdered.forEach { item ->
-                            TopPerformerPodiumCard(
-                                item = item,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    podiumOrdered.forEach { item ->
+                        TopPerformerPodiumCard(
+                            item = item,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
@@ -1441,127 +1445,112 @@ fun TopPerformersBanner(
 }
 
 @Composable
+fun TopPerformersBanner(
+    modifier: Modifier = Modifier
+) {
+    LeaderboardSlideContent(modifier = modifier)
+}
+
+@Composable
 fun TopPerformerPodiumCard(
     item: TopPerformerItem,
     modifier: Modifier = Modifier
 ) {
-    val isDark = isSystemInDarkTheme()
+    val isDark = isStudentAppInDarkTheme()
     val rank = item.rank ?: 1
     val isFirst = rank == 1
     val isSecond = rank == 2
 
+    // Calibrated heights to comfortably fit inside the 185.dp slider
     val cardHeight = when {
-        isFirst -> 176.dp
-        isSecond -> 156.dp
-        else -> 146.dp
+        isFirst -> 130.dp
+        isSecond -> 116.dp
+        else -> 112.dp
     }
 
-    val avatarSize = if (isFirst) 52.dp else 42.dp
-    val ringSize = avatarSize + 6.dp
+    val avatarSize = if (isFirst) 34.dp else 28.dp
+    val ringSize = avatarSize + 4.dp
 
-    val rankGradient = when {
-        isFirst -> listOf(Color(0xFFFFD700), Color(0xFFFFA500))
-        isSecond -> if (isDark) listOf(Color(0xFFE2E8F0), Color(0xFF94A3B8)) else listOf(Color(0xFF64748B), Color(0xFF94A3B8))
-        else -> listOf(Color(0xFFFDBA74), Color(0xFFEA580C))
+    val rankRingGradient = when {
+        isFirst -> listOf(Color(0xFFFFD700), Color(0xFFF59E0B))
+        isSecond -> if (isDark) listOf(Color(0xFFCBD5E1), Color(0xFF64748B)) else listOf(Color(0xFF94A3B8), Color(0xFFCBD5E1))
+        else -> listOf(Color(0xFFFB923C), Color(0xFFEA580C))
     }
 
-    val borderBrush = if (isDark) {
+    // Card background color optimized for light and dark themes
+    val cardBg = if (isDark) {
         when {
-            isFirst -> Brush.verticalGradient(
-                colors = listOf(Color(0xFFFFD700).copy(alpha = 0.85f), Color(0xFFFF8C00).copy(alpha = 0.35f))
-            )
-            isSecond -> Brush.verticalGradient(
-                colors = listOf(Color(0xFFE2E8F0).copy(alpha = 0.55f), Color(0xFF64748B).copy(alpha = 0.25f))
-            )
-            else -> Brush.verticalGradient(
-                colors = listOf(Color(0xFFFDBA74).copy(alpha = 0.55f), Color(0xFF9A3412).copy(alpha = 0.25f))
-            )
+            isFirst -> Color(0xFF221B12)
+            isSecond -> Color(0xFF1B2028)
+            else -> Color(0xFF221714)
         }
     } else {
         when {
-            isFirst -> Brush.verticalGradient(
-                colors = listOf(Color(0xFFF59E0B), Color(0xFFD97706).copy(alpha = 0.6f))
-            )
-            isSecond -> Brush.verticalGradient(
-                colors = listOf(Color(0xFF94A3B8), Color(0xFFCBD5E1))
-            )
-            else -> Brush.verticalGradient(
-                colors = listOf(Color(0xFFEA580C), Color(0xFFFDBA74).copy(alpha = 0.6f))
-            )
+            isFirst -> Color(0xFFFEFCE8)
+            isSecond -> Color(0xFFF8FAFC)
+            else -> Color(0xFFFFF7ED)
         }
     }
 
-    val backgroundBrush = if (isDark) {
+    // Card border stroke
+    val cardBorderColor = if (isDark) {
         when {
-            isFirst -> Brush.verticalGradient(
-                colors = listOf(
-                    Color(0xFF261E38).copy(alpha = 0.8f),
-                    Color(0xFF181326).copy(alpha = 0.9f)
-                )
-            )
-            isSecond -> Brush.verticalGradient(
-                colors = listOf(
-                    Color(0xFF1E293B).copy(alpha = 0.65f),
-                    Color(0xFF0F172A).copy(alpha = 0.75f)
-                )
-            )
-            else -> Brush.verticalGradient(
-                colors = listOf(
-                    Color(0xFF271C19).copy(alpha = 0.65f),
-                    Color(0xFF150F14).copy(alpha = 0.75f)
-                )
-            )
+            isFirst -> Color(0xFFFFD700).copy(alpha = 0.70f)
+            isSecond -> Color(0xFF475569)
+            else -> Color(0xFF9A3412).copy(alpha = 0.65f)
         }
     } else {
         when {
-            isFirst -> Brush.verticalGradient(
-                colors = listOf(
-                    Color(0xFFFFFBEB),
-                    Color(0xFFFEF3C7)
-                )
-            )
-            isSecond -> Brush.verticalGradient(
-                colors = listOf(
-                    Color(0xFFFFFFFF),
-                    Color(0xFFF1F5F9)
-                )
-            )
-            else -> Brush.verticalGradient(
-                colors = listOf(
-                    Color(0xFFFFF7ED),
-                    Color(0xFFFFEDD5)
-                )
-            )
+            isFirst -> Color(0xFFEAB308).copy(alpha = 0.55f)
+            isSecond -> Color(0xFFE2E8F0)
+            else -> Color(0xFFFDBA74).copy(alpha = 0.60f)
         }
     }
 
-    val badgeBgColor = when {
-        isFirst -> Color(0xFFFFD700)
-        isSecond -> if (isDark) Color(0xFFE2E8F0) else Color(0xFF475569)
-        else -> if (isDark) Color(0xFFFFAB76) else Color(0xFFD97706)
+    // Score badge pill styling
+    val badgeBg = if (isDark) {
+        when {
+            isFirst -> Brush.horizontalGradient(listOf(Color(0xFFFFD700), Color(0xFFF59E0B)))
+            isSecond -> Brush.horizontalGradient(listOf(Color(0xFF334155), Color(0xFF334155)))
+            else -> Brush.horizontalGradient(listOf(Color(0xFF431407), Color(0xFF431407)))
+        }
+    } else {
+        when {
+            isFirst -> Brush.horizontalGradient(listOf(Color(0xFFFEF08A), Color(0xFFFDE047)))
+            isSecond -> Brush.horizontalGradient(listOf(Color(0xFFF1F5F9), Color(0xFFF1F5F9)))
+            else -> Brush.horizontalGradient(listOf(Color(0xFFFFEDD5), Color(0xFFFFEDD5)))
+        }
     }
 
-    val badgeTextColor = when {
-        isFirst -> Color(0xFF1A1000)
-        isSecond -> if (isDark) Color(0xFF0F172A) else Color.White
-        else -> if (isDark) Color(0xFF2A0C00) else Color.White
+    val badgeTextColor = if (isDark) {
+        when {
+            isFirst -> Color(0xFF1E1000)
+            isSecond -> Color(0xFFF8FAFC)
+            else -> Color(0xFFFFEDD5)
+        }
+    } else {
+        when {
+            isFirst -> Color(0xFF854D0E)
+            isSecond -> Color(0xFF334155)
+            else -> Color(0xFF9A3412)
+        }
     }
 
-    val nameColor = if (isDark) Color.White else Color(0xFF0F172A)
-    val classColor = if (isDark) Color.White.copy(alpha = 0.55f) else Color(0xFF64748B)
+    val nameColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF0F172A)
+    val classColor = if (isDark) Color(0xFFA1A1AA) else Color(0xFF64748B)
 
     Box(
         modifier = modifier
             .height(cardHeight)
             .zIndex(if (isFirst) 2f else 1f)
-            .clip(RoundedCornerShape(20.dp))
-            .background(backgroundBrush)
+            .clip(RoundedCornerShape(14.dp))
+            .background(cardBg)
             .border(
-                width = if (isFirst) 1.5.dp else 1.dp,
-                brush = borderBrush,
-                shape = RoundedCornerShape(20.dp)
+                width = if (isFirst) 1.2.dp else 1.dp,
+                color = cardBorderColor,
+                shape = RoundedCornerShape(14.dp)
             )
-            .padding(horizontal = 6.dp, vertical = 10.dp),
+            .padding(horizontal = 4.dp, vertical = 6.dp),
         contentAlignment = Alignment.TopCenter
     ) {
         Column(
@@ -1569,17 +1558,17 @@ fun TopPerformerPodiumCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Section: Avatar with Ring
+            // Top Section: Avatar with Rank Ring
             Box(
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier.padding(top = 1.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (isFirst) {
                     Box(
                         modifier = Modifier
-                            .size(ringSize + 8.dp)
+                            .size(ringSize + 4.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFFFD700).copy(alpha = if (isDark) 0.15f else 0.25f))
+                            .background(Color(0xFFFFD700).copy(alpha = if (isDark) 0.15f else 0.20f))
                     )
                 }
 
@@ -1587,14 +1576,14 @@ fun TopPerformerPodiumCard(
                     modifier = Modifier
                         .size(ringSize)
                         .clip(CircleShape)
-                        .background(Brush.linearGradient(rankGradient)),
+                        .background(Brush.linearGradient(rankRingGradient)),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
                         modifier = Modifier
                             .size(avatarSize)
                             .clip(CircleShape)
-                            .background(if (isDark) Color(0xFF0F172A) else Color.White),
+                            .background(if (isDark) Color(0xFF18181B) else Color.White),
                         contentAlignment = Alignment.Center
                     ) {
                         val avatar = item.avatarUrl
@@ -1611,15 +1600,13 @@ fun TopPerformerPodiumCard(
                             Text(
                                 text = (item.name?.take(1) ?: "S").uppercase(),
                                 fontWeight = FontWeight.Bold,
-                                fontSize = if (isFirst) 18.sp else 14.sp,
-                                color = if (isDark) Color.White else Color(0xFF0F172A)
+                                fontSize = if (isFirst) 14.sp else 12.sp,
+                                color = if (isDark) Color.White else Color(0xFF18181B)
                             )
                         }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(4.dp))
 
             // Middle Section: Name & Class/Section
             Column(
@@ -1628,7 +1615,7 @@ fun TopPerformerPodiumCard(
             ) {
                 Text(
                     text = item.name ?: "Student",
-                    fontSize = if (isFirst) 12.sp else 11.sp,
+                    fontSize = if (isFirst) 10.5.sp else 9.5.sp,
                     fontWeight = if (isFirst) FontWeight.Bold else FontWeight.SemiBold,
                     color = nameColor,
                     maxLines = 1,
@@ -1644,7 +1631,7 @@ fun TopPerformerPodiumCard(
                 if (classSec.isNotEmpty()) {
                     Text(
                         text = classSec,
-                        fontSize = 9.sp,
+                        fontSize = 8.sp,
                         color = classColor,
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
@@ -1654,36 +1641,22 @@ fun TopPerformerPodiumCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Bottom Section: Score Percentage Badge
+            // Bottom Section: Score Percentage Badge (Guaranteed No Crop)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        if (isFirst) {
-                            Brush.horizontalGradient(
-                                listOf(Color(0xFFFFD700), Color(0xFFFF9900))
-                            )
-                        } else {
-                            Brush.horizontalGradient(
-                                listOf(
-                                    badgeBgColor.copy(alpha = if (isDark) 0.20f else 0.85f),
-                                    badgeBgColor.copy(alpha = if (isDark) 0.12f else 0.95f)
-                                )
-                            )
-                        }
-                    )
-                    .padding(vertical = 5.dp),
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(badgeBg)
+                    .padding(horizontal = 4.dp, vertical = 2.5.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = String.format("%.1f%%", item.percentage ?: 0.0),
-                    fontSize = if (isFirst) 11.sp else 10.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    text = String.format(java.util.Locale.US, "%.1f%%", item.percentage ?: 0.0),
+                    fontSize = if (isFirst) 10.sp else 9.5.sp,
+                    fontWeight = FontWeight.Bold,
                     color = badgeTextColor,
-                    lineHeight = 12.sp,
+                    maxLines = 1,
+                    softWrap = false,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
             }
@@ -1701,4 +1674,293 @@ fun TopPerformerCard(
     modifier: Modifier = Modifier
 ) {
     TopPerformerPodiumCard(item = item, modifier = modifier)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Student Timetable / Daily Schedule (Matching Teacher Dashboard with Light & Dark Mode)
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun StudentTimetableSkeleton(isDark: Boolean) {
+    val transition = rememberInfiniteTransition(label = "student_cal_shimmer")
+    val shimmerX by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmerX"
+    )
+    val shimmerBrush = Brush.linearGradient(
+        colors = if (isDark) {
+            listOf(Color(0xFF27272A), Color(0xFF3F3F46), Color(0xFF27272A))
+        } else {
+            listOf(Color(0xFFF4F4F5), Color(0xFFE4E4E7), Color(0xFFF4F4F5))
+        },
+        start = androidx.compose.ui.geometry.Offset(shimmerX - 300f, 0f),
+        end   = androidx.compose.ui.geometry.Offset(shimmerX, 0f)
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (isDark) Color(0xFF18181B) else Color(0xFFFFFFFF))
+            .border(
+                1.dp,
+                if (isDark) Color(0xFF27272A) else Color(0xFFE4E4E7),
+                RoundedCornerShape(20.dp)
+            )
+            .padding(18.dp)
+    ) {
+        Column {
+            Box(modifier = Modifier.width(100.dp).height(14.dp).clip(RoundedCornerShape(7.dp)).background(shimmerBrush))
+            Spacer(modifier = Modifier.height(16.dp))
+            Box(modifier = Modifier.width(130.dp).height(10.dp).clip(RoundedCornerShape(5.dp)).background(shimmerBrush))
+            Spacer(modifier = Modifier.height(10.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(42.dp).clip(RoundedCornerShape(12.dp)).background(shimmerBrush))
+            Spacer(modifier = Modifier.height(18.dp))
+            Box(modifier = Modifier.width(90.dp).height(10.dp).clip(RoundedCornerShape(5.dp)).background(shimmerBrush))
+            Spacer(modifier = Modifier.height(10.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(12.dp)).background(shimmerBrush))
+            Spacer(modifier = Modifier.height(6.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(12.dp)).background(shimmerBrush))
+        }
+    }
+}
+
+@Composable
+private fun StudentEventRow(
+    title: String,
+    time: String,
+    barColor: Color,
+    textColor: Color,
+    timeColor: Color = textColor,
+    rowBg: Color = Color.Transparent,
+    rowBorder: Color? = null,
+    cornerRadius: Int = 12,
+    height: Int = 42,
+    horizontalPadding: Int = 12
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(height.dp),
+        shape = RoundedCornerShape(cornerRadius.dp),
+        color = rowBg,
+        border = rowBorder?.let { androidx.compose.foundation.BorderStroke(0.8.dp, it) }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = horizontalPadding.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.weight(1f, fill = false),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(3.5.dp)
+                        .height(16.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(barColor)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = title,
+                    color = textColor,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = time,
+                color = timeColor,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+fun StudentTimetableSection(
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val isDark = isStudentAppInDarkTheme()
+    val sessionManager = remember { SessionManager(context) }
+    val sessionToken = remember { sessionManager.getSessionToken() }
+
+    var todayDateStr by remember { mutableStateOf("TODAY, SCHEDULE") }
+    var todayEvents by remember { mutableStateOf<List<TeacherCalendarEvent>>(emptyList()) }
+    var tomorrowEvents by remember { mutableStateOf<List<TeacherCalendarEvent>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    // Color tokens dynamically tuned for Light and Dark modes
+    val cardBg = if (isDark) Color(0xFF18181B) else Color(0xFFFFFFFF)
+    val cardBorder = if (isDark) Color(0xFF27272A) else Color(0xFFE4E4E7)
+    val headerTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF18181B)
+    val todayDateRed = if (isDark) Color(0xFFFF5A52) else Color(0xFFE11D48)
+    val tomorrowGray = if (isDark) Color(0xFF8A8A8A) else Color(0xFF71717A)
+    val emptyTextColor = if (isDark) Color(0xFF8A8A8A) else Color(0xFF71717A)
+
+    // Today row theme tokens
+    val todayBarColor = if (isDark) Color(0xFFD7D842) else Color(0xFFEAB308)
+    val todayTextColor = if (isDark) Color(0xFFD7D842) else Color(0xFF854D0E)
+    val todayRowBg = if (isDark) Color(0xFF242416) else Color(0xFFFEFCE8)
+    val todayRowBorder = if (isDark) Color(0xFFD7D842).copy(alpha = 0.22f) else Color(0xFFEAB308).copy(alpha = 0.35f)
+
+    // Tomorrow row theme tokens
+    val tomorrowAccentBars = if (isDark) {
+        listOf(Color(0xFFC084FC), Color(0xFFFF7A5A), Color(0xFFD7D842), Color(0xFF60A5FA))
+    } else {
+        listOf(Color(0xFF8B5CF6), Color(0xFFEA580C), Color(0xFFCA8A04), Color(0xFF2563EB))
+    }
+    val tomorrowRowBg = if (isDark) Color.Transparent else Color(0xFFF8FAFC)
+    val tomorrowRowBorder = if (isDark) null else Color(0xFFE2E8F0)
+    val tomorrowTextColor = if (isDark) Color(0xFFE4E4E7) else Color(0xFF1E293B)
+    val tomorrowTimeColor = if (isDark) Color(0xFFA1A1AA) else Color(0xFF64748B)
+
+    LaunchedEffect(Unit) {
+        try {
+            if (!sessionToken.isNullOrEmpty()) {
+                val res = RetrofitClient.authApi.getStudentCalendar("Bearer $sessionToken")
+                if (res.isSuccessful && res.body() != null) {
+                    val body = res.body()
+                    body?.todayDateStr?.let { todayDateStr = it }
+                    todayEvents = body?.todayEvents ?: emptyList()
+                    tomorrowEvents = body?.tomorrowEvents ?: emptyList()
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("StudentTimetable", "Error fetching real student calendar: ${e.message}")
+        } finally {
+            isLoading = false
+        }
+    }
+
+    if (isLoading) {
+        StudentTimetableSkeleton(isDark = isDark)
+    } else {
+        Surface(
+            modifier = modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = cardBg,
+            border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder),
+            shadowElevation = if (isDark) 0.dp else 1.dp
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Timetable",
+                        color = headerTextColor,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.3).sp
+                    )
+
+                    // Three-dot icon decoration
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(3.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        repeat(3) {
+                            Box(
+                                modifier = Modifier
+                                    .size(3.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(if (isDark) Color(0xFF71717A) else Color(0xFFA1A1AA))
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // TODAY Section
+                Text(
+                    text = todayDateStr.uppercase(),
+                    color = todayDateRed,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.1.sp
+                )
+                Spacer(modifier = Modifier.height(9.dp))
+
+                if (todayEvents.isEmpty()) {
+                    Text(
+                        text = "No classes scheduled today",
+                        color = emptyTextColor,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                } else {
+                    todayEvents.take(4).forEach { ev ->
+                        StudentEventRow(
+                            title        = ev.title,
+                            time         = ev.time,
+                            barColor     = todayBarColor,
+                            textColor    = todayTextColor,
+                            timeColor    = todayTextColor,
+                            rowBg        = todayRowBg,
+                            rowBorder    = todayRowBorder,
+                            cornerRadius = 12,
+                            height       = 42,
+                            horizontalPadding = 12
+                        )
+                        Spacer(modifier = Modifier.height(5.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // TOMORROW Section
+                Text(
+                    text = "TOMORROW",
+                    color = tomorrowGray,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.1.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                if (tomorrowEvents.isEmpty()) {
+                    Text(
+                        text = "No classes scheduled tomorrow",
+                        color = emptyTextColor,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        tomorrowEvents.take(4).forEachIndexed { idx, ev ->
+                            val barColor = tomorrowAccentBars[idx % tomorrowAccentBars.size]
+                            StudentEventRow(
+                                title       = ev.title,
+                                time        = ev.time,
+                                barColor    = barColor,
+                                textColor   = if (isDark) barColor else tomorrowTextColor,
+                                timeColor   = if (isDark) barColor else tomorrowTimeColor,
+                                rowBg       = tomorrowRowBg,
+                                rowBorder   = tomorrowRowBorder
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

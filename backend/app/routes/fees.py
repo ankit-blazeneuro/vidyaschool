@@ -1593,6 +1593,85 @@ def get_student_class_leaderboard(
     }
 
 
+@router.get("/api/student/calendar", response_model=Dict[str, Any])
+def get_student_calendar(
+    current_user: User = Depends(require_role(["student", "teacher", "admin", "librarian"])),
+    db: Session = Depends(get_db)
+):
+    from models import UserProfile, Timetable, User as UserModel
+    from sqlalchemy import func
+    
+    days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    now = datetime.now()
+    today_idx = (now.weekday() + 1) % 7
+    today_day = days[today_idx]
+    tomorrow_day = days[(today_idx + 1) % 7]
+
+    months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    today_date_str = f"{today_day.upper()}, {months[now.month - 1]} {now.day}"
+
+    profile = db.query(UserProfile).filter(UserProfile.user_id == current_user.id).first()
+    
+    today_slots = []
+    tomorrow_slots = []
+
+    if profile and profile.class_ and profile.class_ != "none":
+        today_query = db.query(Timetable, UserModel).outerjoin(
+            UserModel, Timetable.teacher_id == UserModel.id
+        ).filter(
+            Timetable.class_ == profile.class_,
+            func.lower(Timetable.day_of_week) == today_day.lower()
+        )
+        if profile.section:
+            today_query = today_query.filter(Timetable.section == profile.section)
+        today_slots = today_query.order_by(Timetable.start_time).all()
+
+        tomorrow_query = db.query(Timetable, UserModel).outerjoin(
+            UserModel, Timetable.teacher_id == UserModel.id
+        ).filter(
+            Timetable.class_ == profile.class_,
+            func.lower(Timetable.day_of_week) == tomorrow_day.lower()
+        )
+        if profile.section:
+            tomorrow_query = tomorrow_query.filter(Timetable.section == profile.section)
+        tomorrow_slots = tomorrow_query.order_by(Timetable.start_time).all()
+
+    def format_time(t_str: str) -> str:
+        if not t_str or ":" not in t_str:
+            return t_str
+        try:
+            parts = t_str.split(":")
+            h = int(parts[0])
+            m = parts[1]
+            ampm = "PM" if h >= 12 else "AM"
+            h_12 = h % 12 or 12
+            return f"{h_12}:{m} {ampm}"
+        except Exception:
+            return t_str
+
+    return {
+        "todayDateStr": today_date_str,
+        "todayEvents": [
+            {
+                "id": s.id,
+                "title": f"{s.subject} (by {teacher.name})" if teacher and teacher.name else s.subject,
+                "time": format_time(s.start_time),
+                "room": s.room or ""
+            }
+            for s, teacher in today_slots
+        ],
+        "tomorrowEvents": [
+            {
+                "id": s.id,
+                "title": f"{s.subject} (by {teacher.name})" if teacher and teacher.name else s.subject,
+                "time": format_time(s.start_time),
+                "room": s.room or ""
+            }
+            for s, teacher in tomorrow_slots
+        ]
+    }
+
+
 # ── Real-Time Server Log Streamer for Developer Console ───────────────────────
 import collections
 from fastapi import Query, Header

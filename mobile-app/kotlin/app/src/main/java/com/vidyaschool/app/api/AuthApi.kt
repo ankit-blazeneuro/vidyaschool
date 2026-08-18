@@ -346,6 +346,11 @@ interface AuthApi {
     ): Response<TeacherCalendarResponse>
     // Note: called on authApi (api.blazeneuro.com) — teacher router prefix is /teacher (no /api prefix)
 
+    @GET("api/student/calendar")
+    suspend fun getStudentCalendar(
+        @Header("Authorization") authHeader: String
+    ): Response<TeacherCalendarResponse>
+
     @GET("api/chats")
     suspend fun getUserChats(
         @Header("Authorization") authHeader: String
