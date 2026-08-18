@@ -725,54 +725,92 @@ Log infrastructural issues or coordinate reports directly with coordinators or I
 Use the File a Complaint button in the sidebar. Select Academic Coordinator, Principal, or IT Support, fill in titles, tag users, and describe your request. CMP reference numbers are issued for all submissions.
 """,
     "/docs/privacy-policy": """# Privacy Policy
-This Privacy Policy details how VidyaSchool collects, utilizes, protects, and governs personal information for students, educators, and guardians.
+This Privacy Policy details how VidyaSchool and BlazeNeuro collect, process, safeguard, and govern personal data for students, guardians, educators, and administrators across web and mobile platforms.
 
-## 1. Introduction
-Welcome to VidyaSchool ("we", "us", "our"). We are committed to safeguarding the privacy and security of our portal users. This policy governs data collected through the portal, mobile apps, and school databases.
+## 1. Scope & Data Fiduciary Details
+Applies to all users across web, Android, iOS, and API interfaces. We process records strictly for educational delivery in compliance with FERPA, COPPA, and DPDP frameworks. We do not sell or monetize student data.
 
-## 2. Data We Collect
-To provide efficient academic workflows, we gather the following personal identifiers:
-- **Profiles**: Full names, profile pictures, institutional emails, secure credentials, and preferred platform roles.
-- **Academics**: Grade level, section allocations, exam marks, classes rosters, and report card remarks.
-- **Emergency Contacts**: Parent or guardian names, verified phone numbers, and physical residential addresses.
-- **Commute Coordinates**: Selected transit modes (Walking vs Transport) and transport route zones.
+## 2. Information We Collect
+- **Identity & Profile**: Legal names, emails, credentials, admission numbers, class/section allocations.
+- **Guardian Coordinates**: Parent/guardian contact numbers, emergency addresses, bus route preferences.
+- **Academic Records**: Attendance registers, exam marks, gradebooks, report cards, teacher remarks.
+- **Financial Logs**: Fee ledgers, transaction references, payment status flags (Razorpay tokenized).
+- **Study Materials**: Notes, drawings, syllabus PDFs, complaint tickets.
+- **Technical & Session Data**: IP addresses, user-agents, session tokens (`better-auth.session_token`), FCM tokens.
 
-## 3. How We Use Data
-Collected data is restricted solely to institutional academic administration:
-- Managing classroom registers and verifying student onboarding.
-- Generating tuition fee ledgers and issuing transaction receipts.
-- Routing transportation school buses based on pincodes.
-- Delivering real-time complaint updates and notices notifications.
+## 3. Purposes & Legal Bases
+- Administering student onboarding, attendance, report cards, and digital fee processing.
+- Dispatching emergency alerts, attendance notifications, and payment receipts via WebPush, SMS, and email.
+- Enforcing Role-Based Access Control (RBAC) and securing multi-device sessions.
 
-## 4. Data Security
-VidyaSchool employs industry-standard encryption protocols (SSL/TLS) for data transmission. Access to database ledgers is governed strictly by Role-Based Access Control (RBAC), restricting student profile visibility only to verified educators and administrators.
+## 4. Children's Privacy, FERPA & Parental Consent
+School institutions warrant valid parental/guardian consent upon registering student accounts. Minors are never subjected to behavioral profiling, commercial data mining, or targeted advertising.
 
-## 5. Your Rights
-Students and guardians retain the right to audit profile records, request correction of grades (via class teacher tickets), or modify commuter preferences. Administrative access is required to purge student account profiles permanently.
+## 5. Data Sharing & Subprocessors
+We do not sell student data. Data is processed through vetted infrastructure partners (Neon PostgreSQL, Vercel, Razorpay, Firebase FCM, AWS S3/Cloudinary, Resend) under strict confidentiality agreements.
 
-## 6. Contact Us
-For privacy inquiries or data auditing concerns, please file a support ticket directly through the portal helpdesk or contact the registrar office at: `privacy@vidyaschool.edu`.
+## 6. Cookies & Session Management
+Strictly necessary session tokens are used to maintain authenticated states. Users can inspect and remotely revoke active device sessions via the Active Sessions security console.
+
+## 7. Data Retention & Security
+Records are retained for the duration of student enrollment plus statutory institutional auditing periods (5-7 years). All transmissions are encrypted via HTTPS/TLS 1.3, with AES-256 encryption at rest.
+
+## 8. Your Legal Rights & Grievance Contact
+Parents and students retain rights of access, rectification, portability, and session revocation.
+For privacy inquiries or grievance redressal, contact our Data Protection Officer at `privacy@vidyaschool.com` or `legal@blazeneuro.com`.
 """,
     "/docs/terms-of-service": """# Terms of Service
-These Terms of Service regulate access and use of the VidyaSchool digital portal, mobile applications, and student information systems.
+These Terms of Service regulate access and use of the VidyaSchool digital portal, mobile applications, APIs, student information systems, fee collection interfaces, and associated services operated by VidyaSchool and BlazeNeuro.
 
-## 1. Acceptance of Terms
-By registering an account, completing onboarding profiles, or using any portal services, you agree to be bound by these Terms of Service. If you disagree with any segment of these clauses, portal access must be discontinued.
+## 1. Binding Agreement & Acceptance of Terms
+By registering an account, verifying onboarding forms, authenticating sessions, processing fee transactions, or using any portal services, you agree to be legally bound by these Terms and our Privacy Policy. If you disagree with any portion of these Terms, portal access must be discontinued immediately.
 
-## 2. User Portal Conduct
-Users must provide accurate, truthful details during onboarding (such as legitimate admission keys and phone numbers). Sharing login sessions or social credentials is prohibited. Harassment or inappropriate language on community chat boards will trigger immediate disciplinary reviews.
+## 2. Eligibility & Minor Consent
+Students under the age of majority may only use the Platform under the consent, supervision, and financial responsibility of their parent, legal guardian, or authorized educational institution under applicable student data protection laws (FERPA, COPPA, DPDP).
 
-## 3. Educator Responsibilities
-Teachers and librarians must maintain academic integrity when publishing marks and entering classroom registers. All Educator accounts require administrative screening and approval. Unauthorized modifications of grading schemas will lead to account suspension.
+## 3. Accounts, Authentication & Security
+Users must provide true, complete, and verifiable admission information. Sharing login credentials or multi-session tokens is prohibited. Users are solely responsible for maintaining credential secrecy and immediately revoking compromised sessions via the Active Sessions dashboard.
 
-## 4. Financial Transactions
-Tuition fee processing utilizes third-party gateways (Razorpay). Users must ensure UPI credentials or bank credit details are secure. VidyaSchool is not liable for transactions failed at banking networks. Official digital receipts generated by the accountant module are final evidence of settlement.
+## 4. Role-Specific Obligations & Academic Integrity
+- **Students**: Academic honesty, non-tampering with marks or attendance, respectful conduct in chat boards.
+- **Teachers & Librarians**: Accuracy and integrity of gradebooks, examination registers, lecture notes, and library catalog records. Mandatory administrative verification before account activation.
+- **Accountants & Administrators**: Strict compliance with fee structures, audit standards, discount waivers, and user privilege delegations.
 
-## 5. Account Termination
-We reserve the right to suspend or terminate accounts that breach portal rules, violate academic guidelines, or post false information. Suspended users will be redirected to the unauthorized error dashboard.
+## 5. Fees, Gateway Transactions & Refund Policy
+Tuition fee processing utilizes licensed third-party gateways (Razorpay, UPI). Digital receipts generated by the accountant portal serve as official settlement proof. VidyaSchool is a technology intermediary; all fee disputes, waivers, and refund policies are governed strictly by the respective educational institution.
 
-## 6. Limitation of Liability
-The VidyaSchool portal is provided on an "as-is" and "as-available" baseline. We do not guarantee uninterrupted system connection during maintenance cycles. We are not liable for transport delays or technical outages impacting online class submissions.
+## 6. Acceptable Use & Prohibited Conduct
+Zero tolerance for security probing, denial-of-service attacks, reverse engineering, automated data scraping, malicious file uploads, cheating/fraud, or defamatory, harassing, and obscene communications.
+
+## 7. Intellectual Property & User Content
+VidyaSchool and BlazeNeuro retain all rights and titles to proprietary software, UI, logos, and shaders. Users retain ownership of uploaded study notes while granting VidyaSchool a royalty-free license to host, format, and display such materials for educational delivery.
+
+## 8. AI-Assisted Educational Tools Disclaimer
+AI Page Builder, formula helpers, and quiz generators are provided strictly as supplemental study aids on an "AS-IS" basis. VidyaSchool disclaims all warranties regarding the factual correctness or curriculum compliance of AI outputs.
+
+## 9. Electronic Communications & Push Alerts
+Users consent to receiving operational and transactional alerts via WebPush, FCM, SMS, and email. Carrier delays or device notification failures do not constitute service liability.
+
+## 10. Third-Party Infrastructure
+The Platform relies on third-party cloud infrastructure (Razorpay, Neon Database, Cloudinary/S3, Firebase, Vercel). VidyaSchool is not liable for upstream vendor outages.
+
+## 11. Suspension & Account Termination
+We reserve the right to suspend or terminate accounts that breach portal rules, violate academic guidelines, or post false information without prior notice.
+
+## 12. Disclaimer of Warranties
+The Platform is provided on an "AS-IS" and "AS-AVAILABLE" basis without warranties of any kind, express or implied.
+
+## 13. Limitation of Liability
+In no event shall VidyaSchool or BlazeNeuro be liable for indirect, incidental, punitive, or consequential damages. Maximum aggregate liability is strictly capped at fees actually paid in the preceding three months or $100 USD.
+
+## 14. Indemnification
+Users agree to defend, indemnify, and hold harmless VidyaSchool and BlazeNeuro from legal claims arising out of user misuse, breach of terms, or law violations.
+
+## 15. Governing Law & Dispute Resolution
+Governed by the substantive laws of India. Unresolved disputes shall be settled through mandatory good-faith negotiation followed by binding individual arbitration in Bengaluru, Karnataka, India.
+
+## 16. General Provisions & Legal Contact
+For legal inquiries, contact the Legal & Compliance Cell at `legal@blazeneuro.com` or `support@vidyaschool.com`.
 """
 }
 

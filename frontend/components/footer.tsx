@@ -125,9 +125,12 @@ export function Footer() {
           <div className="text-[11px] text-muted-foreground">
             &copy; {new Date().getFullYear()} VidyaSchool. All rights reserved.
           </div>
-          <div className="flex gap-4 text-[11px] text-muted-foreground">
-            <Link href="/docs/privacy-policy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link href="/docs/terms-of-service" className="hover:text-foreground transition-colors">Terms of Service</Link>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] text-muted-foreground">
+            <Link href="/docs/privacy-policy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <Link href="/docs/terms-of-service" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link href="/docs/refund-policy" className="hover:text-foreground transition-colors">Refunds</Link>
+            <Link href="/docs/cookie-policy" className="hover:text-foreground transition-colors">Cookies</Link>
+            <Link href="/docs/security-policy" className="hover:text-foreground transition-colors">Security</Link>
           </div>
         </div>
       </div>
