@@ -185,13 +185,14 @@ export async function middleware(request: NextRequest) {
       }
     }
     
+    const roleBasePaths = Object.values(roleDashboardMap)
     const sortedRoutes = Object.entries(protectedRoutes).sort((a, b) => b[0].length - a[0].length)
     for (const [route, allowedRoles] of sortedRoutes) {
       if (pathname.startsWith(route)) {
         if (allowedRoles.includes(user.role as string)) {
           // FAST ROUTE HANDLING: If user hits root /[role] (e.g. /student, /teacher, /admin, /accounts, /librarian),
           // immediately redirect to /[role]/[username]
-          if (pathname === route) {
+          if (roleBasePaths.includes(pathname)) {
             const destination = await resolveUserDestination(user)
             return NextResponse.redirect(new URL(destination, request.url))
           }
