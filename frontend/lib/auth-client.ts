@@ -31,10 +31,37 @@ export function logoutUser() {
     document.cookie = "__Secure-better-auth.session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
   }
 
-  // 2. Clear local and session storage instantly
+  // 2. Clear user session storage and local storage while safely preserving theme & UI preferences
   try {
-    if (typeof localStorage !== 'undefined') localStorage.clear()
-    if (typeof sessionStorage !== 'undefined') sessionStorage.clear()
+    if (typeof localStorage !== 'undefined') {
+      const savedPreferences: Record<string, string> = {}
+      
+      // Preserve all theme and appearance keys (e.g. 'theme', 'wrksz-theme', 'theme-mode', etc.)
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i)
+        if (
+          k &&
+          (k.toLowerCase().includes('theme') ||
+            k.toLowerCase().includes('color-scheme') ||
+            k === 'wrksz-theme' ||
+            k === 'theme-preference' ||
+            k === 'sidebar:state')
+        ) {
+          const val = localStorage.getItem(k)
+          if (val !== null) savedPreferences[k] = val
+        }
+      }
+
+      localStorage.clear()
+
+      // Restore preserved theme and UI preferences
+      for (const [k, v] of Object.entries(savedPreferences)) {
+        localStorage.setItem(k, v)
+      }
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.clear()
+    }
   } catch (e) {}
 
   // 3. Non-blocking background server cleanup with keepalive
