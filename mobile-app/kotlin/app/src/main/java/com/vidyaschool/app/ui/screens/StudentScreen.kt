@@ -730,6 +730,7 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
 
 @Composable
 fun AcademicPerformanceCard(
+    modifier: Modifier = Modifier,
     onGraphClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -780,137 +781,126 @@ fun AcademicPerformanceCard(
         }
     }
 
-    // Auto-slide every 10 seconds
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(10_000)
-            selectedTab = (selectedTab + 1) % tabs.size
-        }
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
-    ) {
-        Column(modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 16.dp, bottom = 14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Academic Performance",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "School Highlights & Analytics",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Graph content
-            when (selectedTab) {
-                0 -> {
-                    val chartData = if (realData.isNotEmpty()) realData else listOf(65f, 80f, 75f, 90f, 85f, 95f)
-                    val chartLabels = if (realLabels.isNotEmpty()) realLabels else listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun")
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { onGraphClick() }
-                    ) {
-                        AcademicPerformanceChart(
-                            data = chartData,
-                            labels = chartLabels,
-                            modifier = Modifier.fillMaxWidth().height(195.dp)
-                        )
-                    }
-                }
-                1 -> SubjectBarChart(
-                    data = listOf(72f, 68f, 85f, 78f, 91f, 88f),
-                    labels = listOf("Math", "Sci", "Eng", "His", "Geo", "Art"),
-                    modifier = Modifier.fillMaxWidth().height(195.dp)
-                )
-                2 -> AttendancePieChart(
-                    present = 82f,
-                    absent = 10f,
-                    modifier = Modifier.fillMaxWidth().height(195.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // Shadcn-style tab strip with sliding animation
-            val pillColor = Color(0xFF000000)
-            var stripWidth by remember { mutableStateOf(0) }
-            var stripHeight by remember { mutableStateOf(0) }
-            val pillOffsetX by animateIntAsState(
-                targetValue = if (stripWidth > 0) stripWidth / tabs.size * selectedTab else 0,
-                animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
-                label = "tabSlide"
+    Column(modifier = modifier.fillMaxWidth()) {
+        // Section Header matching other dashboard sections
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "Academic Performance",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "School Highlights & Analytics",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
-                    .padding(3.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onSizeChanged { stripWidth = it.width; stripHeight = it.height }
-                ) {
-                    tabs.forEachIndexed { index, title ->
-                        val selected = selectedTab == index
+        Spacer(modifier = Modifier.height(14.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            )
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 14.dp)) {
+                // Graph content
+                when (selectedTab) {
+                    0 -> {
+                        val chartData = if (realData.isNotEmpty()) realData else listOf(65f, 80f, 75f, 90f, 85f, 95f)
+                        val chartLabels = if (realLabels.isNotEmpty()) realLabels else listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun")
                         Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .clickable(
-                                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                    indication = null
-                                ) { selectedTab = index }
-                                .padding(vertical = 3.dp),
-                            contentAlignment = Alignment.Center
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onGraphClick() }
                         ) {
-                            Text(
-                                text = title,
-                                fontSize = 11.sp,
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                                color = if (selected) Color(0xFFFFFFFF)
-                                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            AcademicPerformanceChart(
+                                data = chartData,
+                                labels = chartLabels,
+                                modifier = Modifier.fillMaxWidth().height(195.dp)
                             )
                         }
                     }
+                    1 -> SubjectBarChart(
+                        data = listOf(72f, 68f, 85f, 78f, 91f, 88f),
+                        labels = listOf("Math", "Sci", "Eng", "His", "Geo", "Art"),
+                        modifier = Modifier.fillMaxWidth().height(195.dp)
+                    )
+                    2 -> AttendancePieChart(
+                        present = 82f,
+                        absent = 10f,
+                        modifier = Modifier.fillMaxWidth().height(195.dp)
+                    )
                 }
 
-                // Animated pill drawn after Row so size is known, but visually behind via zIndex
-                if (stripWidth > 0 && stripHeight > 0) {
-                    val density = androidx.compose.ui.platform.LocalDensity.current
-                    val pillW = with(density) { (stripWidth / tabs.size).toDp() }
-                    val pillH = with(density) { stripHeight.toDp() }
-                    val offsetDp = with(density) { pillOffsetX.toDp() }
-                    Box(
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Shadcn-style tab strip with sliding animation
+                val pillColor = Color(0xFF000000)
+                var stripWidth by remember { mutableStateOf(0) }
+                var stripHeight by remember { mutableStateOf(0) }
+                val pillOffsetX by animateIntAsState(
+                    targetValue = if (stripWidth > 0) stripWidth / tabs.size * selectedTab else 0,
+                    animationSpec = spring(dampingRatio = 0.8f, stiffness = 400f),
+                    label = "tabSlide"
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                        .padding(3.dp)
+                ) {
+                    Row(
                         modifier = Modifier
-                            .offset(x = offsetDp)
-                            .width(pillW)
-                            .height(pillH)
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(pillColor)
-                            .zIndex(-1f)
-                    )
+                            .fillMaxWidth()
+                            .onSizeChanged { stripWidth = it.width; stripHeight = it.height }
+                    ) {
+                        tabs.forEachIndexed { index, title ->
+                            val selected = selectedTab == index
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable(
+                                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                        indication = null
+                                    ) { selectedTab = index }
+                                    .padding(vertical = 3.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = title,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (selected) Color(0xFFFFFFFF)
+                                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                    }
+
+                    // Animated pill drawn after Row so size is known, but visually behind via zIndex
+                    if (stripWidth > 0 && stripHeight > 0) {
+                        val density = androidx.compose.ui.platform.LocalDensity.current
+                        val pillW = with(density) { (stripWidth / tabs.size).toDp() }
+                        val pillH = with(density) { stripHeight.toDp() }
+                        val offsetDp = with(density) { pillOffsetX.toDp() }
+                        Box(
+                            modifier = Modifier
+                                .offset(x = offsetDp)
+                                .width(pillW)
+                                .height(pillH)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(pillColor)
+                                .zIndex(-1f)
+                        )
+                    }
                 }
             }
         }
@@ -928,6 +918,16 @@ fun SubjectBarChart(
     val textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
     // Theme-aware opacity steps instead of hue colors
     val barAlphas = listOf(1f, 0.8f, 0.65f, 0.5f, 0.38f, 0.25f)
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val textPx = with(density) { 10.sp.toPx() }
+    val paint = remember(textColor, textPx) {
+        Paint().apply {
+            color = textColor.toArgb()
+            textSize = textPx
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+        }
+    }
 
     Canvas(modifier = modifier) {
         val w = size.width; val h = size.height
@@ -965,12 +965,6 @@ fun SubjectBarChart(
             )
         }
 
-        val paint = Paint().apply {
-            color = textColor.toArgb()
-            textSize = 10.sp.toPx()
-            textAlign = Paint.Align.CENTER
-            typeface = Typeface.DEFAULT_BOLD
-        }
         drawIntoCanvas { canvas ->
             labels.forEachIndexed { i, label ->
                 canvas.nativeCanvas.drawText(label, pL + i * slotW + slotW / 2f, h - 10f, paint)
@@ -1207,6 +1201,16 @@ fun AcademicPerformanceChart(
     val textColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
     val valueColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
     val surfaceColor = MaterialTheme.colorScheme.surface
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val textPx = with(density) { 10.sp.toPx() }
+    val labelPaint = remember(textColor, textPx) {
+        Paint().apply {
+            color = textColor.toArgb()
+            textSize = textPx
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+        }
+    }
 
     Canvas(modifier = modifier) {
         val w = size.width
@@ -1269,14 +1273,6 @@ fun AcademicPerformanceChart(
                     ),
                     style = Stroke(width = 2.5.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round)
                 )
-            }
-
-            // Label text paint
-            val labelPaint = Paint().apply {
-                color = textColor.toArgb()
-                textSize = 10.sp.toPx()
-                textAlign = Paint.Align.CENTER
-                typeface = Typeface.DEFAULT_BOLD
             }
 
             drawIntoCanvas { canvas ->

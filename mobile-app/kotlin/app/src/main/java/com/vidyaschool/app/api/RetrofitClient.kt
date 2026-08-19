@@ -15,6 +15,10 @@ object RetrofitClient {
     }
 
     private val baseHttpClient = OkHttpClient.Builder()
+        .connectionPool(okhttp3.ConnectionPool(5, 5, TimeUnit.MINUTES))
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(20, TimeUnit.SECONDS)
+        .writeTimeout(20, TimeUnit.SECONDS)
         .addInterceptor(loggingInterceptor)
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
@@ -26,7 +30,9 @@ object RetrofitClient {
 
     val okHttpClient: OkHttpClient = baseHttpClient
 
-    val socketOkHttpClient: OkHttpClient = baseHttpClient.newBuilder().build()
+    val socketOkHttpClient: OkHttpClient = baseHttpClient.newBuilder()
+        .pingInterval(25, TimeUnit.SECONDS)
+        .build()
 
     val streamingOkHttpClient: OkHttpClient = baseHttpClient.newBuilder()
         .connectTimeout(30, TimeUnit.SECONDS)

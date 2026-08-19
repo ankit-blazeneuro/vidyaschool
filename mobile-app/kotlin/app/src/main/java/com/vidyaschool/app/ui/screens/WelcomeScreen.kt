@@ -17,7 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -66,7 +66,7 @@ fun WelcomeScreen(
             modifier = Modifier
                 .size(350.dp)
                 .offset(x = (-60).dp, y = (-60).dp)
-                .rotate(rotationCw)
+                .graphicsLayer { rotationZ = rotationCw }
         )
         // Bottom-right globe (anticlockwise)
         Icon(
@@ -77,7 +77,7 @@ fun WelcomeScreen(
                 .size(220.dp)
                 .align(Alignment.BottomEnd)
                 .offset(x = 30.dp, y = (-270).dp)
-                .rotate(rotationCcw)
+                .graphicsLayer { rotationZ = rotationCcw }
         )
 
         Box(

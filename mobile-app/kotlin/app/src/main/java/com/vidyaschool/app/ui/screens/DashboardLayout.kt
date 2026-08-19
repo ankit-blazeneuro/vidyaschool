@@ -522,8 +522,8 @@ fun DashboardLayout(
         var globalSocket: io.socket.client.Socket? = null
         try {
             val opts = IO.Options().apply {
-                transports = arrayOf("polling", "websocket")
-                forceNew = true
+                transports = arrayOf("websocket")
+                forceNew = false
                 callFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
                 webSocketFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
             }
@@ -2979,10 +2979,13 @@ fun ProfileTabContent(
         val drawerScrollState = rememberScrollState()
 
         // Expand to full screen when user scrolls inside the drawer
-        LaunchedEffect(drawerScrollState.value) {
-            if (drawerScrollState.value > 0 && sheetState.currentValue != SheetValue.Expanded) {
-                sheetState.expand()
-            }
+        LaunchedEffect(drawerScrollState) {
+            snapshotFlow { drawerScrollState.value > 0 }
+                .collect { hasScrolled ->
+                    if (hasScrolled && sheetState.currentValue != SheetValue.Expanded) {
+                        sheetState.expand()
+                    }
+                }
         }
 
         val isExpanded = sheetState.currentValue == SheetValue.Expanded || sheetState.targetValue == SheetValue.Expanded
@@ -3059,8 +3062,6 @@ fun ProfileTabContent(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (isLoadingSection) {
@@ -3479,7 +3480,6 @@ fun ProfileTabContent(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
                 ProfileDetailRow(label = "Name", value = name.ifEmpty { "N/A" })
                 ProfileDetailRow(label = "Role", value = role.uppercase())
@@ -3512,7 +3512,6 @@ fun ProfileTabContent(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -4379,8 +4378,8 @@ fun CommunityTabContent(
         var socketInstance: io.socket.client.Socket? = null
         try {
             val opts = IO.Options().apply {
-                transports = arrayOf("polling", "websocket")
-                forceNew = true
+                transports = arrayOf("websocket")
+                forceNew = false
                 callFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
                 webSocketFactory = com.vidyaschool.app.api.RetrofitClient.socketOkHttpClient
             }

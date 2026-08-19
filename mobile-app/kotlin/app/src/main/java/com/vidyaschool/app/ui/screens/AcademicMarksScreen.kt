@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.*
@@ -48,8 +47,21 @@ import androidx.compose.ui.unit.sp
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.api.StudentExamResult
 import com.vidyaschool.app.api.StudentSubjectMark
+import androidx.compose.ui.graphics.luminance
 import com.vidyaschool.app.auth.SessionManager
 import kotlinx.coroutines.launch
+
+@Composable
+fun isAcademicMarksScreenInDarkTheme(): Boolean {
+    val context = LocalContext.current
+    val sessionManager = remember { SessionManager(context) }
+    val isSurfaceDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    return when (sessionManager.getThemeMode()) {
+        "light" -> false
+        "dark" -> true
+        else -> isSurfaceDark
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,7 +72,7 @@ fun AcademicMarksScreen(
     val scope = rememberCoroutineScope()
     val sessionManager = remember { SessionManager(context) }
     val sessionToken = sessionManager.getSessionToken()
-    val isDark = isSystemInDarkTheme()
+    val isDark = isAcademicMarksScreenInDarkTheme()
 
     var examDataMap by remember { mutableStateOf<Map<String, StudentExamResult>>(emptyMap()) }
     var selectedTermKey by remember { mutableStateOf<String>("") }
@@ -69,14 +81,16 @@ fun AcademicMarksScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showSearchBar by remember { mutableStateOf(false) }
 
-    // Color tokens for Black & White High-Contrast Theme
-    val bgColor = if (isDark) Color(0xFF09090B) else Color(0xFFFAFAFA)
+    // Color tokens optimized for both Light Mode & Dark Mode
+    val bgColor = if (isDark) Color(0xFF09090B) else Color(0xFFFFFFFF)
     val cardBg = if (isDark) Color(0xFF18181B) else Color(0xFFFFFFFF)
-    val cardBorder = if (isDark) Color(0xFF27272A) else Color(0xFFE4E4E7)
-    val primaryText = if (isDark) Color(0xFFFAFAFA) else Color(0xFF09090B)
-    val secondaryText = if (isDark) Color(0xFFA1A1AA) else Color(0xFF71717A)
-    val accentBlackWhite = if (isDark) Color(0xFFFFFFFF) else Color(0xFF000000)
-    val contrastMuted = if (isDark) Color(0xFF3F3F46) else Color(0xFFD4D4D8)
+    val cardBorder = if (isDark) Color(0xFF27272A) else Color(0xFFE2E8F0)
+    val primaryText = if (isDark) Color(0xFFFAFAFA) else Color(0xFF0F172A)
+    val secondaryText = if (isDark) Color(0xFFA1A1AA) else Color(0xFF64748B)
+    val accentBlackWhite = if (isDark) Color(0xFFFFFFFF) else Color(0xFF0F172A)
+    val contrastMuted = if (isDark) Color(0xFF3F3F46) else Color(0xFFCBD5E1)
+    val chipUnselectedBg = if (isDark) Color(0xFF18181B) else Color(0xFFF1F5F9)
+    val chipUnselectedBorder = if (isDark) Color(0xFF27272A) else Color(0xFFE2E8F0)
 
     fun fetchMarks(isPullRefresh: Boolean = false) {
         if (sessionToken.isNullOrEmpty()) {
@@ -155,9 +169,10 @@ fun AcademicMarksScreen(
                     onClick = onBack,
                     modifier = Modifier
                         .size(36.dp)
+                        .background(cardBg, CircleShape)
                         .border(
                             1.dp,
-                            MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                            cardBorder,
                             shape = CircleShape
                         )
                         .clip(CircleShape)
@@ -166,7 +181,7 @@ fun AcademicMarksScreen(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
                         modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.onBackground
+                        tint = primaryText
                     )
                 }
 
@@ -175,12 +190,12 @@ fun AcademicMarksScreen(
                         text = "Academic Marks",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = primaryText
                     )
                     Text(
                         text = "Performance & Examination Analytics",
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        color = secondaryText
                     )
                 }
             }
@@ -189,9 +204,10 @@ fun AcademicMarksScreen(
                 onClick = { showSearchBar = !showSearchBar },
                 modifier = Modifier
                     .size(36.dp)
+                    .background(cardBg, CircleShape)
                     .border(
                         1.dp,
-                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                        cardBorder,
                         shape = CircleShape
                     )
                     .clip(CircleShape)
@@ -200,7 +216,7 @@ fun AcademicMarksScreen(
                     imageVector = if (showSearchBar) Icons.Default.Close else Icons.Default.Search,
                     contentDescription = "Search",
                     modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onBackground
+                    tint = primaryText
                 )
             }
         }
@@ -218,341 +234,354 @@ fun AcademicMarksScreen(
                     AcademicMarksSkeleton(isDark = isDark)
                 }
             } else if (examDataMap.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "No Examination Marks Recorded",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = primaryText
-                    )
-                    Text(
-                        text = "Your teacher has not uploaded any evaluation marks for your class yet.",
-                        fontSize = 13.sp,
-                        color = secondaryText,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-                    Button(
-                        onClick = { fetchMarks() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = accentBlackWhite,
-                            contentColor = if (isDark) Color(0xFF09090B) else Color(0xFFFFFFFF)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text("Check Again")
-                    }
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Search bar if open
-                if (showSearchBar) {
-                    item {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            placeholder = { Text("Filter subject or code...", fontSize = 13.sp, color = secondaryText) },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = cardBg,
-                                unfocusedContainerColor = cardBg,
-                                focusedBorderColor = accentBlackWhite,
-                                unfocusedBorderColor = cardBorder,
-                                focusedTextColor = primaryText,
-                                unfocusedTextColor = primaryText
-                            )
+                        Text(
+                            text = "No Examination Marks Recorded",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = primaryText
                         )
-                    }
-                }
-
-                // ── Term Selector Chips ──────────────────────────────────────
-                item {
-                    val termKeys = examDataMap.keys.toList()
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        termKeys.forEach { key ->
-                            val termResult = examDataMap[key]
-                            val label = termResult?.termName ?: key.replace("_", " ").uppercase()
-                            val isSelected = key == activeKey
-
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(if (isSelected) accentBlackWhite else cardBg)
-                                    .border(
-                                        width = 1.dp,
-                                        color = if (isSelected) accentBlackWhite else cardBorder,
-                                        shape = RoundedCornerShape(20.dp)
-                                    )
-                                    .clickable { selectedTermKey = key }
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = label,
-                                    fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) (if (isDark) Color(0xFF09090B) else Color(0xFFFFFFFF)) else primaryText
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // ── KPI Summary Cards (B&W High-Contrast) ────────────────────
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        // Overall Percentage Card
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = cardBg),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder)
+                        Text(
+                            text = "Your teacher has not uploaded any evaluation marks for your class yet.",
+                            fontSize = 13.sp,
+                            color = secondaryText,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Button(
+                            onClick = { fetchMarks() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = accentBlackWhite,
+                                contentColor = if (isDark) Color(0xFF09090B) else Color(0xFFFFFFFF)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Column(modifier = Modifier.padding(14.dp)) {
-                                Text("OVERALL SCORE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = secondaryText, letterSpacing = 0.5.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = String.format("%.1f%%", avgPct),
-                                    fontSize = 22.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = primaryText
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "${totalScore.toInt()} / ${totalMax.toInt()} Marks",
-                                    fontSize = 11.sp,
-                                    color = secondaryText
-                                )
-                            }
-                        }
-
-                        // Class Comparison Card
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = cardBg),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder)
-                        ) {
-                            Column(modifier = Modifier.padding(14.dp)) {
-                                Text("CLASS AVERAGE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = secondaryText, letterSpacing = 0.5.sp)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = String.format("%.1f%%", classAvgPct),
-                                    fontSize = 22.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = primaryText
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                val diff = avgPct - classAvgPct
-                                val diffStr = if (diff >= 0) "+${String.format("%.1f%%", diff)} above" else "${String.format("%.1f%%", diff)} below"
-                                Text(
-                                    text = diffStr,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = if (diff >= 0) primaryText else secondaryText
-                                )
-                            }
+                            Text("Check Again")
                         }
                     }
                 }
-
-                // ── Graph 1: Multi-Term Trend Curve (Black & White) ──────────
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = cardBg),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Search bar if open
+                    if (showSearchBar) {
+                        item {
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                placeholder = { Text("Filter subject or code...", fontSize = 13.sp, color = secondaryText) },
+                                singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = cardBg,
+                                    unfocusedContainerColor = cardBg,
+                                    focusedBorderColor = accentBlackWhite,
+                                    unfocusedBorderColor = cardBorder,
+                                    focusedTextColor = primaryText,
+                                    unfocusedTextColor = primaryText
+                                )
+                            )
+                        }
+                    }
+
+                    // ── Term Selector Chips ──────────────────────────────────────
+                    item {
+                        val termKeys = examDataMap.keys.toList()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            termKeys.forEach { key ->
+                                val termResult = examDataMap[key]
+                                val label = termResult?.termName ?: key.replace("_", " ").uppercase()
+                                val isSelected = key == activeKey
+
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(20.dp))
+                                        .background(if (isSelected) accentBlackWhite else chipUnselectedBg)
+                                        .border(
+                                            width = 1.dp,
+                                            color = if (isSelected) accentBlackWhite else chipUnselectedBorder,
+                                            shape = RoundedCornerShape(20.dp)
+                                        )
+                                        .clickable { selectedTermKey = key }
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                ) {
                                     Text(
-                                        text = "Exam Trend Curve",
-                                        fontSize = 16.sp,
+                                        text = label,
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) (if (isDark) Color(0xFF09090B) else Color(0xFFFFFFFF)) else primaryText
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // ── KPI Summary Cards (Optimized Contrast) ───────────────────
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            // Overall Percentage Card
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = cardBg),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = "OVERALL SCORE",
+                                        fontSize = 10.5.sp,
                                         fontWeight = FontWeight.Bold,
+                                        color = secondaryText,
+                                        letterSpacing = 0.6.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = String.format("%.1f%%", avgPct),
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Black,
                                         color = primaryText
                                     )
+                                    Spacer(modifier = Modifier.height(2.dp))
                                     Text(
-                                        text = "Your Score vs Class Average across terms",
-                                        fontSize = 11.sp,
+                                        text = "${totalScore.toInt()} / ${totalMax.toInt()} Marks",
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.Medium,
                                         color = secondaryText
                                     )
                                 }
+                            }
 
-                                // Legend
+                            // Class Comparison Card
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(containerColor = cardBg),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = "CLASS AVERAGE",
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = secondaryText,
+                                        letterSpacing = 0.6.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = String.format("%.1f%%", classAvgPct),
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = primaryText
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    val diff = avgPct - classAvgPct
+                                    val diffStr = if (diff >= 0) "+${String.format("%.1f%%", diff)} above" else "${String.format("%.1f%%", diff)} below"
+                                    Text(
+                                        text = diffStr,
+                                        fontSize = 11.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (diff >= 0) (if (isDark) Color(0xFF4ADE80) else Color(0xFF16A34A)) else secondaryText
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Graph 1: Multi-Term Trend Curve ──────────────────────────
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = cardBg),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
                                 Row(
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(accentBlackWhite))
-                                        Text("You", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = primaryText)
+                                    Column {
+                                        Text(
+                                            text = "Exam Trend Curve",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = primaryText
+                                        )
+                                        Text(
+                                            text = "Your Score vs Class Average across terms",
+                                            fontSize = 11.5.sp,
+                                            color = secondaryText
+                                        )
                                     }
-                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(contrastMuted))
-                                        Text("Avg", fontSize = 10.sp, fontWeight = FontWeight.Normal, color = secondaryText)
+
+                                    // Legend
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(accentBlackWhite))
+                                            Text("You", fontSize = 10.5.sp, fontWeight = FontWeight.Bold, color = primaryText)
+                                        }
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(contrastMuted))
+                                            Text("Avg", fontSize = 10.5.sp, fontWeight = FontWeight.Medium, color = secondaryText)
+                                        }
                                     }
                                 }
-                            }
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                            // Extract term data points
-                            val termsList = examDataMap.values.toList()
-                            val yourScorePoints = termsList.map { term ->
-                                val sList = term.subjects ?: emptyList()
-                                val sScore = sList.sumOf { (it.score ?: 0f).toDouble() }.toFloat()
-                                val sMax = sList.sumOf { (it.maxScore ?: 100f).toDouble() }.toFloat()
-                                if (sMax > 0) (sScore / sMax) * 100f else 0f
-                            }
-                            val avgScorePoints = termsList.map { term ->
-                                val sList = term.subjects ?: emptyList()
-                                val aScore = sList.sumOf { (it.classAverage ?: 0f).toDouble() }.toFloat()
-                                val sMax = sList.sumOf { (it.maxScore ?: 100f).toDouble() }.toFloat()
-                                if (sMax > 0) (aScore / sMax) * 100f else 0f
-                            }
-                            val termLabels = termsList.map { it.termName ?: "Exam" }
-
-                            val minTrendWidth = maxOf(340.dp, (termLabels.size * 130).dp)
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .horizontalScroll(rememberScrollState())
-                            ) {
-                                BlackWhiteTrendChart(
-                                    yourScores = yourScorePoints,
-                                    avgScores = avgScorePoints,
-                                    labels = termLabels,
-                                    isDark = isDark,
-                                    modifier = Modifier
-                                        .width(minTrendWidth)
-                                        .height(210.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // ── Graph 2: Subject-wise Marks Comparison Bar Chart ─────────
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = cardBg),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = "Subject Marks Breakdown",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = primaryText
-                                    )
-                                    Text(
-                                        text = "Direct subject comparison for ${currentExam?.termName ?: "Selected Term"}",
-                                        fontSize = 11.sp,
-                                        color = secondaryText
-                                    )
+                                // Extract term data points
+                                val termsList = examDataMap.values.toList()
+                                val yourScorePoints = termsList.map { term ->
+                                    val sList = term.subjects ?: emptyList()
+                                    val sScore = sList.sumOf { (it.score ?: 0f).toDouble() }.toFloat()
+                                    val sMax = sList.sumOf { (it.maxScore ?: 100f).toDouble() }.toFloat()
+                                    if (sMax > 0) (sScore / sMax) * 100f else 0f
                                 }
-                            }
+                                val avgScorePoints = termsList.map { term ->
+                                    val sList = term.subjects ?: emptyList()
+                                    val aScore = sList.sumOf { (it.classAverage ?: 0f).toDouble() }.toFloat()
+                                    val sMax = sList.sumOf { (it.maxScore ?: 100f).toDouble() }.toFloat()
+                                    if (sMax > 0) (aScore / sMax) * 100f else 0f
+                                }
+                                val termLabels = termsList.map { it.termName ?: "Exam" }
 
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            if (filteredSubjects.isNotEmpty()) {
-                                val minBarWidth = maxOf(340.dp, (filteredSubjects.size * 85).dp)
+                                val minTrendWidth = maxOf(340.dp, (termLabels.size * 130).dp)
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .horizontalScroll(rememberScrollState())
                                 ) {
-                                    BlackWhiteSubjectBarChart(
-                                        subjects = filteredSubjects,
+                                    BlackWhiteTrendChart(
+                                        yourScores = yourScorePoints,
+                                        avgScores = avgScorePoints,
+                                        labels = termLabels,
                                         isDark = isDark,
                                         modifier = Modifier
-                                            .width(minBarWidth)
-                                            .height(220.dp)
+                                            .width(minTrendWidth)
+                                            .height(210.dp)
                                     )
-                                }
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(150.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("No matching subject marks found", fontSize = 12.sp, color = secondaryText)
                                 }
                             }
                         }
                     }
-                }
 
-                // ── Detailed Subject Cards List ──────────────────────────────
-                item {
-                    Text(
-                        text = "Subject Breakdown (${filteredSubjects.size})",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = primaryText
-                    )
-                }
+                    // ── Graph 2: Subject-wise Marks Comparison Bar Chart ─────────
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = cardBg),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = "Subject Marks Breakdown",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = primaryText
+                                        )
+                                        Text(
+                                            text = "Direct subject comparison for ${currentExam?.termName ?: "Selected Term"}",
+                                            fontSize = 11.5.sp,
+                                            color = secondaryText
+                                        )
+                                    }
+                                }
 
-                items(filteredSubjects) { mark ->
-                    SubjectMarkDetailCard(
-                        mark = mark,
-                        isDark = isDark,
-                        cardBg = cardBg,
-                        cardBorder = cardBorder,
-                        primaryText = primaryText,
-                        secondaryText = secondaryText,
-                        accentColor = accentBlackWhite
-                    )
-                }
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                item {
-                    Spacer(modifier = Modifier.height(24.dp))
+                                if (filteredSubjects.isNotEmpty()) {
+                                    val minBarWidth = maxOf(340.dp, (filteredSubjects.size * 85).dp)
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .horizontalScroll(rememberScrollState())
+                                    ) {
+                                        BlackWhiteSubjectBarChart(
+                                            subjects = filteredSubjects,
+                                            isDark = isDark,
+                                            modifier = Modifier
+                                                .width(minBarWidth)
+                                                .height(220.dp)
+                                        )
+                                    }
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(150.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("No matching subject marks found", fontSize = 12.sp, color = secondaryText)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Detailed Subject Cards List ──────────────────────────────
+                    item {
+                        Text(
+                            text = "Subject Breakdown (${filteredSubjects.size})",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = primaryText
+                        )
+                    }
+
+                    items(filteredSubjects) { mark ->
+                        SubjectMarkDetailCard(
+                            mark = mark,
+                            isDark = isDark,
+                            cardBg = cardBg,
+                            cardBorder = cardBorder,
+                            primaryText = primaryText,
+                            secondaryText = secondaryText,
+                            accentColor = accentBlackWhite
+                        )
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
                 }
             }
         }
     }
 }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Black & White Multi-Term Line Trend Chart
+// Black & White Multi-Term Line Trend Chart (Optimized for Light/Dark Mode)
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun BlackWhiteTrendChart(
@@ -562,10 +591,40 @@ fun BlackWhiteTrendChart(
     isDark: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val primaryStroke = if (isDark) Color(0xFFFFFFFF) else Color(0xFF000000)
-    val avgStroke = if (isDark) Color(0xFF71717A) else Color(0xFFA1A1AA)
-    val gridLineColor = if (isDark) Color(0xFF27272A) else Color(0xFFE4E4E7)
-    val textColor = if (isDark) Color(0xFFA1A1AA) else Color(0xFF71717A)
+    val primaryStroke = if (isDark) Color(0xFFFFFFFF) else Color(0xFF0F172A)
+    val avgStroke = if (isDark) Color(0xFF71717A) else Color(0xFF94A3B8)
+    val gridLineColor = if (isDark) Color(0xFF27272A) else Color(0xFFE2E8F0)
+    val textColor = if (isDark) Color(0xFFA1A1AA) else Color(0xFF64748B)
+
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val yTextPx = with(density) { 9.5.sp.toPx() }
+    val valTextPx = with(density) { 10.sp.toPx() }
+    val xLabelTextPx = with(density) { 10.5.sp.toPx() }
+
+    val paintY = remember(textColor, yTextPx) {
+        Paint().apply {
+            color = textColor.toArgb()
+            textSize = yTextPx
+            textAlign = Paint.Align.RIGHT
+            typeface = Typeface.DEFAULT_BOLD
+        }
+    }
+    val valPaint = remember(primaryStroke, valTextPx) {
+        Paint().apply {
+            color = primaryStroke.toArgb()
+            textSize = valTextPx
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+        }
+    }
+    val xLabelPaint = remember(textColor, xLabelTextPx) {
+        Paint().apply {
+            color = textColor.toArgb()
+            textSize = xLabelTextPx
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+        }
+    }
 
     Canvas(modifier = modifier) {
         val w = size.width
@@ -576,12 +635,6 @@ fun BlackWhiteTrendChart(
 
         // Grid lines & Y-axis labels
         val yGridCount = 4
-        val paintY = Paint().apply {
-            color = textColor.toArgb()
-            textSize = 9.sp.toPx()
-            textAlign = Paint.Align.RIGHT
-            typeface = Typeface.DEFAULT
-        }
 
         for (i in 0..yGridCount) {
             val ratio = i.toFloat() / yGridCount
@@ -634,7 +687,7 @@ fun BlackWhiteTrendChart(
                     path = fillPath,
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            primaryStroke.copy(alpha = if (isDark) 0.18f else 0.12f),
+                            primaryStroke.copy(alpha = if (isDark) 0.18f else 0.10f),
                             Color.Transparent
                         ),
                         startY = yourPoints.minOf { it.y },
@@ -680,32 +733,16 @@ fun BlackWhiteTrendChart(
                 )
             }
 
-            // Draw Circle Nodes on Points & Values
-            val valPaint = Paint().apply {
-                color = primaryStroke.toArgb()
-                textSize = 10.sp.toPx()
-                textAlign = Paint.Align.CENTER
-                typeface = Typeface.DEFAULT_BOLD
-            }
-
             yourPoints.forEachIndexed { i, pt ->
                 // Outer ring
-                drawCircle(color = primaryStroke, radius = 5f, center = pt)
-                drawCircle(color = if (isDark) Color(0xFF18181B) else Color(0xFFFFFFFF), radius = 2.5f, center = pt)
+                drawCircle(color = primaryStroke, radius = 5.5f, center = pt)
+                drawCircle(color = if (isDark) Color(0xFF18181B) else Color(0xFFFFFFFF), radius = 3f, center = pt)
 
                 // Value label on top
                 val score = yourScores.getOrNull(i) ?: 0f
                 drawIntoCanvas { canvas ->
                     canvas.nativeCanvas.drawText("${score.toInt()}%", pt.x, pt.y - 10f, valPaint)
                 }
-            }
-
-            // Draw X-axis Term Labels
-            val xLabelPaint = Paint().apply {
-                color = textColor.toArgb()
-                textSize = 10.sp.toPx()
-                textAlign = Paint.Align.CENTER
-                typeface = Typeface.DEFAULT_BOLD
             }
 
             labels.forEachIndexed { i, label ->
@@ -719,7 +756,7 @@ fun BlackWhiteTrendChart(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Black & White Grouped Bar Chart (Subject vs Class Avg)
+// Black & White Grouped Bar Chart (Subject vs Class Avg - Light/Dark Optimized)
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun BlackWhiteSubjectBarChart(
@@ -727,10 +764,32 @@ fun BlackWhiteSubjectBarChart(
     isDark: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val barYouColor = if (isDark) Color(0xFFFAFAFA) else Color(0xFF18181B)
-    val barAvgColor = if (isDark) Color(0xFF52525B) else Color(0xFFD4D4D8)
-    val gridColor = if (isDark) Color(0xFF27272A) else Color(0xFFE4E4E7)
-    val textColor = if (isDark) Color(0xFFA1A1AA) else Color(0xFF71717A)
+    val barYouColor = if (isDark) Color(0xFFFAFAFA) else Color(0xFF0F172A)
+    val barAvgColor = if (isDark) Color(0xFF52525B) else Color(0xFFCBD5E1)
+    val gridColor = if (isDark) Color(0xFF27272A) else Color(0xFFE2E8F0)
+    val textColor = if (isDark) Color(0xFFA1A1AA) else Color(0xFF64748B)
+
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val labelTextPx = with(density) { 10.sp.toPx() }
+    val scoreTextPx = with(density) { 9.5.sp.toPx() }
+
+    val labelPaint = remember(textColor, labelTextPx) {
+        Paint().apply {
+            color = textColor.toArgb()
+            textSize = labelTextPx
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+        }
+    }
+
+    val scorePaint = remember(barYouColor, scoreTextPx) {
+        Paint().apply {
+            color = barYouColor.toArgb()
+            textSize = scoreTextPx
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+        }
+    }
 
     Canvas(modifier = modifier) {
         val w = size.width
@@ -749,20 +808,6 @@ fun BlackWhiteSubjectBarChart(
             val slotW = cW / subjects.size
             val barW = (slotW * 0.30f).coerceIn(16f, 30f)
             val gap = 6f
-
-            val labelPaint = Paint().apply {
-                color = textColor.toArgb()
-                textSize = 10.sp.toPx()
-                textAlign = Paint.Align.CENTER
-                typeface = Typeface.DEFAULT_BOLD
-            }
-
-            val scorePaint = Paint().apply {
-                color = barYouColor.toArgb()
-                textSize = 9.5.sp.toPx()
-                textAlign = Paint.Align.CENTER
-                typeface = Typeface.DEFAULT_BOLD
-            }
 
             subjects.forEachIndexed { i, sub ->
                 val youPct = ((sub.score ?: 0f) / (sub.maxScore ?: 100f)).coerceIn(0f, 1f)
@@ -811,7 +856,7 @@ fun BlackWhiteSubjectBarChart(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Detailed Subject Card Item
+// Detailed Subject Card Item (Light/Dark Optimized)
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun SubjectMarkDetailCard(
@@ -856,12 +901,12 @@ fun SubjectMarkDetailCard(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(4.dp))
-                                    .background(if (isDark) Color(0xFF27272A) else Color(0xFFF4F4F5))
+                                    .background(if (isDark) Color(0xFF27272A) else Color(0xFFF1F5F9))
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
                                     text = mark.code,
-                                    fontSize = 10.sp,
+                                    fontSize = 10.5.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     color = secondaryText
                                 )
@@ -877,7 +922,7 @@ fun SubjectMarkDetailCard(
                     }
                 }
 
-                // Grade / Score Badge (Monochrome)
+                // Grade / Score Badge (Monochrome High-Contrast)
                 Column(horizontalAlignment = Alignment.End) {
                     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
@@ -897,12 +942,12 @@ fun SubjectMarkDetailCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(if (isPassed) accentColor else (if (isDark) Color(0xFF3F3F46) else Color(0xFFE4E4E7)))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                            .background(if (isPassed) accentColor else (if (isDark) Color(0xFF3F3F46) else Color(0xFFE2E8F0)))
+                            .padding(horizontal = 8.dp, vertical = 2.5.dp)
                     ) {
                         Text(
                             text = "Grade $gradeText",
-                            fontSize = 10.sp,
+                            fontSize = 10.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (isPassed) (if (isDark) Color(0xFF09090B) else Color(0xFFFFFFFF)) else primaryText
                         )
@@ -921,7 +966,7 @@ fun SubjectMarkDetailCard(
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .background(if (isDark) Color(0xFF27272A) else Color(0xFFF4F4F5))
+                    .background(if (isDark) Color(0xFF27272A) else Color(0xFFF1F5F9))
             ) {
                 // Score filled bar
                 Box(
@@ -942,9 +987,9 @@ fun SubjectMarkDetailCard(
                         Box(
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
-                                .width(2.dp)
+                                .width(2.5.dp)
                                 .fillMaxHeight()
-                                .background(if (isDark) Color(0xFFFAFAFA) else Color(0xFF09090B))
+                                .background(if (isDark) Color(0xFFFAFAFA) else Color(0xFF0F172A))
                         )
                     }
                 }
@@ -959,13 +1004,14 @@ fun SubjectMarkDetailCard(
             ) {
                 Text(
                     text = "${String.format("%.1f%%", pct)} scored",
-                    fontSize = 11.sp,
+                    fontSize = 11.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = primaryText
                 )
                 Text(
                     text = "Class Avg: ${classAvg.toInt()}%",
-                    fontSize = 11.sp,
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Medium,
                     color = secondaryText
                 )
             }
@@ -990,7 +1036,7 @@ fun AcademicMarksSkeleton(isDark: Boolean) {
     )
     val shimmerBrush = Brush.linearGradient(
         colors = if (isDark) listOf(Color(0xFF27272A), Color(0xFF3F3F46), Color(0xFF27272A))
-                 else listOf(Color(0xFFF4F4F5), Color(0xFFE4E4E7), Color(0xFFF4F4F5)),
+                 else listOf(Color(0xFFF1F5F9), Color(0xFFE2E8F0), Color(0xFFF1F5F9)),
         start = Offset(shimmerX - 300f, 0f),
         end = Offset(shimmerX, 0f)
     )
