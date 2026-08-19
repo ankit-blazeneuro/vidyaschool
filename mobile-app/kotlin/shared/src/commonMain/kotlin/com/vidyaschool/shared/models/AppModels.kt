@@ -350,6 +350,87 @@ data class DocMarkdownResponse(
 )
 
 // ---------------------------------------------------------------------------
+// Student Dashboard & Academic Models
+// ---------------------------------------------------------------------------
+
+@Serializable
+data class TopPerformerItem(
+    val id: String? = null,
+    val rank: Int? = null,
+    val name: String = "",
+    val percentage: Double = 0.0,
+    @SerialName("student_class") val studentClass: String? = null,
+    val section: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null
+)
+
+@Serializable
+data class LeaderboardResponse(
+    val leaderboard: List<TopPerformerItem>? = null,
+    @SerialName("top_performers") val topPerformers: List<TopPerformerItem>? = null,
+    @SerialName("user_rank") val userRank: Int? = null,
+    @SerialName("user_percentage") val userPercentage: Double? = null,
+    @SerialName("total_students") val totalStudents: Int? = null
+)
+
+@Serializable
+data class StudentMarkSubject(
+    val subject: String = "",
+    @SerialName("marks_obtained") val marksObtained: Double = 0.0,
+    @SerialName("max_marks") val maxMarks: Double = 100.0,
+    val score: Float? = null,
+    val maxScore: Float? = null,
+    val grade: String? = null
+)
+
+@Serializable
+data class StudentExamResult(
+    @SerialName("exam_name") val examName: String? = null,
+    @SerialName("termName") val termName: String? = null,
+    val subjects: List<StudentMarkSubject>? = null,
+    @SerialName("total_obtained") val totalObtained: Double = 0.0,
+    @SerialName("total_max") val totalMax: Double = 0.0,
+    val percentage: Double = 0.0,
+    val grade: String? = null
+)
+
+@Serializable
+data class TeacherCalendarEvent(
+    val id: String? = null,
+    val title: String = "",
+    val time: String = "",
+    val room: String? = null
+)
+
+@Serializable
+data class TeacherCalendarResponse(
+    @SerialName("todayDateStr") val todayDateStr: String? = null,
+    @SerialName("todayEvents") val todayEvents: List<TeacherCalendarEvent>? = null,
+    @SerialName("tomorrowEvents") val tomorrowEvents: List<TeacherCalendarEvent>? = null
+)
+
+@Serializable
+data class StudentNote(
+    val id: String,
+    @SerialName("teacher_id") val teacherId: String? = null,
+    val title: String? = null,
+    val content: String? = null,
+    val color: String? = null,
+    @SerialName("class") val targetClass: String? = null,
+    val section: String? = null,
+    val subject: String? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("teacher_name") val teacherName: String? = null,
+    @SerialName("pdf_url") val pdfUrl: String? = null
+)
+
+@Serializable
+data class StudentNotesResponse(
+    val notes: List<StudentNote>? = null
+)
+
+
+// ---------------------------------------------------------------------------
 // App State
 // ---------------------------------------------------------------------------
 

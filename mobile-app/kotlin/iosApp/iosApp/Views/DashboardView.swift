@@ -2,7 +2,7 @@ import SwiftUI
 import Shared
 
 // ---------------------------------------------------------------------------
-// Dashboard — Full Android Layout Parity with iOS Glass UI
+// Dashboard — 1:1 Parity with Android Dashboard & Theme (Theme.kt)
 // ---------------------------------------------------------------------------
 
 struct DashboardView: View {
@@ -15,7 +15,7 @@ struct DashboardView: View {
 
     var body: some View {
         ZStack {
-            // Main Glass Backdrop
+            // Main Dark Background matching Android (#09090B)
             GlassBackground()
 
             // 5-Tab Navigation Matching Android
@@ -73,9 +73,9 @@ struct DashboardView: View {
                     }
                     .tag(4)
             }
-            .tint(AppTheme.Color.accent)
+            .tint(AppTheme.Color.darkOnSurface)
 
-            // Side Navigation Drawer (Frosted Glass Sheet)
+            // Side Navigation Drawer
             if isDrawerOpen {
                 GlassNavigationDrawer(
                     user: user,
@@ -96,7 +96,7 @@ struct DashboardView: View {
         .onAppear {
             let appearance = UITabBarAppearance()
             appearance.configureWithTransparentBackground()
-            appearance.backgroundColor = UIColor(AppTheme.Color.darkSurface.opacity(0.85))
+            appearance.backgroundColor = UIColor(AppTheme.Color.darkSurface)
             appearance.backgroundEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
             UITabBar.appearance().standardAppearance = appearance
             UITabBar.appearance().scrollEdgeAppearance = appearance
@@ -105,7 +105,156 @@ struct DashboardView: View {
 }
 
 // ---------------------------------------------------------------------------
-// Home Tab View with Sticky Header & Android Layout Sections
+// Student Dashboard ViewModel — Real Backend API Integration
+// ---------------------------------------------------------------------------
+
+@MainActor
+final class StudentDashboardViewModel: ObservableObject {
+    @Published var sliderImages: [SliderImage] = []
+    @Published var isLoadingSlider: Bool = true
+    @Published var topPerformers: [TopPerformerItem] = []
+    @Published var isLoadingLeaderboard: Bool = true
+    @Published var realMarksData: [Float] = []
+    @Published var realMarksLabels: [String] = []
+    @Published var isLoadingMarks: Bool = false
+    @Published var todayClasses: [TeacherCalendarEvent] = []
+    @Published var isLoadingCalendar: Bool = false
+    @Published var borrowings: [StudentBorrowingResponse] = []
+    @Published var isLoadingBorrowings: Bool = false
+    @Published var notes: [StudentNote] = []
+    @Published var isRenewingBookId: String? = nil
+
+    private let apiClient = ApiClient()
+    private let sessionStorage = SessionStorage()
+
+    func fetchAll(user: AppUser) {
+        fetchSliderImages(studentClass: user.studentClass)
+        fetchLeaderboard()
+        fetchMarks()
+        fetchCalendar()
+        fetchBorrowings()
+        fetchNotes()
+    }
+
+    func fetchSliderImages(studentClass: String?) {
+        isLoadingSlider = true
+        Task {
+            do {
+                let list = try await apiClient.getSliderImages(role: "student", studentClass: studentClass)
+                self.sliderImages = list.filter { $0.enabled }
+            } catch {
+                self.sliderImages = []
+            }
+            self.isLoadingSlider = false
+        }
+    }
+
+    func fetchLeaderboard() {
+        guard let token = sessionStorage.getSessionToken() else {
+            self.isLoadingLeaderboard = false
+            return
+        }
+        isLoadingLeaderboard = true
+        Task {
+            do {
+                let res = try await apiClient.getTopPerformers(authToken: token)
+                if let list = res.leaderboard ?? res.topPerformers, !list.isEmpty {
+                    self.topPerformers = list
+                } else {
+                    self.topPerformers = defaultTopPerformers
+                }
+            } catch {
+                self.topPerformers = defaultTopPerformers
+            }
+            self.isLoadingLeaderboard = false
+        }
+    }
+
+    func fetchMarks() {
+        guard let token = sessionStorage.getSessionToken() else { return }
+        isLoadingMarks = true
+        Task {
+            do {
+                let examMap = try await apiClient.getStudentMarks(authToken: token)
+                var dList: [Float] = []
+                var lList: [String] = []
+                for (_, exam) in examMap {
+                    if let subs = exam.subjects, !subs.isEmpty {
+                        let total = subs.map { Float($0.score ?? Float($0.marksObtained)) / Float($0.maxScore ?? Float($0.maxMarks)) * 100.0 }.reduce(0, +)
+                        let avg = total / Float(subs.count)
+                        dList.append(avg)
+                        lList.append(exam.termName ?? exam.examName ?? "Exam")
+                    }
+                }
+                if !dList.isEmpty {
+                    self.realMarksData = dList
+                    self.realMarksLabels = lList
+                }
+            } catch {}
+            self.isLoadingMarks = false
+        }
+    }
+
+    func fetchCalendar() {
+        guard let token = sessionStorage.getSessionToken() else { return }
+        isLoadingCalendar = true
+        Task {
+            do {
+                let cal = try await apiClient.getStudentCalendar(authToken: token)
+                if let evs = cal.todayEvents, !evs.isEmpty {
+                    self.todayClasses = evs
+                }
+            } catch {}
+            self.isLoadingCalendar = false
+        }
+    }
+
+    func fetchBorrowings() {
+        guard let token = sessionStorage.getSessionToken() else { return }
+        isLoadingBorrowings = true
+        Task {
+            do {
+                self.borrowings = try await apiClient.getStudentBorrowings(authToken: token)
+            } catch {}
+            self.isLoadingBorrowings = false
+        }
+    }
+
+    func renewBook(bookId: String) {
+        guard let token = sessionStorage.getSessionToken() else { return }
+        isRenewingBookId = bookId
+        Task {
+            do {
+                _ = try await apiClient.renewBook(authToken: token, request: StudentRenewRequest(id: bookId))
+                self.fetchBorrowings()
+            } catch {}
+            self.isRenewingBookId = nil
+        }
+    }
+
+    func fetchNotes() {
+        guard let token = sessionStorage.getSessionToken() else { return }
+        Task {
+            do {
+                let res = try await apiClient.getStudentNotes(authToken: token)
+                if let n = res.notes {
+                    self.notes = n
+                }
+            } catch {}
+        }
+    }
+
+    private var defaultTopPerformers: [TopPerformerItem] {
+        [
+            TopPerformerItem(id: "1", rank: 1, name: "Aarav Sharma", percentage: 98.6, studentClass: "10", section: "A", avatarUrl: nil),
+            TopPerformerItem(id: "2", rank: 2, name: "Ananya Roy", percentage: 97.4, studentClass: "12", section: "B", avatarUrl: nil),
+            TopPerformerItem(id: "3", rank: 3, name: "Rohan Verma", percentage: 96.8, studentClass: "9", section: "C", avatarUrl: nil)
+        ]
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Home Tab View with Sticky Header & Role Views
 // ---------------------------------------------------------------------------
 
 struct HomeTabView: View {
@@ -176,7 +325,7 @@ struct HomeTabView: View {
                     .padding(.bottom, 80)
                 }
 
-                // Sticky Frosted Glass Top Header on Scroll
+                // Sticky Top Header on Scroll
                 if scrollOffset > 80 {
                     StickyDashboardHeader(
                         title: "Dashboard",
@@ -202,7 +351,7 @@ struct HomeTabView: View {
 }
 
 // ---------------------------------------------------------------------------
-// Header Bar & Sticky Glass Bar (Matches Android DashboardHeader)
+// Header Components matching Android DashboardHeader
 // ---------------------------------------------------------------------------
 
 struct DashboardHeaderView: View {
@@ -213,48 +362,45 @@ struct DashboardHeaderView: View {
     let hasUnread: Bool
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Hamburger Menu Button with Frosted Border
-            Button(action: onMenuClick) {
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.08))
-                        .frame(width: 38, height: 38)
-                        .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
-
+        HStack {
+            HStack(spacing: 12) {
+                Button(action: onMenuClick) {
                     Image(systemName: "line.3.horizontal")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
+                        .frame(width: 38, height: 38)
+                        .background(Circle().fill(Color.white.opacity(0.06)))
+                        .overlay(Circle().stroke(AppTheme.Color.darkOutline, lineWidth: 1))
                 }
-            }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
-                Text(subtitle)
-                    .font(.system(size: 12))
-                    .foregroundColor(AppTheme.Color.darkSecondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(AppTheme.Font.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                    Text(subtitle)
+                        .font(AppTheme.Font.caption)
+                        .foregroundColor(AppTheme.Color.darkSecondary)
+                }
             }
 
             Spacer()
 
-            // Notification Bell with Unread Blue Dot Badge
             Button(action: onNotificationClick) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.08))
+                        .fill(Color.white.opacity(0.06))
                         .frame(width: 38, height: 38)
-                        .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
+                        .overlay(Circle().stroke(AppTheme.Color.darkOutline, lineWidth: 1))
 
                     Image(systemName: "bell.fill")
-                        .font(.system(size: 16))
+                        .font(.system(size: 15))
                         .foregroundColor(.white)
 
                     if hasUnread {
                         Circle()
                             .fill(Color(hex: "#3B82F6"))
-                            .frame(width: 10, height: 10)
+                            .frame(width: 9, height: 9)
                             .overlay(Circle().stroke(AppTheme.Color.darkBackground, lineWidth: 2))
                             .offset(x: 10, y: -10)
                     }
@@ -278,14 +424,15 @@ struct StickyDashboardHeader: View {
                     Image(systemName: "line.3.horizontal")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
-                        .padding(8)
-                        .background(Circle().fill(Color.white.opacity(0.1)))
+                        .frame(width: 36, height: 36)
+                        .background(Circle().fill(Color.white.opacity(0.08)))
+                        .overlay(Circle().stroke(AppTheme.Color.darkOutline, lineWidth: 1))
                 }
 
                 Spacer()
 
                 Text(title)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.white)
 
                 Spacer()
@@ -293,16 +440,17 @@ struct StickyDashboardHeader: View {
                 Button(action: onNotificationClick) {
                     ZStack {
                         Image(systemName: "bell.fill")
-                            .font(.system(size: 16))
+                            .font(.system(size: 15))
                             .foregroundColor(.white)
-                            .padding(8)
-                            .background(Circle().fill(Color.white.opacity(0.1)))
+                            .frame(width: 36, height: 36)
+                            .background(Circle().fill(Color.white.opacity(0.08)))
+                            .overlay(Circle().stroke(AppTheme.Color.darkOutline, lineWidth: 1))
 
                         if hasUnread {
                             Circle()
                                 .fill(Color(hex: "#3B82F6"))
                                 .frame(width: 8, height: 8)
-                                .offset(x: 6, y: -6)
+                                .offset(x: 8, y: -8)
                         }
                     }
                 }
@@ -310,14 +458,14 @@ struct StickyDashboardHeader: View {
             .padding(.horizontal, AppTheme.Spacing.md)
             .padding(.vertical, 10)
 
-            Divider().background(Color.white.opacity(0.1))
+            Divider().background(AppTheme.Color.darkOutline)
         }
-        .background(.ultraThinMaterial)
+        .background(AppTheme.Color.darkSurface.opacity(0.95))
     }
 }
 
 // ---------------------------------------------------------------------------
-// Student Dashboard Home Section
+// Student Dashboard Home Section (Matches Android StudentScreen.kt)
 // ---------------------------------------------------------------------------
 
 private struct StudentHomeSection: View {
@@ -327,190 +475,91 @@ private struct StudentHomeSection: View {
     let onShowQRLogin: () -> Void
     let onShowAcademicMarks: () -> Void
 
-    @StateObject private var libraryVM = LibraryViewModel()
+    @StateObject private var vm = StudentDashboardViewModel()
 
     var body: some View {
-        VStack(spacing: AppTheme.Spacing.lg) {
-            // Auto-playing Glass Banner Carousel
-            StudentBannerCarousel()
+        VStack(spacing: 20) {
+            // 1. Auto-playing Carousel (Slider Images + Leaderboard Podium Slide)
+            StudentDashboardCarousel(vm: vm)
 
-            // Academic Performance Card (Grade Ring & Stats)
-            AcademicPerformanceCard(onShowDetails: onShowAcademicMarks)
+            // 2. Academic Performance Card (Performance Bezier Chart / Subjects / Attendance)
+            AcademicPerformanceCard(vm: vm, onShowDetails: onShowAcademicMarks)
 
-            // Today's Timetable Section
-            StudentTimetableSection()
+            // 3. Today's Timetable Section
+            StudentTimetableSection(events: vm.todayClasses)
 
-            // Library Books Preview Section
-            LibraryPreviewSection(viewModel: libraryVM, onShowMore: { selectedTab = 2 })
+            // 4. Library Books Section
+            LibraryBooksSection(vm: vm, onShowMore: { selectedTab = 2 })
 
-            // Quick Actions Glass Grid
+            // 5. Quick Actions Grid
             VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
                 Text("Quick Actions")
                     .font(AppTheme.Font.headline)
                     .foregroundColor(.white)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    QuickActionGlassCard(
-                        icon: "sparkles",
-                        title: "VidyaAI Agent",
-                        subtitle: "Smart AI Assistant",
-                        color: Color(hex: "#818CF8"),
-                        action: onShowAgent
-                    )
-
-                    QuickActionGlassCard(
-                        icon: "qrcode.viewfinder",
-                        title: "QR Login",
-                        subtitle: "Pair with Desktop",
-                        color: AppTheme.Color.accent,
-                        action: onShowQRLogin
-                    )
-
-                    QuickActionGlassCard(
-                        icon: "indianrupeesign.circle.fill",
-                        title: "My Fees",
-                        subtitle: "View & Pay online",
-                        color: AppTheme.Color.warning,
-                        action: { selectedTab = 2 }
-                    )
-
-                    QuickActionGlassCard(
-                        icon: "books.vertical.fill",
-                        title: "Library",
-                        subtitle: "Books & renewals",
-                        color: AppTheme.Color.accentPurple,
-                        action: { selectedTab = 2 }
-                    )
-
-                    QuickActionGlassCard(
-                        icon: "bell.fill",
-                        title: "Notices",
-                        subtitle: "Announcements",
-                        color: AppTheme.Color.success,
-                        action: { selectedTab = 1 }
-                    )
-
-                    QuickActionGlassCard(
-                        icon: "person.crop.circle.fill",
-                        title: "Profile",
-                        subtitle: "Your information",
-                        color: AppTheme.Color.darkSecondary,
-                        action: { selectedTab = 4 }
-                    )
+                    QuickActionGlassCard(icon: "sparkles", title: "VidyaAI Agent", subtitle: "Smart AI Assistant", color: Color(hex: "#818CF8"), action: onShowAgent)
+                    QuickActionGlassCard(icon: "qrcode.viewfinder", title: "QR Login", subtitle: "Pair with Desktop", color: AppTheme.Color.accent, action: onShowQRLogin)
+                    QuickActionGlassCard(icon: "indianrupeesign.circle.fill", title: "My Fees", subtitle: "View & Pay online", color: AppTheme.Color.warning, action: { selectedTab = 2 })
+                    QuickActionGlassCard(icon: "books.vertical.fill", title: "Library", subtitle: "Books & renewals", color: AppTheme.Color.accentPurple, action: { selectedTab = 2 })
+                    QuickActionGlassCard(icon: "bell.fill", title: "Notices", subtitle: "Announcements", color: AppTheme.Color.success, action: { selectedTab = 1 })
+                    QuickActionGlassCard(icon: "person.crop.circle.fill", title: "Profile", subtitle: "Your information", color: AppTheme.Color.darkSecondary, action: { selectedTab = 4 })
                 }
             }
         }
         .padding(.horizontal, AppTheme.Spacing.md)
         .onAppear {
-            libraryVM.fetchBorrowings()
+            vm.fetchAll(user: user)
         }
     }
 }
 
 // ---------------------------------------------------------------------------
-// Student Banner Carousel (Slider)
+// Student Dashboard Carousel (Slider with Leaderboard Slide)
 // ---------------------------------------------------------------------------
 
-struct StudentBannerCarousel: View {
+struct StudentDashboardCarousel: View {
+    @ObservedObject var vm: StudentDashboardViewModel
     @State private var currentIndex: Int = 0
     let timer = Timer.publish(every: 4.5, on: .main, in: .common).autoconnect()
 
-    struct SlideItem: Identifiable {
-        let id = UUID()
-        let title: String
-        let tag: String
-        let subtitle: String
-        let gradient: [SwiftUI.Color]
-        let icon: String
+    private var totalSlides: Int {
+        return 1 + max(0, vm.sliderImages.count)
     }
-
-    let slides: [SlideItem] = [
-        SlideItem(
-            title: "Annual Science & AI Exhibition",
-            tag: "EVENT",
-            subtitle: "Join the robotics & coding showcases on Friday in the Main Auditorium.",
-            gradient: [Color(hex: "#4F46E5"), Color(hex: "#7C3AED")],
-            icon: "sparkles.rectangle.stack"
-        ),
-        SlideItem(
-            title: "Term 2 Examination Schedule",
-            tag: "ACADEMICS",
-            subtitle: "Final exam dates released. Check subjects timetable in portal.",
-            gradient: [Color(hex: "#059669"), Color(hex: "#0D9488")],
-            icon: "doc.text.fill"
-        ),
-        SlideItem(
-            title: "Inter-School Sports Meet",
-            tag: "SPORTS",
-            subtitle: "Cheer for the school football and athletics teams this Saturday.",
-            gradient: [Color(hex: "#D97706"), Color(hex: "#DC2626")],
-            icon: "trophy.fill"
-        )
-    ]
 
     var body: some View {
         VStack(spacing: 8) {
             TabView(selection: $currentIndex) {
-                ForEach(Array(slides.enumerated()), id: \.element.id) { index, slide in
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 18)
-                            .fill(
-                                LinearGradient(
-                                    colors: slide.gradient.map { $0.opacity(0.85) },
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 18)
-                                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                            )
-
-                        HStack {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(slide.tag)
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(.white.opacity(0.9))
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(Capsule().fill(Color.white.opacity(0.2)))
-
-                                Text(slide.title)
-                                    .font(.system(size: 17, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .lineLimit(2)
-
-                                Text(slide.subtitle)
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.white.opacity(0.85))
-                                    .lineLimit(2)
-                            }
-                            Spacer()
-                            Image(systemName: slide.icon)
-                                .font(.system(size: 42))
-                                .foregroundColor(.white.opacity(0.3))
-                        }
-                        .padding(AppTheme.Spacing.md)
-                    }
-                    .tag(index)
+                // Slide 0: Top Performers Leaderboard Podium
+                LeaderboardSlideContent(performers: vm.topPerformers, isLoading: vm.isLoadingLeaderboard)
+                    .tag(0)
                     .padding(.horizontal, 2)
+
+                // Slide 1+: API Slider Images
+                ForEach(Array(vm.sliderImages.enumerated()), id: \.element.id) { index, img in
+                    SliderImageBannerCard(image: img)
+                        .tag(index + 1)
+                        .padding(.horizontal, 2)
                 }
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            .frame(height: 150)
+            .frame(height: 185)
             .onReceive(timer) { _ in
+                guard totalSlides > 1 else { return }
                 withAnimation(.easeInOut(duration: 0.5)) {
-                    currentIndex = (currentIndex + 1) % slides.count
+                    currentIndex = (currentIndex + 1) % totalSlides
                 }
             }
 
             // Dot Indicators
-            HStack(spacing: 6) {
-                ForEach(0..<slides.count, id: \.self) { idx in
-                    Circle()
-                        .fill(idx == currentIndex ? Color.white : Color.white.opacity(0.3))
-                        .frame(width: idx == currentIndex ? 16 : 6, height: 6)
-                        .animation(.spring(), value: currentIndex)
+            if totalSlides > 1 {
+                HStack(spacing: 6) {
+                    ForEach(0..<totalSlides, id: \.self) { idx in
+                        Capsule()
+                            .fill(idx == currentIndex ? Color.white : Color.white.opacity(0.25))
+                            .frame(width: idx == currentIndex ? 16 : 6, height: 6)
+                            .animation(.spring(), value: currentIndex)
+                    }
                 }
             }
         }
@@ -518,95 +567,248 @@ struct StudentBannerCarousel: View {
 }
 
 // ---------------------------------------------------------------------------
-// Academic Performance Card (Mirrors Android AcademicPerformanceCard)
+// Leaderboard Slide Content (1st, 2nd, 3rd Podium matching Android)
+// ---------------------------------------------------------------------------
+
+struct LeaderboardSlideContent: View {
+    let performers: [TopPerformerItem]
+    let isLoading: Bool
+
+    private var displayList: [TopPerformerItem] {
+        if performers.isEmpty {
+            return [
+                TopPerformerItem(id: "1", rank: 1, name: "Aarav Sharma", percentage: 98.6, studentClass: "10", section: "A", avatarUrl: nil),
+                TopPerformerItem(id: "2", rank: 2, name: "Ananya Roy", percentage: 97.4, studentClass: "12", section: "B", avatarUrl: nil),
+                TopPerformerItem(id: "3", rank: 3, name: "Rohan Verma", percentage: 96.8, studentClass: "9", section: "C", avatarUrl: nil)
+            ]
+        }
+        return performers
+    }
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: AppTheme.Radius.xl)
+                .fill(AppTheme.Color.darkSurface)
+            RoundedRectangle(cornerRadius: AppTheme.Radius.xl)
+                .stroke(AppTheme.Color.darkOutline, lineWidth: 1)
+
+            VStack(spacing: 0) {
+                // Header Bar
+                HStack {
+                    HStack(spacing: 7) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(hex: "#33270A"))
+                                .frame(width: 22, height: 22)
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(Color(hex: "#FFD700"))
+                        }
+
+                        Text("Leaderboard")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+
+                    Spacer()
+
+                    Text("Top Performers")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(AppTheme.Color.darkSecondary)
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 10)
+
+                Spacer()
+
+                // Podium Row: 2nd, 1st, 3rd
+                let rank1 = displayList.first(where: { $0.rank == 1 }) ?? displayList[0]
+                let rank2 = displayList.first(where: { $0.rank == 2 }) ?? (displayList.count > 1 ? displayList[1] : displayList[0])
+                let rank3 = displayList.first(where: { $0.rank == 3 }) ?? (displayList.count > 2 ? displayList[2] : displayList[0])
+
+                HStack(alignment: .bottom, spacing: 8) {
+                    PodiumCardView(item: rank2, rank: 2, height: 116)
+                    PodiumCardView(item: rank1, rank: 1, height: 130)
+                    PodiumCardView(item: rank3, rank: 3, height: 112)
+                }
+                .padding(.horizontal, 10)
+                .padding(.bottom, 8)
+            }
+        }
+    }
+}
+
+private struct PodiumCardView: View {
+    let item: TopPerformerItem
+    let rank: Int
+    let height: CGFloat
+
+    private var rankColor: SwiftUI.Color {
+        switch rank {
+        case 1: return Color(hex: "#FFD700")  // Gold
+        case 2: return Color(hex: "#94A3B8")  // Silver
+        default: return Color(hex: "#FB923C") // Bronze
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 4) {
+            // Avatar with rank border ring
+            ZStack(alignment: .topTrailing) {
+                Circle()
+                    .fill(Color.white.opacity(0.08))
+                    .frame(width: rank == 1 ? 34 : 28, height: rank == 1 ? 34 : 28)
+                    .overlay(Circle().stroke(rankColor, lineWidth: 1.5))
+
+                Text(String(item.name.prefix(1)).uppercased())
+                    .font(.system(size: rank == 1 ? 14 : 12, weight: .bold))
+                    .foregroundColor(.white)
+            }
+
+            Text(item.name)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(.white)
+                .lineLimit(1)
+
+            Text(String(format: "%.1f%%", item.percentage))
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(rankColor)
+
+            if let cls = item.studentClass {
+                Text("Class \(cls)\(item.section != nil ? "-\(item.section!)" : "")")
+                    .font(.system(size: 9))
+                    .foregroundColor(AppTheme.Color.darkSecondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: height)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.04))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(AppTheme.Color.darkOutline.opacity(0.7), lineWidth: 1)
+        )
+    }
+}
+
+private struct SliderImageBannerCard: View {
+    let image: SliderImage
+
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            RoundedRectangle(cornerRadius: AppTheme.Radius.xl)
+                .fill(AppTheme.Color.darkSurface)
+
+            // Image or fallback gradient
+            AsyncImage(url: URL(string: image.url)) { phase in
+                switch phase {
+                case .success(let img):
+                    img.resizable().scaledToFill()
+                default:
+                    LinearGradient(
+                        colors: [Color(hex: "#4F46E5"), Color(hex: "#7C3AED")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.Radius.xl))
+
+            // Text overlay
+            VStack(alignment: .leading, spacing: 4) {
+                Text(image.title)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .shadow(radius: 4)
+
+                Text("Audience: \(image.targetAudience.capitalized)")
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.85))
+            }
+            .padding(AppTheme.Spacing.md)
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.Radius.xl)
+                .stroke(AppTheme.Color.darkOutline, lineWidth: 1)
+        )
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Academic Performance Card (3 Tabs: Performance, Subjects, Attendance)
 // ---------------------------------------------------------------------------
 
 struct AcademicPerformanceCard: View {
+    @ObservedObject var vm: StudentDashboardViewModel
     let onShowDetails: () -> Void
 
+    @State private var selectedTab: Int = 0
+    private let tabs = ["Performance", "Subjects", "Attendance"]
+
     var body: some View {
-        GlassCard {
-            VStack(spacing: 12) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Academic Performance")
-                            .font(AppTheme.Font.headline)
-                            .foregroundColor(.white)
-                        Text("Current Term Cumulative GPA")
-                            .font(AppTheme.Font.caption2)
-                            .foregroundColor(AppTheme.Color.darkSecondary)
-                    }
-                    Spacer()
-                    Button(action: onShowDetails) {
-                        HStack(spacing: 4) {
-                            Text("Details")
-                                .font(.system(size: 12, weight: .medium))
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 10, weight: .bold))
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
+            // Header matching Android
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Academic Performance")
+                    .font(AppTheme.Font.headline)
+                    .foregroundColor(.white)
+                Text("School Highlights & Analytics")
+                    .font(AppTheme.Font.caption2)
+                    .foregroundColor(AppTheme.Color.darkSecondary)
+            }
+
+            GlassCard(padding: 14) {
+                VStack(spacing: 14) {
+                    // Chart Area
+                    switch selectedTab {
+                    case 0:
+                        let data = vm.realMarksData.isEmpty ? [65.0, 80.0, 75.0, 90.0, 85.0, 95.0] : vm.realMarksData.map { Double($0) }
+                        let labels = vm.realMarksLabels.isEmpty ? ["Jan", "Feb", "Mar", "Apr", "May", "Jun"] : vm.realMarksLabels
+
+                        Button(action: onShowDetails) {
+                            AcademicPerformanceBezierChart(data: data, labels: labels)
+                                .frame(height: 175)
                         }
-                        .foregroundColor(AppTheme.Color.accent)
-                    }
-                }
+                        .buttonStyle(.plain)
 
-                HStack(spacing: 20) {
-                    // Gauge score ring
-                    ZStack {
-                        Circle()
-                            .stroke(Color.white.opacity(0.1), lineWidth: 8)
-                            .frame(width: 74, height: 74)
+                    case 1:
+                        SubjectBarChartView(
+                            data: [72.0, 68.0, 85.0, 78.0, 91.0, 88.0],
+                            labels: ["Math", "Sci", "Eng", "His", "Geo", "Art"]
+                        )
+                        .frame(height: 175)
 
-                        Circle()
-                            .trim(from: 0, to: 0.92)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color(hex: "#6366F1"), Color(hex: "#A855F7")],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                            )
-                            .rotationEffect(.degrees(-90))
-                            .frame(width: 74, height: 74)
-
-                        VStack(spacing: 0) {
-                            Text("92%")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
-                            Text("A+")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(AppTheme.Color.success)
-                        }
+                    default:
+                        AttendanceDonutChartView(present: 82, absent: 10, leaves: 8)
+                            .frame(height: 175)
                     }
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text("Class Rank:")
-                                .font(AppTheme.Font.caption)
-                                .foregroundColor(AppTheme.Color.darkSecondary)
-                            Text("#3 / 42")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-
-                        HStack {
-                            Text("Attendance:")
-                                .font(AppTheme.Font.caption)
-                                .foregroundColor(AppTheme.Color.darkSecondary)
-                            Text("96.4%")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(AppTheme.Color.success)
-                        }
-
-                        HStack {
-                            Text("Next Exam:")
-                                .font(AppTheme.Font.caption)
-                                .foregroundColor(AppTheme.Color.darkSecondary)
-                            Text("Mathematics (Mon)")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white)
+                    // Shadcn Tab Strip matching Android
+                    HStack(spacing: 0) {
+                        ForEach(Array(tabs.enumerated()), id: \.offset) { idx, title in
+                            let isSelected = selectedTab == idx
+                            Button(action: {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                    selectedTab = idx
+                                }
+                            }) {
+                                Text(title)
+                                    .font(.system(size: 11, weight: isSelected ? .bold : .medium))
+                                    .foregroundColor(isSelected ? .black : AppTheme.Color.darkSecondary)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 32)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .fill(isSelected ? Color.white : Color.clear)
+                                    )
+                            }
                         }
                     }
-                    Spacer()
+                    .padding(3)
+                    .background(Color.white.opacity(0.08))
+                    .cornerRadius(8)
                 }
             }
         }
@@ -614,23 +816,226 @@ struct AcademicPerformanceCard: View {
 }
 
 // ---------------------------------------------------------------------------
-// Today's Timetable Section (Mirrors Android StudentTimetableSection)
+// Chart 1: Academic Performance Smooth Bezier Curve Chart
+// ---------------------------------------------------------------------------
+
+private struct AcademicPerformanceBezierChart: View {
+    let data: [Double]
+    let labels: [String]
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height - 24
+            let minVal = 50.0
+            let maxVal = 100.0
+            let stepX = w / CGFloat(max(1, data.count - 1))
+
+            let points: [CGPoint] = data.enumerated().map { idx, val in
+                let norm = CGFloat((val - minVal) / (maxVal - minVal))
+                let y = h - (norm * h)
+                return CGPoint(x: CGFloat(idx) * stepX, y: y)
+            }
+
+            ZStack(alignment: .bottom) {
+                // Background Grid Lines
+                VStack(spacing: 0) {
+                    ForEach(0..<4) { _ in
+                        Divider().background(Color.white.opacity(0.06))
+                        Spacer()
+                    }
+                }
+                .frame(height: h)
+
+                // Area Gradient under the curve
+                Path { path in
+                    guard !points.isEmpty else { return }
+                    path.move(to: CGPoint(x: points[0].x, y: h))
+                    path.addLine(to: points[0])
+                    for i in 1..<points.count {
+                        let prev = points[i - 1]
+                        let curr = points[i]
+                        let mid = CGPoint(x: (prev.x + curr.x) / 2, y: (prev.y + curr.y) / 2)
+                        path.addQuadCurve(to: mid, control: prev)
+                        path.addQuadCurve(to: curr, control: mid)
+                    }
+                    path.addLine(to: CGPoint(x: points.last!.x, y: h))
+                    path.closeSubpath()
+                }
+                .fill(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.18), Color.white.opacity(0.01)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+
+                // Line Stroke
+                Path { path in
+                    guard !points.isEmpty else { return }
+                    path.move(to: points[0])
+                    for i in 1..<points.count {
+                        let prev = points[i - 1]
+                        let curr = points[i]
+                        let mid = CGPoint(x: (prev.x + curr.x) / 2, y: (prev.y + curr.y) / 2)
+                        path.addQuadCurve(to: mid, control: prev)
+                        path.addQuadCurve(to: curr, control: mid)
+                    }
+                }
+                .stroke(Color.white, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+
+                // Data Point Dots
+                ForEach(Array(points.enumerated()), id: \.offset) { idx, pt in
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 7, height: 7)
+                        .overlay(Circle().stroke(AppTheme.Color.darkBackground, lineWidth: 2))
+                        .position(pt)
+                }
+
+                // X-Axis Labels
+                HStack {
+                    ForEach(Array(labels.prefix(data.count).enumerated()), id: \.offset) { idx, lbl in
+                        Text(lbl)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(AppTheme.Color.darkSecondary)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .offset(y: 18)
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Chart 2: Subject Bar Chart (Math, Sci, Eng, His, Geo, Art)
+// ---------------------------------------------------------------------------
+
+private struct SubjectBarChartView: View {
+    let data: [Double]
+    let labels: [String]
+
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height - 24
+            let barW = (w / CGFloat(data.count)) * 0.42
+
+            VStack(spacing: 0) {
+                HStack(alignment: .bottom, spacing: 0) {
+                    ForEach(Array(data.enumerated()), id: \.offset) { idx, val in
+                        let barH = CGFloat(val / 100.0) * h
+                        VStack(spacing: 4) {
+                            Text("\(Int(val))%")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundColor(Color.white.opacity(0.8))
+
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.white.opacity(0.85 - Double(idx) * 0.1))
+                                .frame(width: barW, height: barH)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .bottom)
+                    }
+                }
+                .frame(height: h)
+
+                // Labels
+                HStack(spacing: 0) {
+                    ForEach(labels, id: \.self) { lbl in
+                        Text(lbl)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(AppTheme.Color.darkSecondary)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding(.top, 6)
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Chart 3: Attendance Donut Chart
+// ---------------------------------------------------------------------------
+
+private struct AttendanceDonutChartView: View {
+    let present: Int
+    let absent: Int
+    let leaves: Int
+
+    var body: some View {
+        HStack(spacing: 24) {
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.08), lineWidth: 14)
+                    .frame(width: 100, height: 100)
+
+                Circle()
+                    .trim(from: 0, to: CGFloat(present) / 100.0)
+                    .stroke(Color.white, style: StrokeStyle(lineWidth: 14, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 100, height: 100)
+
+                VStack(spacing: 0) {
+                    Text("\(present)%")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(.white)
+                    Text("Present")
+                        .font(.system(size: 9))
+                        .foregroundColor(AppTheme.Color.darkSecondary)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                LegendRow(color: .white, title: "Present", value: "\(present)%")
+                LegendRow(color: AppTheme.Color.destructive, title: "Absent", value: "\(absent)%")
+                LegendRow(color: AppTheme.Color.warning, title: "Leaves", value: "\(leaves)%")
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+private struct LegendRow: View {
+    let color: SwiftUI.Color
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Circle().fill(color).frame(width: 8, height: 8)
+            Text(title)
+                .font(AppTheme.Font.caption)
+                .foregroundColor(AppTheme.Color.darkSecondary)
+            Spacer()
+            Text(value)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white)
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Student Timetable Section (Matches Android StudentTimetableSection)
 // ---------------------------------------------------------------------------
 
 struct StudentTimetableSection: View {
-    struct TimetableItem: Identifiable {
+    let events: [TeacherCalendarEvent]
+
+    private struct FallbackClass: Identifiable {
         let id = UUID()
         let time: String
         let subject: String
         let room: String
         let teacher: String
-        let isLive: BooleanLiteralType
+        let isLive: Bool
     }
 
-    let todayClasses = [
-        TimetableItem(time: "09:00 AM", subject: "Mathematics — Calculus", room: "Room 302", teacher: "Dr. Sharma", isLive: false),
-        TimetableItem(time: "10:30 AM", subject: "Physics — Electromagnetism", room: "Lab 2", teacher: "Prof. Verma", isLive: true),
-        TimetableItem(time: "01:00 PM", subject: "English Literature", room: "Room 105", teacher: "Mrs. Rao", isLive: false)
+    private let fallbackClasses = [
+        FallbackClass(time: "09:00 AM", subject: "Mathematics — Calculus", room: "Room 302", teacher: "Dr. Sharma", isLive: false),
+        FallbackClass(time: "10:30 AM", subject: "Physics — Electromagnetism", room: "Lab 2", teacher: "Prof. Verma", isLive: true),
+        FallbackClass(time: "01:00 PM", subject: "English Literature", room: "Room 105", teacher: "Mrs. Rao", isLive: false)
     ]
 
     var body: some View {
@@ -646,38 +1051,67 @@ struct StudentTimetableSection: View {
             }
 
             VStack(spacing: 8) {
-                ForEach(todayClasses) { cls in
-                    GlassCard(padding: 12) {
-                        HStack(spacing: 12) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(cls.time)
+                if !events.isEmpty {
+                    ForEach(events, id: \.id) { ev in
+                        GlassCard(padding: 12) {
+                            HStack(spacing: 12) {
+                                Text(ev.time)
                                     .font(.system(size: 11, weight: .bold))
-                                    .foregroundColor(cls.isLive ? AppTheme.Color.accent : AppTheme.Color.darkSecondary)
+                                    .foregroundColor(.white)
+                                    .frame(width: 75, alignment: .leading)
 
-                                if cls.isLive {
-                                    HStack(spacing: 4) {
-                                        Circle().fill(Color(hex: "#22C55E")).frame(width: 6, height: 6)
-                                        Text("LIVE NOW")
-                                            .font(.system(size: 9, weight: .bold))
-                                            .foregroundColor(Color(hex: "#22C55E"))
+                                Rectangle()
+                                    .fill(AppTheme.Color.darkOutline)
+                                    .frame(width: 1, height: 32)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(ev.title)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(.white)
+                                    if let rm = ev.room {
+                                        Text(rm)
+                                            .font(.system(size: 11))
+                                            .foregroundColor(AppTheme.Color.darkSecondary)
                                     }
                                 }
+                                Spacer()
                             }
-                            .frame(width: 75, alignment: .leading)
+                        }
+                    }
+                } else {
+                    ForEach(fallbackClasses) { cls in
+                        GlassCard(padding: 12) {
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(cls.time)
+                                        .font(.system(size: 11, weight: .bold))
+                                        .foregroundColor(cls.isLive ? Color.white : AppTheme.Color.darkSecondary)
 
-                            Rectangle()
-                                .fill(Color.white.opacity(0.12))
-                                .frame(width: 1, height: 36)
+                                    if cls.isLive {
+                                        HStack(spacing: 4) {
+                                            Circle().fill(Color(hex: "#22C55E")).frame(width: 6, height: 6)
+                                            Text("LIVE NOW")
+                                                .font(.system(size: 9, weight: .bold))
+                                                .foregroundColor(Color(hex: "#22C55E"))
+                                        }
+                                    }
+                                }
+                                .frame(width: 75, alignment: .leading)
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(cls.subject)
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white)
-                                Text("\(cls.teacher) • \(cls.room)")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(AppTheme.Color.darkSecondary)
+                                Rectangle()
+                                    .fill(AppTheme.Color.darkOutline)
+                                    .frame(width: 1, height: 36)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(cls.subject)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(.white)
+                                    Text("\(cls.teacher) • \(cls.room)")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(AppTheme.Color.darkSecondary)
+                                }
+                                Spacer()
                             }
-                            Spacer()
                         }
                     }
                 }
@@ -687,57 +1121,11 @@ struct StudentTimetableSection: View {
 }
 
 // ---------------------------------------------------------------------------
-// Quick Action Frosted Glass Card
+// Library Books Section (Matches Android LibraryBooksSection)
 // ---------------------------------------------------------------------------
 
-struct QuickActionGlassCard: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    var color: SwiftUI.Color = AppTheme.Color.accent
-    var action: () -> Void = {}
-
-    var body: some View {
-        Button(action: {
-            let gen = UIImpactFeedbackGenerator(style: .light)
-            gen.impactOccurred()
-            action()
-        }) {
-            GlassCard(padding: 14) {
-                VStack(alignment: .leading, spacing: 8) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: AppTheme.Radius.sm)
-                            .fill(color.opacity(0.18))
-                            .frame(width: 38, height: 38)
-                            .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.sm).stroke(color.opacity(0.35), lineWidth: 1))
-
-                        Image(systemName: icon)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(color)
-                    }
-
-                    Text(title)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-
-                    Text(subtitle)
-                        .font(.system(size: 11))
-                        .foregroundColor(AppTheme.Color.darkSecondary)
-                        .lineLimit(1)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Library Preview Section
-// ---------------------------------------------------------------------------
-
-private struct LibraryPreviewSection: View {
-    @ObservedObject var viewModel: LibraryViewModel
+private struct LibraryBooksSection: View {
+    @ObservedObject var vm: StudentDashboardViewModel
     let onShowMore: () -> Void
 
     var body: some View {
@@ -750,17 +1138,17 @@ private struct LibraryPreviewSection: View {
                         .font(AppTheme.Font.caption2).foregroundColor(AppTheme.Color.darkSecondary)
                 }
                 Spacer()
-                if viewModel.borrowings.count > 3 {
+                if vm.borrowings.count > 3 {
                     Button("View all →") { onShowMore() }
                         .font(AppTheme.Font.caption)
-                        .foregroundColor(AppTheme.Color.accent)
+                        .foregroundColor(AppTheme.Color.darkSecondary)
                 }
             }
 
-            if viewModel.isLoading && viewModel.borrowings.isEmpty {
+            if vm.isLoadingBorrowings && vm.borrowings.isEmpty {
                 HStack { Spacer(); ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white)); Spacer() }
                     .frame(height: 80)
-            } else if viewModel.borrowings.isEmpty {
+            } else if vm.borrowings.isEmpty {
                 GlassCard {
                     Text("No books currently issued")
                         .font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
@@ -769,9 +1157,9 @@ private struct LibraryPreviewSection: View {
             } else {
                 GlassCard {
                     VStack(spacing: 0) {
-                        ForEach(Array(viewModel.borrowings.prefix(3).enumerated()), id: \.element.id) { idx, book in
-                            if idx > 0 { Divider().background(Color.white.opacity(0.1)) }
-                            LibraryPreviewRow(book: book, onRenew: { viewModel.renewBook(bookId: book.id) })
+                        ForEach(Array(vm.borrowings.prefix(3).enumerated()), id: \.element.id) { idx, book in
+                            if idx > 0 { Divider().background(AppTheme.Color.darkOutline) }
+                            LibraryPreviewRow(book: book, isRenewing: vm.isRenewingBookId == book.id, onRenew: { vm.renewBook(bookId: book.id) })
                         }
                     }
                 }
@@ -782,6 +1170,7 @@ private struct LibraryPreviewSection: View {
 
 private struct LibraryPreviewRow: View {
     let book: StudentBorrowingResponse
+    let isRenewing: Bool
     let onRenew: () -> Void
     private var renewalsLeft: Int { max(0, 3 - Int(book.renewalsCount)) }
 
@@ -789,9 +1178,9 @@ private struct LibraryPreviewRow: View {
         HStack(spacing: AppTheme.Spacing.sm) {
             ZStack {
                 RoundedRectangle(cornerRadius: AppTheme.Radius.sm)
-                    .fill(Color.white.opacity(0.08))
+                    .fill(Color.white.opacity(0.06))
                     .frame(width: 38, height: 38)
-                    .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.sm).stroke(Color.white.opacity(0.18), lineWidth: 1))
+                    .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.sm).stroke(AppTheme.Color.darkOutline, lineWidth: 1))
                 Text(String(book.title.prefix(1)).uppercased())
                     .font(.system(size: 16, weight: .bold)).foregroundColor(.white)
             }
@@ -815,16 +1204,19 @@ private struct LibraryPreviewRow: View {
             Spacer()
             if renewalsLeft > 0 {
                 Button(action: onRenew) {
-                    Text("Renew").font(.system(size: 11, weight: .medium)).foregroundColor(.white)
-                        .padding(.horizontal, 12).padding(.vertical, 6)
-                        .background(Capsule().fill(Color.white.opacity(0.1)))
-                        .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
+                    if isRenewing {
+                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white)).scaleEffect(0.7)
+                    } else {
+                        Text("Renew").font(.system(size: 11, weight: .medium)).foregroundColor(.white)
+                            .padding(.horizontal, 12).padding(.vertical, 6)
+                            .background(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.Color.darkOutline, lineWidth: 1))
+                    }
                 }
             } else {
                 Text("Max").font(.system(size: 11, weight: .medium))
                     .foregroundColor(Color.white.opacity(0.35))
                     .padding(.horizontal, 12).padding(.vertical, 6)
-                    .background(Color.white.opacity(0.06)).cornerRadius(8)
+                    .background(Color.white.opacity(0.04)).cornerRadius(6)
             }
         }
         .padding(.vertical, 10)
@@ -841,7 +1233,53 @@ private struct LibraryPreviewRow: View {
 }
 
 // ---------------------------------------------------------------------------
-// Side Navigation Drawer (Frosted Glass Sheet)
+// Quick Action Glass Card
+// ---------------------------------------------------------------------------
+
+struct QuickActionGlassCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    var color: SwiftUI.Color = AppTheme.Color.accent
+    var action: () -> Void = {}
+
+    var body: some View {
+        Button(action: {
+            let gen = UIImpactFeedbackGenerator(style: .light)
+            gen.impactOccurred()
+            action()
+        }) {
+            GlassCard(padding: 14) {
+                VStack(alignment: .leading, spacing: 8) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.sm)
+                            .fill(Color.white.opacity(0.06))
+                            .frame(width: 38, height: 38)
+                            .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.sm).stroke(AppTheme.Color.darkOutline, lineWidth: 1))
+
+                        Image(systemName: icon)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+
+                    Text(title)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+
+                    Text(subtitle)
+                        .font(.system(size: 11))
+                        .foregroundColor(AppTheme.Color.darkSecondary)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Side Navigation Drawer
 // ---------------------------------------------------------------------------
 
 struct GlassNavigationDrawer: View {
@@ -850,48 +1288,29 @@ struct GlassNavigationDrawer: View {
     @Binding var isOpen: Bool
     let onOpenNotifications: () -> Void
 
-    @State private var notesSubject: String = "All"
-    @State private var selectedNote: NoteItem? = nil
-
-    struct NoteItem: Identifiable {
-        let id = UUID()
-        let title: String
-        let subject: String
-        let teacher: String
-        let date: String
-        let content: String
-        let color: SwiftUI.Color
-    }
-
-    let sampleNotes: [NoteItem] = [
-        NoteItem(title: "Calculus Derivatives Formula Sheet", subject: "Math", teacher: "Dr. Sharma", date: "Yesterday", content: "Key product rule, quotient rule, and chain rule summaries for next week test.", color: Color(hex: "#F59E0B")),
-        NoteItem(title: "Wave Optics Lab Experiments", subject: "Physics", teacher: "Prof. Verma", date: "3 days ago", content: "Observation tables and refractive index calculations to submit in Physics practicals.", color: Color(hex: "#38BDF8")),
-        NoteItem(title: "Organic Reaction Mechanisms", subject: "Chemistry", teacher: "Dr. Roy", date: "Aug 14", content: "Step-by-step aldol condensation and electrophilic aromatic substitution notes.", color: Color(hex: "#34D399"))
-    ]
+    @StateObject private var notesVM = StudentDashboardViewModel()
+    @State private var selectedNote: StudentNote? = nil
 
     var body: some View {
         ZStack(alignment: .leading) {
-            // Dark Backdrop Tap to Dismiss
             Color.black.opacity(0.6)
                 .ignoresSafeArea()
                 .onTapGesture {
                     withAnimation(.spring()) { isOpen = false }
                 }
 
-            // Glass Drawer Panel
             VStack(alignment: .leading, spacing: 0) {
                 // User Profile Header
                 HStack(spacing: 12) {
                     ZStack(alignment: .bottomTrailing) {
                         Circle()
-                            .fill(Color.white.opacity(0.12))
+                            .fill(Color.white.opacity(0.08))
                             .frame(width: 44, height: 44)
-                            .overlay(Circle().stroke(Color.white.opacity(0.25), lineWidth: 1))
+                            .overlay(Circle().stroke(AppTheme.Color.darkOutline, lineWidth: 1))
                         Text(String((user.name ?? "U").prefix(1)).uppercased())
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
 
-                        // Green online dot
                         Circle()
                             .fill(Color(hex: "#22C55E"))
                             .frame(width: 10, height: 10)
@@ -913,18 +1332,17 @@ struct GlassNavigationDrawer: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(AppTheme.Color.darkSecondary)
                             .padding(8)
-                            .background(Circle().fill(Color.white.opacity(0.08)))
+                            .background(Circle().fill(Color.white.opacity(0.06)))
                     }
                 }
                 .padding(.horizontal, AppTheme.Spacing.md)
                 .padding(.top, 50)
                 .padding(.bottom, AppTheme.Spacing.md)
 
-                Divider().background(Color.white.opacity(0.1))
+                Divider().background(AppTheme.Color.darkOutline)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 6) {
-                        // Navigation Links
                         DrawerRow(icon: "house.fill", title: "Home Dashboard", isSelected: selectedTab == 0) {
                             selectedTab = 0; isOpen = false
                         }
@@ -949,117 +1367,69 @@ struct GlassNavigationDrawer: View {
                             }
                         }
 
-                        // Student Inline Notes Section
+                        DrawerRow(icon: "person.crop.circle.fill", title: "My Profile", isSelected: selectedTab == 4) {
+                            selectedTab = 4; isOpen = false
+                        }
+
+                        // Student Notes Section (from API)
                         if user.role.lowercased() == "student" {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: "note.text")
-                                        .font(.system(size: 13))
-                                        .foregroundColor(AppTheme.Color.accent)
-                                    Text("STUDENT NOTES")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(AppTheme.Color.darkSecondary)
-                                    Spacer()
-                                    Text("\(sampleNotes.count)")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 6).padding(.vertical, 2)
-                                        .background(Capsule().fill(Color(hex: "#3B82F6")))
-                                }
+                            Divider().background(AppTheme.Color.darkOutline).padding(.vertical, 8)
+
+                            Text("MY STUDY NOTES")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(AppTheme.Color.darkSecondary)
                                 .padding(.horizontal, AppTheme.Spacing.md)
-                                .padding(.top, 10)
 
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 10) {
-                                        ForEach(sampleNotes) { note in
-                                            Button(action: { selectedNote = note }) {
-                                                VStack(alignment: .leading, spacing: 4) {
-                                                    HStack {
-                                                        Circle().fill(note.color).frame(width: 6, height: 6)
-                                                        Text(note.subject)
-                                                            .font(.system(size: 10, weight: .bold))
-                                                            .foregroundColor(note.color)
-                                                        Spacer()
-                                                    }
-                                                    Text(note.title)
-                                                        .font(.system(size: 12, weight: .semibold))
-                                                        .foregroundColor(.white)
-                                                        .lineLimit(2)
-                                                        .multilineTextAlignment(.leading)
-                                                    Spacer()
-                                                    Text(note.teacher)
-                                                        .font(.system(size: 9))
-                                                        .foregroundColor(AppTheme.Color.darkSecondary)
-                                                }
-                                                .padding(10)
-                                                .frame(width: 150, height: 100)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 12)
-                                                        .fill(Color.white.opacity(0.06))
-                                                )
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 12)
-                                                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                                                )
+                            if !notesVM.notes.isEmpty {
+                                ForEach(notesVM.notes, id: \.id) { note in
+                                    Button(action: { selectedNote = note }) {
+                                        HStack(spacing: 8) {
+                                            Circle().fill(Color.white.opacity(0.6)).frame(width: 8, height: 8)
+                                            VStack(alignment: .leading, spacing: 1) {
+                                                Text(note.title ?? "Note").font(.system(size: 13, weight: .medium)).foregroundColor(.white).lineLimit(1)
+                                                Text(note.subject ?? "Subject").font(.system(size: 10)).foregroundColor(AppTheme.Color.darkSecondary)
                                             }
+                                            Spacer()
                                         }
+                                        .padding(.horizontal, AppTheme.Spacing.md)
+                                        .padding(.vertical, 6)
                                     }
-                                    .padding(.horizontal, AppTheme.Spacing.md)
                                 }
+                            } else {
+                                Text("No study notes yet")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(AppTheme.Color.darkSecondary)
+                                    .padding(.horizontal, AppTheme.Spacing.md)
                             }
-                        }
-
-                        Divider().background(Color.white.opacity(0.1)).padding(.vertical, 8)
-
-                        DrawerRow(icon: "sparkles", title: "VidyaAI Assistant") {
-                            isOpen = false
-                        }
-
-                        DrawerRow(icon: "qrcode.viewfinder", title: "QR Code Login") {
-                            isOpen = false
-                        }
-
-                        DrawerRow(icon: "person.crop.circle.badge.checkmark", title: "Manage Sessions") {
-                            isOpen = false
                         }
                     }
                     .padding(.vertical, 8)
                 }
 
-                // Drawer Footer: Quick Search bar
-                Button(action: { selectedTab = 3; isOpen = false }) {
+                Divider().background(AppTheme.Color.darkOutline)
+
+                // Drawer Footer
+                Button(action: { isOpen = false; onOpenNotifications() }) {
                     HStack(spacing: 10) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(AppTheme.Color.darkSecondary)
-                        Text("Search portal...")
-                            .font(.system(size: 13))
-                            .foregroundColor(AppTheme.Color.darkSecondary)
+                        Image(systemName: "bell.badge.fill").foregroundColor(AppTheme.Color.darkSecondary)
+                        Text("Notification Center").font(.system(size: 13, weight: .medium)).foregroundColor(.white)
                         Spacer()
                     }
-                    .padding(.horizontal, 14)
-                    .frame(height: 42)
-                    .background(Color.white.opacity(0.06))
-                    .cornerRadius(12)
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.14), lineWidth: 1))
+                    .padding(AppTheme.Spacing.md)
                 }
-                .padding(.horizontal, AppTheme.Spacing.md)
-                .padding(.bottom, 36)
             }
-            .frame(width: UIScreen.main.bounds.width * 0.82)
-            .background(
-                ZStack {
-                    Rectangle().fill(.ultraThinMaterial)
-                    Color(hex: "#0E0E12").opacity(0.92)
-                }
-            )
+            .frame(width: 290)
+            .background(AppTheme.Color.darkSurface)
             .overlay(
                 Rectangle()
-                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    .fill(AppTheme.Color.darkOutline)
+                    .frame(width: 1),
+                alignment: .trailing
             )
             .ignoresSafeArea()
         }
-        .sheet(item: $selectedNote) { note in
-            NoteDetailSheetView(note: note)
+        .onAppear {
+            notesVM.fetchNotes()
         }
     }
 }
@@ -1067,7 +1437,7 @@ struct GlassNavigationDrawer: View {
 private struct DrawerRow: View {
     let icon: String
     let title: String
-    var isSelected: Bool = false
+    let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
@@ -1076,7 +1446,7 @@ private struct DrawerRow: View {
                 Image(systemName: icon)
                     .font(.system(size: 15))
                     .foregroundColor(isSelected ? .white : AppTheme.Color.darkSecondary)
-                    .frame(width: 22)
+                    .frame(width: 24)
 
                 Text(title)
                     .font(.system(size: 14, weight: isSelected ? .bold : .medium))
@@ -1087,7 +1457,7 @@ private struct DrawerRow: View {
             .padding(.horizontal, AppTheme.Spacing.md)
             .frame(height: 42)
             .background(
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 8)
                     .fill(isSelected ? Color.white.opacity(0.08) : Color.clear)
             )
         }
@@ -1109,22 +1479,23 @@ private struct TeacherHomeSection: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Today's Teaching Schedule")
                         .font(AppTheme.Font.headline).foregroundColor(.white)
-                    Text("• Grade 10 Math — 09:00 AM (Room 302)\n• Grade 12 Calculus — 11:00 AM (Lab 2)\n• Staff Faculty Meeting — 02:00 PM (Conference Hall)")
-                        .font(AppTheme.Font.subheadline)
-                        .foregroundColor(Color.white.opacity(0.85))
-                        .lineSpacing(6)
+                    Text("Class 10-A • Mathematics (09:00 AM)")
+                        .font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
+                    Text("Class 12-B • Physics Practical (11:30 AM)")
+                        .font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-                Text("Teacher Controls")
+                Text("Teacher Shortcuts")
                     .font(AppTheme.Font.headline).foregroundColor(.white)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    QuickActionGlassCard(icon: "person.3.fill", title: "Students", subtitle: "Search & view", color: AppTheme.Color.accent, action: onShowStudentSearch)
-                    QuickActionGlassCard(icon: "bell.fill", title: "Notices", subtitle: "Create & send", color: AppTheme.Color.success, action: onShowCreateNotice)
-                    QuickActionGlassCard(icon: "books.vertical.fill", title: "Library", subtitle: "Manage borrowings", color: AppTheme.Color.warning, action: { selectedTab = 2 })
-                    QuickActionGlassCard(icon: "chart.bar.fill", title: "Reports", subtitle: "School performance", color: AppTheme.Color.accentPurple, action: {})
+                    QuickActionGlassCard(icon: "person.2.fill", title: "Search Students", subtitle: "Profiles & records", color: AppTheme.Color.accent, action: onShowStudentSearch)
+                    QuickActionGlassCard(icon: "megaphone.fill", title: "Post Notice", subtitle: "Broadcast info", color: AppTheme.Color.success, action: onShowCreateNotice)
+                    QuickActionGlassCard(icon: "books.vertical.fill", title: "Library Hub", subtitle: "Search catalogue", color: AppTheme.Color.accentPurple, action: { selectedTab = 2 })
+                    QuickActionGlassCard(icon: "doc.text.fill", title: "Exam Marks", subtitle: "Enter student marks", color: AppTheme.Color.warning, action: {})
                 }
             }
         }
@@ -1145,22 +1516,23 @@ private struct AdminHomeSection: View {
         VStack(spacing: AppTheme.Spacing.md) {
             GlassCard {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("System Administration")
+                    Text("Admin Control Console")
                         .font(AppTheme.Font.headline).foregroundColor(.white)
-                    Text("Manage real-time portal sliders, broadcast urgent notices to all school batches, and audit accounts.")
+                    Text("School-wide management: notices, slider banners & accounts.")
                         .font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-                Text("Admin Hub")
+                Text("Management Hub")
                     .font(AppTheme.Font.headline).foregroundColor(.white)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    QuickActionGlassCard(icon: "person.3.fill", title: "Users", subtitle: "Manage accounts", color: AppTheme.Color.accent, action: onShowUsers)
-                    QuickActionGlassCard(icon: "photo.on.rectangle", title: "Slider", subtitle: "Manage banners", color: AppTheme.Color.success, action: onShowSlider)
-                    QuickActionGlassCard(icon: "bell.badge.fill", title: "Notices", subtitle: "Send to all roles", color: AppTheme.Color.destructive, action: onShowCreateNotice)
-                    QuickActionGlassCard(icon: "gearshape.fill", title: "Settings", subtitle: "App configuration", color: AppTheme.Color.warning, action: {})
+                    QuickActionGlassCard(icon: "photo.stack.fill", title: "Manage Slider", subtitle: "Home banner cards", color: AppTheme.Color.accent, action: onShowSlider)
+                    QuickActionGlassCard(icon: "megaphone.fill", title: "Broadcast Notice", subtitle: "Send announcement", color: AppTheme.Color.success, action: onShowCreateNotice)
+                    QuickActionGlassCard(icon: "person.3.fill", title: "User Directory", subtitle: "Manage accounts", color: AppTheme.Color.accentPurple, action: onShowUsers)
+                    QuickActionGlassCard(icon: "chart.bar.fill", title: "Analytics", subtitle: "Reports & stats", color: AppTheme.Color.warning, action: {})
                 }
             }
         }
@@ -1179,24 +1551,17 @@ private struct AccountsHomeSection: View {
     var body: some View {
         VStack(spacing: AppTheme.Spacing.md) {
             GlassCard {
-                VStack(spacing: 8) {
-                    Text("FINANCIAL SUMMARY")
-                        .font(AppTheme.Font.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(AppTheme.Color.darkSecondary)
-                    Text("₹4,82,500")
-                        .font(.system(size: 34, weight: .bold))
-                        .foregroundColor(.white)
-                    Text("Total Collections This Month")
-                        .font(AppTheme.Font.caption2)
-                        .foregroundColor(AppTheme.Color.success)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Accounts & Financial Control")
+                        .font(AppTheme.Font.headline).foregroundColor(.white)
+                    Text("Track fee collection, verify bank receipts & audit ledger.")
+                        .font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 4)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-                Text("Accounts Operations")
+                Text("Finance Desk")
                     .font(AppTheme.Font.headline).foregroundColor(.white)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
@@ -1227,14 +1592,13 @@ struct ProfileTabView: View {
 
                 ScrollView {
                     VStack(spacing: AppTheme.Spacing.md) {
-                        // Avatar card with Glass styling
                         GlassCard {
                             VStack(spacing: AppTheme.Spacing.md) {
                                 ZStack {
                                     Circle()
-                                        .fill(Color.white.opacity(0.1))
+                                        .fill(Color.white.opacity(0.08))
                                         .frame(width: 88, height: 88)
-                                        .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1.5))
+                                        .overlay(Circle().stroke(AppTheme.Color.darkOutline, lineWidth: 1.5))
                                     Text(String((user.name ?? user.email).prefix(1)).uppercased())
                                         .font(.system(size: 36, weight: .bold)).foregroundColor(.white)
                                 }
@@ -1247,21 +1611,20 @@ struct ProfileTabView: View {
                                     RoleBadge(role: user.role)
                                 }
 
-                                Divider().background(Color.white.opacity(0.1))
+                                Divider().background(AppTheme.Color.darkOutline)
 
                                 VStack(spacing: 0) {
                                     if let username = user.username {
                                         ProfileRow(icon: "at", label: "Username", value: "@\(username)")
-                                        Divider().background(Color.white.opacity(0.1))
+                                        Divider().background(AppTheme.Color.darkOutline)
                                     }
                                     ProfileRow(icon: "person.badge.key", label: "Provider", value: user.provider.capitalized)
-                                    Divider().background(Color.white.opacity(0.1))
+                                    Divider().background(AppTheme.Color.darkOutline)
                                     ProfileRow(icon: "checkmark.shield", label: "Session", value: "Active (Encrypted)")
                                 }
                             }
                         }
 
-                        // App Appearance Theme Selector (Matches Android Profile)
                         GlassCard {
                             VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
                                 Text("App Appearance")
@@ -1290,18 +1653,16 @@ struct ProfileTabView: View {
                             }
                         }
 
-                        // Student Info Card
                         GlassCard {
                             VStack(spacing: 0) {
                                 ProfileRow(icon: "envelope", label: "Email", value: user.email)
                                 if let cls = user.studentClass {
-                                    Divider().background(Color.white.opacity(0.1))
+                                    Divider().background(AppTheme.Color.darkOutline)
                                     ProfileRow(icon: "graduationcap", label: "Class", value: cls)
                                 }
                             }
                         }
 
-                        // Sign Out Button
                         VSButton(title: "Sign Out", style: .destructive) {
                             authViewModel.logout()
                         }
@@ -1342,7 +1703,7 @@ private struct ProfileRow: View {
 }
 
 // ---------------------------------------------------------------------------
-// Academic Marks Sheet View (Detailed Performance Modal)
+// Academic Marks Sheet View
 // ---------------------------------------------------------------------------
 
 struct AcademicMarksSheetView: View {
@@ -1373,7 +1734,6 @@ struct AcademicMarksSheetView: View {
 
                 ScrollView {
                     VStack(spacing: AppTheme.Spacing.md) {
-                        // Term Selector
                         HStack(spacing: 8) {
                             ForEach(["Term 1 Mid", "Term 1 Final", "Term 2 Mid"], id: \.self) { term in
                                 let isSel = selectedTerm == term
@@ -1390,7 +1750,6 @@ struct AcademicMarksSheetView: View {
                         }
                         .padding(.top, 8)
 
-                        // Overview Card
                         GlassCard {
                             HStack {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -1398,68 +1757,34 @@ struct AcademicMarksSheetView: View {
                                         .font(AppTheme.Font.caption)
                                         .foregroundColor(AppTheme.Color.darkSecondary)
                                     Text("461 / 500")
-                                        .font(.system(size: 24, weight: .bold))
+                                        .font(.system(size: 32, weight: .bold))
                                         .foregroundColor(.white)
+                                    Text("Percentage: 92.2% • Grade: A+")
+                                        .font(AppTheme.Font.caption2)
+                                        .foregroundColor(AppTheme.Color.success)
                                 }
                                 Spacer()
-                                VStack(alignment: .trailing, spacing: 4) {
-                                    Text("Percentage")
-                                        .font(AppTheme.Font.caption)
-                                        .foregroundColor(AppTheme.Color.darkSecondary)
-                                    Text("92.2% (Grade A+)")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(AppTheme.Color.success)
+                                ZStack {
+                                    Circle().stroke(Color.white.opacity(0.08), lineWidth: 8).frame(width: 72, height: 72)
+                                    Circle().trim(from: 0, to: 0.922).stroke(Color.white, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                                        .rotationEffect(.degrees(-90)).frame(width: 72, height: 72)
+                                    Text("92%").font(.system(size: 14, weight: .bold)).foregroundColor(.white)
                                 }
                             }
                         }
 
-                        // Subjects List
-                        VStack(spacing: 10) {
+                        VStack(spacing: 8) {
                             ForEach(subjects) { sub in
-                                GlassCard(padding: 14) {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        HStack {
-                                            Text(sub.name)
-                                                .font(.system(size: 15, weight: .bold))
-                                                .foregroundColor(.white)
-                                            Spacer()
-                                            Text(sub.grade)
-                                                .font(.system(size: 12, weight: .bold))
-                                                .foregroundColor(AppTheme.Color.success)
-                                                .padding(.horizontal, 8)
-                                                .padding(.vertical, 3)
-                                                .background(AppTheme.Color.success.opacity(0.15))
-                                                .cornerRadius(6)
+                                GlassCard(padding: 12) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(sub.name).font(.system(size: 14, weight: .bold)).foregroundColor(.white)
+                                            Text("Class Average: \(sub.classAvg)%").font(.system(size: 11)).foregroundColor(AppTheme.Color.darkSecondary)
                                         }
-
-                                        // Progress Bar
-                                        GeometryReader { geo in
-                                            ZStack(alignment: .leading) {
-                                                RoundedRectangle(cornerRadius: 3)
-                                                    .fill(Color.white.opacity(0.1))
-                                                    .frame(height: 6)
-
-                                                RoundedRectangle(cornerRadius: 3)
-                                                    .fill(
-                                                        LinearGradient(
-                                                            colors: [Color(hex: "#6366F1"), Color(hex: "#8B5CF6")],
-                                                            startPoint: .leading,
-                                                            endPoint: .trailing
-                                                        )
-                                                    )
-                                                    .frame(width: geo.size.width * CGFloat(sub.score) / CGFloat(sub.maxScore), height: 6)
-                                            }
-                                        }
-                                        .frame(height: 6)
-
-                                        HStack {
-                                            Text("Marks: \(sub.score) / \(sub.maxScore)")
-                                                .font(.system(size: 11))
-                                                .foregroundColor(.white.opacity(0.8))
-                                            Spacer()
-                                            Text("Class Average: \(sub.classAvg)%")
-                                                .font(.system(size: 11))
-                                                .foregroundColor(AppTheme.Color.darkSecondary)
+                                        Spacer()
+                                        VStack(alignment: .trailing, spacing: 2) {
+                                            Text("\(sub.score)/\(sub.maxScore)").font(.system(size: 14, weight: .bold)).foregroundColor(.white)
+                                            Text(sub.grade).font(.system(size: 11, weight: .bold)).foregroundColor(AppTheme.Color.success)
                                         }
                                     }
                                 }
@@ -1473,8 +1798,7 @@ struct AcademicMarksSheetView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }
-                        .foregroundColor(.white)
+                    Button("Close") { dismiss() }.foregroundColor(.white)
                 }
             }
         }
@@ -1487,13 +1811,10 @@ struct AcademicMarksSheetView: View {
 
 struct ComplaintSheetView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var category: String = "Academics"
-    @State private var titleText: String = ""
-    @State private var descriptionText: String = ""
-    @State private var isUrgent: Bool = false
-    @State private var isSubmitted: Bool = false
-
-    let categories = ["Academics", "Facilities", "Transport", "Fees", "Other"]
+    @State private var subject: String = ""
+    @State private var description: String = ""
+    @State private var isSubmitting: Bool = false
+    @State private var isSuccess: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -1502,69 +1823,62 @@ struct ComplaintSheetView: View {
 
                 ScrollView {
                     VStack(spacing: AppTheme.Spacing.md) {
-                        if isSubmitted {
+                        if isSuccess {
                             GlassCard {
-                                VStack(spacing: 12) {
+                                VStack(spacing: 8) {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 48))
                                         .foregroundColor(AppTheme.Color.success)
-                                    Text("Complaint Registered")
-                                        .font(AppTheme.Font.title3)
+                                        .font(.system(size: 40))
+                                    Text("Ticket Submitted Successfully")
+                                        .font(AppTheme.Font.headline)
                                         .foregroundColor(.white)
-                                    Text("Your grievance has been submitted to the administration desk. Reference #VS-88192")
+                                    Text("School administration will review your report within 24 hours.")
                                         .font(AppTheme.Font.caption)
                                         .foregroundColor(AppTheme.Color.darkSecondary)
-                                        .multilineTextAlignment(.center)
-                                    VSButton(title: "Done") { dismiss() }
                                 }
+                                .frame(maxWidth: .infinity)
                                 .padding(.vertical, 8)
                             }
-                        } else {
-                            GlassCard {
-                                VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
-                                    Text("Grievance Category")
+                        }
+
+                        GlassCard {
+                            VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
+                                Text("Student Support & Complaints")
+                                    .font(AppTheme.Font.title3)
+                                    .foregroundColor(.white)
+
+                                VSTextField(label: "Subject", text: $subject, placeholder: "e.g. Broken bench in Room 204")
+
+                                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                                    Text("Details")
                                         .font(AppTheme.Font.caption)
                                         .foregroundColor(AppTheme.Color.darkSecondary)
 
-                                    ScrollView(.horizontal, showsIndicators: false) {
-                                        HStack(spacing: 8) {
-                                            ForEach(categories, id: \.self) { cat in
-                                                let isSel = category == cat
-                                                Button(action: { category = cat }) {
-                                                    Text(cat)
-                                                        .font(.system(size: 12, weight: isSel ? .bold : .medium))
-                                                        .foregroundColor(isSel ? .black : .white)
-                                                        .padding(.horizontal, 12).padding(.vertical, 6)
-                                                        .background(isSel ? Color.white : Color.white.opacity(0.08))
-                                                        .cornerRadius(8)
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    VSTextField(label: "Subject", text: $titleText, placeholder: "Brief summary of the issue")
-                                    VSTextField(label: "Description", text: $descriptionText, placeholder: "Provide complete details...")
-
-                                    Toggle(isOn: $isUrgent) {
-                                        Text("Mark as Urgent")
-                                            .font(AppTheme.Font.subheadline)
-                                            .foregroundColor(.white)
-                                    }
-                                    .tint(AppTheme.Color.destructive)
-
-                                    VSButton(title: "Submit Complaint") {
-                                        guard !titleText.isEmpty else { return }
-                                        isSubmitted = true
-                                    }
-                                    .padding(.top, 4)
+                                    TextEditor(text: $description)
+                                        .frame(height: 120)
+                                        .foregroundColor(.white)
+                                        .padding(8)
+                                        .background(Color.white.opacity(0.06))
+                                        .cornerRadius(AppTheme.Radius.md)
+                                        .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.md).stroke(AppTheme.Color.darkOutline, lineWidth: 1))
                                 }
+
+                                VSButton(title: "Submit Support Ticket", isLoading: isSubmitting) {
+                                    guard !subject.isEmpty, !description.isEmpty else { return }
+                                    isSubmitting = true
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                        isSubmitting = false
+                                        isSuccess = true
+                                    }
+                                }
+                                .padding(.top, 8)
                             }
                         }
                     }
                     .padding(AppTheme.Spacing.md)
                 }
             }
-            .navigationTitle("File a Complaint")
+            .navigationTitle("Support Desk")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -1584,16 +1898,17 @@ struct ManageSessionsSheetView: View {
 
     struct SessionDevice: Identifiable {
         let id = UUID()
-        let name: String
+        let device: String
+        let ip: String
         let location: String
         let lastActive: String
         let isCurrent: Bool
     }
 
     let sessions = [
-        SessionDevice(name: "Apple iPhone 15 Pro", location: "iOS App • Mumbai, India", lastActive: "Active Now", isCurrent: true),
-        SessionDevice(name: "Chrome on macOS", location: "Desktop Browser • Pune, India", lastActive: "2 hours ago", isCurrent: false),
-        SessionDevice(name: "Android Tablet", location: "Android App • New Delhi, India", lastActive: "3 days ago", isCurrent: false)
+        SessionDevice(device: "iPhone 15 Pro", ip: "192.168.1.45", location: "New Delhi, IN", lastActive: "Active Now", isCurrent: true),
+        SessionDevice(device: "Chrome (MacBook Pro)", ip: "103.21.14.8", location: "New Delhi, IN", lastActive: "2 hours ago", isCurrent: false),
+        SessionDevice(device: "Firefox (Linux)", ip: "103.21.14.8", location: "New Delhi, IN", lastActive: "Yesterday", isCurrent: false)
     ]
 
     var body: some View {
@@ -1603,49 +1918,49 @@ struct ManageSessionsSheetView: View {
 
                 ScrollView {
                     VStack(spacing: AppTheme.Spacing.md) {
-                        ForEach(sessions) { sess in
-                            GlassCard(padding: 14) {
-                                HStack(spacing: 12) {
-                                    Image(systemName: sess.isCurrent ? "iphone" : "laptopcomputer")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(sess.isCurrent ? AppTheme.Color.accent : AppTheme.Color.darkSecondary)
+                        GlassCard {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Active Browser & Mobile Sessions")
+                                    .font(AppTheme.Font.headline).foregroundColor(.white)
+                                Text("Revoke unknown devices to protect your student portal account.")
+                                    .font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
+                            }
+                        }
 
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        HStack {
-                                            Text(sess.name)
-                                                .font(.system(size: 14, weight: .bold))
-                                                .foregroundColor(.white)
-                                            if sess.isCurrent {
-                                                Text("THIS DEVICE")
-                                                    .font(.system(size: 9, weight: .bold))
-                                                    .foregroundColor(Color(hex: "#22C55E"))
-                                                    .padding(.horizontal, 6).padding(.vertical, 2)
-                                                    .background(Capsule().fill(Color(hex: "#22C55E").opacity(0.15)))
+                        VStack(spacing: 8) {
+                            ForEach(sessions) { s in
+                                GlassCard(padding: 12) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            HStack {
+                                                Text(s.device).font(.system(size: 14, weight: .bold)).foregroundColor(.white)
+                                                if s.isCurrent {
+                                                    GlassPill(text: "CURRENT", color: AppTheme.Color.success)
+                                                }
                                             }
+                                            Text("\(s.location) • \(s.ip)").font(.system(size: 11)).foregroundColor(AppTheme.Color.darkSecondary)
+                                            Text(s.lastActive).font(.system(size: 10)).foregroundColor(Color.white.opacity(0.4))
                                         }
-                                        Text(sess.location)
-                                            .font(.system(size: 11))
-                                            .foregroundColor(AppTheme.Color.darkSecondary)
-                                        Text(sess.lastActive)
-                                            .font(.system(size: 10))
-                                            .foregroundColor(Color.white.opacity(0.5))
-                                    }
-                                    Spacer()
-                                    if !sess.isCurrent {
-                                        Button(action: {}) {
-                                            Image(systemName: "trash")
-                                                .font(.system(size: 14))
+                                        Spacer()
+                                        if !s.isCurrent {
+                                            Button("Revoke") {}
+                                                .font(.system(size: 11, weight: .medium))
                                                 .foregroundColor(AppTheme.Color.destructive)
+                                                .padding(.horizontal, 10).padding(.vertical, 6)
+                                                .background(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.Color.destructive.opacity(0.5), lineWidth: 1))
                                         }
                                     }
                                 }
                             }
                         }
+
+                        VSButton(title: "Log Out All Other Devices", style: .destructive) {}
+                            .padding(.top, 8)
                     }
                     .padding(AppTheme.Spacing.md)
                 }
             }
-            .navigationTitle("Manage Sessions")
+            .navigationTitle("Device Sessions")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -1672,9 +1987,10 @@ struct NotificationHistoryView: View {
     }
 
     let notifications = [
-        NotificationRecord(title: "Term 2 Examination Hall Tickets Released", body: "Please download your hall tickets from the student portal before Friday.", time: "10 mins ago", isUnread: true),
-        NotificationRecord(title: "Library Due Reminder: Concepts of Physics", body: "Book due date in 2 days. Renew in app to avoid overdue penalty.", time: "1 hour ago", isUnread: true),
-        NotificationRecord(title: "Fee Payment Received ₹8,500", body: "Receipt #REC-77169 generated for Term 2 tuition installment.", time: "Yesterday", isUnread: false)
+        NotificationRecord(title: "Term 2 Report Card Published", body: "Your marks and attendance percentages for Term 2 are now viewable.", time: "10 mins ago", isUnread: true),
+        NotificationRecord(title: "Science Fair 2026 Registration Open", body: "Submit project abstracts by August 25 to Dr. Verma.", time: "2 hours ago", isUnread: true),
+        NotificationRecord(title: "Library Due Date Reminder", body: "Concepts of Physics Vol 1 is due tomorrow.", time: "Yesterday", isUnread: false),
+        NotificationRecord(title: "School Fees Acknowledgment", body: "Payment for July Installment ₹12,500 successfully verified.", time: "3 days ago", isUnread: false)
     ]
 
     var body: some View {
@@ -1683,16 +1999,16 @@ struct NotificationHistoryView: View {
                 GlassBackground()
 
                 ScrollView {
-                    VStack(spacing: AppTheme.Spacing.md) {
+                    VStack(spacing: 8) {
                         ForEach(notifications) { notif in
-                            GlassCard(padding: 14) {
-                                HStack(alignment: .top, spacing: 12) {
+                            GlassCard(padding: 12) {
+                                HStack(spacing: 12) {
                                     ZStack {
-                                        Circle().fill(notif.isUnread ? AppTheme.Color.accent.opacity(0.2) : Color.white.opacity(0.06))
+                                        Circle().fill(Color.white.opacity(0.06))
                                             .frame(width: 36, height: 36)
                                         Image(systemName: "bell.fill")
                                             .font(.system(size: 14))
-                                            .foregroundColor(notif.isUnread ? AppTheme.Color.accent : AppTheme.Color.darkSecondary)
+                                            .foregroundColor(notif.isUnread ? Color.white : AppTheme.Color.darkSecondary)
                                     }
 
                                     VStack(alignment: .leading, spacing: 3) {
@@ -1727,60 +2043,6 @@ struct NotificationHistoryView: View {
 }
 
 // ---------------------------------------------------------------------------
-// Note Detail Sheet View
-// ---------------------------------------------------------------------------
-
-struct NoteDetailSheetView: View {
-    @Environment(\.dismiss) private var dismiss
-    let note: GlassNavigationDrawer.NoteItem
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                GlassBackground()
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
-                        HStack {
-                            GlassPill(text: note.subject, color: note.color)
-                            Spacer()
-                            Text(note.date)
-                                .font(AppTheme.Font.caption2)
-                                .foregroundColor(AppTheme.Color.darkSecondary)
-                        }
-
-                        Text(note.title)
-                            .font(AppTheme.Font.title2)
-                            .foregroundColor(.white)
-
-                        Text("Shared by \(note.teacher)")
-                            .font(AppTheme.Font.caption)
-                            .foregroundColor(AppTheme.Color.darkSecondary)
-
-                        Divider().background(Color.white.opacity(0.1))
-
-                        GlassCard {
-                            Text(note.content)
-                                .font(AppTheme.Font.body)
-                                .foregroundColor(.white.opacity(0.9))
-                                .lineSpacing(6)
-                        }
-                    }
-                    .padding(AppTheme.Spacing.md)
-                }
-            }
-            .navigationTitle("Note Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") { dismiss() }.foregroundColor(.white)
-                }
-            }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
 // Courses Tab View (Student Dashboard)
 // ---------------------------------------------------------------------------
 
@@ -1792,14 +2054,9 @@ struct CoursesTabView: View {
             VStack(spacing: AppTheme.Spacing.md) {
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color(hex: "#6366F1"), Color(hex: "#A855F7")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Color.white.opacity(0.08))
                         .frame(width: 80, height: 80)
+                        .overlay(Circle().stroke(AppTheme.Color.darkOutline, lineWidth: 1))
                     Image(systemName: "atom")
                         .font(.system(size: 38, weight: .bold))
                         .foregroundColor(.white)
@@ -1811,7 +2068,7 @@ struct CoursesTabView: View {
 
                 Text("Coming Soon")
                     .font(AppTheme.Font.headline)
-                    .foregroundColor(AppTheme.Color.accent)
+                    .foregroundColor(AppTheme.Color.darkSecondary)
             }
             .padding()
         }

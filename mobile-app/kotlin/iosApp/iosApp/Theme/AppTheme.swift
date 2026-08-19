@@ -2,24 +2,25 @@ import SwiftUI
 
 // ---------------------------------------------------------------------------
 // VidyaSchool Design System — Glass UI & AppTheme
-// Mirrors the Android Material3 zinc-palette dark/light scheme with modern iOS Glass UI
+// Matches Android Material3 zinc-palette dark scheme (Theme.kt) with iOS SwiftUI styling
 // ---------------------------------------------------------------------------
 
 enum AppTheme {
 
     // -----------------------------------------------------------------------
-    // Colours  (zinc palette matching Android Theme.kt)
+    // Colours (zinc palette matching Android Theme.kt)
     // -----------------------------------------------------------------------
 
     enum Color {
-        // Dark scheme
-        static let darkBackground    = SwiftUI.Color(hex: "#09090B")  // zinc-950
-        static let darkSurface       = SwiftUI.Color(hex: "#18181B")  // zinc-900
+        // Dark scheme (Android DarkColorScheme)
+        static let darkBackground    = SwiftUI.Color(hex: "#09090B")  // zinc-950 (MaterialTheme.background)
+        static let darkSurface       = SwiftUI.Color(hex: "#18181B")  // zinc-900 (MaterialTheme.surface)
         static let darkSurface2      = SwiftUI.Color(hex: "#27272A")  // zinc-800
-        static let darkOutline       = SwiftUI.Color(hex: "#3F3F46")  // zinc-700
-        static let darkOnSurface     = SwiftUI.Color.white
-        static let darkSecondary     = SwiftUI.Color(hex: "#71717A")  // zinc-500
-        static let darkPrimary       = SwiftUI.Color.white
+        static let darkOutline       = SwiftUI.Color(hex: "#27272A")  // zinc-800 (MaterialTheme.outline)
+        static let darkOnSurface     = SwiftUI.Color.white            // MaterialTheme.onSurface
+        static let darkSecondary     = SwiftUI.Color(hex: "#71717A")  // zinc-500 (MaterialTheme.secondary)
+        static let darkMuted         = SwiftUI.Color(hex: "#A1A1AA")  // zinc-400
+        static let darkPrimary       = SwiftUI.Color.white            // MaterialTheme.primary
 
         // Light scheme
         static let lightBackground   = SwiftUI.Color(hex: "#FAFAFA")
@@ -41,9 +42,9 @@ enum AppTheme {
         static let destructiveMuted  = SwiftUI.Color(hex: "#7F1D1D")
 
         // Glass tints
-        static let glassBg           = SwiftUI.Color.white.opacity(0.06)
-        static let glassBorder       = SwiftUI.Color.white.opacity(0.14)
-        static let glassHighlight    = SwiftUI.Color.white.opacity(0.25)
+        static let glassBg           = SwiftUI.Color.white.opacity(0.05)
+        static let glassBorder       = SwiftUI.Color(hex: "#27272A")
+        static let glassHighlight    = SwiftUI.Color.white.opacity(0.12)
     }
 
     // -----------------------------------------------------------------------
@@ -71,9 +72,8 @@ enum AppTheme {
 
         static let glassBorder = LinearGradient(
             colors: [
-                SwiftUI.Color.white.opacity(0.32),
-                SwiftUI.Color.white.opacity(0.08),
-                SwiftUI.Color.white.opacity(0.02)
+                SwiftUI.Color(hex: "#27272A"),
+                SwiftUI.Color(hex: "#27272A").opacity(0.6)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -81,8 +81,8 @@ enum AppTheme {
 
         static let glassCardBg = LinearGradient(
             colors: [
-                SwiftUI.Color(hex: "#1C1C22").opacity(0.72),
-                SwiftUI.Color(hex: "#0E0E12").opacity(0.85)
+                SwiftUI.Color(hex: "#18181B"),
+                SwiftUI.Color(hex: "#141416")
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -90,9 +90,9 @@ enum AppTheme {
 
         static let shimmerGradient = LinearGradient(
             colors: [
-                SwiftUI.Color.white.opacity(0.04),
-                SwiftUI.Color.white.opacity(0.16),
-                SwiftUI.Color.white.opacity(0.04)
+                SwiftUI.Color.white.opacity(0.03),
+                SwiftUI.Color.white.opacity(0.10),
+                SwiftUI.Color.white.opacity(0.03)
             ],
             startPoint: .leading,
             endPoint: .trailing
@@ -138,7 +138,7 @@ enum AppTheme {
         static let sm:  CGFloat = 8
         static let md:  CGFloat = 12
         static let lg:  CGFloat = 16
-        static let xl:  CGFloat = 24
+        static let xl:  CGFloat = 20
         static let full: CGFloat = 9999
     }
 }
@@ -184,56 +184,24 @@ extension SwiftUI.Color {
 }
 
 // ---------------------------------------------------------------------------
-// Glass UI Core Components
+// Glass UI Core Components (Matching Android Dark Theme)
 // ---------------------------------------------------------------------------
 
-/// Ambient Animated Glow Background for Glass UI
+/// Clean Deep Background matching Android Theme.kt (Color(0xFF09090B))
 struct GlassBackground: View {
-    @State private var animate = false
-
     var body: some View {
-        ZStack {
-            AppTheme.Color.darkBackground.ignoresSafeArea()
-
-            GeometryReader { geo in
-                // Indigo top-right orb
-                Circle()
-                    .fill(AppTheme.Color.accent.opacity(0.18))
-                    .frame(width: 320, height: 320)
-                    .blur(radius: 90)
-                    .offset(x: geo.size.width * 0.45, y: animate ? -40 : -80)
-
-                // Violet middle-left orb
-                Circle()
-                    .fill(AppTheme.Color.accentPurple.opacity(0.14))
-                    .frame(width: 280, height: 280)
-                    .blur(radius: 80)
-                    .offset(x: -80, y: animate ? geo.size.height * 0.35 : geo.size.height * 0.25)
-
-                // Cyan bottom-right orb
-                Circle()
-                    .fill(AppTheme.Color.accentCyan.opacity(0.10))
-                    .frame(width: 260, height: 260)
-                    .blur(radius: 85)
-                    .offset(x: geo.size.width * 0.4, y: animate ? geo.size.height * 0.7 : geo.size.height * 0.6)
-            }
+        AppTheme.Color.darkBackground
             .ignoresSafeArea()
-            .onAppear {
-                withAnimation(.easeInOut(duration: 5.0).repeatForever(autoreverses: true)) {
-                    animate = true
-                }
-            }
-        }
     }
 }
 
-/// Frosted Glassmorphism Card
+/// Frosted Glassmorphism Card matching Android Card + surfaceVariant + outline
 struct GlassCard<Content: View>: View {
     let content: Content
-    var cornerRadius: CGFloat = AppTheme.Radius.lg
+    var cornerRadius: CGFloat = AppTheme.Radius.xl
     var padding: CGFloat = AppTheme.Spacing.md
 
-    init(cornerRadius: CGFloat = AppTheme.Radius.lg, padding: CGFloat = AppTheme.Spacing.md, @ViewBuilder content: () -> Content) {
+    init(cornerRadius: CGFloat = AppTheme.Radius.xl, padding: CGFloat = AppTheme.Spacing.md, @ViewBuilder content: () -> Content) {
         self.cornerRadius = cornerRadius
         self.padding = padding
         self.content = content()
@@ -243,20 +211,13 @@ struct GlassCard<Content: View>: View {
         content
             .padding(padding)
             .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .fill(.ultraThinMaterial)
-                        .opacity(0.85)
-
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .fill(AppTheme.Gradient.glassCardBg)
-                }
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(AppTheme.Color.darkSurface)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(AppTheme.Gradient.glassBorder, lineWidth: 1)
+                    .stroke(AppTheme.Color.darkOutline, lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.25), radius: 10, x: 0, y: 4)
     }
 }
 
@@ -271,7 +232,7 @@ struct VSCard<Content: View>: View {
     }
 
     var body: some View {
-        GlassCard(cornerRadius: AppTheme.Radius.lg, padding: padding) {
+        GlassCard(cornerRadius: AppTheme.Radius.xl, padding: padding) {
             content
         }
     }

@@ -1,35 +1,7 @@
 package com.vidyaschool.shared.network
 
-import com.vidyaschool.shared.models.CreateOrderRequest
-import com.vidyaschool.shared.models.CreateOrderResponse
-import com.vidyaschool.shared.models.CreateSessionRequest
-import com.vidyaschool.shared.models.CreateSessionResponse
-import com.vidyaschool.shared.models.DeviceCodeResponse
-import com.vidyaschool.shared.models.DevicePollRequest
-import com.vidyaschool.shared.models.DevicePollResponse
-import com.vidyaschool.shared.models.DocMarkdownResponse
-import com.vidyaschool.shared.models.FeeInstallment
-import com.vidyaschool.shared.models.LoginRequest
-import com.vidyaschool.shared.models.LoginResponse
-import com.vidyaschool.shared.models.NoticeResponse
-import com.vidyaschool.shared.models.NotificationHistoryItem
-import com.vidyaschool.shared.models.OnboardingStatusResponse
-import com.vidyaschool.shared.models.OnboardingSubmitRequest
-import com.vidyaschool.shared.models.PayFeesRequest
-import com.vidyaschool.shared.models.PayFeesResponse
-import com.vidyaschool.shared.models.ProfileResponse
-import com.vidyaschool.shared.models.ProfileUpdateRequest
-import com.vidyaschool.shared.models.SearchBackendResponse
-import com.vidyaschool.shared.models.SearchUserResponse
-import com.vidyaschool.shared.models.SignupRequest
-import com.vidyaschool.shared.models.SignupResponse
-import com.vidyaschool.shared.models.SliderImage
-import com.vidyaschool.shared.models.StudentBorrowingResponse
-import com.vidyaschool.shared.models.StudentRenewRequest
-import com.vidyaschool.shared.models.UpdateSliderImagesResponse
-import com.vidyaschool.shared.models.UserRoleResponse
-import com.vidyaschool.shared.models.VerifyPaymentRequest
-import com.vidyaschool.shared.models.VerifySessionResponse
+import com.vidyaschool.shared.models.*
+
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -247,6 +219,31 @@ class ApiClient {
         httpClient.get("$BACKEND_URL/api/notices") {
             header("Authorization", "Bearer $authToken")
         }.body()
+
+    // -----------------------------------------------------------------------
+    // Student Dashboard & Academics
+    // -----------------------------------------------------------------------
+
+    suspend fun getTopPerformers(authToken: String): LeaderboardResponse =
+        httpClient.get("$BACKEND_URL/api/student/leaderboard") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+
+    suspend fun getStudentMarks(authToken: String): Map<String, com.vidyaschool.shared.models.StudentExamResult> =
+        httpClient.get("$BACKEND_URL/api/student/marks") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+
+    suspend fun getStudentCalendar(authToken: String): com.vidyaschool.shared.models.TeacherCalendarResponse =
+        httpClient.get("$BACKEND_URL/api/student/calendar") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+
+    suspend fun getStudentNotes(authToken: String): com.vidyaschool.shared.models.StudentNotesResponse =
+        httpClient.get("$BACKEND_URL/api/student/notes") {
+            header("Authorization", "Bearer $authToken")
+        }.body()
+
 
     // -----------------------------------------------------------------------
     // FCM / Notifications
