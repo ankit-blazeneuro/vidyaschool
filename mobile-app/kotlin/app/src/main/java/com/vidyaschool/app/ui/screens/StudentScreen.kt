@@ -126,16 +126,15 @@ fun StudentScreen(
         }
     }
     
-    LaunchedEffect(currentStudentClass, showOnboarding) {
-        if (showOnboarding) return@LaunchedEffect
+    LaunchedEffect(currentStudentClass) {
         isLoadingSlider = true
         try {
             val response = RetrofitClient.authApi.getSliderImages(
                 role = "student",
-                studentClass = currentStudentClass.takeIf { it.isNotEmpty() }
+                studentClass = currentStudentClass.takeIf { it.isNotBlank() }
             )
-            if (response.isSuccessful) {
-                sliderImages = response.body() ?: emptyList()
+            if (response.isSuccessful && response.body() != null) {
+                sliderImages = response.body()!!
             }
         } catch (e: Exception) {
             android.util.Log.e("StudentScreen", "Failed to fetch slider images: ${e.message}")
@@ -796,7 +795,7 @@ fun AcademicPerformanceCard(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
     ) {
-        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp)) {
+        Column(modifier = Modifier.padding(start = 14.dp, end = 14.dp, top = 16.dp, bottom = 14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -834,26 +833,26 @@ fun AcademicPerformanceCard(
                         AcademicPerformanceChart(
                             data = chartData,
                             labels = chartLabels,
-                            modifier = Modifier.fillMaxWidth().height(180.dp)
+                            modifier = Modifier.fillMaxWidth().height(195.dp)
                         )
                     }
                 }
                 1 -> SubjectBarChart(
                     data = listOf(72f, 68f, 85f, 78f, 91f, 88f),
                     labels = listOf("Math", "Sci", "Eng", "His", "Geo", "Art"),
-                    modifier = Modifier.fillMaxWidth().height(180.dp)
+                    modifier = Modifier.fillMaxWidth().height(195.dp)
                 )
                 2 -> AttendancePieChart(
                     present = 82f,
                     absent = 10f,
-                    modifier = Modifier.fillMaxWidth().height(180.dp)
+                    modifier = Modifier.fillMaxWidth().height(195.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Shadcn-style tab strip with sliding animation
-            val pillColor = MaterialTheme.colorScheme.surface
+            val pillColor = Color(0xFF000000)
             var stripWidth by remember { mutableStateOf(0) }
             var stripHeight by remember { mutableStateOf(0) }
             val pillOffsetX by animateIntAsState(
@@ -890,7 +889,7 @@ fun AcademicPerformanceCard(
                                 text = title,
                                 fontSize = 11.sp,
                                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                                color = if (selected) MaterialTheme.colorScheme.onSurface
+                                color = if (selected) Color(0xFFFFFFFF)
                                         else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                             )
                         }
@@ -1212,7 +1211,7 @@ fun AcademicPerformanceChart(
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
-        val pL = 24f; val pR = 24f; val pT = 28f; val pB = 32f
+        val pL = 12f; val pR = 12f; val pT = 24f; val pB = 30f
         val cW = w - pL - pR
         val cH = h - pT - pB
 
