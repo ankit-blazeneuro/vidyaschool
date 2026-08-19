@@ -366,7 +366,7 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
     fun loadBooks() {
         if (!sessionToken.isNullOrEmpty()) {
             isLoading = true
-            scope.launch {
+            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                 try {
                     val res = RetrofitClient.authApi.getStudentBorrowings("Bearer $sessionToken")
                     if (res.isSuccessful) {
@@ -1072,12 +1072,22 @@ fun StudentDashboardCarousel(
     val totalPages = effectiveImages.size + 1
     val pagerState = rememberPagerState(pageCount = { totalPages })
 
-    // Auto-scroll loop with safety against gesture interruptions
+    // Auto-scroll loop — pauses when app is in background to save CPU/battery
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val isResumed = remember { mutableStateOf(true) }
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            isResumed.value = event == androidx.lifecycle.Lifecycle.Event.ON_RESUME
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     LaunchedEffect(pagerState, totalPages) {
         if (totalPages > 1) {
             while (true) {
-                delay(4500L)
-                if (!pagerState.isScrollInProgress) {
+                delay(5000L)
+                if (isResumed.value && !pagerState.isScrollInProgress) {
                     try {
                         val targetPage = (pagerState.currentPage + 1) % totalPages
                         pagerState.animateScrollToPage(targetPage)

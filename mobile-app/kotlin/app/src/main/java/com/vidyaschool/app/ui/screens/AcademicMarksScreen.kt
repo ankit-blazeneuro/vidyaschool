@@ -49,6 +49,7 @@ import com.vidyaschool.app.api.StudentExamResult
 import com.vidyaschool.app.api.StudentSubjectMark
 import androidx.compose.ui.graphics.luminance
 import com.vidyaschool.app.auth.SessionManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
@@ -99,7 +100,7 @@ fun AcademicMarksScreen(
             return
         }
         if (isPullRefresh) isRefreshing = true else isLoading = true
-        scope.launch {
+        scope.launch(Dispatchers.IO) {
             try {
                 val res = RetrofitClient.authApi.getStudentMarks("Bearer $sessionToken")
                 if (res.isSuccessful && res.body() != null) {

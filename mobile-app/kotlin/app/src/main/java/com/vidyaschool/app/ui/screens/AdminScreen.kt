@@ -20,7 +20,9 @@ import androidx.compose.ui.unit.sp
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.ui.shadcn.Input
 import com.vidyaschool.app.api.SliderImage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun AdminScreen(
@@ -183,7 +185,7 @@ fun AdminScreen(
                                                         sliderImages = updatedList
                                                         expanded = false
                                                         
-                                                        scope.launch {
+                                                        scope.launch(Dispatchers.IO) {
                                                             try {
                                                                 RetrofitClient.authApi.updateSliderImages(updatedList)
                                                             } catch (e: Exception) {
@@ -204,7 +206,7 @@ fun AdminScreen(
                                             }
                                             sliderImages = updatedList
                                             
-                                            scope.launch {
+                                            scope.launch(Dispatchers.IO) {
                                                 try {
                                                     RetrofitClient.authApi.updateSliderImages(updatedList)
                                                 } catch (e: Exception) {
@@ -217,7 +219,7 @@ fun AdminScreen(
                                         onClick = {
                                             val updatedList = sliderImages.filter { it.id != img.id }
                                             sliderImages = updatedList
-                                            scope.launch {
+                                            scope.launch(Dispatchers.IO) {
                                                 try {
                                                     RetrofitClient.authApi.updateSliderImages(updatedList)
                                                 } catch (e: Exception) {
@@ -310,12 +312,14 @@ fun AdminScreen(
                                     )
                                     val updatedList = sliderImages + newImg
                                     sliderImages = updatedList
-                                    scope.launch {
+                                    scope.launch(Dispatchers.IO) {
                                         try {
                                             RetrofitClient.authApi.updateSliderImages(updatedList)
-                                            newTitle = ""
-                                            newUrl = ""
-                                            newTargetAudience = "all"
+                                            withContext(Dispatchers.Main) {
+                                                newTitle = ""
+                                                newUrl = ""
+                                                newTargetAudience = "all"
+                                            }
                                         } catch (e: Exception) {
                                             android.util.Log.e("AdminScreen", "Failed to add slider image: ${e.message}")
                                         }

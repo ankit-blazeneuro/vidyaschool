@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import com.vidyaschool.app.auth.SessionManager
 import com.vidyaschool.app.api.RetrofitClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,7 +39,7 @@ fun LibraryHubScreen(onBack: () -> Unit) {
     fun loadBooks() {
         if (!sessionToken.isNullOrEmpty()) {
             isLoading = true
-            scope.launch {
+            scope.launch(Dispatchers.IO) {
                 try {
                     val res = RetrofitClient.authApi.getStudentBorrowings("Bearer $sessionToken")
                     if (res.isSuccessful) {

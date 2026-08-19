@@ -11,7 +11,8 @@ object RetrofitClient {
     private const val FRONTEND_URL = "https://vidyaschool.vercel.app/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.HEADERS
+        level = if (com.vidyaschool.app.BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
+                else HttpLoggingInterceptor.Level.NONE
     }
 
     private val baseHttpClient = OkHttpClient.Builder()
