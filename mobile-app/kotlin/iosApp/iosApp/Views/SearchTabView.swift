@@ -2,7 +2,7 @@ import SwiftUI
 import Shared
 
 // ---------------------------------------------------------------------------
-// Search Tab — mirrors Android SearchTabContent
+// Search Tab — mirrors Android SearchTabContent with iOS Glass UI
 // ---------------------------------------------------------------------------
 
 struct SearchTabView: View {
@@ -23,15 +23,15 @@ struct SearchTabView: View {
 
     private var pages: [PageItem] {
         var items = [
-            PageItem(name: "Home Dashboard",    description: "Access stats & shortcuts",          icon: "house",                  tabIndex: 0),
-            PageItem(name: "Notice Board",       description: "School announcements",              icon: "bell",                   tabIndex: 1),
-            PageItem(name: "My Profile",         description: "Settings & session info",           icon: "person.circle",          tabIndex: 4),
+            PageItem(name: "Home Dashboard",    description: "Access stats & shortcuts",          icon: "house.fill",                  tabIndex: 0),
+            PageItem(name: "Notice Board",       description: "School announcements",              icon: "bell.fill",                   tabIndex: 1),
+            PageItem(name: "My Profile",         description: "Settings & session info",           icon: "person.crop.circle.fill",     tabIndex: 4),
         ]
         if user.role.lowercased() == "student" {
-            items.insert(PageItem(name: "Pay Fees", description: "Manage dues & pay online", icon: "indianrupeesign.circle", tabIndex: 2), at: 2)
-            items.insert(PageItem(name: "Library",  description: "Books & borrowings",       icon: "books.vertical",         tabIndex: 2), at: 3)
+            items.insert(PageItem(name: "Pay Fees", description: "Manage dues & pay online", icon: "indianrupeesign.circle.fill", tabIndex: 2), at: 2)
+            items.insert(PageItem(name: "Library",  description: "Books & borrowings",       icon: "books.vertical.fill",         tabIndex: 2), at: 3)
         } else {
-            items.insert(PageItem(name: "Library",  description: "Manage borrowings",        icon: "books.vertical",         tabIndex: 2), at: 2)
+            items.insert(PageItem(name: "Library",  description: "Manage borrowings",        icon: "books.vertical.fill",         tabIndex: 2), at: 2)
         }
         return items
     }
@@ -39,11 +39,13 @@ struct SearchTabView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
+
                 VStack(spacing: 0) {
-                    // Search bar
+                    // Frosted Glass Search bar
                     HStack {
-                        Image(systemName: "magnifyingglass").foregroundColor(AppTheme.Color.darkSecondary)
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(AppTheme.Color.darkSecondary)
                         TextField("Search pages, users...", text: $query)
                             .foregroundColor(.white)
                             .textInputAutocapitalization(.never)
@@ -51,32 +53,41 @@ struct SearchTabView: View {
                             .onChange(of: query) { q in vm.search(query: q) }
                         if !query.isEmpty {
                             Button(action: { query = ""; vm.clear() }) {
-                                Image(systemName: "xmark.circle.fill").foregroundColor(AppTheme.Color.darkSecondary)
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(AppTheme.Color.darkSecondary)
                             }
                         }
                     }
-                    .padding(AppTheme.Spacing.sm)
-                    .background(AppTheme.Color.darkSurface)
-                    .cornerRadius(AppTheme.Radius.md)
-                    .overlay(RoundedRectangle(cornerRadius: AppTheme.Radius.md)
-                        .stroke(AppTheme.Color.darkOutline, lineWidth: 1))
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                            .fill(Color.white.opacity(0.08))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                            .stroke(AppTheme.Gradient.glassBorder, lineWidth: 1)
+                    )
                     .padding(.horizontal, AppTheme.Spacing.md)
                     .padding(.top, AppTheme.Spacing.sm)
 
-                    // Filter pills
+                    // Frosted Glass Filter pills
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: AppTheme.Spacing.sm) {
-                            ForEach(["All","Pages","Users"], id: \.self) { f in
+                            ForEach(["All", "Pages", "Users"], id: \.self) { f in
                                 let sel = activeFilter == f
                                 Button(action: { activeFilter = f }) {
                                     Text(f)
-                                        .font(AppTheme.Font.caption).fontWeight(.medium)
-                                        .foregroundColor(sel ? AppTheme.Color.darkBackground : .white)
-                                        .padding(.horizontal, 14).padding(.vertical, 6)
-                                        .background(sel ? Color.white : Color.clear)
-                                        .cornerRadius(6)
-                                        .overlay(RoundedRectangle(cornerRadius: 6)
-                                            .stroke(sel ? Color.clear : AppTheme.Color.darkOutline, lineWidth: 1))
+                                        .font(AppTheme.Font.caption)
+                                        .fontWeight(sel ? .bold : .medium)
+                                        .foregroundColor(sel ? .black : .white)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 7)
+                                        .background(sel ? Color.white : Color.white.opacity(0.08))
+                                        .cornerRadius(AppTheme.Radius.full)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: AppTheme.Radius.full)
+                                                .stroke(sel ? Color.clear : Color.white.opacity(0.18), lineWidth: 1)
+                                        )
                                 }
                             }
                         }
@@ -127,6 +138,7 @@ struct SearchTabView: View {
                                 }
                             }
                             .padding(AppTheme.Spacing.md)
+                            .padding(.bottom, 60)
                         }
                     }
                 }
@@ -156,36 +168,38 @@ private struct SearchResultRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: AppTheme.Spacing.sm) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 13.5, weight: .semibold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                    if !subtitle.isEmpty {
-                        Text(subtitle)
-                            .font(.system(size: 11.5))
-                            .foregroundColor(AppTheme.Color.darkSecondary)
-                            .lineLimit(1)
+            GlassCard(padding: 12) {
+                HStack(spacing: AppTheme.Spacing.sm) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.white.opacity(0.08))
+                            .frame(width: 34, height: 34)
+                        Image(systemName: icon)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white)
                     }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title)
+                            .font(.system(size: 13.5, weight: .semibold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        if !subtitle.isEmpty {
+                            Text(subtitle)
+                                .font(.system(size: 11.5))
+                                .foregroundColor(AppTheme.Color.darkSecondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    Spacer()
+                    GlassPill(text: category.uppercased(), color: AppTheme.Color.accent)
                 }
-                Spacer()
-                Text(category.uppercased())
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(Color.white.opacity(0.7))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color.white.opacity(0.04))
-                    .cornerRadius(4)
-                    .overlay(RoundedRectangle(cornerRadius: 4)
-                        .stroke(AppTheme.Color.darkOutline, lineWidth: 1))
             }
-            .padding(.horizontal, AppTheme.Spacing.sm)
-            .padding(.vertical, 8)
         }
         .buttonStyle(.plain)
     }
 }
+
 
 // ---------------------------------------------------------------------------
 // SearchViewModel

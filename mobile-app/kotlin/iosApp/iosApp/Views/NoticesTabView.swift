@@ -8,7 +8,7 @@ struct NoticesTabView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 if viewModel.isLoading && viewModel.notices.isEmpty {
                     ProgressView()
@@ -30,6 +30,7 @@ struct NoticesTabView: View {
                             }
                         }
                         .padding(AppTheme.Spacing.md)
+                        .padding(.bottom, 60)
                     }
                 }
             }
@@ -40,6 +41,8 @@ struct NoticesTabView: View {
                     Button(action: { viewModel.fetchNotices() }) {
                         Image(systemName: "arrow.clockwise")
                             .foregroundColor(.white)
+                            .padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
                 }
             }
@@ -68,17 +71,15 @@ private struct NoticeCard: View {
     }
 
     var body: some View {
-        VSCard {
+        GlassCard {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
                 HStack {
-                    // Urgent/Category Badge
-                    Text(categoryText.uppercased())
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(notice.isUrgent ? AppTheme.Color.destructive : AppTheme.Color.accent)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(notice.isUrgent ? AppTheme.Color.destructive.opacity(0.15) : AppTheme.Color.accent.opacity(0.15))
-                        .cornerRadius(6)
+                    // Urgent/Category Glass Badge
+                    GlassPill(
+                        text: categoryText.uppercased(),
+                        icon: notice.isUrgent ? "exclamationmark.triangle.fill" : "bell.fill",
+                        color: notice.isUrgent ? AppTheme.Color.destructive : AppTheme.Color.accent
+                    )
 
                     Spacer()
 
@@ -105,3 +106,4 @@ private struct NoticeCard: View {
         }
     }
 }
+

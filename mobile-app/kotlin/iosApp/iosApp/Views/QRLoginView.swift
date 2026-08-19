@@ -16,7 +16,7 @@ struct QRLoginView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 ScrollView {
                     VStack(spacing: AppTheme.Spacing.lg) {
@@ -38,8 +38,8 @@ struct QRLoginView: View {
                         }
 
                         if authSuccess {
-                            // Success Confirmation Card
-                            VSCard {
+                            // Success Confirmation Glass Card
+                            GlassCard {
                                 VStack(spacing: AppTheme.Spacing.md) {
                                     Image(systemName: "checkmark.circle.fill")
                                         .font(.system(size: 54))
@@ -63,11 +63,11 @@ struct QRLoginView: View {
                             // Camera Viewfinder Mock Box
                             ZStack {
                                 RoundedRectangle(cornerRadius: 20)
-                                    .fill(Color.black.opacity(0.6))
+                                    .fill(Color.black.opacity(0.4))
                                     .frame(width: 250, height: 250)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 20)
-                                            .stroke(AppTheme.Color.darkOutline, lineWidth: 2)
+                                            .stroke(AppTheme.Gradient.glassBorder, lineWidth: 1.5)
                                     )
 
                                 // Viewfinder Corner Indicators
@@ -105,53 +105,55 @@ struct QRLoginView: View {
                             }
 
                             Divider()
-                                .background(AppTheme.Color.darkOutline)
+                                .background(Color.white.opacity(0.1))
                                 .padding(.horizontal, AppTheme.Spacing.lg)
 
                             // Manual Code Entry Section
-                            VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
-                                Text("Or Enter 6-Digit Web Code")
-                                    .font(AppTheme.Font.footnote)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
+                            GlassCard {
+                                VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
+                                    Text("Or Enter 6-Digit Web Code")
+                                        .font(AppTheme.Font.footnote)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.white)
 
-                                VSTextField(
-                                    label: "Pairing Code",
-                                    text: $manualCode,
-                                    placeholder: "e.g. 849201"
-                                )
-                                .keyboardType(.numberPad)
+                                    VSTextField(
+                                        label: "Pairing Code",
+                                        text: $manualCode,
+                                        placeholder: "e.g. 849201"
+                                    )
+                                    .keyboardType(.numberPad)
 
-                                if let err = errorMessage {
-                                    Text(err)
-                                        .font(AppTheme.Font.caption)
-                                        .foregroundColor(AppTheme.Color.destructive)
+                                    if let err = errorMessage {
+                                        Text(err)
+                                            .font(AppTheme.Font.caption)
+                                            .foregroundColor(AppTheme.Color.destructive)
+                                    }
+
+                                    VSButton(
+                                        title: "Authorize Desktop Session",
+                                        isLoading: isAuthorizing
+                                    ) {
+                                        authorizeCode()
+                                    }
+                                    .disabled(manualCode.trimmingCharacters(in: .whitespaces).isEmpty)
                                 }
-
-                                VSButton(
-                                    title: "Authorize Desktop Session",
-                                    isLoading: isAuthorizing
-                                ) {
-                                    authorizeCode()
-                                }
-                                .disabled(manualCode.trimmingCharacters(in: .whitespaces).isEmpty)
                             }
                         }
 
                         // Security Tip Card
-                        HStack(spacing: 12) {
-                            Image(systemName: "lock.shield.fill")
-                                .font(.system(size: 20))
-                                .foregroundColor(AppTheme.Color.accent)
-                            Text("Never scan or enter QR code pairing keys requested by unknown callers or external emails.")
-                                .font(AppTheme.Font.caption2)
-                                .foregroundColor(AppTheme.Color.darkSecondary)
+                        GlassCard {
+                            HStack(spacing: 12) {
+                                Image(systemName: "lock.shield.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(AppTheme.Color.accent)
+                                Text("Never scan or enter QR code pairing keys requested by unknown callers or external emails.")
+                                    .font(AppTheme.Font.caption2)
+                                    .foregroundColor(AppTheme.Color.darkSecondary)
+                            }
                         }
-                        .padding(AppTheme.Spacing.md)
-                        .background(Color.white.opacity(0.04))
-                        .cornerRadius(12)
                     }
                     .padding(AppTheme.Spacing.md)
+                    .padding(.bottom, 40)
                 }
             }
             .navigationTitle("QR Login")

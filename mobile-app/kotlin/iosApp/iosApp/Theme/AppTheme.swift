@@ -1,8 +1,8 @@
 import SwiftUI
 
 // ---------------------------------------------------------------------------
-// VidyaSchool Design System — AppTheme
-// Mirrors the Android Material3 zinc-palette dark/light scheme
+// VidyaSchool Design System — Glass UI & AppTheme
+// Mirrors the Android Material3 zinc-palette dark/light scheme with modern iOS Glass UI
 // ---------------------------------------------------------------------------
 
 enum AppTheme {
@@ -33,10 +33,17 @@ enum AppTheme {
         // Semantic / accent
         static let accent            = SwiftUI.Color(hex: "#6366F1")  // indigo-500
         static let accentMuted       = SwiftUI.Color(hex: "#4F46E5")  // indigo-600
+        static let accentPurple      = SwiftUI.Color(hex: "#8B5CF6")  // violet-500
+        static let accentCyan        = SwiftUI.Color(hex: "#06B6D4")  // cyan-500
         static let success           = SwiftUI.Color(hex: "#22C55E")  // green-500
         static let warning           = SwiftUI.Color(hex: "#F59E0B")  // amber-500
         static let destructive       = SwiftUI.Color(hex: "#EF4444")  // red-500
         static let destructiveMuted  = SwiftUI.Color(hex: "#7F1D1D")
+
+        // Glass tints
+        static let glassBg           = SwiftUI.Color.white.opacity(0.06)
+        static let glassBorder       = SwiftUI.Color.white.opacity(0.14)
+        static let glassHighlight    = SwiftUI.Color.white.opacity(0.25)
     }
 
     // -----------------------------------------------------------------------
@@ -62,10 +69,20 @@ enum AppTheme {
             endPoint: .bottomTrailing
         )
 
-        static let cardGradient = LinearGradient(
+        static let glassBorder = LinearGradient(
             colors: [
-                SwiftUI.Color(hex: "#1C1C1E").opacity(0.95),
-                SwiftUI.Color(hex: "#09090B").opacity(0.95)
+                SwiftUI.Color.white.opacity(0.32),
+                SwiftUI.Color.white.opacity(0.08),
+                SwiftUI.Color.white.opacity(0.02)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+
+        static let glassCardBg = LinearGradient(
+            colors: [
+                SwiftUI.Color(hex: "#1C1C22").opacity(0.72),
+                SwiftUI.Color(hex: "#0E0E12").opacity(0.85)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -73,9 +90,9 @@ enum AppTheme {
 
         static let shimmerGradient = LinearGradient(
             colors: [
-                SwiftUI.Color.white.opacity(0.05),
-                SwiftUI.Color.white.opacity(0.15),
-                SwiftUI.Color.white.opacity(0.05)
+                SwiftUI.Color.white.opacity(0.04),
+                SwiftUI.Color.white.opacity(0.16),
+                SwiftUI.Color.white.opacity(0.04)
             ],
             startPoint: .leading,
             endPoint: .trailing
@@ -167,17 +184,369 @@ extension SwiftUI.Color {
 }
 
 // ---------------------------------------------------------------------------
+// Glass UI Core Components
+// ---------------------------------------------------------------------------
+
+/// Ambient Animated Glow Background for Glass UI
+struct GlassBackground: View {
+    @State private var animate = false
+
+    var body: some View {
+        ZStack {
+            AppTheme.Color.darkBackground.ignoresSafeArea()
+
+            GeometryReader { geo in
+                // Indigo top-right orb
+                Circle()
+                    .fill(AppTheme.Color.accent.opacity(0.18))
+                    .frame(width: 320, height: 320)
+                    .blur(radius: 90)
+                    .offset(x: geo.size.width * 0.45, y: animate ? -40 : -80)
+
+                // Violet middle-left orb
+                Circle()
+                    .fill(AppTheme.Color.accentPurple.opacity(0.14))
+                    .frame(width: 280, height: 280)
+                    .blur(radius: 80)
+                    .offset(x: -80, y: animate ? geo.size.height * 0.35 : geo.size.height * 0.25)
+
+                // Cyan bottom-right orb
+                Circle()
+                    .fill(AppTheme.Color.accentCyan.opacity(0.10))
+                    .frame(width: 260, height: 260)
+                    .blur(radius: 85)
+                    .offset(x: geo.size.width * 0.4, y: animate ? geo.size.height * 0.7 : geo.size.height * 0.6)
+            }
+            .ignoresSafeArea()
+            .onAppear {
+                withAnimation(.easeInOut(duration: 5.0).repeatForever(autoreverses: true)) {
+                    animate = true
+                }
+            }
+        }
+    }
+}
+
+/// Frosted Glassmorphism Card
+struct GlassCard<Content: View>: View {
+    let content: Content
+    var cornerRadius: CGFloat = AppTheme.Radius.lg
+    var padding: CGFloat = AppTheme.Spacing.md
+
+    init(cornerRadius: CGFloat = AppTheme.Radius.lg, padding: CGFloat = AppTheme.Spacing.md, @ViewBuilder content: () -> Content) {
+        self.cornerRadius = cornerRadius
+        self.padding = padding
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .padding(padding)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.85)
+
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(AppTheme.Gradient.glassCardBg)
+                }
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(AppTheme.Gradient.glassBorder, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.25), radius: 10, x: 0, y: 4)
+    }
+}
+
+/// Backwards-compatible VSCard wrapping GlassCard
+struct VSCard<Content: View>: View {
+    let content: Content
+    var padding: CGFloat = AppTheme.Spacing.md
+
+    init(padding: CGFloat = AppTheme.Spacing.md, @ViewBuilder content: () -> Content) {
+        self.padding = padding
+        self.content = content()
+    }
+
+    var body: some View {
+        GlassCard(cornerRadius: AppTheme.Radius.lg, padding: padding) {
+            content
+        }
+    }
+}
+
+/// Frosted Glass Pill Chip
+struct GlassPill: View {
+    let text: String
+    var icon: String? = nil
+    var color: SwiftUI.Color = AppTheme.Color.accent
+
+    var body: some View {
+        HStack(spacing: 5) {
+            if let icon = icon {
+                Image(systemName: icon)
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            Text(text)
+                .font(AppTheme.Font.caption2)
+                .fontWeight(.semibold)
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: AppTheme.Radius.full)
+                    .fill(color.opacity(0.14))
+                RoundedRectangle(cornerRadius: AppTheme.Radius.full)
+                    .stroke(color.opacity(0.35), lineWidth: 1)
+            }
+        )
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Exact Vector Icons Matching Android XML Drawables
+// ---------------------------------------------------------------------------
+
+/// Authentic 4-color Google Logo Icon matching Android's `ic_google_logo.xml`
+struct GoogleLogoIcon: View {
+    var body: some View {
+        Canvas { context, size in
+            let scaleX = size.width / 48.0
+            let scaleY = size.height / 48.0
+
+            // 1. Red Path (#EA4335 / #FF3D00)
+            var redPath = Path()
+            redPath.move(to: CGPoint(x: 6.306 * scaleX, y: 14.691 * scaleY))
+            redPath.addLine(to: CGPoint(x: 12.877 * scaleX, y: 19.51 * scaleY))
+            redPath.addCurve(to: CGPoint(x: 24.0 * scaleX, y: 12.0 * scaleY),
+                             control1: CGPoint(x: 14.655 * scaleX, y: 15.108 * scaleY),
+                             control2: CGPoint(x: 18.961 * scaleX, y: 12.0 * scaleY))
+            redPath.addCurve(to: CGPoint(x: 31.961 * scaleX, y: 15.039 * scaleY),
+                             control1: CGPoint(x: 27.059 * scaleX, y: 12.0 * scaleY),
+                             control2: CGPoint(x: 29.842 * scaleX, y: 13.154 * scaleY))
+            redPath.addLine(to: CGPoint(x: 37.618 * scaleX, y: 9.382 * scaleY))
+            redPath.addCurve(to: CGPoint(x: 24.0 * scaleX, y: 4.0 * scaleY),
+                             control1: CGPoint(x: 34.046 * scaleX, y: 6.053 * scaleY),
+                             control2: CGPoint(x: 29.268 * scaleX, y: 4.0 * scaleY))
+            redPath.addCurve(to: CGPoint(x: 6.306 * scaleX, y: 14.691 * scaleY),
+                             control1: CGPoint(x: 16.318 * scaleX, y: 4.0 * scaleY),
+                             control2: CGPoint(x: 9.656 * scaleX, y: 8.337 * scaleY))
+            redPath.closeSubpath()
+            context.fill(redPath, with: .color(SwiftUI.Color(hex: "#EA4335")))
+
+            // 2. Green Path (#34A853 / #4CAF50)
+            var greenPath = Path()
+            greenPath.move(to: CGPoint(x: 24.0 * scaleX, y: 44.0 * scaleY))
+            greenPath.addCurve(to: CGPoint(x: 37.409 * scaleX, y: 38.808 * scaleY),
+                               control1: CGPoint(x: 29.166 * scaleX, y: 44.0 * scaleY),
+                               control2: CGPoint(x: 33.86 * scaleX, y: 42.023 * scaleY))
+            greenPath.addLine(to: CGPoint(x: 31.219 * scaleX, y: 33.57 * scaleY))
+            greenPath.addCurve(to: CGPoint(x: 24.0 * scaleX, y: 36.0 * scaleY),
+                               control1: CGPoint(x: 29.1 * scaleX, y: 35.1 * scaleY),
+                               control2: CGPoint(x: 26.65 * scaleX, y: 36.0 * scaleY))
+            greenPath.addCurve(to: CGPoint(x: 12.717 * scaleX, y: 28.054 * scaleY),
+                               control1: CGPoint(x: 18.798 * scaleX, y: 36.0 * scaleY),
+                               control2: CGPoint(x: 14.381 * scaleX, y: 32.683 * scaleY))
+            greenPath.addLine(to: CGPoint(x: 6.195 * scaleX, y: 33.079 * scaleY))
+            greenPath.addCurve(to: CGPoint(x: 24.0 * scaleX, y: 44.0 * scaleY),
+                               control1: CGPoint(x: 9.505 * scaleX, y: 39.556 * scaleY),
+                               control2: CGPoint(x: 16.227 * scaleX, y: 44.0 * scaleY))
+            greenPath.closeSubpath()
+            context.fill(greenPath, with: .color(SwiftUI.Color(hex: "#34A853")))
+
+            // 3. Blue Path (#4285F4 / #1976D2)
+            var bluePath = Path()
+            bluePath.move(to: CGPoint(x: 43.611 * scaleX, y: 20.083 * scaleY))
+            bluePath.addLine(to: CGPoint(x: 24.0 * scaleX, y: 20.083 * scaleY))
+            bluePath.addLine(to: CGPoint(x: 24.0 * scaleX, y: 28.0 * scaleY))
+            bluePath.addLine(to: CGPoint(x: 35.303 * scaleX, y: 28.0 * scaleY))
+            bluePath.addCurve(to: CGPoint(x: 31.219 * scaleX, y: 33.57 * scaleY),
+                              control1: CGPoint(x: 34.22 * scaleX, y: 30.8 * scaleY),
+                              control2: CGPoint(x: 32.8 * scaleX, y: 32.4 * scaleY))
+            bluePath.addLine(to: CGPoint(x: 37.409 * scaleX, y: 38.808 * scaleY))
+            bluePath.addCurve(to: CGPoint(x: 44.0 * scaleX, y: 24.0 * scaleY),
+                              control1: CGPoint(x: 41.5 * scaleX, y: 35.0 * scaleY),
+                              control2: CGPoint(x: 44.0 * scaleX, y: 29.8 * scaleY))
+            bluePath.addCurve(to: CGPoint(x: 43.611 * scaleX, y: 20.083 * scaleY),
+                              control1: CGPoint(x: 44.0 * scaleX, y: 22.659 * scaleY),
+                              control2: CGPoint(x: 43.862 * scaleX, y: 21.35 * scaleY))
+            bluePath.closeSubpath()
+            context.fill(bluePath, with: .color(SwiftUI.Color(hex: "#4285F4")))
+
+            // 4. Yellow Path (#FBBC05 / #FFC107)
+            var yellowPath = Path()
+            yellowPath.move(to: CGPoint(x: 6.306 * scaleX, y: 14.691 * scaleY))
+            yellowPath.addLine(to: CGPoint(x: 12.877 * scaleX, y: 19.51 * scaleY))
+            yellowPath.addCurve(to: CGPoint(x: 12.717 * scaleX, y: 28.054 * scaleY),
+                                control1: CGPoint(x: 12.14 * scaleX, y: 21.72 * scaleY),
+                                control2: CGPoint(x: 12.08 * scaleX, y: 25.84 * scaleY))
+            yellowPath.addLine(to: CGPoint(x: 6.195 * scaleX, y: 33.079 * scaleY))
+            yellowPath.addCurve(to: CGPoint(x: 4.0 * scaleX, y: 24.0 * scaleY),
+                                control1: CGPoint(x: 4.8 * scaleX, y: 30.3 * scaleY),
+                                control2: CGPoint(x: 4.0 * scaleX, y: 27.24 * scaleY))
+            yellowPath.addCurve(to: CGPoint(x: 6.306 * scaleX, y: 14.691 * scaleY),
+                                control1: CGPoint(x: 4.0 * scaleX, y: 20.6 * scaleY),
+                                control2: CGPoint(x: 4.85 * scaleX, y: 17.45 * scaleY))
+            yellowPath.closeSubpath()
+            context.fill(yellowPath, with: .color(SwiftUI.Color(hex: "#FBBC05")))
+        }
+    }
+}
+
+/// Authentic GitHub Invertocat Logo Icon matching Android's `ic_github_logo.xml`
+struct GitHubLogoIcon: View {
+    var color: SwiftUI.Color = .white
+
+    var body: some View {
+        Canvas { context, size in
+            let scale = min(size.width, size.height) / 24.0
+            var path = Path()
+
+            path.move(to: CGPoint(x: 12 * scale, y: 0.297 * scale))
+            path.addCurve(to: CGPoint(x: 0 * scale, y: 12.297 * scale),
+                          control1: CGPoint(x: 5.37 * scale, y: 0.297 * scale),
+                          control2: CGPoint(x: 0 * scale, y: 5.67 * scale))
+            path.addCurve(to: CGPoint(x: 8.205 * scale, y: 23.682 * scale),
+                          control1: CGPoint(x: 0 * scale, y: 17.6 * scale),
+                          control2: CGPoint(x: 3.438 * scale, y: 22.097 * scale))
+            path.addCurve(to: CGPoint(x: 8.784 * scale, y: 23.103 * scale),
+                          control1: CGPoint(x: 8.805 * scale, y: 23.792 * scale),
+                          control2: CGPoint(x: 8.784 * scale, y: 23.473 * scale))
+            path.addLine(to: CGPoint(x: 8.784 * scale, y: 20.697 * scale))
+            path.addCurve(to: CGPoint(x: 5.093 * scale, y: 20.197 * scale),
+                          control1: CGPoint(x: 5.447 * scale, y: 21.423 * scale),
+                          control2: CGPoint(x: 4.745 * scale, y: 19.382 * scale))
+            path.addCurve(to: CGPoint(x: 3.869 * scale, y: 18.577 * scale),
+                          control1: CGPoint(x: 4.412 * scale, y: 18.467 * scale),
+                          control2: CGPoint(x: 3.869 * scale, y: 18.577 * scale))
+            path.addCurve(to: CGPoint(x: 4.887 * scale, y: 18.513 * scale),
+                          control1: CGPoint(x: 3.031 * scale, y: 18.006 * scale),
+                          control2: CGPoint(x: 3.966 * scale, y: 18.513 * scale))
+            path.addCurve(to: CGPoint(x: 6.377 * scale, y: 19.467 * scale),
+                          control1: CGPoint(x: 5.688 * scale, y: 18.513 * scale),
+                          control2: CGPoint(x: 6.223 * scale, y: 19.467 * scale))
+            path.addCurve(to: CGPoint(x: 8.358 * scale, y: 20.082 * scale),
+                          control1: CGPoint(x: 6.843 * scale, y: 20.267 * scale),
+                          control2: CGPoint(x: 7.618 * scale, y: 20.082 * scale))
+            path.addCurve(to: CGPoint(x: 8.895 * scale, y: 18.917 * scale),
+                          control1: CGPoint(x: 8.544 * scale, y: 19.553 * scale),
+                          control2: CGPoint(x: 8.895 * scale, y: 18.917 * scale))
+            path.addCurve(to: CGPoint(x: 4.095 * scale, y: 13.972 * scale),
+                          control1: CGPoint(x: 6.228 * scale, y: 18.617 * scale),
+                          control2: CGPoint(x: 4.095 * scale, y: 17.527 * scale))
+            path.addCurve(to: CGPoint(x: 5.37 * scale, y: 9.877 * scale),
+                          control1: CGPoint(x: 4.095 * scale, y: 12.277 * scale),
+                          control2: CGPoint(x: 4.708 * scale, y: 10.797 * scale))
+            path.addCurve(to: CGPoint(x: 5.487 * scale, y: 7.747 * scale),
+                          control1: CGPoint(x: 5.253 * scale, y: 9.537 * scale),
+                          control2: CGPoint(x: 5.487 * scale, y: 8.677 * scale))
+            path.addCurve(to: CGPoint(x: 8.784 * scale, y: 9.172 * scale),
+                          control1: CGPoint(x: 6.558 * scale, y: 7.407 * scale),
+                          control2: CGPoint(x: 8.784 * scale, y: 9.172 * scale))
+            path.addCurve(to: CGPoint(x: 12.0 * scale, y: 8.747 * scale),
+                          control1: CGPoint(x: 9.813 * scale, y: 8.887 * scale),
+                          control2: CGPoint(x: 10.908 * scale, y: 8.747 * scale))
+            path.addCurve(to: CGPoint(x: 15.228 * scale, y: 9.172 * scale),
+                          control1: CGPoint(x: 13.104 * scale, y: 8.747 * scale),
+                          control2: CGPoint(x: 14.199 * scale, y: 8.887 * scale))
+            path.addCurve(to: CGPoint(x: 18.525 * scale, y: 7.747 * scale),
+                          control1: CGPoint(x: 15.228 * scale, y: 9.172 * scale),
+                          control2: CGPoint(x: 17.454 * scale, y: 7.407 * scale))
+            path.addCurve(to: CGPoint(x: 18.642 * scale, y: 9.877 * scale),
+                          control1: CGPoint(x: 18.525 * scale, y: 8.677 * scale),
+                          control2: CGPoint(x: 18.759 * scale, y: 9.537 * scale))
+            path.addCurve(to: CGPoint(x: 19.917 * scale, y: 13.962 * scale),
+                          control1: CGPoint(x: 19.304 * scale, y: 10.797 * scale),
+                          control2: CGPoint(x: 19.917 * scale, y: 12.267 * scale))
+            path.addCurve(to: CGPoint(x: 15.108 * scale, y: 18.927 * scale),
+                          control1: CGPoint(x: 19.917 * scale, y: 17.537 * scale),
+                          control2: CGPoint(x: 17.772 * scale, y: 18.617 * scale))
+            path.addCurve(to: CGPoint(x: 15.657 * scale, y: 20.307 * scale),
+                          control1: CGPoint(x: 15.483 * scale, y: 19.297 * scale),
+                          control2: CGPoint(x: 15.657 * scale, y: 19.867 * scale))
+            path.addLine(to: CGPoint(x: 15.657 * scale, y: 23.103 * scale))
+            path.addCurve(to: CGPoint(x: 16.248 * scale, y: 23.682 * scale),
+                          control1: CGPoint(x: 15.657 * scale, y: 23.473 * scale),
+                          control2: CGPoint(x: 15.624 * scale, y: 23.792 * scale))
+            path.addCurve(to: CGPoint(x: 24.0 * scale, y: 12.297 * scale),
+                          control1: CGPoint(x: 20.574 * scale, y: 22.087 * scale),
+                          control2: CGPoint(x: 24.0 * scale, y: 17.59 * scale))
+            path.addCurve(to: CGPoint(x: 12.0 * scale, y: 0.297 * scale),
+                          control1: CGPoint(x: 24.0 * scale, y: 5.67 * scale),
+                          control2: CGPoint(x: 18.63 * scale, y: 0.297 * scale))
+            path.closeSubpath()
+
+            context.fill(path, with: .color(color))
+        }
+    }
+}
+
+/// Social Button Matching Android SecondaryButton Style & Full Width Layout
+struct SocialAuthButton: View {
+    let title: String
+    let iconType: IconType // .google or .github
+    var isLoading: Bool = false
+    let action: () -> Void
+
+    enum IconType { case google, github }
+
+    var body: some View {
+        Button(action: {
+            let gen = UIImpactFeedbackGenerator(style: .light)
+            gen.impactOccurred()
+            action()
+        }) {
+            HStack(spacing: 12) {
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(0.8)
+                } else {
+                    if iconType == .google {
+                        GoogleLogoIcon()
+                            .frame(width: 20, height: 20)
+                    } else {
+                        GitHubLogoIcon(color: .white)
+                            .frame(width: 20, height: 20)
+                    }
+
+                    Text(title)
+                        .font(AppTheme.Font.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 48)
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                    .fill(AppTheme.Color.darkSurface2.opacity(0.8))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                    .stroke(AppTheme.Gradient.glassBorder, lineWidth: 1)
+            )
+        }
+        .disabled(isLoading)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Reusable UI Components
 // ---------------------------------------------------------------------------
 
-/// Primary branded button with haptic feedback
+/// Primary branded button with haptic feedback & Glass variant
 struct VSButton: View {
     let title: String
     var isLoading: Bool = false
     var style: Style = .primary
     let action: () -> Void
 
-    enum Style { case primary, secondary, ghost, destructive }
+    enum Style { case primary, secondary, ghost, destructive, glass }
 
     var body: some View {
         Button(action: {
@@ -197,12 +566,12 @@ struct VSButton: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 52)
+            .frame(height: 48)
             .background(backgroundFill)
             .cornerRadius(AppTheme.Radius.md)
             .overlay(
                 RoundedRectangle(cornerRadius: AppTheme.Radius.md)
-                    .stroke(borderColor, lineWidth: style == .secondary ? 1 : 0)
+                    .stroke(borderColor, lineWidth: 1)
             )
         }
         .disabled(isLoading)
@@ -215,6 +584,7 @@ struct VSButton: View {
         case .secondary:   return AppTheme.Color.darkOnSurface
         case .ghost:       return AppTheme.Color.darkSecondary
         case .destructive: return .white
+        case .glass:       return .white
         }
     }
 
@@ -229,15 +599,21 @@ struct VSButton: View {
             SwiftUI.Color.clear
         case .destructive:
             AppTheme.Color.destructive
+        case .glass:
+            AppTheme.Color.glassBg
         }
     }
 
     private var borderColor: SwiftUI.Color {
-        style == .secondary ? AppTheme.Color.darkOutline : .clear
+        switch style {
+        case .secondary:   return AppTheme.Color.darkOutline
+        case .glass:       return AppTheme.Color.glassBorder
+        default:           return .clear
+        }
     }
 }
 
-/// Branded text field
+/// Branded Frosted Glass Text Field
 struct VSTextField: View {
     let label: String
     @Binding var text: String
@@ -276,37 +652,15 @@ struct VSTextField: View {
             }
             .padding(.horizontal, AppTheme.Spacing.md)
             .padding(.vertical, 14)
-            .background(AppTheme.Color.darkSurface2)
-            .cornerRadius(AppTheme.Radius.md)
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                    .fill(AppTheme.Color.darkSurface2.opacity(0.8))
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: AppTheme.Radius.md)
-                    .stroke(AppTheme.Color.darkOutline, lineWidth: 1)
+                    .stroke(AppTheme.Color.darkOutline.opacity(0.6), lineWidth: 1)
             )
         }
-    }
-}
-
-/// Glass-morphism card
-struct VSCard<Content: View>: View {
-    let content: Content
-    var padding: CGFloat = AppTheme.Spacing.md
-
-    init(padding: CGFloat = AppTheme.Spacing.md, @ViewBuilder content: () -> Content) {
-        self.padding = padding
-        self.content = content()
-    }
-
-    var body: some View {
-        content
-            .padding(padding)
-            .background(
-                RoundedRectangle(cornerRadius: AppTheme.Radius.lg)
-                    .fill(AppTheme.Color.darkSurface.opacity(0.85))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: AppTheme.Radius.lg)
-                            .stroke(AppTheme.Color.darkOutline.opacity(0.5), lineWidth: 1)
-                    )
-            )
     }
 }
 
@@ -322,7 +676,7 @@ struct ShimmerView: View {
                     LinearGradient(
                         colors: [
                             .clear,
-                            SwiftUI.Color.white.opacity(0.08),
+                            SwiftUI.Color.white.opacity(0.12),
                             .clear
                         ],
                         startPoint: .init(x: phase, y: 0),
@@ -338,7 +692,7 @@ struct ShimmerView: View {
     }
 }
 
-/// Role badge chip
+/// Role badge chip with glass highlight
 struct RoleBadge: View {
     let role: String
 
@@ -349,8 +703,14 @@ struct RoleBadge: View {
             .foregroundColor(roleColor)
             .padding(.horizontal, AppTheme.Spacing.sm)
             .padding(.vertical, 3)
-            .background(roleColor.opacity(0.15))
-            .cornerRadius(AppTheme.Radius.full)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.full)
+                        .fill(roleColor.opacity(0.15))
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.full)
+                        .stroke(roleColor.opacity(0.35), lineWidth: 1)
+                }
+            )
     }
 
     private var roleColor: SwiftUI.Color {
@@ -386,12 +746,9 @@ extension View {
 
 // ---------------------------------------------------------------------------
 // presentationBackground compatibility (requires iOS 16.4+)
-// Falls back to a .background modifier on iOS 16.0–16.3.
 // ---------------------------------------------------------------------------
 
 extension View {
-    /// Applies `.presentationBackground` on iOS 16.4+ and a plain
-    /// `.background` on earlier iOS 16.x deployments.
     @ViewBuilder
     func sheetBackground(_ color: SwiftUI.Color) -> some View {
         if #available(iOS 16.4, *) {
@@ -401,3 +758,4 @@ extension View {
         }
     }
 }
+

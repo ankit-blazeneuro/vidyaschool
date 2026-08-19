@@ -8,7 +8,7 @@ struct LibraryTabView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 if viewModel.isLoading && viewModel.borrowings.isEmpty {
                     ProgressView()
@@ -32,6 +32,7 @@ struct LibraryTabView: View {
                             }
                         }
                         .padding(AppTheme.Spacing.md)
+                        .padding(.bottom, 60)
                     }
                 }
             }
@@ -42,6 +43,8 @@ struct LibraryTabView: View {
                     Button(action: { viewModel.fetchBorrowings() }) {
                         Image(systemName: "arrow.clockwise")
                             .foregroundColor(.white)
+                            .padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
                 }
             }
@@ -61,16 +64,16 @@ private struct BookBorrowingCard: View {
     }
 
     var body: some View {
-        VSCard {
+        GlassCard {
             HStack(spacing: AppTheme.Spacing.md) {
-                // Monochrome initial avatar (Shadcn style)
+                // Glass initial avatar
                 ZStack {
                     RoundedRectangle(cornerRadius: AppTheme.Radius.sm)
-                        .fill(Color.white.opacity(0.06))
+                        .fill(Color.white.opacity(0.08))
                         .frame(width: 52, height: 52)
                         .overlay(
                             RoundedRectangle(cornerRadius: AppTheme.Radius.sm)
-                                .stroke(AppTheme.Color.darkOutline, lineWidth: 1)
+                                .stroke(Color.white.opacity(0.18), lineWidth: 1)
                         )
                     Text(String(book.title.prefix(1)).uppercased())
                         .font(.system(size: 22, weight: .bold))
@@ -98,7 +101,7 @@ private struct BookBorrowingCard: View {
                             .background(isOverdue ? AppTheme.Color.destructive.opacity(0.15) : Color.white.opacity(0.07))
                             .cornerRadius(6)
 
-                        // Pip track (Monochrome/Shadcn style)
+                        // Pip track (Glass style)
                         HStack(spacing: 3) {
                             ForEach(0..<3) { i in
                                 RoundedRectangle(cornerRadius: 2)
@@ -127,11 +130,10 @@ private struct BookBorrowingCard: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
-                            .background(Color.clear)
-                            .cornerRadius(8)
+                            .background(Capsule().fill(Color.white.opacity(0.1)))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(AppTheme.Color.darkOutline, lineWidth: 1)
+                                Capsule()
+                                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
                             )
                     }
                 } else {
@@ -163,3 +165,4 @@ private struct BookBorrowingCard: View {
         return "\(monthName) \(day), \(year)"
     }
 }
+

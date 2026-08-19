@@ -9,33 +9,40 @@ struct StudentSearchView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 VStack(spacing: AppTheme.Spacing.md) {
-                    // Search Bar Card
-                    VSCard {
-                        HStack {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(AppTheme.Color.darkSecondary)
-                            TextField("Search students by name...", text: $searchQuery)
-                                .foregroundColor(.white)
-                                .textInputAutocapitalization(.never)
-                                .disableAutocorrection(true)
-                                .onChange(of: searchQuery) { newValue in
-                                    viewModel.searchStudents(query: newValue)
-                                }
+                    // Glass Search Bar
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(AppTheme.Color.darkSecondary)
+                        TextField("Search students by name...", text: $searchQuery)
+                            .foregroundColor(.white)
+                            .textInputAutocapitalization(.never)
+                            .disableAutocorrection(true)
+                            .onChange(of: searchQuery) { newValue in
+                                viewModel.searchStudents(query: newValue)
+                            }
 
-                            if !searchQuery.isEmpty {
-                                Button(action: {
-                                    searchQuery = ""
-                                    viewModel.searchStudents(query: "")
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(AppTheme.Color.darkSecondary)
-                                }
+                        if !searchQuery.isEmpty {
+                            Button(action: {
+                                searchQuery = ""
+                                viewModel.searchStudents(query: "")
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(AppTheme.Color.darkSecondary)
                             }
                         }
                     }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                            .fill(Color.white.opacity(0.08))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                            .stroke(AppTheme.Gradient.glassBorder, lineWidth: 1)
+                    )
                     .padding(.horizontal, AppTheme.Spacing.md)
                     .padding(.top, AppTheme.Spacing.sm)
 
@@ -64,6 +71,7 @@ struct StudentSearchView: View {
                                 }
                             }
                             .padding(.horizontal, AppTheme.Spacing.md)
+                            .padding(.bottom, 40)
                         }
                     }
                 }
@@ -84,13 +92,14 @@ private struct StudentRow: View {
     let student: SearchUserResponse
 
     var body: some View {
-        VSCard {
+        GlassCard(padding: 12) {
             HStack(spacing: AppTheme.Spacing.md) {
-                // Monochromatic Avatar
+                // Glass Avatar
                 ZStack {
                     Circle()
-                        .fill(AppTheme.Color.darkOutline)
+                        .fill(Color.white.opacity(0.08))
                         .frame(width: 44, height: 44)
+                        .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
                     Text(String(student.name.prefix(1)).uppercased())
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
@@ -107,15 +116,9 @@ private struct StudentRow: View {
 
                 Spacer()
 
-                // Enrollment Status Badge
-                Text("Enrolled")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(AppTheme.Color.success)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(AppTheme.Color.success.opacity(0.15))
-                    .cornerRadius(6)
+                GlassPill(text: "Enrolled", color: AppTheme.Color.success)
             }
         }
     }
 }
+

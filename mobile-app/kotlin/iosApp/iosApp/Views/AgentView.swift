@@ -35,7 +35,7 @@ struct AgentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 VStack(spacing: 0) {
                     // Header Bar
@@ -88,7 +88,7 @@ struct AgentView: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)
                     .padding(8)
-                    .background(Circle().fill(AppTheme.Color.darkSurface))
+                    .background(Circle().fill(Color.white.opacity(0.1)))
             }
 
             // AI Avatar & Title
@@ -97,7 +97,7 @@ struct AgentView: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [Color(hex: 0x6366F1), Color(hex: 0xA855F7)],
+                                colors: [Color(hex: "#6366F1"), Color(hex: "#A855F7")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -115,7 +115,7 @@ struct AgentView: View {
                             .foregroundColor(.white)
 
                         Circle()
-                            .fill(Color.green)
+                            .fill(Color(hex: "#22C55E"))
                             .frame(width: 6, height: 6)
                     }
 
@@ -138,12 +138,12 @@ struct AgentView: View {
                     .font(.system(size: 15))
                     .foregroundColor(AppTheme.Color.darkSecondary)
                     .padding(8)
-                    .background(Circle().fill(AppTheme.Color.darkSurface))
+                    .background(Circle().fill(Color.white.opacity(0.1)))
             }
         }
         .padding(.horizontal, AppTheme.Spacing.md)
         .padding(.vertical, AppTheme.Spacing.sm)
-        .background(AppTheme.Color.darkSurface.opacity(0.8))
+        .background(.ultraThinMaterial)
     }
 
     // Quick prompt pills
@@ -160,7 +160,7 @@ struct AgentView: View {
                             .background(
                                 Capsule()
                                     .fill(Color.white.opacity(0.08))
-                                    .overlay(Capsule().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                                    .overlay(Capsule().stroke(Color.white.opacity(0.18), lineWidth: 1))
                             )
                     }
                 }
@@ -168,7 +168,7 @@ struct AgentView: View {
             .padding(.horizontal, AppTheme.Spacing.md)
             .padding(.vertical, 8)
         }
-        .background(AppTheme.Color.darkBackground.opacity(0.5))
+        .background(Color.black.opacity(0.2))
     }
 
     // Bottom input bar
@@ -195,9 +195,9 @@ struct AgentView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(AppTheme.Color.darkSurface)
+            .background(Color.white.opacity(0.08))
             .cornerRadius(20)
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(AppTheme.Color.darkOutline, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.15), lineWidth: 1))
 
             Button(action: handleSend) {
                 ZStack {
@@ -213,7 +213,7 @@ struct AgentView: View {
         }
         .padding(.horizontal, AppTheme.Spacing.md)
         .padding(.vertical, 10)
-        .background(AppTheme.Color.darkSurface.opacity(0.95))
+        .background(.ultraThinMaterial)
     }
 
     private func handleSend() {
@@ -292,7 +292,7 @@ private struct ChatBubbleView: View {
             if message.sender == .agent {
                 ZStack {
                     Circle()
-                        .fill(LinearGradient(colors: [Color(hex: 0x6366F1), Color(hex: 0xA855F7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .fill(LinearGradient(colors: [Color(hex: "#6366F1"), Color(hex: "#A855F7")], startPoint: .topLeading, endPoint: .bottomTrailing))
                         .frame(width: 28, height: 28)
                     Image(systemName: "sparkles")
                         .font(.system(size: 12, weight: .bold))
@@ -310,13 +310,14 @@ private struct ChatBubbleView: View {
                     .padding(.vertical, 10)
                     .background(
                         message.sender == .user ?
-                        AppTheme.Color.accent :
-                        AppTheme.Color.darkSurface
+                        AnyView(AppTheme.Color.accent) :
+                        AnyView(GlassCard(padding: 0) { Color.clear })
                     )
+                    .background(message.sender == .user ? AppTheme.Color.accent : Color.white.opacity(0.08))
                     .cornerRadius(18)
                     .overlay(
                         RoundedRectangle(cornerRadius: 18)
-                            .stroke(message.sender == .user ? Color.clear : AppTheme.Color.darkOutline, lineWidth: 1)
+                            .stroke(message.sender == .user ? Color.clear : Color.white.opacity(0.18), lineWidth: 1)
                     )
 
                 Text(message.timestamp)
@@ -329,7 +330,7 @@ private struct ChatBubbleView: View {
             if message.sender == .user {
                 ZStack {
                     Circle()
-                        .fill(AppTheme.Color.darkOutline)
+                        .fill(Color.white.opacity(0.1))
                         .frame(width: 28, height: 28)
                     Image(systemName: "person.fill")
                         .font(.system(size: 12))
@@ -356,8 +357,9 @@ private struct ToolExecutingBadge: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
-        .background(AppTheme.Color.accent.opacity(0.12))
+        .background(AppTheme.Color.accent.opacity(0.15))
         .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppTheme.Color.accent.opacity(0.3), lineWidth: 1))
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -369,7 +371,7 @@ private struct ThinkingIndicatorView: View {
         HStack(spacing: 6) {
             ZStack {
                 Circle()
-                    .fill(LinearGradient(colors: [Color(hex: 0x6366F1), Color(hex: 0xA855F7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(LinearGradient(colors: [Color(hex: "#6366F1"), Color(hex: "#A855F7")], startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 28, height: 28)
                 Image(systemName: "sparkles")
                     .font(.system(size: 12, weight: .bold))
@@ -392,8 +394,9 @@ private struct ThinkingIndicatorView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(AppTheme.Color.darkSurface)
+            .background(Color.white.opacity(0.08))
             .cornerRadius(16)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.15), lineWidth: 1))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear { isAnimating = true }
@@ -405,3 +408,4 @@ private func currentTimeString() -> String {
     formatter.dateFormat = "h:mm a"
     return formatter.string(from: Date())
 }
+

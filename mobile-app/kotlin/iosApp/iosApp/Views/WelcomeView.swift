@@ -5,25 +5,28 @@ import SwiftUI
 // ---------------------------------------------------------------------------
 
 struct SplashView: View {
-    @State private var scale: CGFloat = 0.7
+    @State private var scale: CGFloat = 0.8
     @State private var opacity: Double = 0
 
     var body: some View {
         ZStack {
-            AppTheme.Color.darkBackground.ignoresSafeArea()
+            GlassBackground()
 
             VStack(spacing: AppTheme.Spacing.md) {
-                // Logo mark
+                // Logo mark with Glass highlight
                 ZStack {
                     Circle()
-                        .fill(AppTheme.Color.darkSurface)
-                        .frame(width: 88, height: 88)
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 90, height: 90)
+                        .overlay(Circle().stroke(AppTheme.Gradient.glassBorder, lineWidth: 1.5))
+                        .shadow(color: AppTheme.Color.accent.opacity(0.35), radius: 16, x: 0, y: 6)
+
                     Text("VS")
-                        .font(.system(size: 32, weight: .bold))
+                        .font(.system(size: 34, weight: .bold))
                         .foregroundColor(.white)
                 }
 
-                Text("VidyaSchool")
+                Text("Vidya School")
                     .font(AppTheme.Font.title1)
                     .foregroundColor(.white)
 
@@ -44,87 +47,100 @@ struct SplashView: View {
 }
 
 // ---------------------------------------------------------------------------
-// Welcome Screen
+// Welcome Screen — Matches Android WelcomeScreen.kt with Glass UI
 // ---------------------------------------------------------------------------
 
 struct WelcomeView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var showLoginSheet = false
     @State private var showSignupSheet = false
-    @State private var particleOffset: CGFloat = 0
+    @State private var rotationCw: Double = 0
+    @State private var rotationCcw: Double = 360
 
     var body: some View {
         ZStack {
-            // Background
-            AppTheme.Color.darkBackground.ignoresSafeArea()
+            // Glass ambient background
+            GlassBackground()
 
-            // Ambient glow blobs
+            // Revolving backdrop grid orbs (mirrors Android rotating globe backdrop)
             GeometryReader { geo in
-                Circle()
-                    .fill(AppTheme.Color.accent.opacity(0.12))
-                    .frame(width: 300, height: 300)
-                    .blur(radius: 80)
-                    .offset(x: geo.size.width * 0.4, y: -geo.size.height * 0.1 + particleOffset)
+                ZStack {
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.18), Color.clear, Color.white.opacity(0.08)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                        .frame(width: 320, height: 320)
+                        .offset(x: -60, y: -60)
+                        .rotationEffect(.degrees(rotationCw))
 
-                Circle()
-                    .fill(SwiftUI.Color(hex: "#8B5CF6").opacity(0.08))
-                    .frame(width: 250, height: 250)
-                    .blur(radius: 60)
-                    .offset(x: -40, y: geo.size.height * 0.3 - particleOffset * 0.6)
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [AppTheme.Color.accent.opacity(0.2), Color.clear, AppTheme.Color.accentPurple.opacity(0.15)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 1.5
+                        )
+                        .frame(width: 220, height: 220)
+                        .position(x: geo.size.width - 20, y: geo.size.height * 0.45)
+                        .rotationEffect(.degrees(rotationCcw))
+                }
             }
             .ignoresSafeArea()
             .onAppear {
-                withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
-                    particleOffset = 30
+                withAnimation(.linear(duration: 40).repeatForever(autoreverses: false)) {
+                    rotationCw = 360
+                    rotationCcw = 0
                 }
             }
 
             VStack(spacing: 0) {
+                // Centered Hero Branding
                 Spacer()
 
-                // Hero section
-                VStack(spacing: AppTheme.Spacing.md) {
-                    // Logo
+                VStack(spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill(AppTheme.Color.darkSurface)
-                            .frame(width: 100, height: 100)
-                            .overlay(
-                                Circle()
-                                    .stroke(AppTheme.Color.darkOutline, lineWidth: 1)
-                            )
+                            .fill(.ultraThinMaterial)
+                            .frame(width: 96, height: 96)
+                            .overlay(Circle().stroke(AppTheme.Gradient.glassBorder, lineWidth: 1.5))
+                            .shadow(color: AppTheme.Color.accent.opacity(0.3), radius: 20, x: 0, y: 8)
+
                         Text("VS")
-                            .font(.system(size: 36, weight: .bold))
+                            .font(.system(size: 38, weight: .bold))
                             .foregroundColor(.white)
                     }
 
-                    VStack(spacing: AppTheme.Spacing.xs) {
-                        Text("Vidya School")
-                            .font(AppTheme.Font.largeTitle)
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
+                    Text("Vidya School")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .shadow(color: Color.black.opacity(0.4), radius: 8, x: 0, y: 4)
 
-                        Text("Your complete school management\nplatform")
-                            .font(AppTheme.Font.subheadline)
-                            .foregroundColor(AppTheme.Color.darkSecondary)
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(4)
-                    }
+                    Text("Your complete school management platform")
+                        .font(AppTheme.Font.subheadline)
+                        .foregroundColor(AppTheme.Color.darkSecondary)
+                        .multilineTextAlignment(.center)
                 }
 
                 Spacer()
 
-                // Bottom sheet style action area
-                VStack(spacing: AppTheme.Spacing.sm) {
-                    // Feature pills
-                    HStack(spacing: AppTheme.Spacing.sm) {
-                        FeaturePill(icon: "book.closed", label: "Library")
-                        FeaturePill(icon: "indianrupeesign.circle", label: "Fees")
-                        FeaturePill(icon: "bell", label: "Notices")
+                // Bottom Glass Drawer matching Android BottomDrawer
+                VStack(spacing: AppTheme.Spacing.md) {
+                    // Feature Pills with Glass styling
+                    HStack(spacing: 8) {
+                        GlassPill(text: "Library", icon: "books.vertical", color: AppTheme.Color.accent)
+                        GlassPill(text: "Fees", icon: "indianrupeesign.circle", color: AppTheme.Color.warning)
+                        GlassPill(text: "Notices", icon: "bell", color: AppTheme.Color.success)
                     }
-                    .padding(.bottom, AppTheme.Spacing.md)
+                    .padding(.bottom, 6)
 
-                    VSButton(title: "Get Started") {
+                    VSButton(title: "Login") {
                         showLoginSheet = true
                     }
 
@@ -132,27 +148,60 @@ struct WelcomeView: View {
                         showSignupSheet = true
                     }
 
-                    Text("By continuing, you agree to our Terms of Service")
-                        .font(AppTheme.Font.caption)
-                        .foregroundColor(AppTheme.Color.darkSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, AppTheme.Spacing.xs)
+                    // Terms text matching Android annotated string
+                    HStack(spacing: 4) {
+                        Text("By continuing, you agree to our")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(hex: "#71717A"))
+
+                        Link("Terms & Conditions", destination: URL(string: "https://vidyaschool.vercel.app/docs/terms-of-service")!)
+                            .font(.system(size: 11, weight: .medium))
+                            .underline()
+                            .foregroundColor(.white)
+                    }
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 4)
                 }
                 .padding(.horizontal, AppTheme.Spacing.lg)
-                .padding(.bottom, AppTheme.Spacing.xl)
-                .padding(.top, AppTheme.Spacing.lg)
+                .padding(.top, 24)
+                .padding(.bottom, 36)
                 .background(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: AppTheme.Radius.xl,
-                        topTrailingRadius: AppTheme.Radius.xl
-                    )
-                    .fill(AppTheme.Color.darkSurface.opacity(0.7))
-                    .overlay(
+                    ZStack {
                         UnevenRoundedRectangle(
-                            topLeadingRadius: AppTheme.Radius.xl,
-                            topTrailingRadius: AppTheme.Radius.xl
+                            topLeadingRadius: 24,
+                            topTrailingRadius: 24
                         )
-                        .stroke(AppTheme.Color.darkOutline.opacity(0.4), lineWidth: 1)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.95)
+
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: 24,
+                            topTrailingRadius: 24
+                        )
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(hex: "#18181B").opacity(0.92),
+                                    Color(hex: "#09090B").opacity(0.98)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    }
+                )
+                .overlay(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 24,
+                        topTrailingRadius: 24
+                    )
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.25), Color.white.opacity(0.05)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 1
                     )
                 )
             }
@@ -172,25 +221,3 @@ struct WelcomeView: View {
     }
 }
 
-private struct FeaturePill: View {
-    let icon: String
-    let label: String
-
-    var body: some View {
-        HStack(spacing: 5) {
-            Image(systemName: icon)
-                .font(.system(size: 11, weight: .medium))
-            Text(label)
-                .font(AppTheme.Font.caption2)
-        }
-        .foregroundColor(AppTheme.Color.darkSecondary)
-        .padding(.horizontal, AppTheme.Spacing.sm)
-        .padding(.vertical, 6)
-        .background(AppTheme.Color.darkSurface2)
-        .cornerRadius(AppTheme.Radius.full)
-        .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.Radius.full)
-                .stroke(AppTheme.Color.darkOutline, lineWidth: 1)
-        )
-    }
-}

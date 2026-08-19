@@ -8,7 +8,7 @@ struct FeesView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 if viewModel.isLoading && viewModel.installments.isEmpty {
                     ProgressView()
@@ -16,11 +16,11 @@ struct FeesView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: AppTheme.Spacing.md) {
-                            // Total Outstanding Card
+                            // Total Outstanding Glass Card
                             let unpaid = viewModel.installments.filter { $0.status.lowercased() != "paid" }
                             let totalUnpaid = unpaid.reduce(0.0) { $0 + $1.amount }
 
-                            VSCard {
+                            GlassCard {
                                 VStack(spacing: 8) {
                                     Text("TOTAL OUTSTANDING")
                                         .font(AppTheme.Font.caption)
@@ -45,7 +45,11 @@ struct FeesView: View {
                                     .padding()
                                     .frame(maxWidth: .infinity)
                                     .background(AppTheme.Color.destructive.opacity(0.2))
-                                    .cornerRadius(8)
+                                    .cornerRadius(AppTheme.Radius.md)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                                            .stroke(AppTheme.Color.destructive.opacity(0.4), lineWidth: 1)
+                                    )
                             }
 
                             if let success = viewModel.paymentSuccessMessage {
@@ -55,7 +59,11 @@ struct FeesView: View {
                                     .padding()
                                     .frame(maxWidth: .infinity)
                                     .background(AppTheme.Color.success.opacity(0.2))
-                                    .cornerRadius(8)
+                                    .cornerRadius(AppTheme.Radius.md)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                                            .stroke(AppTheme.Color.success.opacity(0.4), lineWidth: 1)
+                                    )
                             }
 
                             // Installment List
@@ -66,6 +74,7 @@ struct FeesView: View {
                             }
                         }
                         .padding(AppTheme.Spacing.md)
+                        .padding(.bottom, 60)
                     }
                 }
             }
@@ -82,6 +91,8 @@ struct FeesView: View {
                     Button(action: { viewModel.fetchFees() }) {
                         Image(systemName: "arrow.clockwise")
                             .foregroundColor(.white)
+                            .padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
                 }
             }
@@ -110,7 +121,7 @@ private struct InstallmentRow: View {
     }
 
     var body: some View {
-        VSCard {
+        GlassCard {
             HStack(spacing: AppTheme.Spacing.md) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("\(installment.month.capitalized) \(installment.year)")
@@ -147,13 +158,7 @@ private struct InstallmentRow: View {
 
                 VStack {
                     if isPaid {
-                        Text("PAID")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(AppTheme.Color.success)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(AppTheme.Color.success.opacity(0.15))
-                            .cornerRadius(6)
+                        GlassPill(text: "PAID", icon: "checkmark.seal.fill", color: AppTheme.Color.success)
                     } else {
                         Button(action: onPay) {
                             HStack {
@@ -179,3 +184,4 @@ private struct InstallmentRow: View {
         }
     }
 }
+

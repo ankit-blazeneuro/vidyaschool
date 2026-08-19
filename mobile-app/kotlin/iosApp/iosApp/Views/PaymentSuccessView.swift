@@ -17,7 +17,7 @@ struct PaymentSuccessView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 ScrollView {
                     VStack(spacing: AppTheme.Spacing.lg) {
@@ -48,7 +48,7 @@ struct PaymentSuccessView: View {
                         }
 
                         // Amount Card
-                        VSCard {
+                        GlassCard {
                             VStack(spacing: 4) {
                                 Text("AMOUNT PAID")
                                     .font(AppTheme.Font.caption2)
@@ -64,16 +64,16 @@ struct PaymentSuccessView: View {
                         }
 
                         // Details Breakdown List
-                        VSCard {
+                        GlassCard {
                             VStack(spacing: 12) {
                                 DetailRow(title: "Receipt Number", value: receiptNo, isHighlighted: true)
-                                Divider().background(AppTheme.Color.darkOutline)
+                                Divider().background(Color.white.opacity(0.1))
                                 DetailRow(title: "Installment", value: installmentTitle)
-                                Divider().background(AppTheme.Color.darkOutline)
+                                Divider().background(Color.white.opacity(0.1))
                                 DetailRow(title: "Payment Method", value: paymentMethod)
-                                Divider().background(AppTheme.Color.darkOutline)
+                                Divider().background(Color.white.opacity(0.1))
                                 DetailRow(title: "Date & Time", value: currentDateTimeString())
-                                Divider().background(AppTheme.Color.darkOutline)
+                                Divider().background(Color.white.opacity(0.1))
                                 DetailRow(title: "Status", value: "CLEARED", valueColor: AppTheme.Color.success)
                             }
                         }
@@ -95,6 +95,7 @@ struct PaymentSuccessView: View {
                         }
                     }
                     .padding(AppTheme.Spacing.md)
+                    .padding(.bottom, 40)
                 }
             }
             .navigationBarHidden(true)
@@ -150,103 +151,101 @@ struct FeeReceiptView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 ScrollView {
                     VStack(spacing: AppTheme.Spacing.md) {
-                        // Official Receipt Card
-                        VStack(alignment: .leading, spacing: 16) {
-                            // Header
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("VIDYASCHOOL ACADEMY")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(.white)
-                                    Text("Official Fee Payment Receipt")
-                                        .font(AppTheme.Font.caption)
+                        // Official Receipt Glass Card
+                        GlassCard {
+                            VStack(alignment: .leading, spacing: 16) {
+                                // Header
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("VIDYASCHOOL ACADEMY")
+                                            .font(.system(size: 16, weight: .bold))
+                                            .foregroundColor(.white)
+                                        Text("Official Fee Payment Receipt")
+                                            .font(AppTheme.Font.caption)
+                                            .foregroundColor(AppTheme.Color.accent)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "doc.text.fill")
+                                        .font(.system(size: 28))
                                         .foregroundColor(AppTheme.Color.accent)
                                 }
-                                Spacer()
-                                Image(systemName: "doc.text.fill")
-                                    .font(.system(size: 28))
-                                    .foregroundColor(AppTheme.Color.accent)
-                            }
 
-                            Divider().background(AppTheme.Color.darkOutline)
+                                Divider().background(Color.white.opacity(0.1))
 
-                            // Receipt Metadata Grid
-                            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-                                GridRow {
-                                    Text("Receipt No:").font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
-                                    Text(receiptNo).font(AppTheme.Font.caption).fontWeight(.bold).foregroundColor(.white)
+                                // Receipt Metadata Grid
+                                Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+                                    GridRow {
+                                        Text("Receipt No:").font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
+                                        Text(receiptNo).font(AppTheme.Font.caption).fontWeight(.bold).foregroundColor(.white)
+                                    }
+                                    GridRow {
+                                        Text("Payment Date:").font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
+                                        Text(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none)).font(AppTheme.Font.caption).foregroundColor(.white)
+                                    }
+                                    GridRow {
+                                        Text("Mode:").font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
+                                        Text(paymentMethod).font(AppTheme.Font.caption).foregroundColor(.white)
+                                    }
                                 }
-                                GridRow {
-                                    Text("Payment Date:").font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
-                                    Text(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .none)).font(AppTheme.Font.caption).foregroundColor(.white)
-                                }
-                                GridRow {
-                                    Text("Mode:").font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
-                                    Text(paymentMethod).font(AppTheme.Font.caption).foregroundColor(.white)
-                                }
-                            }
 
-                            Divider().background(AppTheme.Color.darkOutline)
+                                Divider().background(Color.white.opacity(0.1))
 
-                            // Fee Itemized Breakdown
-                            VStack(spacing: 8) {
+                                // Fee Itemized Breakdown
+                                VStack(spacing: 8) {
+                                    HStack {
+                                        Text("Description").font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
+                                        Spacer()
+                                        Text("Amount (₹)").font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
+                                    }
+
+                                    HStack {
+                                        Text(installmentTitle).font(AppTheme.Font.subheadline).foregroundColor(.white)
+                                        Spacer()
+                                        Text("₹\(String(format: "%.2f", amount * 0.85))").font(AppTheme.Font.subheadline).foregroundColor(.white)
+                                    }
+
+                                    HStack {
+                                        Text("Development & IT Charge").font(AppTheme.Font.subheadline).foregroundColor(.white)
+                                        Spacer()
+                                        Text("₹\(String(format: "%.2f", amount * 0.15))").font(AppTheme.Font.subheadline).foregroundColor(.white)
+                                    }
+                                }
+                                .padding(12)
+                                .background(Color.white.opacity(0.04))
+                                .cornerRadius(10)
+
+                                Divider().background(Color.white.opacity(0.1))
+
+                                // Total
                                 HStack {
-                                    Text("Description").font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
+                                    Text("TOTAL PAID")
+                                        .font(AppTheme.Font.headline)
+                                        .foregroundColor(.white)
                                     Spacer()
-                                    Text("Amount (₹)").font(AppTheme.Font.caption).foregroundColor(AppTheme.Color.darkSecondary)
+                                    Text("₹\(String(format: "%.2f", amount))")
+                                        .font(AppTheme.Font.title3)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(AppTheme.Color.success)
                                 }
 
+                                // Official Verified Stamp Badge
                                 HStack {
-                                    Text(installmentTitle).font(AppTheme.Font.subheadline).foregroundColor(.white)
-                                    Spacer()
-                                    Text("₹\(String(format: "%.2f", amount * 0.85))").font(AppTheme.Font.subheadline).foregroundColor(.white)
+                                    Image(systemName: "checkmark.seal.fill")
+                                        .foregroundColor(AppTheme.Color.success)
+                                    Text("DIGITALLY SIGNED & VERIFIED BY ACCOUNTS")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundColor(AppTheme.Color.success)
                                 }
-
-                                HStack {
-                                    Text("Development & IT Charge").font(AppTheme.Font.subheadline).foregroundColor(.white)
-                                    Spacer()
-                                    Text("₹\(String(format: "%.2f", amount * 0.15))").font(AppTheme.Font.subheadline).foregroundColor(.white)
-                                }
+                                .padding(8)
+                                .frame(maxWidth: .infinity)
+                                .background(AppTheme.Color.success.opacity(0.15))
+                                .cornerRadius(8)
                             }
-                            .padding(12)
-                            .background(Color.white.opacity(0.04))
-                            .cornerRadius(10)
-
-                            Divider().background(AppTheme.Color.darkOutline)
-
-                            // Total
-                            HStack {
-                                Text("TOTAL PAID")
-                                    .font(AppTheme.Font.headline)
-                                    .foregroundColor(.white)
-                                Spacer()
-                                Text("₹\(String(format: "%.2f", amount))")
-                                    .font(AppTheme.Font.title3)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(AppTheme.Color.success)
-                            }
-
-                            // Official Verified Stamp Badge
-                            HStack {
-                                Image(systemName: "checkmark.seal.fill")
-                                    .foregroundColor(AppTheme.Color.success)
-                                Text("DIGITALLY SIGNED & VERIFIED BY ACCOUNTS")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(AppTheme.Color.success)
-                            }
-                            .padding(8)
-                            .frame(maxWidth: .infinity)
-                            .background(AppTheme.Color.success.opacity(0.12))
-                            .cornerRadius(8)
                         }
-                        .padding(AppTheme.Spacing.md)
-                        .background(AppTheme.Color.darkSurface)
-                        .cornerRadius(20)
-                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(AppTheme.Color.darkOutline, lineWidth: 1))
 
                         // Print / Share Button
                         VSButton(title: "Print / Export Receipt PDF") {
@@ -254,6 +253,7 @@ struct FeeReceiptView: View {
                         }
                     }
                     .padding(AppTheme.Spacing.md)
+                    .padding(.bottom, 40)
                 }
             }
             .navigationTitle("Fee Receipt")
@@ -267,3 +267,4 @@ struct FeeReceiptView: View {
         }
     }
 }
+

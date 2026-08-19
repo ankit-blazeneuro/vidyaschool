@@ -9,12 +9,12 @@ struct ReceiptVerificationView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 ScrollView {
                     VStack(spacing: AppTheme.Spacing.md) {
-                        // Info Header
-                        VSCard {
+                        // Info Header Glass Card
+                        GlassCard {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Receipt Audit Desk")
                                     .font(AppTheme.Font.headline)
@@ -26,7 +26,7 @@ struct ReceiptVerificationView: View {
                         }
 
                         // Form card
-                        VSCard {
+                        GlassCard {
                             VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
                                 Text("Audit Verification")
                                     .font(AppTheme.Font.title3)
@@ -46,8 +46,12 @@ struct ReceiptVerificationView: View {
                                     }
                                     .padding()
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(AppTheme.Color.destructive.opacity(0.15))
-                                    .cornerRadius(8)
+                                    .background(AppTheme.Color.destructive.opacity(0.2))
+                                    .cornerRadius(AppTheme.Radius.md)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                                            .stroke(AppTheme.Color.destructive.opacity(0.4), lineWidth: 1)
+                                    )
                                 }
 
                                 if let result = viewModel.verificationResult {
@@ -60,8 +64,12 @@ struct ReceiptVerificationView: View {
                                     }
                                     .padding()
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(AppTheme.Color.success.opacity(0.15))
-                                    .cornerRadius(8)
+                                    .background(AppTheme.Color.success.opacity(0.2))
+                                    .cornerRadius(AppTheme.Radius.md)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: AppTheme.Radius.md)
+                                            .stroke(AppTheme.Color.success.opacity(0.4), lineWidth: 1)
+                                    )
                                 }
 
                                 VSButton(title: "Verify Receipt", isLoading: viewModel.isLoading) {
@@ -72,6 +80,7 @@ struct ReceiptVerificationView: View {
                         }
                     }
                     .padding(AppTheme.Spacing.md)
+                    .padding(.bottom, 40)
                 }
             }
             .navigationTitle("Verify Receipts")
@@ -85,3 +94,4 @@ struct ReceiptVerificationView: View {
         }
     }
 }
+

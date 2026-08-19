@@ -16,7 +16,7 @@ struct SliderManagementView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 if viewModel.isLoading && viewModel.sliderImages.isEmpty {
                     ProgressView()
@@ -25,7 +25,7 @@ struct SliderManagementView: View {
                     ScrollView {
                         VStack(spacing: AppTheme.Spacing.md) {
                             // Info card
-                            VSCard {
+                            GlassCard {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Image Slider Control")
                                         .font(AppTheme.Font.headline)
@@ -71,7 +71,7 @@ struct SliderManagementView: View {
                             }
 
                             // Add New Form Card
-                            VSCard {
+                            GlassCard {
                                 VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
                                     Text("Add New Slider Image")
                                         .font(AppTheme.Font.headline)
@@ -118,6 +118,7 @@ struct SliderManagementView: View {
                             }
                         }
                         .padding(AppTheme.Spacing.md)
+                        .padding(.bottom, 40)
                     }
                 }
             }
@@ -132,6 +133,8 @@ struct SliderManagementView: View {
                     Button(action: { viewModel.fetchSliderImages() }) {
                         Image(systemName: "arrow.clockwise")
                             .foregroundColor(.white)
+                            .padding(8)
+                            .background(Circle().fill(Color.white.opacity(0.1)))
                     }
                 }
             }
@@ -149,7 +152,7 @@ private struct SliderImageRow: View {
     let onTargetChange: (String) -> Void
 
     var body: some View {
-        VSCard {
+        GlassCard(padding: 12) {
             HStack(spacing: AppTheme.Spacing.md) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(image.title)
@@ -173,7 +176,7 @@ private struct SliderImageRow: View {
                         Text(audienceEmoji(image.targetAudience))
                             .font(.system(size: 16))
                             .padding(8)
-                            .background(Color.white.opacity(0.06))
+                            .background(Color.white.opacity(0.08))
                             .cornerRadius(8)
                     }
 
@@ -219,11 +222,11 @@ private struct AudienceChip: View {
                 .foregroundColor(isSelected ? AppTheme.Color.darkBackground : .white)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.white : AppTheme.Color.darkSurface2)
-                .cornerRadius(AppTheme.Radius.sm)
+                .background(isSelected ? Color.white : Color.white.opacity(0.08))
+                .cornerRadius(AppTheme.Radius.full)
                 .overlay(
-                    RoundedRectangle(cornerRadius: AppTheme.Radius.sm)
-                        .stroke(AppTheme.Color.darkOutline, lineWidth: isSelected ? 0 : 1)
+                    RoundedRectangle(cornerRadius: AppTheme.Radius.full)
+                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.18), lineWidth: 1)
                 )
         }
     }
@@ -244,12 +247,12 @@ struct CreateNoticeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                AppTheme.Color.darkBackground.ignoresSafeArea()
+                GlassBackground()
 
                 ScrollView {
                     VStack(spacing: AppTheme.Spacing.md) {
                         if viewModel.noticeSuccess {
-                            VSCard {
+                            GlassCard {
                                 VStack(spacing: 8) {
                                     Image(systemName: "checkmark.circle.fill")
                                         .foregroundColor(AppTheme.Color.success)
@@ -266,7 +269,7 @@ struct CreateNoticeView: View {
                             }
                         }
 
-                        VSCard {
+                        GlassCard {
                             VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
                                 Text("New School Announcement")
                                     .font(AppTheme.Font.title3)
@@ -278,16 +281,16 @@ struct CreateNoticeView: View {
                                     Text("Description")
                                         .font(AppTheme.Font.caption)
                                         .foregroundColor(AppTheme.Color.darkSecondary)
-                                    
+
                                     TextEditor(text: $noticeContent)
                                         .frame(height: 120)
                                         .foregroundColor(.white)
                                         .padding(8)
-                                        .background(AppTheme.Color.darkSurface2)
+                                        .background(Color.white.opacity(0.06))
                                         .cornerRadius(AppTheme.Radius.md)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: AppTheme.Radius.md)
-                                                .stroke(AppTheme.Color.darkOutline, lineWidth: 1)
+                                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
                                         )
                                 }
 
@@ -302,7 +305,7 @@ struct CreateNoticeView: View {
                                         Text("👨‍🏫 Teachers").tag("teacher")
                                     }
                                     .pickerStyle(.segmented)
-                                    .background(AppTheme.Color.darkSurface2)
+                                    .background(Color.white.opacity(0.08))
                                     .cornerRadius(8)
                                 }
                                 .padding(.top, 4)
@@ -322,6 +325,7 @@ struct CreateNoticeView: View {
                         }
                     }
                     .padding(AppTheme.Spacing.md)
+                    .padding(.bottom, 40)
                 }
             }
             .navigationTitle("Broadcast Notice")
@@ -335,3 +339,4 @@ struct CreateNoticeView: View {
         }
     }
 }
+
