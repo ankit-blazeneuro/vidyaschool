@@ -33,6 +33,7 @@ import com.vidyaschool.app.ui.screens.AccountsScreen
 import com.vidyaschool.app.ui.screens.LibraryHubScreen
 import com.vidyaschool.app.ui.screens.AdminScreen
 import com.vidyaschool.app.ui.screens.FeeReceiptScreen
+import com.vidyaschool.app.ui.screens.AcademicMarksScreen
 import com.vidyaschool.app.ui.theme.VidyaSchoolTheme
 
 import com.razorpay.PaymentResultWithDataListener
@@ -374,6 +375,7 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                         themeMode = mode
                     },
                     onShowLibrary = { navController.navigate("library") },
+                    onShowAcademicPerformance = { navController.navigate("academicMarks") },
                     onLogout = {
                         sessionManager.clearSession()
                         navController.navigate("welcome") {
@@ -381,6 +383,9 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
                         }
                     }
                 )
+            }
+            composable("academicMarks") {
+                AcademicMarksScreen(onBack = { navController.popBackStack() })
             }
             composable("library") {
                 LibraryHubScreen(onBack = { navController.popBackStack() })

@@ -92,6 +92,7 @@ fun StudentScreen(
     themeMode: String = "system",
     onThemeChange: (String) -> Unit = {},
     onShowLibrary: () -> Unit = {},
+    onShowAcademicPerformance: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val context = LocalContext.current
@@ -209,7 +210,7 @@ fun StudentScreen(
                         Spacer(modifier = Modifier.height(20.dp))
                     }
                     
-                    AcademicPerformanceCard()
+                    AcademicPerformanceCard(onGraphClick = onShowAcademicPerformance)
                     
                     Spacer(modifier = Modifier.height(20.dp))
                     
@@ -729,7 +730,9 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
 }
 
 @Composable
-fun AcademicPerformanceCard() {
+fun AcademicPerformanceCard(
+    onGraphClick: () -> Unit = {}
+) {
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
     val tabs = listOf("Performance", "Subject", "Attendance")
@@ -794,18 +797,26 @@ fun AcademicPerformanceCard() {
         )
     ) {
         Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp)) {
-            Text(
-                text = "Academic Performance",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "School Highlights & Analytics",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Academic Performance",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "School Highlights & Analytics",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -814,11 +825,18 @@ fun AcademicPerformanceCard() {
                 0 -> {
                     val chartData = if (realData.isNotEmpty()) realData else listOf(65f, 80f, 75f, 90f, 85f, 95f)
                     val chartLabels = if (realLabels.isNotEmpty()) realLabels else listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun")
-                    AcademicPerformanceChart(
-                        data = chartData,
-                        labels = chartLabels,
-                        modifier = Modifier.fillMaxWidth().height(180.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { onGraphClick() }
+                    ) {
+                        AcademicPerformanceChart(
+                            data = chartData,
+                            labels = chartLabels,
+                            modifier = Modifier.fillMaxWidth().height(180.dp)
+                        )
+                    }
                 }
                 1 -> SubjectBarChart(
                     data = listOf(72f, 68f, 85f, 78f, 91f, 88f),
@@ -1680,7 +1698,7 @@ fun TopPerformerCard(
 // Student Timetable / Daily Schedule (Matching Teacher Dashboard with Light & Dark Mode)
 // ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun StudentTimetableSkeleton(isDark: Boolean) {
+private fun StudentTimetableSkeleton(isDark: Boolean, modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = "student_cal_shimmer")
     val shimmerX by transition.animateFloat(
         initialValue = 0f,
@@ -1701,30 +1719,47 @@ private fun StudentTimetableSkeleton(isDark: Boolean) {
         end   = androidx.compose.ui.geometry.Offset(shimmerX, 0f)
     )
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(if (isDark) Color(0xFF18181B) else Color(0xFFFFFFFF))
-            .border(
-                1.dp,
-                if (isDark) Color(0xFF27272A) else Color(0xFFE4E4E7),
-                RoundedCornerShape(20.dp)
-            )
-            .padding(18.dp)
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Column {
-            Box(modifier = Modifier.width(100.dp).height(14.dp).clip(RoundedCornerShape(7.dp)).background(shimmerBrush))
-            Spacer(modifier = Modifier.height(16.dp))
-            Box(modifier = Modifier.width(130.dp).height(10.dp).clip(RoundedCornerShape(5.dp)).background(shimmerBrush))
-            Spacer(modifier = Modifier.height(10.dp))
-            Box(modifier = Modifier.fillMaxWidth().height(42.dp).clip(RoundedCornerShape(12.dp)).background(shimmerBrush))
-            Spacer(modifier = Modifier.height(18.dp))
-            Box(modifier = Modifier.width(90.dp).height(10.dp).clip(RoundedCornerShape(5.dp)).background(shimmerBrush))
-            Spacer(modifier = Modifier.height(10.dp))
-            Box(modifier = Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(12.dp)).background(shimmerBrush))
-            Spacer(modifier = Modifier.height(6.dp))
-            Box(modifier = Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(12.dp)).background(shimmerBrush))
+            Text(
+                text = "Timetable",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Daily Schedule & Classes",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
+                .background(if (isDark) Color(0xFF18181B) else Color(0xFFFFFFFF))
+                .border(
+                    1.dp,
+                    if (isDark) Color(0xFF27272A) else Color(0xFFE4E4E7),
+                    RoundedCornerShape(20.dp)
+                )
+                .padding(18.dp)
+        ) {
+            Column {
+                Box(modifier = Modifier.width(130.dp).height(10.dp).clip(RoundedCornerShape(5.dp)).background(shimmerBrush))
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(modifier = Modifier.fillMaxWidth().height(42.dp).clip(RoundedCornerShape(12.dp)).background(shimmerBrush))
+                Spacer(modifier = Modifier.height(18.dp))
+                Box(modifier = Modifier.width(90.dp).height(10.dp).clip(RoundedCornerShape(5.dp)).background(shimmerBrush))
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(modifier = Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(12.dp)).background(shimmerBrush))
+                Spacer(modifier = Modifier.height(6.dp))
+                Box(modifier = Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(12.dp)).background(shimmerBrush))
+            }
         }
     }
 }
@@ -1807,7 +1842,6 @@ fun StudentTimetableSection(
     // Color tokens dynamically tuned for Light and Dark modes
     val cardBg = if (isDark) Color(0xFF18181B) else Color(0xFFFFFFFF)
     val cardBorder = if (isDark) Color(0xFF27272A) else Color(0xFFE4E4E7)
-    val headerTextColor = if (isDark) Color(0xFFF4F4F5) else Color(0xFF18181B)
     val todayDateRed = if (isDark) Color(0xFFFF5A52) else Color(0xFFE11D48)
     val tomorrowGray = if (isDark) Color(0xFF8A8A8A) else Color(0xFF71717A)
     val emptyTextColor = if (isDark) Color(0xFF8A8A8A) else Color(0xFF71717A)
@@ -1848,115 +1882,102 @@ fun StudentTimetableSection(
     }
 
     if (isLoading) {
-        StudentTimetableSkeleton(isDark = isDark)
+        StudentTimetableSkeleton(isDark = isDark, modifier = modifier)
     } else {
-        Surface(
-            modifier = modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            color = cardBg,
-            border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder),
-            shadowElevation = if (isDark) 0.dp else 1.dp
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Timetable",
-                        color = headerTextColor,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.3).sp
-                    )
+        Column(modifier = modifier.fillMaxWidth()) {
+            Column {
+                Text(
+                    text = "Timetable",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Daily Schedule & Classes",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
 
-                    // Three-dot icon decoration
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(3.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        repeat(3) {
-                            Box(
-                                modifier = Modifier
-                                    .size(3.dp)
-                                    .clip(RoundedCornerShape(2.dp))
-                                    .background(if (isDark) Color(0xFF71717A) else Color(0xFFA1A1AA))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                color = cardBg,
+                border = androidx.compose.foundation.BorderStroke(1.dp, cardBorder),
+                shadowElevation = if (isDark) 0.dp else 1.dp
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {
+                    // TODAY Section
+                    Text(
+                        text = todayDateStr.uppercase(),
+                        color = todayDateRed,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.1.sp
+                    )
+                    Spacer(modifier = Modifier.height(9.dp))
+
+                    if (todayEvents.isEmpty()) {
+                        Text(
+                            text = "No classes scheduled today",
+                            color = emptyTextColor,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    } else {
+                        todayEvents.take(4).forEach { ev ->
+                            StudentEventRow(
+                                title        = ev.title,
+                                time         = ev.time,
+                                barColor     = todayBarColor,
+                                textColor    = todayTextColor,
+                                timeColor    = todayTextColor,
+                                rowBg        = todayRowBg,
+                                rowBorder    = todayRowBorder,
+                                cornerRadius = 12,
+                                height       = 42,
+                                horizontalPadding = 12
                             )
+                            Spacer(modifier = Modifier.height(5.dp))
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                // TODAY Section
-                Text(
-                    text = todayDateStr.uppercase(),
-                    color = todayDateRed,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.1.sp
-                )
-                Spacer(modifier = Modifier.height(9.dp))
-
-                if (todayEvents.isEmpty()) {
+                    // TOMORROW Section
                     Text(
-                        text = "No classes scheduled today",
-                        color = emptyTextColor,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(vertical = 4.dp)
+                        text = "TOMORROW",
+                        color = tomorrowGray,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.1.sp
                     )
-                } else {
-                    todayEvents.take(4).forEach { ev ->
-                        StudentEventRow(
-                            title        = ev.title,
-                            time         = ev.time,
-                            barColor     = todayBarColor,
-                            textColor    = todayTextColor,
-                            timeColor    = todayTextColor,
-                            rowBg        = todayRowBg,
-                            rowBorder    = todayRowBorder,
-                            cornerRadius = 12,
-                            height       = 42,
-                            horizontalPadding = 12
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (tomorrowEvents.isEmpty()) {
+                        Text(
+                            text = "No classes scheduled tomorrow",
+                            color = emptyTextColor,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(vertical = 4.dp)
                         )
-                        Spacer(modifier = Modifier.height(5.dp))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // TOMORROW Section
-                Text(
-                    text = "TOMORROW",
-                    color = tomorrowGray,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.1.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                if (tomorrowEvents.isEmpty()) {
-                    Text(
-                        text = "No classes scheduled tomorrow",
-                        color = emptyTextColor,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                        tomorrowEvents.take(4).forEachIndexed { idx, ev ->
-                            val barColor = tomorrowAccentBars[idx % tomorrowAccentBars.size]
-                            StudentEventRow(
-                                title       = ev.title,
-                                time        = ev.time,
-                                barColor    = barColor,
-                                textColor   = if (isDark) barColor else tomorrowTextColor,
-                                timeColor   = if (isDark) barColor else tomorrowTimeColor,
-                                rowBg       = tomorrowRowBg,
-                                rowBorder   = tomorrowRowBorder
-                            )
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            tomorrowEvents.take(4).forEachIndexed { idx, ev ->
+                                val barColor = tomorrowAccentBars[idx % tomorrowAccentBars.size]
+                                StudentEventRow(
+                                    title       = ev.title,
+                                    time        = ev.time,
+                                    barColor    = barColor,
+                                    textColor   = if (isDark) barColor else tomorrowTextColor,
+                                    timeColor   = if (isDark) barColor else tomorrowTimeColor,
+                                    rowBg       = tomorrowRowBg,
+                                    rowBorder   = tomorrowRowBorder
+                                )
+                            }
                         }
                     }
                 }
