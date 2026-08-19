@@ -39,7 +39,7 @@ fun LibraryHubScreen(onBack: () -> Unit) {
     fun loadBooks() {
         if (!sessionToken.isNullOrEmpty()) {
             isLoading = true
-            scope.launch(Dispatchers.IO) {
+            scope.launch {
                 try {
                     val res = RetrofitClient.authApi.getStudentBorrowings("Bearer $sessionToken")
                     if (res.isSuccessful) {

@@ -100,7 +100,7 @@ fun AcademicMarksScreen(
             return
         }
         if (isPullRefresh) isRefreshing = true else isLoading = true
-        scope.launch(Dispatchers.IO) {
+        scope.launch {
             try {
                 val res = RetrofitClient.authApi.getStudentMarks("Bearer $sessionToken")
                 if (res.isSuccessful && res.body() != null) {

@@ -185,7 +185,7 @@ fun AdminScreen(
                                                         sliderImages = updatedList
                                                         expanded = false
                                                         
-                                                        scope.launch(Dispatchers.IO) {
+                                                        scope.launch {
                                                             try {
                                                                 RetrofitClient.authApi.updateSliderImages(updatedList)
                                                             } catch (e: Exception) {
@@ -206,7 +206,7 @@ fun AdminScreen(
                                             }
                                             sliderImages = updatedList
                                             
-                                            scope.launch(Dispatchers.IO) {
+                                            scope.launch {
                                                 try {
                                                     RetrofitClient.authApi.updateSliderImages(updatedList)
                                                 } catch (e: Exception) {
@@ -219,7 +219,7 @@ fun AdminScreen(
                                         onClick = {
                                             val updatedList = sliderImages.filter { it.id != img.id }
                                             sliderImages = updatedList
-                                            scope.launch(Dispatchers.IO) {
+                                            scope.launch {
                                                 try {
                                                     RetrofitClient.authApi.updateSliderImages(updatedList)
                                                 } catch (e: Exception) {
@@ -312,14 +312,12 @@ fun AdminScreen(
                                     )
                                     val updatedList = sliderImages + newImg
                                     sliderImages = updatedList
-                                    scope.launch(Dispatchers.IO) {
+                                    scope.launch {
                                         try {
                                             RetrofitClient.authApi.updateSliderImages(updatedList)
-                                            withContext(Dispatchers.Main) {
-                                                newTitle = ""
-                                                newUrl = ""
-                                                newTargetAudience = "all"
-                                            }
+                                            newTitle = ""
+                                            newUrl = ""
+                                            newTargetAudience = "all"
                                         } catch (e: Exception) {
                                             android.util.Log.e("AdminScreen", "Failed to add slider image: ${e.message}")
                                         }

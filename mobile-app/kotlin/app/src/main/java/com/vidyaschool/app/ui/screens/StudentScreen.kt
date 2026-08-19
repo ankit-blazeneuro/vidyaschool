@@ -366,7 +366,7 @@ fun LibraryBooksSection(onShowMore: () -> Unit = {}) {
     fun loadBooks() {
         if (!sessionToken.isNullOrEmpty()) {
             isLoading = true
-            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            scope.launch {
                 try {
                     val res = RetrofitClient.authApi.getStudentBorrowings("Bearer $sessionToken")
                     if (res.isSuccessful) {

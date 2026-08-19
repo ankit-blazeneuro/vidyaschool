@@ -400,7 +400,7 @@ fun DashboardLayout(
 
     val triggerRefresh: () -> Unit = {
         isRefreshing = true
-        scope.launch(Dispatchers.IO) {
+        scope.launch {
             try {
                 val sessionToken = sessionManager.getSessionToken()
                 var sessionVerified = false
@@ -1651,7 +1651,7 @@ fun SessionsTabContent(
     var revokingSessionId by remember { mutableStateOf<String?>(null) }
 
     fun loadSessions() {
-        scope.launch(Dispatchers.IO) {
+        scope.launch {
             isLoading = true
             errorMsg = null
             try {
@@ -1675,27 +1675,21 @@ fun SessionsTabContent(
     }
 
     fun revokeSingleSession(sessionId: String) {
-        scope.launch(Dispatchers.IO) {
+        scope.launch {
             revokingSessionId = sessionId
             try {
                 val token = sessionManager.getSessionToken()
                 if (!token.isNullOrEmpty()) {
                     val response = RetrofitClient.authApi.revokeSession("Bearer $token", sessionId)
                     if (response.isSuccessful) {
-                        withContext(Dispatchers.Main) {
-                            android.widget.Toast.makeText(context, "Session revoked successfully!", android.widget.Toast.LENGTH_SHORT).show()
-                        }
+                        android.widget.Toast.makeText(context, "Session revoked successfully!", android.widget.Toast.LENGTH_SHORT).show()
                         loadSessions()
                     } else {
-                        withContext(Dispatchers.Main) {
-                            android.widget.Toast.makeText(context, "Failed to revoke session", android.widget.Toast.LENGTH_SHORT).show()
-                        }
+                        android.widget.Toast.makeText(context, "Failed to revoke session", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                }
+                android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
             } finally {
                 revokingSessionId = null
             }
@@ -1703,27 +1697,21 @@ fun SessionsTabContent(
     }
 
     fun revokeAllOthers() {
-        scope.launch(Dispatchers.IO) {
+        scope.launch {
             isRevokingAll = true
             try {
                 val token = sessionManager.getSessionToken()
                 if (!token.isNullOrEmpty()) {
                     val response = RetrofitClient.authApi.revokeOtherSessions("Bearer $token")
                     if (response.isSuccessful) {
-                        withContext(Dispatchers.Main) {
-                            android.widget.Toast.makeText(context, "All other sessions revoked!", android.widget.Toast.LENGTH_SHORT).show()
-                        }
+                        android.widget.Toast.makeText(context, "All other sessions revoked!", android.widget.Toast.LENGTH_SHORT).show()
                         loadSessions()
                     } else {
-                        withContext(Dispatchers.Main) {
-                            android.widget.Toast.makeText(context, "Failed to revoke other sessions", android.widget.Toast.LENGTH_SHORT).show()
-                        }
+                        android.widget.Toast.makeText(context, "Failed to revoke other sessions", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                }
+                android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
             } finally {
                 isRevokingAll = false
             }
@@ -3870,7 +3858,7 @@ fun NoticeTabContent(
     val fetchNotices: () -> Unit = {
         isLoading = true
         loadError = null
-        scope.launch(Dispatchers.IO) {
+        scope.launch {
             try {
                 val token = sessionManager.getSessionToken()
                 if (!token.isNullOrEmpty()) {
@@ -3893,6 +3881,7 @@ fun NoticeTabContent(
     }
 
     LaunchedEffect(Unit) { fetchNotices() }
+    LaunchedEffect(isRefreshing) { if (isRefreshing) fetchNotices() }
 
     PullToRefreshBox(
         isRefreshing = isRefreshing || isLoading,
@@ -5249,7 +5238,7 @@ fun FeesTabContent(
 
     val fetchFees: () -> Unit = {
         isLoading = true
-        scope.launch(Dispatchers.IO) {
+        scope.launch {
             try {
                 val token = sessionManager.getSessionToken()
                 if (!token.isNullOrEmpty()) {
@@ -5265,12 +5254,17 @@ fun FeesTabContent(
     }
 
     LaunchedEffect(Unit) { fetchFees() }
+    LaunchedEffect(isRefreshing) { if (isRefreshing) fetchFees() }
 
     val handlePayFee: (FeeInstallment) -> Unit = { inst ->
         isProcessingPayment = inst.id
-        scope.launch(Dispatchers.IO) {
+        scope.launch {
             try {
-                val token = sessionManager.getSessionToken() ?: return@launch
+                val token = sessionManager.getSessionToken() ?: run {
+                    isProcessingPayment = null
+                    android.widget.Toast.makeText(context, "Session expired, please log in again", android.widget.Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
                 val amountPaise = (inst.amount * 100).toInt()
                 val orderResp = RetrofitClient.authApi.createOrder(
                     authHeader = "Bearer $token",
@@ -5280,7 +5274,9 @@ fun FeesTabContent(
                     )
                 )
                 if (!orderResp.isSuccessful || orderResp.body() == null) {
-                    android.widget.Toast.makeText(context, "Order creation failed", android.widget.Toast.LENGTH_SHORT).show()
+                    val errorBody = orderResp.errorBody()?.string()
+                    android.util.Log.e("FeesTabContent", "Create order failed: code=${orderResp.code()} body=$errorBody")
+                    android.widget.Toast.makeText(context, "Order creation failed: ${orderResp.message()}", android.widget.Toast.LENGTH_SHORT).show()
                     isProcessingPayment = null
                     return@launch
                 }
@@ -5306,7 +5302,11 @@ fun FeesTabContent(
                     return@launch
                 }
 
-                val activity = context as? com.vidyaschool.app.MainActivity ?: run { isProcessingPayment = null; return@launch }
+                val activity = context as? com.vidyaschool.app.MainActivity ?: run {
+                    isProcessingPayment = null
+                    android.widget.Toast.makeText(context, "Activity context error", android.widget.Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
                 activity.pendingInstallmentId = inst.id
                 activity.pendingOrderId = order.orderId ?: ""
                 activity.pendingIsMock = order.mockPayment == true
@@ -5346,7 +5346,9 @@ fun FeesTabContent(
                     })
                 }
                 checkout.open(activity, options)
+                isProcessingPayment = null
             } catch (e: Exception) {
+                android.util.Log.e("FeesTabContent", "Error during payment init: ${e.message}", e)
                 android.widget.Toast.makeText(context, "Error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
                 isProcessingPayment = null
             }
