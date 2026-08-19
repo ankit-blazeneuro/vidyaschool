@@ -49,6 +49,7 @@ import { PWARegister } from "@/components/pwa-register"
 import { CustomSearchDialog } from "@/components/custom-search-dialog"
 import { Toaster } from "@/components/ui/sonner"
 import { PaperPlanesWrapper } from "@/components/paper-planes-wrapper"
+import { Analytics } from "@vercel/analytics/next"
 
 export default async function RootLayout({
   children,
@@ -83,6 +84,7 @@ export default async function RootLayout({
             >
               <PWARegister />
               {children}
+              <Analytics />
               <Toaster richColors position="top-right" />
             </RootProvider>
           </TooltipProvider>
