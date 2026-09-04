@@ -35,6 +35,15 @@ import com.vidyaschool.app.ui.screens.AdminScreen
 import com.vidyaschool.app.ui.screens.FeeReceiptScreen
 import com.vidyaschool.app.ui.screens.AcademicMarksScreen
 import com.vidyaschool.app.ui.theme.VidyaSchoolTheme
+import com.vidyaschool.app.ui.components.RainBackgroundEffect
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
 
 import com.razorpay.PaymentResultWithDataListener
 import com.razorpay.PaymentData
@@ -297,6 +306,37 @@ fun VidyaSchoolApp(viewModel: AuthViewModel, sessionManager: SessionManager) {
 
     VidyaSchoolTheme(darkTheme = isDarkTheme) {
         val navController = rememberNavController()
+
+        // Location permission request for accurate weather tracking
+        val locationPermissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+            val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+            if (fineGranted || coarseGranted) {
+                android.util.Log.d("LocationPermission", "Location permission granted by user")
+            }
+        }
+
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            val hasFine = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            val hasCoarse = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasFine && !hasCoarse) {
+                locationPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            }
+        }
 
         val startDestination = if (sessionManager.isLoggedIn()) {
             val role = sessionManager.getRole() ?: "student"

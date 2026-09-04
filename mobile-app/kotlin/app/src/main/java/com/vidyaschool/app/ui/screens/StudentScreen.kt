@@ -49,10 +49,17 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.luminance
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import com.vidyaschool.app.api.TeacherCalendarEvent
 import com.vidyaschool.app.api.RetrofitClient
 import com.vidyaschool.app.api.TopPerformerItem
+import com.vidyaschool.app.api.WeatherResponse
 import com.vidyaschool.app.ui.components.SliderSkeleton
+import com.vidyaschool.app.ui.components.RainBackgroundEffect
+import androidx.compose.ui.zIndex
 import com.vidyaschool.app.api.SliderImage
 import coil.compose.AsyncImage
 import androidx.compose.foundation.pager.HorizontalPager
@@ -100,6 +107,7 @@ fun StudentScreen(
     val sessionToken = sessionManager.getSessionToken()
 
     var currentStudentClass by remember { mutableStateOf(studentClass) }
+    var studentCity by remember { mutableStateOf<String?>(null) }
     var sliderImages by remember { mutableStateOf<List<SliderImage>>(emptyList()) }
     var isLoadingSlider by remember { mutableStateOf(true) }
     var showOnboarding by remember { mutableStateOf(false) }
@@ -118,6 +126,7 @@ fun StudentScreen(
                 val completed = profile?.onboardingCompleted == true && !profile.username.isNullOrBlank()
                 showOnboarding = !completed
                 profile?.`class`?.takeIf { it.isNotBlank() }?.let { currentStudentClass = it }
+                profile?.city?.takeIf { it.isNotBlank() }?.let { studentCity = it }
             }
         } catch (e: Exception) {
             android.util.Log.e("StudentScreen", "Failed to check onboarding: ${e.message}")
@@ -141,6 +150,76 @@ fun StudentScreen(
         } finally {
             isLoadingSlider = false
         }
+    }
+
+    var weatherResponse by remember { mutableStateOf<WeatherResponse?>(null) }
+    var isWeatherLoading by remember { mutableStateOf(false) }
+
+    // Fetch live weather data from Backend API using GPS coordinates or city
+    LaunchedEffect(studentCity) {
+        isWeatherLoading = true
+        try {
+            var userLat: Double? = null
+            var userLon: Double? = null
+
+            try {
+                val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                val hasCoarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                if (hasFine || hasCoarse) {
+                    val locManager = context.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+                    val lastLoc = locManager?.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                        ?: locManager?.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
+                        ?: locManager?.getLastKnownLocation(android.location.LocationManager.PASSIVE_PROVIDER)
+                    if (lastLoc != null) {
+                        userLat = lastLoc.latitude
+                        userLon = lastLoc.longitude
+                    }
+                }
+            } catch (e: Exception) {
+                // Location access error fallback
+            }
+
+            val cityQuery = if (userLat == null || userLon == null) (studentCity?.ifBlank { "auto" } ?: "auto") else null
+            val res = RetrofitClient.authApi.getCurrentWeather(
+                lat = userLat,
+                lon = userLon,
+                city = cityQuery
+            )
+            if (res.isSuccessful && res.body() != null) {
+                weatherResponse = res.body()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("StudentWeather", "Failed to fetch weather: ${e.message}")
+        } finally {
+            isWeatherLoading = false
+        }
+    }
+
+    val weatherCurrent = weatherResponse?.current
+    val weatherDesc = weatherCurrent?.weatherDescriptions?.firstOrNull() ?: ""
+
+    // Condition check: Show rain animation ONLY when weather indicates rain
+    val isRaining = remember(weatherResponse) {
+        if (weatherResponse == null) {
+            false
+        } else {
+            val code = weatherCurrent?.weatherCode
+            val isCodeRain = code != null && (code in 51..67 || code in 80..82 || code in 95..99)
+            val allDesc = weatherCurrent?.weatherDescriptions?.joinToString(" ")?.lowercase() ?: ""
+            val isTextRain = allDesc.contains("rain") || allDesc.contains("drizzle") ||
+                    allDesc.contains("shower") || allDesc.contains("thunder") ||
+                    allDesc.contains("storm") || allDesc.contains("downpour") ||
+                    allDesc.contains("monsoon") || allDesc.contains("sprinkle") ||
+                    allDesc.contains("precip")
+            isCodeRain || isTextRain
+        }
+    }
+
+    val isLightningCondition = remember(weatherResponse) {
+        val code = weatherCurrent?.weatherCode
+        val isCodeThunder = code != null && (code in 95..99)
+        val allDesc = weatherCurrent?.weatherDescriptions?.joinToString(" ")?.lowercase() ?: ""
+        isCodeThunder || allDesc.contains("thunder") || allDesc.contains("storm") || allDesc.contains("heavy")
     }
     
     Box(modifier = Modifier.fillMaxSize()) {
@@ -173,42 +252,70 @@ fun StudentScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .statusBarsPadding()
                     .padding(bottom = 24.dp)
             ) {
-                DashboardHeader(
-                    title = "Dashboard",
-                    subtitle = "Welcome, ${name.ifEmpty { "Student" }}",
-                    onNotificationClick = onNotificationClick,
-                    hasUnreadNotifications = hasUnread
-                )
+                // Header & Carousel container with Rain animation - ONLY rendered when it is raining!
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    if (isRaining) {
+                        RainBackgroundEffect(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .zIndex(-1f),
+                            weatherCondition = weatherDesc,
+                            enableSplashes = true,
+                            enableLightning = isLightningCondition
+                        )
+                    }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                    ) {
+                        DashboardHeader(
+                            title = "Dashboard",
+                            subtitle = "Welcome, ${name.ifEmpty { "Student" }}",
+                            onNotificationClick = onNotificationClick,
+                            hasUnreadNotifications = hasUnread,
+                            isDarkHeader = if (isRaining) isStudentAppInDarkTheme() else false
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                        ) {
+                            if (isLoadingSlider) {
+                                SliderSkeleton(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(185.dp)
+                                )
+                            } else {
+                                val enabledImages = sliderImages.filter { it.enabled }
+                                StudentDashboardCarousel(
+                                    images = enabledImages,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(185.dp)
+                                )
+                            }
+                        }
+
+                        // Slight margin below the slider button where rain drops end & splash
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp)
                 ) {
-                    // Auto-playing Carousel Slider with Announcements & Leaderboard Slide
-                    if (isLoadingSlider) {
-                        SliderSkeleton(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(185.dp)
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                    } else {
-                        val enabledImages = sliderImages.filter { it.enabled }
-                        StudentDashboardCarousel(
-                            images = enabledImages,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(185.dp)
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                    }
-                    
                     AcademicPerformanceCard(onGraphClick = onShowAcademicPerformance)
                     
                     Spacer(modifier = Modifier.height(20.dp))

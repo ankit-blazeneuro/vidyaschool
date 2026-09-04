@@ -421,6 +421,15 @@ interface AuthApi {
         @Header("Authorization") authHeader: String,
         @retrofit2.http.Part file: okhttp3.MultipartBody.Part
     ): Response<ChatFileUploadResponse>
+
+    // ── Weather Endpoints ──────────────────────────────────────────────────
+
+    @GET("api/weather/current")
+    suspend fun getCurrentWeather(
+        @Query("lat") lat: Double? = null,
+        @Query("lon") lon: Double? = null,
+        @Query("city") city: String? = null
+    ): Response<WeatherResponse>
 }
 
 data class ChatFileUploadResponse(
@@ -658,4 +667,43 @@ data class QRStatusResponse(
     val status: String,                        // "pending" | "confirmed" | "expired"
     @SerializedName("session_token") val sessionToken: String? = null,
     val user: Map<String, Any?>? = null
+)
+
+// ── Weather Data Models ───────────────────────────────────────────────────
+
+data class WeatherLocation(
+    val name: String? = null,
+    val region: String? = null,
+    val country: String? = null,
+    val lat: Double? = null,
+    val lon: Double? = null,
+    val localtime: String? = null
+)
+
+data class WeatherCurrent(
+    val temperature: Double? = null,
+    @SerializedName("feelslike") val feelsLike: Double? = null,
+    @SerializedName("weather_code") val weatherCode: Int? = null,
+    @SerializedName("weather_descriptions") val weatherDescriptions: List<String>? = null,
+    @SerializedName("weather_icons") val weatherIcons: List<String>? = null,
+    @SerializedName("wind_speed") val windSpeed: Double? = null,
+    @SerializedName("wind_dir") val windDir: String? = null,
+    val humidity: Int? = null,
+    @SerializedName("uv_index") val uvIndex: Int? = null,
+    val visibility: Double? = null,
+    val pressure: Int? = null,
+    val precip: Double? = null,
+    @SerializedName("is_day") val isDay: String? = null
+)
+
+data class WeatherResponse(
+    val success: Boolean = true,
+    val location: WeatherLocation? = null,
+    val current: WeatherCurrent? = null,
+    val cached: Boolean = false,
+    @SerializedName("cost_saved") val costSaved: Boolean = false,
+    @SerializedName("is_fallback") val isFallback: Boolean = false,
+    @SerializedName("cache_type") val cacheType: String? = null,
+    @SerializedName("cached_at") val cachedAt: String? = null,
+    val message: String? = null
 )

@@ -15,12 +15,12 @@ import androidx.core.view.WindowCompat
 private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFFFFFFFF),
     onPrimary = Color(0xFF18181B),
-    background = Color(0xFF09090B),
+    background = Color(0xFF000000),
     surface = Color(0xFF18181B),
     onSurface = Color(0xFFFFFFFF),
     onBackground = Color(0xFFFFFFFF),
     outline = Color(0xFF27272A),
-    surfaceVariant = Color(0xFF09090B),
+    surfaceVariant = Color(0xFF121214),
     secondary = Color(0xFF71717A),
     onSecondary = Color(0xFFFFFFFF)
 )
@@ -28,12 +28,12 @@ private val DarkColorScheme = darkColorScheme(
 private val LightColorScheme = lightColorScheme(
     primary = Color(0xFF18181B),
     onPrimary = Color(0xFFFFFFFF),
-    background = Color(0xFFFAFAFA),
+    background = Color(0xFFFFFFFF),
     surface = Color(0xFFFFFFFF),
     onSurface = Color(0xFF18181B),
     onBackground = Color(0xFF18181B),
     outline = Color(0xFFE4E4E7),
-    surfaceVariant = Color(0xFFFAFAFA),
+    surfaceVariant = Color(0xFFF4F4F5),
     secondary = Color(0xFFA1A1AA),
     onSecondary = Color(0xFF18181B)
 )
@@ -54,7 +54,6 @@ fun VidyaSchoolTheme(
             window.navigationBarColor = Color.Transparent.toArgb()
             
             val insetsController = WindowCompat.getInsetsController(window, view)
-            // Dark icons on light theme, Light icons on dark theme
             insetsController.isAppearanceLightStatusBars = !darkTheme
             insetsController.isAppearanceLightNavigationBars = !darkTheme
         }

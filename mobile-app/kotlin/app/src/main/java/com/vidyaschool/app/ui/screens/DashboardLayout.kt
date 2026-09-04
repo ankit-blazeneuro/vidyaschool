@@ -51,6 +51,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -98,6 +99,7 @@ import com.vidyaschool.app.auth.SessionManager
 import com.vidyaschool.app.api.UpdateChecker
 import com.vidyaschool.app.api.UpdateInfo
 import com.vidyaschool.app.ui.components.CustomTextField
+import com.vidyaschool.app.ui.components.RainBackgroundEffect
 import com.vidyaschool.app.ui.shadcn.Input
 import com.vidyaschool.app.ui.shadcn.Select
 import com.vidyaschool.app.ui.shadcn.SelectOption
@@ -146,9 +148,12 @@ fun DashboardHeader(
     subtitle: String,
     onNotificationClick: () -> Unit,
     hasUnreadNotifications: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDarkHeader: Boolean = false
 ) {
     val menuClick = LocalMenuClickHandler.current
+    val contentColor = if (isDarkHeader) Color.White else MaterialTheme.colorScheme.onBackground
+    val borderAlpha = if (isDarkHeader) 0.25f else 0.15f
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -166,7 +171,7 @@ fun DashboardHeader(
                     .size(36.dp)
                     .border(
                         1.dp,
-                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                        contentColor.copy(alpha = borderAlpha),
                         shape = CircleShape
                     )
                     .clip(CircleShape)
@@ -175,7 +180,7 @@ fun DashboardHeader(
                     painter = painterResource(id = R.drawable.ic_custom_menu),
                     contentDescription = "Menu",
                     modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onBackground
+                    tint = contentColor
                 )
             }
 
@@ -184,12 +189,12 @@ fun DashboardHeader(
                     text = title,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = contentColor
                 )
                 Text(
                     text = subtitle,
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    color = contentColor.copy(alpha = 0.65f)
                 )
             }
         }
@@ -200,7 +205,7 @@ fun DashboardHeader(
                 .size(36.dp)
                 .border(
                     1.dp,
-                    MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
+                    contentColor.copy(alpha = borderAlpha),
                     shape = CircleShape
                 )
                 .clip(CircleShape)
@@ -210,7 +215,7 @@ fun DashboardHeader(
                     painter = painterResource(id = R.drawable.ic_custom_notification),
                     contentDescription = "Notifications",
                     modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onBackground
+                    tint = contentColor
                 )
                 if (hasUnreadNotifications) {
                     Box(
@@ -220,7 +225,7 @@ fun DashboardHeader(
                             .size(10.dp)
                             .clip(CircleShape)
                             .background(Color(0xFF3B82F6))
-                            .border(1.5.dp, MaterialTheme.colorScheme.background, CircleShape)
+                            .border(1.5.dp, if (isDarkHeader) Color.Black else MaterialTheme.colorScheme.background, CircleShape)
                     )
                 }
             }
